@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "container-manager-mcp"
-version = "1.1.1"
+version = "1.1.2"
 description = "Container Manager manage Docker, Docker Swarm, and Podman containers as an MCP Server"
 readme = "README.md"
 authors = [{ name = "Audel Rouhi", email = "knucklessg1@gmail.com" }]
