@@ -11,7 +11,6 @@ import json
 import shutil
 import subprocess
 from datetime import datetime
-import dateutil.parser
 import platform
 import traceback
 
@@ -74,18 +73,39 @@ class ContainerManagerBase(ABC):
             size_bytes /= 1024.0
         return f"{size_bytes:.2f}PB"
 
-    def _parse_timestamp(self, timestamp: Any) -> str:
-        """Parse timestamp (integer or string) to ISO 8601 string."""
+    def _parse_timestamp(timestamp: Any) -> str:
+        """Parse timestamp (integer, float, or string) to ISO 8601 string."""
         if not timestamp:
             return "unknown"
+
+        # Handle numeric timestamps (Unix timestamps in seconds)
         if isinstance(timestamp, (int, float)):
-            return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%dT%H:%M:%S")
-        if isinstance(timestamp, str):
             try:
-                parsed = dateutil.parser.isoparse(timestamp)
-                return parsed.strftime("%Y-%m-%dT%H:%M:%S")
-            except ValueError:
+                return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%dT%H:%M:%S")
+            except (ValueError, OSError):
                 return "unknown"
+
+        # Handle string timestamps
+        if isinstance(timestamp, str):
+            # Common ISO 8601-like formats to try
+            formats = [
+                "%Y-%m-%dT%H:%M:%S",  # 2023-10-05T14:30:00
+                "%Y-%m-%d %H:%M:%S",  # 2023-10-05 14:30:00
+                "%Y-%m-%dT%H:%M:%S%z",  # 2023-10-05T14:30:00+0000
+                "%Y-%m-%d %H:%M:%S%z",  # 2023-10-05 14:30:00+0000
+                "%Y-%m-%dT%H:%M:%S.%f",  # 2023-10-05T14:30:00.123456
+                "%Y-%m-%d %H:%M:%S.%f",  # 2023-10-05 14:30:00.123456
+                "%Y-%m-%dT%H:%M:%S.%f%z",  # 2023-10-05T14:30:00.123456+0000
+                "%Y-%m-%d",  # 2023-10-05
+            ]
+            for fmt in formats:
+                try:
+                    parsed = datetime.strptime(timestamp, fmt)
+                    return parsed.strftime("%Y-%m-%dT%H:%M:%S")
+                except ValueError:
+                    continue
+            return "unknown"
+
         return "unknown"
 
     @abstractmethod
