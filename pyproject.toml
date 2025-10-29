@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "container-manager-mcp"
-version = "1.1.9"
+version = "1.1.10"
 description = "Container Manager manage Docker, Docker Swarm, and Podman containers as an MCP Server"
 readme = "README.md"
 authors = [{ name = "Audel Rouhi", email = "knucklessg1@gmail.com" }]
@@ -19,7 +19,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "requests>=2.28.1",
-    "fastmcp>=2.12.4",
+    "fastmcp>=2.13.0.2",
     "podman>=5.6.0",
 ]
 
@@ -32,7 +32,7 @@ docker = [
 ]
 all = [
     "requests>=2.28.1",
-    "fastmcp>=2.12.4",
+    "fastmcp>=2.13.0.2",
     "docker>=7.1.0",
     "podman>=5.6.0",
 ]
