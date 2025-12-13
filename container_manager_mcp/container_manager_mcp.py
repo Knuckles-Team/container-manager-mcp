@@ -2,14 +2,12 @@
 # coding: utf-8
 
 import argparse
-import json
 import os
 import sys
 import logging
 from threading import local
 from typing import Optional, Dict, List, Union
 
-import httpx
 import requests
 from eunomia_mcp.middleware import EunomiaMcpMiddleware
 from pydantic import Field
@@ -70,6 +68,7 @@ def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, st
         return image_name, tag
     return image, default_tag
 
+
 config = {
     "enable_delegation": to_boolean(os.environ.get("ENABLE_DELEGATION", "False")),
     "audience": os.environ.get("AUDIENCE", None),
@@ -129,6 +128,7 @@ class JWTClaimsLoggingMiddleware(Middleware):
                 },
             )
 
+
 def register_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -138,7 +138,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container_manager_info"},
     )
     async def get_version(
         manager_type: Optional[str] = Field(
@@ -172,7 +172,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to get version: {str(e)}")
             raise RuntimeError(f"Failed to get version: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Get Info",
@@ -181,7 +180,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container_manager_info"},
     )
     async def get_info(
         manager_type: Optional[str] = Field(
@@ -215,7 +214,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to get info: {str(e)}")
             raise RuntimeError(f"Failed to get info: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "List Images",
@@ -224,7 +222,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"image_management"},
     )
     async def list_images(
         manager_type: Optional[str] = Field(
@@ -258,7 +256,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to list images: {str(e)}")
             raise RuntimeError(f"Failed to list images: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Pull Image",
@@ -267,7 +264,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"image_management"},
     )
     async def pull_image(
         image: str = Field(
@@ -313,7 +310,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to pull image: {str(e)}")
             raise RuntimeError(f"Failed to pull image: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Remove Image",
@@ -322,7 +318,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"image_management"},
     )
     async def remove_image(
         image: str = Field(description="Image name or ID to remove"),
@@ -358,7 +354,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to remove image: {str(e)}")
             raise RuntimeError(f"Failed to remove image: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Prune Images",
@@ -367,7 +362,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"image_management"},
     )
     async def prune_images(
         all: bool = Field(description="Prune all unused images", default=False),
@@ -401,7 +396,6 @@ def register_tools(mcp: FastMCP):
         except Exception as e:
             logger.error(f"Failed to prune images: {str(e)}")
             raise RuntimeError(f"Failed to prune images: {str(e)}")
-
 
     @mcp.tool(
         annotations={
@@ -447,7 +441,6 @@ def register_tools(mcp: FastMCP):
         except Exception as e:
             logger.error(f"Failed to list containers: {str(e)}")
             raise RuntimeError(f"Failed to list containers: {str(e)}")
-
 
     @mcp.tool(
         annotations={
@@ -509,7 +502,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to run container: {str(e)}")
             raise RuntimeError(f"Failed to run container: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Stop Container",
@@ -553,7 +545,6 @@ def register_tools(mcp: FastMCP):
         except Exception as e:
             logger.error(f"Failed to stop container: {str(e)}")
             raise RuntimeError(f"Failed to stop container: {str(e)}")
-
 
     @mcp.tool(
         annotations={
@@ -599,7 +590,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to remove container: {str(e)}")
             raise RuntimeError(f"Failed to remove container: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Prune Containers",
@@ -642,7 +632,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune containers: {str(e)}")
             raise RuntimeError(f"Failed to prune containers: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Get Container Logs",
@@ -651,7 +640,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"log_management", "debug", "container_management"},
     )
     async def get_container_logs(
         container_id: str = Field(description="Container ID or name"),
@@ -688,7 +677,6 @@ def register_tools(mcp: FastMCP):
         except Exception as e:
             logger.error(f"Failed to get container logs: {str(e)}")
             raise RuntimeError(f"Failed to get container logs: {str(e)}")
-
 
     @mcp.tool(
         annotations={
@@ -735,7 +723,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to exec in container: {str(e)}")
             raise RuntimeError(f"Failed to exec in container: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "List Volumes",
@@ -744,7 +731,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"volume_management"},
     )
     async def list_volumes(
         manager_type: Optional[str] = Field(
@@ -778,7 +765,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to list volumes: {str(e)}")
             raise RuntimeError(f"Failed to list volumes: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Create Volume",
@@ -787,7 +773,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"volume_management"},
     )
     async def create_volume(
         name: str = Field(description="Volume name"),
@@ -822,7 +808,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to create volume: {str(e)}")
             raise RuntimeError(f"Failed to create volume: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Remove Volume",
@@ -831,7 +816,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"volume_management"},
     )
     async def remove_volume(
         name: str = Field(description="Volume name"),
@@ -867,7 +852,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to remove volume: {str(e)}")
             raise RuntimeError(f"Failed to remove volume: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Prune Volumes",
@@ -876,7 +860,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"volume_management"},
     )
     async def prune_volumes(
         all: bool = Field(description="Remove all volumes (dangerous)", default=False),
@@ -911,7 +895,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune volumes: {str(e)}")
             raise RuntimeError(f"Failed to prune volumes: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "List Networks",
@@ -920,7 +903,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"network_management"},
     )
     async def list_networks(
         manager_type: Optional[str] = Field(
@@ -954,7 +937,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to list networks: {str(e)}")
             raise RuntimeError(f"Failed to list networks: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Create Network",
@@ -963,11 +945,13 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"network_management"},
     )
     async def create_network(
         name: str = Field(description="Network name"),
-        driver: str = Field(description="Network driver (e.g., bridge)", default="bridge"),
+        driver: str = Field(
+            description="Network driver (e.g., bridge)", default="bridge"
+        ),
         manager_type: Optional[str] = Field(
             description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -999,7 +983,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to create network: {str(e)}")
             raise RuntimeError(f"Failed to create network: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Remove Network",
@@ -1008,7 +991,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"network_management"},
     )
     async def remove_network(
         network_id: str = Field(description="Network ID or name"),
@@ -1043,7 +1026,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to remove network: {str(e)}")
             raise RuntimeError(f"Failed to remove network: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Prune Networks",
@@ -1052,7 +1034,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"network_management"},
     )
     async def prune_networks(
         manager_type: Optional[str] = Field(
@@ -1086,7 +1068,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune networks: {str(e)}")
             raise RuntimeError(f"Failed to prune networks: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Prune System",
@@ -1095,7 +1076,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"system_management"},
     )
     async def prune_system(
         force: bool = Field(description="Force prune", default=False),
@@ -1131,9 +1112,7 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune system: {str(e)}")
             raise RuntimeError(f"Failed to prune system: {str(e)}")
 
-
     # Swarm-specific tools
-
 
     @mcp.tool(
         annotations={
@@ -1143,7 +1122,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"container_management", "swarm"},
+        tags={"swarm_management", "swarm"},
     )
     async def init_swarm(
         advertise_addr: Optional[str] = Field(
@@ -1182,7 +1161,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to init swarm: {str(e)}")
             raise RuntimeError(f"Failed to init swarm: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Leave Swarm",
@@ -1191,7 +1169,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "swarm"},
+        tags={"swarm_management", "swarm"},
     )
     async def leave_swarm(
         force: bool = Field(description="Force leave", default=False),
@@ -1228,7 +1206,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to leave swarm: {str(e)}")
             raise RuntimeError(f"Failed to leave swarm: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "List Nodes",
@@ -1237,7 +1214,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "swarm"},
+        tags={"swarm_management", "swarm"},
     )
     async def list_nodes(
         manager_type: Optional[str] = Field(
@@ -1273,7 +1250,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to list nodes: {str(e)}")
             raise RuntimeError(f"Failed to list nodes: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "List Services",
@@ -1282,7 +1258,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "swarm"},
+        tags={"swarm_management", "swarm"},
     )
     async def list_services(
         manager_type: Optional[str] = Field(
@@ -1318,7 +1294,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to list services: {str(e)}")
             raise RuntimeError(f"Failed to list services: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Create Service",
@@ -1327,7 +1302,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"container_management", "swarm"},
+        tags={"swarm_management", "swarm"},
     )
     async def create_service(
         name: str = Field(description="Service name"),
@@ -1372,7 +1347,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to create service: {str(e)}")
             raise RuntimeError(f"Failed to create service: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Remove Service",
@@ -1381,7 +1355,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "swarm"},
+        tags={"swarm_management", "swarm"},
     )
     async def remove_service(
         service_id: str = Field(description="Service ID or name"),
@@ -1418,7 +1392,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to remove service: {str(e)}")
             raise RuntimeError(f"Failed to remove service: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Compose Up",
@@ -1427,7 +1400,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"container_management", "compose"},
+        tags={"compose_management", "compose"},
     )
     async def compose_up(
         compose_file: str = Field(description="Path to compose file"),
@@ -1464,7 +1437,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to compose up: {str(e)}")
             raise RuntimeError(f"Failed to compose up: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Compose Down",
@@ -1473,7 +1445,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "compose"},
+        tags={"compose_management", "compose"},
     )
     async def compose_down(
         compose_file: str = Field(description="Path to compose file"),
@@ -1508,7 +1480,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to compose down: {str(e)}")
             raise RuntimeError(f"Failed to compose down: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Compose Ps",
@@ -1517,7 +1488,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "compose"},
+        tags={"compose_management", "compose"},
     )
     async def compose_ps(
         compose_file: str = Field(description="Path to compose file"),
@@ -1552,7 +1523,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to compose ps: {str(e)}")
             raise RuntimeError(f"Failed to compose ps: {str(e)}")
 
-
     @mcp.tool(
         annotations={
             "title": "Compose Logs",
@@ -1561,7 +1531,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management", "compose"},
+        tags={"log_management", "compose", "compose_management"},
     )
     async def compose_logs(
         compose_file: str = Field(description="Path to compose file"),
@@ -1607,9 +1577,7 @@ def register_prompts(mcp: FastMCP):
         """
         Generates a prompt for getting the logs of a running container
         """
-        return (
-            f"Get the logs for the following service: {container}"
-        )
+        return f"Get the logs for the following service: {container}"
 
 
 def container_manager_mcp():
@@ -1813,7 +1781,7 @@ def container_manager_mcp():
     config["oidc_config_url"] = args.oidc_config_url or config["oidc_config_url"]
     config["oidc_client_id"] = args.oidc_client_id or config["oidc_client_id"]
     config["oidc_client_secret"] = (
-            args.oidc_client_secret or config["oidc_client_secret"]
+        args.oidc_client_secret or config["oidc_client_secret"]
     )
 
     # Configure delegation if enabled
@@ -1825,11 +1793,11 @@ def container_manager_mcp():
             logger.error("audience is required for delegation")
             sys.exit(1)
         if not all(
-                [
-                    config["oidc_config_url"],
-                    config["oidc_client_id"],
-                    config["oidc_client_secret"],
-                ]
+            [
+                config["oidc_config_url"],
+                config["oidc_client_id"],
+                config["oidc_client_secret"],
+            ]
         ):
             logger.error(
                 "Delegation requires complete OIDC configuration (oidc-config-url, oidc-client-id, oidc-client-secret)"
@@ -1967,14 +1935,14 @@ def container_manager_mcp():
             sys.exit(1)
     elif args.auth_type == "oauth-proxy":
         if not (
-                args.oauth_upstream_auth_endpoint
-                and args.oauth_upstream_token_endpoint
-                and args.oauth_upstream_client_id
-                and args.oauth_upstream_client_secret
-                and args.oauth_base_url
-                and args.token_jwks_uri
-                and args.token_issuer
-                and args.token_audience
+            args.oauth_upstream_auth_endpoint
+            and args.oauth_upstream_token_endpoint
+            and args.oauth_upstream_client_id
+            and args.oauth_upstream_client_secret
+            and args.oauth_base_url
+            and args.token_jwks_uri
+            and args.token_issuer
+            and args.token_audience
         ):
             print(
                 "oauth-proxy requires oauth-upstream-auth-endpoint, oauth-upstream-token-endpoint, "
@@ -2012,10 +1980,10 @@ def container_manager_mcp():
         )
     elif args.auth_type == "oidc-proxy":
         if not (
-                args.oidc_config_url
-                and args.oidc_client_id
-                and args.oidc_client_secret
-                and args.oidc_base_url
+            args.oidc_config_url
+            and args.oidc_client_id
+            and args.oidc_client_secret
+            and args.oidc_base_url
         ):
             logger.error(
                 "oidc-proxy requires oidc-config-url, oidc-client-id, oidc-client-secret, oidc-base-url",
@@ -2035,11 +2003,11 @@ def container_manager_mcp():
         )
     elif args.auth_type == "remote-oauth":
         if not (
-                args.remote_auth_servers
-                and args.remote_base_url
-                and args.token_jwks_uri
-                and args.token_issuer
-                and args.token_audience
+            args.remote_auth_servers
+            and args.remote_base_url
+            and args.token_jwks_uri
+            and args.token_issuer
+            and args.token_audience
         ):
             logger.error(
                 "remote-oauth requires remote-auth-servers, remote-base-url, token-jwks-uri, token-issuer, token-audience",
@@ -2126,7 +2094,6 @@ def container_manager_mcp():
     else:
         logger.error("Invalid transport", extra={"transport": args.transport})
         sys.exit(1)
-
 
 
 if __name__ == "__main__":

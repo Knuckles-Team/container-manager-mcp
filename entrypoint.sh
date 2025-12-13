@@ -4,31 +4,36 @@ set -e
 # Default command logic:
 # 1. Use CMD environment variable if set (allows via docker run -e CMD=...)
 # 2. Else use first argument (allows via docker run image command ...)
-# 3. Default to servicenow-mcp (set in Dockerfile CMD, so $1 is usually this if no args)
+# 3. Default to container-manager-mcp (set in Dockerfile CMD, so $1 is usually this if no args)
 
-# If default CMD (servicenow-mcp) is passed and we have an env override, ignore the argument
-if [ -n "$CMD" ] && [ "$1" = "servicenow-mcp" ]; then
+# If default CMD (container-manager-mcp) is passed and we have an env override, ignore the argument
+if [ -n "$CMD" ] && [ "$1" = "container-manager-mcp" ]; then
     shift
 fi
 
 COMMAND="${CMD:-$1}"
 
-# If COMMAND starts with -, assume it's flags for the default tool (servicenow-mcp)
+# If COMMAND starts with -, assume it's flags for the default tool (container-manager-mcp)
 if [ "${COMMAND#-}" != "$COMMAND" ]; then
-    COMMAND="servicenow-mcp"
+    COMMAND="container-manager-mcp"
     # Don't shift, keep the flag in $@ (Wait, if COMMAND was $1, we need to not shift it out? Or explicitly set it?)
-    # If COMMAND was detected from $1 (which was --help), and we set COMMAND=servicenow-mcp.
+    # If COMMAND was detected from $1 (which was --help), and we set COMMAND=container-manager-mcp.
     # We want subsequent logic to see $1 as --help.
     # So we should NOT shift if we detected a flag.
 else
     # If we are taking the command from $1, shift it.
-    if [ -z "$CMD" ]; then
+    if [ -z "$CMD" ] && [ "$#" -gt 0 ]; then
         shift
     fi
 fi
 
-if [ "$COMMAND" = "servicenow-mcp" ]; then
-    exec servicenow-mcp \
+# Fallback if no command specified (shouldn't happen with Dockerfile CMD but good practice)
+if [ -z "$COMMAND" ]; then
+    COMMAND="container-manager-mcp"
+fi
+
+if [ "$COMMAND" = "container-manager-mcp" ]; then
+    exec container-manager-mcp \
     --transport "${TRANSPORT}" \
     --host "${HOST}" \
     --port "${PORT}" \
@@ -57,13 +62,12 @@ if [ "$COMMAND" = "servicenow-mcp" ]; then
     $( [ -n "${EUNOMIA_REMOTE_URL}" ] && echo "--eunomia-remote-url ${EUNOMIA_REMOTE_URL}" ) \
     $( [ -n "${OPENAPI_FILE}" ] && echo "--openapi-file ${OPENAPI_FILE}" ) \
     $( [ -n "${ENABLE_DELEGATION}" ] && echo "--enable-delegation" ) \
-    $( [ -n "${SERVICENOW_AUDIENCE}" ] && echo "--audience ${SERVICENOW_AUDIENCE}" ) \
+    $( [ -n "${CONTAINER_MANAGER_AUDIENCE}" ] && echo "--audience ${CONTAINER_MANAGER_AUDIENCE}" ) \
     $( [ -n "${DELEGATED_SCOPES}" ] && echo "--delegated-scopes ${DELEGATED_SCOPES}" ) \
     "$@"
 
-elif [ "$COMMAND" = "servicenow-a2a" ]; then
-    # shift 1 # Already shifted
-    exec servicenow-a2a \
+elif [ "$COMMAND" = "container-manager-a2a" ]; then
+    exec container-manager-a2a \
         --host "${HOST}" \
         --port "${PORT}" \
         $( [ -n "${PROVIDER}" ] && echo "--provider ${PROVIDER}" ) \
