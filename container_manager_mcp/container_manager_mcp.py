@@ -1648,7 +1648,7 @@ def container_manager_mcp():
     parser.add_argument(
         "--required-scopes",
         default=os.getenv("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES"),
-        help="Comma-separated list of required scopes (e.g., servicenow.read,servicenow.write).",
+        help="Comma-separated list of required scopes (e.g., containermanager.read,containermanager.write).",
     )
     # OAuth Proxy params
     parser.add_argument(
@@ -1716,17 +1716,17 @@ def container_manager_mcp():
         "--enable-delegation",
         action="store_true",
         default=to_boolean(os.environ.get("ENABLE_DELEGATION", "False")),
-        help="Enable OIDC token delegation to ServiceNow",
+        help="Enable OIDC token delegation",
     )
     parser.add_argument(
         "--audience",
         default=os.environ.get("AUDIENCE", None),
-        help="Audience for the delegated ServiceNow token",
+        help="Audience for the delegated",
     )
     parser.add_argument(
         "--delegated-scopes",
         default=os.environ.get("DELEGATED_SCOPES", "api"),
-        help="Scopes for the delegated ServiceNow token (space-separated)",
+        help="Scopes for the delegated token (space-separated)",
     )
     parser.add_argument(
         "--openapi-file",
@@ -1736,7 +1736,7 @@ def container_manager_mcp():
     parser.add_argument(
         "--openapi-base-url",
         default=None,
-        help="Base URL for the OpenAPI client (overrides ServiceNow instance URL)",
+        help="Base URL for the OpenAPI client (overrides instance URL)",
     )
     parser.add_argument(
         "--openapi-use-token",
@@ -2079,7 +2079,7 @@ def container_manager_mcp():
     for mw in middlewares:
         mcp.add_middleware(mw)
 
-    print("\nStarting ServiceNow MCP Server")
+    print("\nStarting Container Manager MCP Server")
     print(f"  Transport: {args.transport.upper()}")
     print(f"  Auth: {args.auth_type}")
     print(f"  Delegation: {'ON' if config['enable_delegation'] else 'OFF'}")
