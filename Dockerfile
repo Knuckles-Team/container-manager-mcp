@@ -52,7 +52,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 RUN pip install uv \
-    && uv pip install --system --upgrade container-manager-mcp[all]>=1.1.13
+    && uv pip install --system --upgrade container-manager-mcp[all]>=1.1.14
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["container-manager-mcp"]

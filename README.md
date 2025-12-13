@@ -20,7 +20,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 1.1.13*
+*Version: 1.1.14*
 
 Container Manager provides a robust universal interface to manage Docker and Podman containers, networks, volumes,
 and Docker Swarm services, enabling programmatic and remote container management.
