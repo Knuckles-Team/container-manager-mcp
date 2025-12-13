@@ -8,6 +8,7 @@ import inspect
 MODULES = [
     "container_manager_mcp.container_manager",
     "container_manager_mcp.container_manager_mcp",
+    "container_manager_mcp.container_manager_a2a",
 ]
 
 # Initialize __all__ to expose all public classes and functions
