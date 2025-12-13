@@ -28,7 +28,7 @@ from container_manager_mcp.container_manager import create_manager
 
 # Thread-local storage for user token
 local = local()
-logger = get_logger(name="ServiceNow.TokenMiddleware")
+logger = get_logger(name="ContainerManager.TokenMiddleware")
 logger.setLevel(logging.DEBUG)
 
 
