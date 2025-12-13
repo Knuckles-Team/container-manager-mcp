@@ -1,4 +1,4 @@
-# Container Manager MCP Server
+# Container Manager - A2A & MCP Server
 
 ![PyPI - Version](https://img.shields.io/pypi/v/container-manager-mcp)
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/container-manager-mcp)
@@ -20,9 +20,12 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 1.1.12*
+*Version: 1.1.13*
 
-Container Manager MCP Server provides a robust interface to manage Docker and Podman containers, networks, volumes, and Docker Swarm services through a FastMCP server, enabling programmatic and remote container management.
+Container Manager provides a robust universal interface to manage Docker and Podman containers, networks, volumes,
+and Docker Swarm services, enabling programmatic and remote container management.
+
+This is package contains an MCP Server + A2A Server Out of the Box!
 
 This repository is actively maintained - Contributions are welcome!
 
@@ -34,6 +37,7 @@ This repository is actively maintained - Contributions are welcome!
 - FastMCP server for remote API access
 - Comprehensive logging and error handling
 - Extensible architecture for additional container runtimes
+- Multi-agent A2A system for delegated container management
 
 <details>
   <summary><b>Usage:</b></summary>
@@ -65,6 +69,19 @@ This repository is actively maintained - Contributions are welcome!
 |            | --eunomia-type                     | Eunomia authorization type: 'none', 'embedded', 'remote' (default: none)   |
 |            | --eunomia-policy-file              | Policy file for embedded Eunomia (default: mcp_policies.json)              |
 |            | --eunomia-remote-url               | URL for remote Eunomia server                                              |
+
+### A2A CLI
+
+| Long Flag         | Description                                      |
+|-------------------|--------------------------------------------------|
+| --host            | Host to bind the server to (default: 0.0.0.0)    |
+| --port            | Port to bind the server to (default: 9000)       |
+| --provider        | LLM Provider: openai, anthropic, google, huggingface (default: openai) |
+| --model-id        | LLM Model ID (default: qwen3:4b)                 |
+| --base-url        | LLM Base URL (for OpenAI compatible providers)   |
+| --api-key         | LLM API Key                                      |
+| --mcp-url         | MCP Server URL (default: http://localhost:8000/mcp) |
+
 
 
 ### Using as an MCP Server
@@ -128,6 +145,21 @@ docker run -d \
   -e AUTH_TYPE=none \
   -e EUNOMIA_TYPE=none \
   knucklessg1/container-manager:latest
+```
+
+#### Run A2A Agent (Docker):
+
+```bash
+docker run -d \
+  --name container-manager-a2a \
+  -p 9000:9000 \
+  -e PORT=9000 \
+  -e PROVIDER=openai \
+  -e MODEL_ID=qwen3:4b \
+  -e BASE_URL=http://host.docker.internal:11434/v1 \
+  -e MCP_URL=http://host.docker.internal:8004/mcp \
+  knucklessg1/container-manager:latest \
+  container-manager-a2a
 ```
 
 For advanced authentication (e.g., JWT, OAuth Proxy, OIDC Proxy, Remote OAuth) or Eunomia, add the relevant environment variables:

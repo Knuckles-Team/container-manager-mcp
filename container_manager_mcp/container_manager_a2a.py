@@ -17,27 +17,21 @@ DEFAULT_OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "http://ollama.arpa/v1")
 DEFAULT_OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "ollama")
 DEFAULT_MCP_URL = "http://localhost:8000/mcp"
 
-# Detected tags from servicenow_mcp.py
+# Detected tags from container_manager_mcp.py
 TAGS = [
-    "application",
-    "cmdb",
-    "cicd",
-    "plugins",
-    "source_control",
-    "testing",
-    "update_sets",
-    "change_management",
-    "import_sets",
-    "incidents",
-    "knowledge_management",
-    "table_api",
-    "auth",
-    "custom_api",
+    "container_manager_info",
+    "image_management",
+    "container_management",
+    "log_management",
+    "volume_management",
+    "network_management",
+    "system_management" "swarm_management",
+    "compose_management",
 ]
 
-AGENT_NAME = "ServiceNowOrchestrator"
+AGENT_NAME = "ContainerManagerOrchestrator"
 AGENT_DESCRIPTION = (
-    "A multi-agent system for managing ServiceNow tasks via delegated specialists."
+    "A multi-agent system for managing container tasks via delegated specialists."
 )
 
 
@@ -102,7 +96,7 @@ def create_child_agent(
     )
 
     system_prompt = (
-        f"You are a specialized ServiceNow agent focused on '{tag}' tasks. "
+        f"You are a specialized Container Manager agent focused on '{tag}' tasks. "
         f"You have access to tools tagged with '{tag}'. "
         "Use them to fulfill the user's request efficiently. "
         "If a task is outside your scope, kindly indicate that."
@@ -111,7 +105,7 @@ def create_child_agent(
     return Agent(
         model,
         system_prompt=system_prompt,
-        name=f"ServiceNow_{tag}_Specialist",
+        name=f"ContainerManager_{tag}_Specialist",
         toolsets=[filtered_toolset],
     )
 
@@ -170,13 +164,13 @@ def create_orchestrator(
 
     # 4. Create Parent Agent
     system_prompt = (
-        "You are the ServiceNow Orchestrator Agent. "
+        "You are the Container Manager Orchestrator Agent. "
         "Your goal is to assist the user by delegating tasks to specialized child agents. "
         "Analyze the user's request and determine which domain(s) it falls into "
-        "(e.g., incidents, change_management, cmdb). "
+        "(e.g., container_management, volume_management, network_management, image_management). "
         "Then, call the appropriate delegation tool(s) with a specific task description. "
         "Synthesize the results from the child agents into a final helpful response. "
-        "Do not attempt to perform ServiceNow actions directly; always delegate."
+        "Do not attempt to perform Container Manager actions directly; always delegate."
     )
 
     orchestrator = Agent(
@@ -197,10 +191,10 @@ skills = []
 for tag in TAGS:
     skills.append(
         Skill(
-            id=f"servicenow_{tag}",
-            name=f"ServiceNow {tag.replace('_', ' ').title()}",
-            description=f"Manage and query ServiceNow {tag.replace('_', ' ')}.",
-            tags=[tag, "servicenow"],
+            id=f"container_manager_{tag}",
+            name=f"Container Manager {tag.replace('_', ' ').title()}",
+            description=f"Manage and query Container Manager {tag.replace('_', ' ')}.",
+            tags=[tag, "container_manager"],
             input_modes=["text"],
             output_modes=["text"],
         )
@@ -247,7 +241,7 @@ def agent_server():
 
     # Create A2A App
     cli_app = cli_agent.to_a2a(
-        name=AGENT_NAME, description=AGENT_DESCRIPTION, version="1.3.31", skills=skills
+        name=AGENT_NAME, description=AGENT_DESCRIPTION, version="1.1.13", skills=skills
     )
 
     uvicorn.run(
