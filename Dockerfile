@@ -48,11 +48,17 @@ ENV EUNOMIA_REMOTE_URL=${EUNOMIA_REMOTE_URL}
 ENV PATH="/usr/local/bin:${PATH}"
 ENV UV_HTTP_TIMEOUT=3600
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# For local debugging
+WORKDIR /app
+COPY . /app
+RUN pip install .[all]
 
-RUN pip install uv \
-    && uv pip install --system --upgrade container-manager-mcp[all]>=1.2.0
+# For production
+#RUN pip install uv \
+#    && uv pip install --system --upgrade container-manager-mcp[all]>=1.2.0 \
+#
+#COPY entrypoint.sh /entrypoint.sh
+#RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
 CMD ["container-manager-mcp"]

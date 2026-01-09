@@ -41,7 +41,7 @@ This repository is actively maintained - Contributions are welcome!
 - Extensible architecture for additional container runtimes
 - Multi-agent A2A system for delegated container management
 
-## MCP 
+## MCP
 
 ### MCP Tools
 
@@ -118,7 +118,7 @@ This repository is actively maintained - Contributions are welcome!
 
 
 
-## Usage 
+## Usage
 
 ### Using as an MCP Server
 
@@ -148,7 +148,7 @@ docker run -d \
   -p 8004:8004 \
   -e HOST=0.0.0.0 \
   -e PORT=8004 \
-  -e TRANSPORT=http \
+  -e TRANSPORT=streamable-http \
   -e AUTH_TYPE=none \
   -e EUNOMIA_TYPE=none \
   knucklessg1/container-manager:latest
@@ -177,7 +177,7 @@ docker run -d \
   -p 8004:8004 \
   -e HOST=0.0.0.0 \
   -e PORT=8004 \
-  -e TRANSPORT=http \
+  -e TRANSPORT=streamable-http \
   -e AUTH_TYPE=oidc-proxy \
   -e OIDC_CONFIG_URL=https://provider.com/.well-known/openid-configuration \
   -e OIDC_CLIENT_ID=your-client-id \
@@ -200,7 +200,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8004
-      - TRANSPORT=http
+      - TRANSPORT=streamable-http
       - AUTH_TYPE=none
       - EUNOMIA_TYPE=none
     ports:
@@ -216,7 +216,7 @@ services:
     environment:
       - HOST=0.0.0.0
       - PORT=8004
-      - TRANSPORT=http
+      - TRANSPORT=streamable-http
       - AUTH_TYPE=oidc-proxy
       - OIDC_CONFIG_URL=https://provider.com/.well-known/openid-configuration
       - OIDC_CLIENT_ID=your-client-id
@@ -277,7 +277,7 @@ uv pip install --upgrade container-manager-mcp
 ## Test
 
 ```bash
-container-manager-mcp --transport http --host 127.0.0.1 --port 8080
+container-manager-mcp --transport streamable-http --host 127.0.0.1 --port 8080
 ```
 
 This starts the MCP server using HTTP transport on localhost port 8080.

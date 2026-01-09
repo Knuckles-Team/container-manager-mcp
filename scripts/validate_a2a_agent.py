@@ -14,8 +14,9 @@ async def main():
     print(f"Validating A2A Agent at {A2A_URL}...")
 
     questions = [
-        "Can you list the incidents",
-        #"Can you create an incident with the description: Test, Title: Test, ...."
+        "Can you list the container images available?",
+        # "List all the running containers."
+        # "Create a standard docker network named 'test_network'. Once its created, verify it exists by showing all of the docker networks.",
     ]
 
     async with httpx.AsyncClient(timeout=10000.0) as client:

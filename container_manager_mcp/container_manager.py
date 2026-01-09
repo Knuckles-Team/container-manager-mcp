@@ -73,7 +73,7 @@ class ContainerManagerBase(ABC):
             size_bytes /= 1024.0
         return f"{size_bytes:.2f}PB"
 
-    def _parse_timestamp(timestamp: Any) -> str:
+    def _parse_timestamp(self, timestamp: Any) -> str:
         """Parse timestamp (integer, float, or string) to ISO 8601 string."""
         if not timestamp:
             return "unknown"
@@ -517,7 +517,7 @@ class DockerManager(ContainerManagerBase):
         }
         try:
             container = self.client.containers.run(
-                image,
+                image=image,
                 command=command,
                 name=name,
                 detach=detach,

@@ -89,13 +89,13 @@ def create_model(
 
 
 def create_agent(
-        provider: str = DEFAULT_PROVIDER,
-        model_id: str = DEFAULT_MODEL_ID,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        mcp_url: str = DEFAULT_MCP_URL,
-        mcp_config: str = DEFAULT_MCP_CONFIG,
-        skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
+    provider: str = DEFAULT_PROVIDER,
+    model_id: str = DEFAULT_MODEL_ID,
+    base_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    mcp_url: str = DEFAULT_MCP_URL,
+    mcp_config: str = DEFAULT_MCP_CONFIG,
+    skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
 ) -> Agent:
     agent_toolsets = []
 
@@ -156,7 +156,7 @@ async def stream_chat(agent: Agent, prompt: str) -> None:
     # Option A: Easiest & most common - just stream the final text output
     async with agent.run_stream(prompt) as result:
         async for text_chunk in result.stream_text(
-                delta=True
+            delta=True
         ):  # ← streams partial text deltas
             print(text_chunk, end="", flush=True)
         print("\nDone!")  # optional
@@ -209,16 +209,16 @@ def load_skills_from_directory(directory: str) -> List[Skill]:
 
 
 def create_a2a_server(
-        provider: str = DEFAULT_PROVIDER,
-        model_id: str = DEFAULT_MODEL_ID,
-        base_url: Optional[str] = None,
-        api_key: Optional[str] = None,
-        mcp_url: str = DEFAULT_MCP_URL,
-        mcp_config: str = DEFAULT_MCP_CONFIG,
-        skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
-        debug: Optional[bool] = DEFAULT_DEBUG,
-        host: Optional[str] = DEFAULT_HOST,
-        port: Optional[int] = DEFAULT_PORT,
+    provider: str = DEFAULT_PROVIDER,
+    model_id: str = DEFAULT_MODEL_ID,
+    base_url: Optional[str] = None,
+    api_key: Optional[str] = None,
+    mcp_url: str = DEFAULT_MCP_URL,
+    mcp_config: str = DEFAULT_MCP_CONFIG,
+    skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
+    debug: Optional[bool] = DEFAULT_DEBUG,
+    host: Optional[str] = DEFAULT_HOST,
+    port: Optional[int] = DEFAULT_PORT,
 ):
     print(
         f"Starting {AGENT_NAME} with provider={provider}, model={model_id}, mcp={mcp_url} | {mcp_config}"

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import sys
-from servicenow_api.servicenow_a2a import stream_chat, chat, node_chat
-
+from container_manager_mcp.container_manager_a2a import stream_chat, chat, node_chat
 
 # Attempt to import assuming dependencies are installed
 import os
@@ -10,7 +9,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from servicenow_api.servicenow_a2a import create_agent
+    from container_manager_mcp.container_manager_a2a import create_agent
 except ImportError as e:
     print(f"Import Error: {e}")
     print("Please install dependencies via `pip install .[all]`")
@@ -27,16 +26,17 @@ async def main():
                 "OPENAI_BASE_URL", "http://localhost:1234/v1"
             ),  # 127.0.0.1
             api_key=os.getenv("OPENAI_API_KEY", "llama"),
-            mcp_url=os.getenv("MCP_URL", "http://localhost:8005/mcp"),  # 127.0.0.1
-            mcp_config=None,
+            mcp_url=os.getenv("MCP_URL", "http://localhost:8015/mcp"),  # 127.0.0.1
+            #mcp_config=None,
         )
 
         print("Agent initialized successfully.")
 
         # Define sample questions
         questions = [
-            "Can you list the incidents",
-            #"Can you create an incident with the description: Test, Title: Test, ...."
+            "Can you list the container images available on the host?",
+            "List all the running containers."
+            "Create a standard docker network named 'test_network'. Once its created, verify it exists by showing all of the docker networks.",
         ]
 
         print("\n--- Starting Sample Chat Validation ---\n")

@@ -22,28 +22,13 @@ from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
 from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
 from fastmcp.utilities.logging import get_logger
 from container_manager_mcp.container_manager import create_manager
+from container_manager_mcp.utils import to_boolean
 
 
 # Thread-local storage for user token
 local = local()
 logger = get_logger(name="ContainerManager.TokenMiddleware")
 logger.setLevel(logging.DEBUG)
-
-
-def to_boolean(string: Union[str, bool] = None) -> bool:
-    if isinstance(string, bool):
-        return string
-    if not string:
-        return False
-    normalized = str(string).strip().lower()
-    true_values = {"t", "true", "y", "yes", "1"}
-    false_values = {"f", "false", "n", "no", "0"}
-    if normalized in true_values:
-        return True
-    elif normalized in false_values:
-        return False
-    else:
-        raise ValueError(f"Cannot convert '{string}' to boolean")
 
 
 def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, str]:
@@ -1587,8 +1572,8 @@ def container_manager_mcp():
         "-t",
         "--transport",
         default="stdio",
-        choices=["stdio", "http", "sse"],
-        help="Transport method: 'stdio', 'http', or 'sse' [legacy] (default: stdio)",
+        choices=["stdio", "streamable-http", "sse"],
+        help="Transport method: 'stdio', 'streamable-http', or 'sse' [legacy] (default: stdio)",
     )
     parser.add_argument(
         "-s",
@@ -2087,8 +2072,8 @@ def container_manager_mcp():
 
     if args.transport == "stdio":
         mcp.run(transport="stdio")
-    elif args.transport == "http":
-        mcp.run(transport="http", host=args.host, port=args.port)
+    elif args.transport == "streamable-http":
+        mcp.run(transport="streamable-http", host=args.host, port=args.port)
     elif args.transport == "sse":
         mcp.run(transport="sse", host=args.host, port=args.port)
     else:

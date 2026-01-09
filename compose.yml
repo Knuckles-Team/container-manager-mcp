@@ -1,25 +1,25 @@
 ---
 services:
-  gitlab-mcp:
-    image: docker.io/knucklessg1/gitlab:latest
-    # build: . # Debug
-    container_name: gitlab-mcp
-    hostname: gitlab-mcp
+  container-manager-mcp:
+    # image: docker.io/knucklessg1/container-manager:latest
+    build: . # Debug
+    container_name: container-manager-mcp
+    hostname: container-manager-mcp
     command: |
-      gitlab-mcp
+      container-manager-mcp
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
     restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - "HOST=0.0.0.0"
-      - "PORT=8005"
+      - "PORT=8015"
       - "TRANSPORT=streamable-http"
-      - "GITLAB_INSTANCE=${GITLAB_INSTANCE:-http://gitlab.arpa/api/v4}"
-      - "GITLAB_ACCESS_TOKEN=${GITLAB_ACCESS_TOKEN:-glpat-asdfa;sldkfj}"
-      - "GITLAB_VERIFY=False" # Optional
+      - "CONTAINER_MANAGER_TYPE=docker"
     #      - AUTH_TYPE=oidc-proxy # Optional
     #      - OIDC_CONFIG_URL=https://provider.com/.well-known/openid-configuration # Optional
     #      - OIDC_CLIENT_ID=your-client-id # Optional
@@ -36,15 +36,15 @@ services:
     #      - FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES=gitlab.read,gitlab.write # Optional
     network_mode: "host"
 
-  gitlab-a2a:
-    image: docker.io/knucklessg1/gitlab:latest
-    # build: . # Debug
-    container_name: gitlab-a2a
-    hostname: gitlab-a2a
+  container-manager-a2a:
+    # image: docker.io/knucklessg1/container-manager:latest
+    build: . # Debug
+    container_name: container-manager-a2a
+    hostname: container-manager-a2a
     command: |
-      gitlab-a2a --debug True
+      container-manager-a2a --debug True
     depends_on:
-      - gitlab-mcp
+      - container-manager-mcp
     logging:
       driver: json-file
       options:
@@ -54,8 +54,8 @@ services:
     environment:
       - "HOST=0.0.0.0"
       - "PORT=9000"
-      # - "MCP_CONFIG=./gitlab_api/mcp_config.json" # Optionally specify your own file - Default will use MCP_URL in the pre-packaged mcp_config.json
-      - "MCP_URL=http://localhost:8005/mcp"
+      # - "MCP_CONFIG=./container_manager_mcp/mcp_config.json" # Optionally specify your own file - Default will use MCP_URL in the pre-packaged mcp_config.json
+      - "MCP_URL=http://localhost:8015/mcp"
       - "PROVIDER=openai"
       - "OPENAI_BASE_URL=http://localhost:1234/v1"
       - "OPENAI_API_KEY=llama"
@@ -66,5 +66,6 @@ services:
   mcp-inspector:
     image: mcpjam/mcp-inspector
     container_name: mcp-inspector
-    ports:
-      - "6274:6274"
+    network_mode: "host"
+#    ports:
+#      - "6274:6274"
