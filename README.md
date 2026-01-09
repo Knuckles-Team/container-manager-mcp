@@ -20,7 +20,9 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 1.1.14*
+*Version: 1.2.0*
+
+## Overview
 
 Container Manager provides a robust universal interface to manage Docker and Podman containers, networks, volumes,
 and Docker Swarm services, enabling programmatic and remote container management.
@@ -39,8 +41,38 @@ This repository is actively maintained - Contributions are welcome!
 - Extensible architecture for additional container runtimes
 - Multi-agent A2A system for delegated container management
 
-<details>
-  <summary><b>Usage:</b></summary>
+## MCP 
+
+### MCP Tools
+
+- `get_version`: Retrieve version information of the container runtime
+- `get_info`: Get system information about the container runtime
+- `list_images`: List all available images
+- `pull_image`: Pull an image from a registry
+- `remove_image`: Remove an image
+- `list_containers`: List running or all containers
+- `run_container`: Run a new container
+- `stop_container`: Stop a running container
+- `remove_container`: Remove a container
+- `get_container_logs`: Retrieve logs from a container
+- `exec_in_container`: Execute a command in a container
+- `list_volumes`: List all volumes
+- `create_volume`: Create a new volume
+- `remove_volume`: Remove a volume
+- `list_networks`: List all networks
+- `create_network`: Create a new network
+- `remove_network`: Remove a network
+- `compose_up`: Start services defined in a Compose file
+- `compose_down`: Stop and remove services defined in a Compose file
+- `compose_ps`: List containers for a Compose project
+- `compose_logs`: View logs for a Compose project or specific service
+- `init_swarm`: Initialize a Docker Swarm
+- `leave_swarm`: Leave a Docker Swarm
+- `list_nodes`: List nodes in a Docker Swarm
+- `list_services`: List services in a Docker Swarm
+- `create_service`: Create a new service in a Docker Swarm
+- `remove_service`: Remove a service from a Docker Swarm
+
 
 ### MCP CLI
 
@@ -70,6 +102,8 @@ This repository is actively maintained - Contributions are welcome!
 |            | --eunomia-policy-file              | Policy file for embedded Eunomia (default: mcp_policies.json)              |
 |            | --eunomia-remote-url               | URL for remote Eunomia server                                              |
 
+## A2A Agent
+
 ### A2A CLI
 
 | Long Flag         | Description                                      |
@@ -84,6 +118,8 @@ This repository is actively maintained - Contributions are welcome!
 
 
 
+## Usage 
+
 ### Using as an MCP Server
 
 The MCP Server can be run in two modes: `stdio` (for local testing) or `http` (for networked access). To start the server, use the following commands:
@@ -97,35 +133,6 @@ container-manager-mcp
 ```bash
 container-manager-mcp --transport "http"  --host "0.0.0.0"  --port "8000"
 ```
-
-### Available MCP Tools
-- `get_version`: Retrieve version information of the container runtime
-- `get_info`: Get system information about the container runtime
-- `list_images`: List all available images
-- `pull_image`: Pull an image from a registry
-- `remove_image`: Remove an image
-- `list_containers`: List running or all containers
-- `run_container`: Run a new container
-- `stop_container`: Stop a running container
-- `remove_container`: Remove a container
-- `get_container_logs`: Retrieve logs from a container
-- `exec_in_container`: Execute a command in a container
-- `list_volumes`: List all volumes
-- `create_volume`: Create a new volume
-- `remove_volume`: Remove a volume
-- `list_networks`: List all networks
-- `create_network`: Create a new network
-- `remove_network`: Remove a network
-- `compose_up`: Start services defined in a Compose file
-- `compose_down`: Stop and remove services defined in a Compose file
-- `compose_ps`: List containers for a Compose project
-- `compose_logs`: View logs for a Compose project or specific service
-- `init_swarm`: Initialize a Docker Swarm
-- `leave_swarm`: Leave a Docker Swarm
-- `list_nodes`: List nodes in a Docker Swarm
-- `list_services`: List services in a Docker Swarm
-- `create_service`: Create a new service in a Docker Swarm
-- `remove_service`: Remove a service from a Docker Swarm
 
 ### Deploy MCP Server as a Service
 
@@ -254,12 +261,8 @@ docker-compose up -d
   }
 }
 ```
-</details>
 
-<details>
-  <summary><b>Installation Instructions:</b></summary>
-
-### Install Python Package
+## Install Python Package
 
 ```bash
 python -m pip install container-manager-mcp
@@ -271,7 +274,7 @@ or
 uv pip install --upgrade container-manager-mcp
 ```
 
-## Test Server
+## Test
 
 ```bash
 container-manager-mcp --transport http --host 127.0.0.1 --port 8080
@@ -308,12 +311,6 @@ python -m pip install fastmcp docker podman pydantic
 
 Ensure Docker or Podman is installed and running on your system.
 
-</details>
-
-
-<details>
-  <summary><b>Development and Contribution:</b></summary>
-
 ## Development and Contribution
 
 Contributions are welcome! To contribute:
@@ -326,22 +323,14 @@ Contributions are welcome! To contribute:
 
 Please ensure your code follows the project's coding standards and includes appropriate tests.
 
-</details>
-
-<details>
-  <summary><b>License:</b></summary>
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/Knuckles-Team/container-manager-mcp/blob/main/LICENSE) file for details.
 
-</details>
-<details>
-  <summary><b>Repository Owners:</b></summary>
 
+## Repository Owners:
 <img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=Knucklessg1&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
 
 ![GitHub followers](https://img.shields.io/github/followers/Knucklessg1)
 ![GitHub User's stars](https://img.shields.io/github/stars/Knucklessg1)
-
-</details>

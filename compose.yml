@@ -1,0 +1,70 @@
+---
+services:
+  gitlab-mcp:
+    image: docker.io/knucklessg1/gitlab:latest
+    # build: . # Debug
+    container_name: gitlab-mcp
+    hostname: gitlab-mcp
+    command: |
+      gitlab-mcp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
+    environment:
+      - "HOST=0.0.0.0"
+      - "PORT=8005"
+      - "TRANSPORT=streamable-http"
+      - "GITLAB_INSTANCE=${GITLAB_INSTANCE:-http://gitlab.arpa/api/v4}"
+      - "GITLAB_ACCESS_TOKEN=${GITLAB_ACCESS_TOKEN:-glpat-asdfa;sldkfj}"
+      - "GITLAB_VERIFY=False" # Optional
+    #      - AUTH_TYPE=oidc-proxy # Optional
+    #      - OIDC_CONFIG_URL=https://provider.com/.well-known/openid-configuration # Optional
+    #      - OIDC_CLIENT_ID=your-client-id # Optional
+    #      - OIDC_CLIENT_SECRET=your-client-secret # Optional
+    #      - OIDC_BASE_URL=https://your-server.com # Optional
+    #      - ALLOWED_CLIENT_REDIRECT_URIS=http://localhost:*,https://*.example.com/* # Optional
+    #      - ENABLE_DELEGATION=True # Optional
+    #      - AUDIENCE=https://yourinstance.gitlab.com # Optional
+    #      - DELEGATED_SCOPES='api user_impersonation' # Optional
+    #      - EUNOMIA_TYPE=embedded # Optional
+    #      - EUNOMIA_POLICY_FILE=/app/mcp_policies.json # Optional
+    #      - FASTMCP_SERVER_AUTH_JWT_ALGORITHM=HS256 # Optional
+    #      - FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY=your-shared-secret # Optional
+    #      - FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES=gitlab.read,gitlab.write # Optional
+    network_mode: "host"
+
+  gitlab-a2a:
+    image: docker.io/knucklessg1/gitlab:latest
+    # build: . # Debug
+    container_name: gitlab-a2a
+    hostname: gitlab-a2a
+    command: |
+      gitlab-a2a --debug True
+    depends_on:
+      - gitlab-mcp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: always
+    environment:
+      - "HOST=0.0.0.0"
+      - "PORT=9000"
+      # - "MCP_CONFIG=./gitlab_api/mcp_config.json" # Optionally specify your own file - Default will use MCP_URL in the pre-packaged mcp_config.json
+      - "MCP_URL=http://localhost:8005/mcp"
+      - "PROVIDER=openai"
+      - "OPENAI_BASE_URL=http://localhost:1234/v1"
+      - "OPENAI_API_KEY=llama"
+      - "MODEL_ID=qwen/qwen3-8b"
+    network_mode: "host"
+
+  # Debug MCP Service
+  mcp-inspector:
+    image: mcpjam/mcp-inspector
+    container_name: mcp-inspector
+    ports:
+      - "6274:6274"
