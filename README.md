@@ -1,6 +1,7 @@
 # Container Manager - A2A & MCP Server
 
 ![PyPI - Version](https://img.shields.io/pypi/v/container-manager-mcp)
+![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
 ![PyPI - Downloads](https://img.shields.io/pypi/dd/container-manager-mcp)
 ![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/container-manager-mcp)
 ![GitHub forks](https://img.shields.io/github/forks/Knuckles-Team/container-manager-mcp)
@@ -20,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 1.2.0*
+*Version: 1.2.1*
 
 ## Overview
 
