@@ -330,7 +330,8 @@ Please ensure your code follows the project's coding standards and includes appr
 This project is licensed under the MIT License - see the [LICENSE](https://github.com/Knuckles-Team/container-manager-mcp/blob/main/LICENSE) file for details.
 
 
-## Repository Owners:
+## Repository Owners
+
 <img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=Knucklessg1&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
 
 ![GitHub followers](https://img.shields.io/github/followers/Knucklessg1)

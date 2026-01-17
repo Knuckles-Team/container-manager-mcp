@@ -27,7 +27,7 @@ async def main():
             ),  # 127.0.0.1
             api_key=os.getenv("OPENAI_API_KEY", "llama"),
             mcp_url=os.getenv("MCP_URL", "http://localhost:8015/mcp"),  # 127.0.0.1
-            #mcp_config=None,
+            # mcp_config=None,
         )
 
         print("Agent initialized successfully.")

@@ -1,34 +1,54 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 # coding: utf-8
 
-import argparse
 import os
+import argparse
 import sys
 import logging
-from threading import local
-from typing import Optional, Dict, List, Union
+import threading
+from typing import Optional, List, Dict, Union
 
 import requests
-from eunomia_mcp.middleware import EunomiaMcpMiddleware
 from pydantic import Field
+from eunomia_mcp.middleware import EunomiaMcpMiddleware
 from fastmcp import FastMCP, Context
 from fastmcp.server.auth.oidc_proxy import OIDCProxy
 from fastmcp.server.auth import OAuthProxy, RemoteAuthProvider
 from fastmcp.server.auth.providers.jwt import JWTVerifier, StaticTokenVerifier
-from fastmcp.server.middleware import MiddlewareContext, Middleware
 from fastmcp.server.middleware.logging import LoggingMiddleware
 from fastmcp.server.middleware.timing import TimingMiddleware
 from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
 from fastmcp.server.middleware.error_handling import ErrorHandlingMiddleware
 from fastmcp.utilities.logging import get_logger
 from container_manager_mcp.container_manager import create_manager
-from container_manager_mcp.utils import to_boolean
+from container_manager_mcp.utils import to_boolean, to_integer
+from container_manager_mcp.middlewares import (
+    UserTokenMiddleware,
+    JWTClaimsLoggingMiddleware,
+)
 
-
-# Thread-local storage for user token
-local = local()
-logger = get_logger(name="ContainerManager.TokenMiddleware")
+logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
+
+config = {
+    "enable_delegation": to_boolean(os.environ.get("ENABLE_DELEGATION", "False")),
+    "audience": os.environ.get("AUDIENCE", None),
+    "delegated_scopes": os.environ.get("DELEGATED_SCOPES", "api"),
+    "token_endpoint": None,  # Will be fetched dynamically from OIDC config
+    "oidc_client_id": os.environ.get("OIDC_CLIENT_ID", None),
+    "oidc_client_secret": os.environ.get("OIDC_CLIENT_SECRET", None),
+    "oidc_config_url": os.environ.get("OIDC_CONFIG_URL", None),
+    "jwt_jwks_uri": os.getenv("FASTMCP_SERVER_AUTH_JWT_JWKS_URI", None),
+    "jwt_issuer": os.getenv("FASTMCP_SERVER_AUTH_JWT_ISSUER", None),
+    "jwt_audience": os.getenv("FASTMCP_SERVER_AUTH_JWT_AUDIENCE", None),
+    "jwt_algorithm": os.getenv("FASTMCP_SERVER_AUTH_JWT_ALGORITHM", None),
+    "jwt_secret": os.getenv("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY", None),
+    "jwt_required_scopes": os.getenv("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES", None),
+}
+
+DEFAULT_TRANSPORT = os.getenv("TRANSPORT", "stdio")
+DEFAULT_HOST = os.getenv("HOST", "0.0.0.0")
+DEFAULT_PORT = to_integer(string=os.getenv("PORT", "8000"))
 
 
 def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, str]:
@@ -52,66 +72,6 @@ def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, st
             return image, default_tag
         return image_name, tag
     return image, default_tag
-
-
-config = {
-    "enable_delegation": to_boolean(os.environ.get("ENABLE_DELEGATION", "False")),
-    "audience": os.environ.get("AUDIENCE", None),
-    "delegated_scopes": os.environ.get("DELEGATED_SCOPES", "api"),
-    "token_endpoint": None,  # Will be fetched dynamically from OIDC config
-    "oidc_client_id": os.environ.get("OIDC_CLIENT_ID", None),
-    "oidc_client_secret": os.environ.get("OIDC_CLIENT_SECRET", None),
-    "oidc_config_url": os.environ.get("OIDC_CONFIG_URL", None),
-    "jwt_jwks_uri": os.getenv("FASTMCP_SERVER_AUTH_JWT_JWKS_URI", None),
-    "jwt_issuer": os.getenv("FASTMCP_SERVER_AUTH_JWT_ISSUER", None),
-    "jwt_audience": os.getenv("FASTMCP_SERVER_AUTH_JWT_AUDIENCE", None),
-    "jwt_algorithm": os.getenv("FASTMCP_SERVER_AUTH_JWT_ALGORITHM", None),
-    "jwt_secret": os.getenv("FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY", None),
-    "jwt_required_scopes": os.getenv("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES", None),
-}
-
-
-class UserTokenMiddleware(Middleware):
-    async def on_request(self, context: MiddlewareContext, call_next):
-        logger.debug(f"Delegation enabled: {config['enable_delegation']}")
-        if config["enable_delegation"]:
-            headers = getattr(context.message, "headers", {})
-            auth = headers.get("Authorization")
-            if auth and auth.startswith("Bearer "):
-                token = auth.split(" ")[1]
-                local.user_token = token
-                local.user_claims = None  # Will be populated by JWTVerifier
-
-                # Extract claims if JWTVerifier already validated
-                if hasattr(context, "auth") and hasattr(context.auth, "claims"):
-                    local.user_claims = context.auth.claims
-                    logger.info(
-                        "Stored JWT claims for delegation",
-                        extra={"subject": context.auth.claims.get("sub")},
-                    )
-                else:
-                    logger.debug("JWT claims not yet available (will be after auth)")
-
-                logger.info("Extracted Bearer token for delegation")
-            else:
-                logger.error("Missing or invalid Authorization header")
-                raise ValueError("Missing or invalid Authorization header")
-        return await call_next(context)
-
-
-class JWTClaimsLoggingMiddleware(Middleware):
-    async def on_response(self, context: MiddlewareContext, call_next):
-        response = await call_next(context)
-        logger.info(f"JWT Response: {response}")
-        if hasattr(context, "auth") and hasattr(context.auth, "claims"):
-            logger.info(
-                "JWT Authentication Success",
-                extra={
-                    "subject": context.auth.claims.get("sub"),
-                    "client_id": context.auth.claims.get("client_id"),
-                    "scopes": context.auth.claims.get("scope"),
-                },
-            )
 
 
 def register_tools(mcp: FastMCP):
@@ -1567,25 +1527,24 @@ def register_prompts(mcp: FastMCP):
 
 def container_manager_mcp():
     parser = argparse.ArgumentParser(description="Container Manager MCP Server")
-
     parser.add_argument(
         "-t",
         "--transport",
-        default="stdio",
+        default=DEFAULT_TRANSPORT,
         choices=["stdio", "streamable-http", "sse"],
         help="Transport method: 'stdio', 'streamable-http', or 'sse' [legacy] (default: stdio)",
     )
     parser.add_argument(
         "-s",
         "--host",
-        default="0.0.0.0",
+        default=DEFAULT_HOST,
         help="Host address for HTTP transport (default: 0.0.0.0)",
     )
     parser.add_argument(
         "-p",
         "--port",
         type=int,
-        default=8000,
+        default=DEFAULT_PORT,
         help="Port number for HTTP transport (default: 8000)",
     )
     parser.add_argument(
@@ -1706,7 +1665,7 @@ def container_manager_mcp():
     parser.add_argument(
         "--audience",
         default=os.environ.get("AUDIENCE", None),
-        help="Audience for the delegated",
+        help="Audience for the delegated token",
     )
     parser.add_argument(
         "--delegated-scopes",
@@ -2035,9 +1994,8 @@ def container_manager_mcp():
         LoggingMiddleware(),
         JWTClaimsLoggingMiddleware(),
     ]
-
     if config["enable_delegation"] or args.auth_type == "jwt":
-        middlewares.insert(0, UserTokenMiddleware())  # Must be first
+        middlewares.insert(0, UserTokenMiddleware(config=config))  # Must be first
 
     if args.eunomia_type in ["embedded", "remote"]:
         try:
@@ -2057,7 +2015,7 @@ def container_manager_mcp():
             logger.error("Failed to load Eunomia middleware", extra={"error": str(e)})
             sys.exit(1)
 
-    mcp = FastMCP("ContainerManagerServer", auth=auth)
+    mcp = FastMCP("ContainerManager", auth=auth)
     register_tools(mcp)
     register_prompts(mcp)
 
