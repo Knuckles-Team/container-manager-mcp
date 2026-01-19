@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import asyncio
 import sys
-from container_manager_mcp.container_manager_a2a import stream_chat, chat, node_chat
+from container_manager_mcp.container_manager_agent import stream_chat, chat, node_chat
 
 # Attempt to import assuming dependencies are installed
 import os
@@ -9,7 +9,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 try:
-    from container_manager_mcp.container_manager_a2a import create_agent
+    from container_manager_mcp.container_manager_agent import create_agent
 except ImportError as e:
     print(f"Import Error: {e}")
     print("Please install dependencies via `pip install .[all]`")

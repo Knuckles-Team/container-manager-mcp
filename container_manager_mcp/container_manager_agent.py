@@ -1,15 +1,17 @@
 #!/usr/bin/python
 # coding: utf-8
+import json
 import os
 import argparse
 import logging
 import uvicorn
 from typing import Optional, Any, List
+from contextlib import asynccontextmanager
 from pathlib import Path
 import yaml
 
 from fastmcp import Client
-from pydantic_ai import Agent
+from pydantic_ai import Agent, ModelSettings
 from pydantic_ai.mcp import load_mcp_servers
 from pydantic_ai.toolsets.fastmcp import FastMCPToolset
 from pydantic_ai_skills import SkillsToolset
@@ -18,8 +20,19 @@ from pydantic_ai.models.anthropic import AnthropicModel
 from pydantic_ai.models.google import GoogleModel
 from pydantic_ai.models.huggingface import HuggingFaceModel
 from fasta2a import Skill
-from container_manager_mcp.utils import to_integer, to_boolean
+from container_manager_mcp.utils import (
+    to_integer,
+    to_boolean,
+    get_mcp_config_path,
+    get_skills_path,
+)
 from importlib.resources import files, as_file
+
+from fastapi import FastAPI, Request
+from starlette.responses import Response, StreamingResponse
+from pydantic import ValidationError
+from pydantic_ai.ui import SSE_CONTENT_TYPE
+from pydantic_ai.ui.ag_ui import AGUIAdapter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,14 +44,6 @@ logging.getLogger("fastmcp").setLevel(logging.INFO)
 logging.getLogger("httpx").setLevel(logging.INFO)
 logger = logging.getLogger(__name__)
 
-mcp_config_file = files("container_manager_mcp") / "mcp_config.json"
-with as_file(mcp_config_file) as path:
-    mcp_config_path = str(path)
-
-skills_dir = files("container_manager_mcp") / "skills"
-with as_file(skills_dir) as path:
-    skills_path = str(path)
-
 DEFAULT_HOST = os.getenv("HOST", "0.0.0.0")
 DEFAULT_PORT = to_integer(string=os.getenv("PORT", "9000"))
 DEFAULT_DEBUG = to_boolean(string=os.getenv("DEBUG", "False"))
@@ -47,12 +52,24 @@ DEFAULT_MODEL_ID = os.getenv("MODEL_ID", "qwen/qwen3-8b")
 DEFAULT_OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "http://127.0.0.1:1234/v1")
 DEFAULT_OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "ollama")
 DEFAULT_MCP_URL = os.getenv("MCP_URL", None)
-DEFAULT_MCP_CONFIG = os.getenv("MCP_CONFIG", mcp_config_path)
-DEFAULT_SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", skills_path)
+DEFAULT_MCP_CONFIG = os.getenv("MCP_CONFIG", get_mcp_config_path())
+DEFAULT_SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", get_skills_path())
+DEFAULT_ENABLE_WEB_UI = to_boolean(os.getenv("ENABLE_WEB_UI", "False"))
 
-AGENT_NAME = "ContainerManagerOrchestrator"
+AGENT_NAME = "ContainerManager"
 AGENT_DESCRIPTION = (
     "A multi-agent system for managing container tasks via delegated specialists."
+)
+AGENT_SYSTEM_PROMPT = (
+    "You are the Container Manager Agent.\n"
+    "You have access to all skills and toolsets to interact with the Docker/Podman API.\n"
+    "Your responsibilities:\n"
+    "1. Analyze the user's request.\n"
+    "2. Identify the domain (e.g., logs, volumes, images, run, compose, etc) and select the appropriate skills.\n"
+    "4. If a complicated task requires multiple skills (e.g. 'verify the logs of container XXXX and bring down my compose services'), "
+    "   orchestrate them sequentially: call the Log skill, then the Compose skill.\n"
+    "5. Always be warm, professional, and helpful.\n"
+    "6. Explain your plan in detail before executing."
 )
 
 
@@ -119,22 +136,15 @@ def create_agent(
 
     logger.info("Initializing Agent...")
 
+    settings = ModelSettings(timeout=3600.0)
+
     return Agent(
         model=model,
-        system_prompt=(
-            "You are the Container Manager Agent.\n"
-            "You have access to all skills and toolsets to interact with the Docker/Podman API.\n"
-            "Your responsibilities:\n"
-            "1. Analyze the user's request.\n"
-            "2. Identify the domain (e.g., logs, volumes, images, run, compose, etc) and select the appropriate skills.\n"
-            "4. If a complicated task requires multiple skills (e.g. 'verify the logs of container XXXX and bring down my compose services'), "
-            "   orchestrate them sequentially: call the Log skill, then the Compose skill.\n"
-            "5. Always be warm, professional, and helpful.\n"
-            "6. Explain your plan in detail before executing."
-        ),
+        system_prompt=AGENT_SYSTEM_PROMPT,
         name="Container Manager Agent",
         toolsets=agent_toolsets,
         deps_type=Any,
+        model_settings=settings,
     )
 
 
@@ -208,7 +218,7 @@ def load_skills_from_directory(directory: str) -> List[Skill]:
     return skills
 
 
-def create_a2a_server(
+def create_agent_server(
     provider: str = DEFAULT_PROVIDER,
     model_id: str = DEFAULT_MODEL_ID,
     base_url: Optional[str] = None,
@@ -219,6 +229,7 @@ def create_a2a_server(
     debug: Optional[bool] = DEFAULT_DEBUG,
     host: Optional[str] = DEFAULT_HOST,
     port: Optional[int] = DEFAULT_PORT,
+    enable_web_ui: bool = DEFAULT_ENABLE_WEB_UI,
 ):
     print(
         f"Starting {AGENT_NAME} with provider={provider}, model={model_id}, mcp={mcp_url} | {mcp_config}"
@@ -248,8 +259,8 @@ def create_a2a_server(
                 output_modes=["text"],
             )
         ]
-    # Create A2A App
-    app = agent.to_a2a(
+    # Create A2A app explicitly before main app to bind lifespan
+    a2a_app = agent.to_a2a(
         name=AGENT_NAME,
         description=AGENT_DESCRIPTION,
         version="1.2.1",
@@ -257,24 +268,76 @@ def create_a2a_server(
         debug=debug,
     )
 
-    logger.info(
-        "Starting A2A server with provider=%s, model=%s, mcp_url=%s, mcp_config=%s",
-        provider,
-        model_id,
-        mcp_url,
-        mcp_config,
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Trigger A2A (sub-app) startup/shutdown events
+        # This is critical for TaskManager initialization in A2A
+        if hasattr(a2a_app, "router"):
+            async with a2a_app.router.lifespan_context(a2a_app):
+                yield
+        else:
+            yield
+
+    # Create main FastAPI app
+    app = FastAPI(
+        title=f"{AGENT_NAME} - A2A + AG-UI Server",
+        description=AGENT_DESCRIPTION,
+        debug=debug,
+        lifespan=lifespan,
     )
+
+    # Mount A2A as sub-app at /a2a
+    app.mount("/a2a", a2a_app)
+
+    # Add AG-UI endpoint (POST to /ag-ui)
+    @app.post("/ag-ui")
+    async def ag_ui_endpoint(request: Request) -> Response:
+        accept = request.headers.get("accept", SSE_CONTENT_TYPE)
+        try:
+            # Parse incoming AG-UI RunAgentInput from request body
+            run_input = AGUIAdapter.build_run_input(await request.body())
+        except ValidationError as e:
+            return Response(
+                content=json.dumps(e.json()),
+                media_type="application/json",
+                status_code=422,
+            )
+
+        # Create adapter and run the agent → stream AG-UI events
+        adapter = AGUIAdapter(agent=agent, run_input=run_input, accept=accept)
+        event_stream = adapter.run_stream()  # Runs agent, yields events
+        sse_stream = adapter.encode_stream(event_stream)  # Encodes to SSE
+
+        return StreamingResponse(
+            sse_stream,
+            media_type=accept,
+        )
+
+    # Mount Web UI if enabled
+    if enable_web_ui:
+        web_ui = agent.to_web(instructions=AGENT_SYSTEM_PROMPT)
+        app.mount("/", web_ui)
+        logger.info(
+            "Starting server on %s:%s (A2A at /a2a, AG-UI at /ag-ui, Web UI: %s)",
+            host,
+            port,
+            "Enabled at /" if enable_web_ui else "Disabled",
+        )
 
     uvicorn.run(
         app,
         host=host,
         port=port,
+        timeout_keep_alive=1800, # 30 minute timeout
+        timeout_graceful_shutdown=60,
         log_level="debug" if debug else "info",
     )
 
 
 def agent_server():
-    parser = argparse.ArgumentParser(description=f"Run the {AGENT_NAME} A2A Server")
+    parser = argparse.ArgumentParser(
+        description=f"Run the {AGENT_NAME} A2A + AG-UI Server"
+    )
     parser.add_argument(
         "--host", default=DEFAULT_HOST, help="Host to bind the server to"
     )
@@ -301,6 +364,12 @@ def agent_server():
     parser.add_argument(
         "--mcp-config", default=DEFAULT_MCP_CONFIG, help="MCP Server Config"
     )
+    parser.add_argument(
+        "--web",
+        action="store_true",
+        default=DEFAULT_ENABLE_WEB_UI,
+        help="Enable Pydantic AI Web UI",
+    )
     args = parser.parse_args()
 
     if args.debug:
@@ -322,7 +391,8 @@ def agent_server():
         logger.debug("Debug mode enabled")
 
     # Create the agent with CLI args
-    create_a2a_server(
+    # Create the agent with CLI args
+    create_agent_server(
         provider=args.provider,
         model_id=args.model_id,
         base_url=args.base_url,
@@ -332,6 +402,7 @@ def agent_server():
         debug=args.debug,
         host=args.host,
         port=args.port,
+        enable_web_ui=args.web,
     )
 
 

@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "container_manager_mcp": {
+    "container-manager-mcp": {
       "url": "${MCP_URL:-http://localhost:8015/mcp}"
     }
   }

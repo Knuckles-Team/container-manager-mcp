@@ -5,7 +5,6 @@ import os
 import argparse
 import sys
 import logging
-import threading
 from typing import Optional, List, Dict, Union
 
 import requests

@@ -1756,8 +1756,7 @@ def create_manager(
 
 
 def usage():
-    print(
-        """
+    print("""
 Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!
 
 Usage:
@@ -1831,8 +1830,7 @@ Actions:
 
 Example:
 container_manager.py --manager docker --pull-image nginx --tag latest --list-containers --all --log-file /path/to/log.log
-"""
-    )
+""")
 
 
 def container_manager():

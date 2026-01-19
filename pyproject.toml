@@ -32,7 +32,7 @@ docker = [
     "docker>=7.1.0",
 ]
 a2a = [
-    "pydantic-ai-slim[fastmcp,openai,anthropic,google,huggingface,a2a]>=1.32.0",
+    "pydantic-ai-slim[fastmcp,openai,anthropic,google,huggingface,a2a,ag-ui,web]>=1.32.0",
     "pydantic-ai-skills",
 ]
 all = [
@@ -41,14 +41,14 @@ all = [
     "eunomia-mcp>=0.3.10",
     "docker>=7.1.0",
     "podman>=5.6.0",
-    "pydantic-ai-slim[fastmcp,openai,anthropic,google,huggingface,a2a]>=1.32.0",
+    "pydantic-ai-slim[fastmcp,openai,anthropic,google,huggingface,a2a,ag-ui,web]>=1.32.0",
     "pydantic-ai-skills",
 ]
 
 [project.scripts]
 container-manager = "container_manager_mcp.container_manager:container_manager"
 container-manager-mcp = "container_manager_mcp.container_manager_mcp:container_manager_mcp"
-container-manager-a2a = "container_manager_mcp.container_manager_a2a:agent_server"
+container-manager-agent = "container_manager_mcp.container_manager_agent:agent_server"
 
 
 [tool.setuptools.package-data]

@@ -6,6 +6,8 @@ services:
     container_name: container-manager-mcp
     hostname: container-manager-mcp
     command: ["container-manager-mcp"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     logging:
       driver: json-file
       options:
@@ -16,7 +18,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - "HOST=0.0.0.0"
-      - "PORT=8015"
+      - "PORT=8019"
       - "TRANSPORT=streamable-http"
       - "CONTAINER_MANAGER_TYPE=docker"
     #      - AUTH_TYPE=oidc-proxy # Optional
@@ -34,14 +36,16 @@ services:
     #      - FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY=your-shared-secret # Optional
     #      - FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES=gitlab.read,gitlab.write # Optional
     ports:
-      - "8015:8015"
+      - "8019:8019"
 
-  container-manager-a2a:
+  container-manager-agent:
     image: docker.io/knucklessg1/container-manager:latest
     # build: . # Debug
-    container_name: container-manager-a2a
-    hostname: container-manager-a2a
-    command: ["container-manager-a2a"]
+    container_name: container-manager-agent
+    hostname: container-manager-agent
+    command: ["container-manager-agent"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - container-manager-mcp
     logging:
@@ -52,12 +56,14 @@ services:
     restart: always
     environment:
       - "HOST=0.0.0.0"
-      - "PORT=9000"
+      - "PORT=9019"
       # - "MCP_CONFIG=./container_manager_mcp/mcp_config.json" # Optionally specify your own file - Default will use MCP_URL in the pre-packaged mcp_config.json
-      - "MCP_URL=http://localhost:8015/mcp"
+      - "MCP_URL=http://container-manager-mcp:8019/mcp"
       - "PROVIDER=openai"
-      - "OPENAI_BASE_URL=http://localhost:1234/v1"
+      - "OPENAI_BASE_URL=http://host.docker.internal:1234/v1"
       - "OPENAI_API_KEY=llama"
       - "MODEL_ID=qwen/qwen3-8b"
+      - "DEBUG=False"
+      - "ENABLE_WEB_UI=True"
     ports:
-      - "9000:9000"
+      - "9019:9019"

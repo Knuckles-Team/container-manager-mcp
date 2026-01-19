@@ -1,4 +1,4 @@
-# Container Manager - A2A & MCP Server
+# Container Manager - A2A | AG-UI | MCP
 
 ![PyPI - Version](https://img.shields.io/pypi/v/container-manager-mcp)
 ![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
@@ -106,6 +106,10 @@ This repository is actively maintained - Contributions are welcome!
 ## A2A Agent
 
 ### A2A CLI
+#### Endpoints
+- **Web UI**: `http://localhost:8000/` (if enabled)
+- **A2A**: `http://localhost:8000/a2a` (Discovery: `/a2a/.well-known/agent.json`)
+- **AG-UI**: `http://localhost:8000/ag-ui` (POST)
 
 | Long Flag         | Description                                      |
 |-------------------|--------------------------------------------------|
@@ -116,6 +120,7 @@ This repository is actively maintained - Contributions are welcome!
 | --base-url        | LLM Base URL (for OpenAI compatible providers)   |
 | --api-key         | LLM API Key                                      |
 | --mcp-url         | MCP Server URL (default: http://localhost:8000/mcp) |
+| --web             | Enable Pydantic AI Web UI                               | False (Env: ENABLE_WEB_UI) |
 
 
 
@@ -159,7 +164,7 @@ docker run -d \
 
 ```bash
 docker run -d \
-  --name container-manager-a2a \
+  --name container-manager-agent \
   -p 9000:9000 \
   -e PORT=9000 \
   -e PROVIDER=openai \
@@ -167,7 +172,7 @@ docker run -d \
   -e BASE_URL=http://host.docker.internal:11434/v1 \
   -e MCP_URL=http://host.docker.internal:8004/mcp \
   knucklessg1/container-manager:latest \
-  container-manager-a2a
+  container-manager-agent
 ```
 
 For advanced authentication (e.g., JWT, OAuth Proxy, OIDC Proxy, Remote OAuth) or Eunomia, add the relevant environment variables:
