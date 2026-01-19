@@ -26,7 +26,6 @@ from container_manager_mcp.utils import (
     get_mcp_config_path,
     get_skills_path,
 )
-from importlib.resources import files, as_file
 
 from fastapi import FastAPI, Request
 from starlette.responses import Response, StreamingResponse
@@ -328,7 +327,7 @@ def create_agent_server(
         app,
         host=host,
         port=port,
-        timeout_keep_alive=1800, # 30 minute timeout
+        timeout_keep_alive=1800,  # 30 minute timeout
         timeout_graceful_shutdown=60,
         log_level="debug" if debug else "info",
     )
