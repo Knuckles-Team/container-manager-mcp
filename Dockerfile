@@ -50,6 +50,6 @@ ENV UV_HTTP_TIMEOUT=3600
 
 
 RUN pip install uv \
-    && uv pip install --system --upgrade container-manager-mcp[all]>=1.2.1
+    && uv pip install --system --upgrade container-manager-mcp[all]>=1.2.2
 
 CMD ["container-manager-mcp"]
