@@ -1,8 +1,8 @@
 ---
 services:
   container-manager-mcp:
-    image: docker.io/knucklessg1/container-manager:latest
-    # build: . # Debug
+    #image: docker.io/knucklessg1/container-manager:latest
+    build: . # Debug
     container_name: container-manager-mcp
     hostname: container-manager-mcp
     command: [ "container-manager-mcp" ]
@@ -45,8 +45,8 @@ services:
       start_period: 10s
 
   container-manager-agent:
-    image: docker.io/knucklessg1/container-manager:latest
-    # build: . # Debug
+    # image: docker.io/knucklessg1/container-manager:latest
+    build: . # Debug
     container_name: container-manager-agent
     hostname: container-manager-agent
     command: [ "container-manager-agent" ]
