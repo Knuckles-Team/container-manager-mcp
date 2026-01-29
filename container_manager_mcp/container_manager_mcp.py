@@ -28,6 +28,8 @@ from container_manager_mcp.middlewares import (
     JWTClaimsLoggingMiddleware,
 )
 
+__version__ = "1.2.8"
+
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
 
@@ -1519,6 +1521,8 @@ def register_tools(mcp: FastMCP):
 
 
 def register_prompts(mcp: FastMCP):
+    print(f"container_manager_mcp v{__version__}")
+
     # Prompts
     @mcp.prompt
     def get_logs(
@@ -2027,6 +2031,7 @@ def container_manager_mcp():
     for mw in middlewares:
         mcp.add_middleware(mw)
 
+    print(f"Container Manager MCP v{__version__}")
     print("\nStarting Container Manager MCP Server")
     print(f"  Transport: {args.transport.upper()}")
     print(f"  Auth: {args.auth_type}")

@@ -14,6 +14,8 @@ from datetime import datetime
 import platform
 import traceback
 
+__version__ = "1.2.8"
+
 try:
     import docker
     from docker.errors import DockerException
@@ -1834,6 +1836,7 @@ container_manager.py --manager docker --pull-image nginx --tag latest --list-con
 
 
 def container_manager():
+    print(f"container_manager v{__version__}")
     parser = argparse.ArgumentParser(
         description="Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!"
     )
