@@ -28,7 +28,7 @@ from container_manager_mcp.middlewares import (
     JWTClaimsLoggingMiddleware,
 )
 
-__version__ = "1.2.9"
+__version__ = "1.2.10"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
