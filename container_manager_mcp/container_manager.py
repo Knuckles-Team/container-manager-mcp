@@ -14,7 +14,7 @@ from datetime import datetime
 import platform
 import traceback
 
-__version__ = "1.2.10"
+__version__ = "1.2.11"
 
 try:
     import docker
