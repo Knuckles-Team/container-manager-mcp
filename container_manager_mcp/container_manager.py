@@ -14,7 +14,7 @@ from datetime import datetime
 import platform
 import traceback
 
-__version__ = "1.2.12"
+__version__ = "1.2.13"
 
 try:
     import docker
@@ -1758,87 +1758,79 @@ def create_manager(
 
 
 def usage():
-    print("""
-Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!
-
-Usage:
--h | --help            [ See usage for script ]
--s | --silent          [ Suppress output ]
--m | --manager <type>  [ docker, podman, swarm; default: auto-detect ]
---log-file <path>      [ Log to specified file (default: container_manager.log in script dir) ]
-
-Actions:
---get-version          [ Get version info ]
---get-info             [ Get system info ]
---list-images          [ List images ]
---pull-image <image>   [ Pull image, e.g., nginx ]
-  --tag <tag>          [ Tag, default: latest ]
-  --platform <plat>    [ Platform, e.g., linux/amd64 ]
---remove-image <image> [ Remove image ]
-  --force              [ Force removal (global for remove actions) ]
---prune-images         [ Prune unused images ]
-  --all                [ Prune all unused images ]
---list-containers      [ List containers ]
-  --all                [ Show all containers ]
---run-container <image> [ Run container ]
-  --name <name>        [ Container name ]
-  --command <cmd>      [ Command to run ]
-  --detach             [ Detach mode ]
-  --ports <ports>      [ Ports, comma-separated host:container, e.g., 8080:80,8443:443 ]
-  --volumes <vols>     [ Volumes, comma-separated host:container:mode, mode default rw ]
-  --environment <env>  [ Env vars, comma-separated KEY=val ]
---stop-container <id>  [ Stop container ]
-  --timeout <sec>      [ Timeout, default 10 ]
---remove-container <id>[ Remove container ]
-  --force              [ Force ]
---prune-containers     [ Prune stopped containers ]
---get-container-logs <id> [ Get logs ]
-  --tail <tail>        [ Tail lines, default all ]
---exec-in-container <id> [ Exec command ]
-  --exec-command <cmd> [ Command, space-separated "ls -l /" ]
-  --exec-detach        [ Detach exec ]
---list-volumes         [ List volumes ]
---create-volume <name> [ Create volume ]
---remove-volume <name> [ Remove volume ]
-  --force              [ Force ]
---prune-volumes        [ Prune unused volumes ]
-  --all                [ Remove all volumes (dangerous) ]
---list-networks        [ List networks ]
---create-network <name>[ Create network ]
-  --driver <driver>    [ Driver, default bridge ]
---remove-network <id>  [ Remove network ]
---prune-networks       [ Prune unused networks ]
---prune-system         [ Prune system resources ]
-  --all                [ Prune all unused (including volumes, build cache) ]
---compose-up <file>    [ Compose up ]
-  --build              [ Build images ]
-  --detach             [ Detach mode, default true ]
---compose-down <file>  [ Compose down ]
---compose-ps <file>    [ Compose ps ]
---compose-logs <file>  [ Compose logs ]
-  --service <service>  [ Specific service ]
---init-swarm           [ Init swarm ]
-  --advertise-addr <addr> [ Advertise address ]
---leave-swarm          [ Leave swarm ]
-  --force              [ Force ]
---list-nodes           [ List swarm nodes ]
---list-services        [ List swarm services ]
---create-service <name>[ Create service ]
-  --image <image>      [ Image for service ]
-  --replicas <n>       [ Replicas, default 1 ]
-  --ports <ports>      [ Ports, same as run-container ]
-  --mounts <mounts>    [ Mounts, comma-separated source:target:mode ]
---remove-service <id>  [ Remove service ]
-
-Example:
-container_manager.py --manager docker --pull-image nginx --tag latest --list-containers --all --log-file /path/to/log.log
-""")
+    print(
+        f"Container Manager Mcp ({__version__}): Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!\n\n"
+        "Usage:\n"
+        "-s | --silent           [ Suppress output ]\n"
+        "-m | --manager          [ Container manager type: docker, podman, swarm (default: auto-detect) ]\n"
+        "--log-file              [ Path to log file ]\n"
+        "--get-version           [ Get version info ]\n"
+        "--get-info              [ Get system info ]\n"
+        "--list-images           [ List images ]\n"
+        "--pull-image            [ Image to pull ]\n"
+        "--tag                   [ Image tag ]\n"
+        "--platform              [ Platform ]\n"
+        "--remove-image          [ Image to remove ]\n"
+        "--prune-images          [ Prune images ]\n"
+        "--list-containers       [ List containers ]\n"
+        "--all                   [ Show all containers ]\n"
+        "--run-container         [ Image to run ]\n"
+        "--name                  [ Container name ]\n"
+        "--command               [ Command to run ]\n"
+        "--detach                [ Detach mode ]\n"
+        "--ports                 [ Port mappings ]\n"
+        "--volumes               [ Volume mappings ]\n"
+        "--environment           [ Environment vars ]\n"
+        "--stop-container        [ Container to stop ]\n"
+        "--timeout               [ Timeout in seconds ]\n"
+        "--remove-container      [ Container to remove ]\n"
+        "--prune-containers      [ Prune containers ]\n"
+        "--get-container-logs    [ Container logs ]\n"
+        "--tail                  [ Tail lines ]\n"
+        "--exec-in-container     [ Container to exec ]\n"
+        "--exec-command          [ Exec command ]\n"
+        "--exec-detach           [ Detach exec ]\n"
+        "--list-volumes          [ List volumes ]\n"
+        "--create-volume         [ Volume to create ]\n"
+        "--remove-volume         [ Volume to remove ]\n"
+        "--prune-volumes         [ Prune volumes ]\n"
+        "--list-networks         [ List networks ]\n"
+        "--create-network        [ Network to create ]\n"
+        "--driver                [ Network driver ]\n"
+        "--remove-network        [ Network to remove ]\n"
+        "--prune-networks        [ Prune networks ]\n"
+        "--prune-system          [ Prune system ]\n"
+        "--compose-up            [ Compose file up ]\n"
+        "--build                 [ Build images ]\n"
+        "--compose-detach        [ Detach compose ]\n"
+        "--compose-down          [ Compose file down ]\n"
+        "--compose-ps            [ Compose ps ]\n"
+        "--compose-logs          [ Compose logs ]\n"
+        "--service               [ Specific service ]\n"
+        "--init-swarm            [ Init swarm ]\n"
+        "--advertise-addr        [ Advertise address ]\n"
+        "--leave-swarm           [ Leave swarm ]\n"
+        "--list-nodes            [ List swarm nodes ]\n"
+        "--list-services         [ List swarm services ]\n"
+        "--create-service        [ Service to create ]\n"
+        "--image                 [ Service image ]\n"
+        "--replicas              [ Replicas ]\n"
+        "--mounts                [ Mounts ]\n"
+        "--remove-service        [ Service to remove ]\n"
+        "--force                 [ Force removal ]\n"
+        "-h | --help             [ Show help ]\n"
+        "\n"
+        "Examples:\n"
+        "  [Simple]  container-manager --help\n"
+        '  [Complex] container-manager --silent --manager "value" --log-file "value" --get-version --get-info --list-images --pull-image "value" --tag "value" --platform "value" --remove-image "value" --prune-images --list-containers --all --run-container "value" --name "value" --command "value" --detach --ports "value" --volumes "value" --environment "value" --stop-container "value" --timeout "value" --remove-container "value" --prune-containers --get-container-logs "value" --tail "value" --exec-in-container "value" --exec-command "value" --exec-detach --list-volumes --create-volume "value" --remove-volume "value" --prune-volumes --list-networks --create-network "value" --driver "value" --remove-network "value" --prune-networks --prune-system --compose-up "value" --build --compose-detach --compose-down "value" --compose-ps "value" --compose-logs "value" --service "value" --init-swarm --advertise-addr "value" --leave-swarm --list-nodes --list-services --create-service "value" --image "value" --replicas "value" --mounts "value" --remove-service "value" --force\n'
+    )
 
 
 def container_manager():
     print(f"container_manager v{__version__}")
     parser = argparse.ArgumentParser(
-        description="Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!"
+        add_help=False,
+        description="Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!",
     )
     parser.add_argument("-s", "--silent", action="store_true", help="Suppress output")
     parser.add_argument(
@@ -1941,7 +1933,15 @@ def container_manager():
     parser.add_argument("--force", action="store_true", help="Force removal")
     parser.add_argument("-h", "--help", action="store_true", help="Show help")
 
+    parser.add_argument("--help", action="store_true", help="Show usage")
+
     args = parser.parse_args()
+
+    if hasattr(args, "help") and args.help:
+
+        usage()
+
+        sys.exit(0)
 
     if args.help:
         usage()

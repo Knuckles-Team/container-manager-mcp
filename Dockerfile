@@ -53,6 +53,6 @@ ENV HOST=${HOST} \
 RUN apt-get update \
    && apt-get install -y curl nano \
    && curl -LsSf https://astral.sh/uv/install.sh | sh \
-    && uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow container-manager-mcp[all]>=1.2.12
+    && uv pip install --system --upgrade --verbose --no-cache --break-system-packages --prerelease=allow container-manager-mcp[all]>=1.2.13
 
 CMD ["container-manager-mcp"]
