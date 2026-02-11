@@ -6,7 +6,7 @@ import uuid
 
 # Configuration
 A2A_URL = (
-    "http://localhost:9000/"  # Discovered endpoint is POST / based on 405 on GET /
+    "http://localhost:9000/a2a"  # Discovered endpoint is POST / based on 405 on GET /
 )
 
 
