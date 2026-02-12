@@ -14,6 +14,8 @@ services:
         max-size: "10m"
         max-file: "3"
     restart: always
+    env_file:
+      - .env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -67,7 +69,7 @@ services:
       - "MCP_URL=http://container-manager-mcp:8019/mcp"
       - "PROVIDER=openai"
       - "LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:1234/v1}"
-      - "LLM_API_KEY=llama"
+      - "LLM_API_KEY=${LLM_API_KEY:-llama}"
       - "MODEL_ID=${MODEL_ID:-qwen/qwen3-coder-next}"
       - "DEBUG=False"
       - "ENABLE_WEB_UI=True"

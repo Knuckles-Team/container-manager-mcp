@@ -3,7 +3,6 @@ import asyncio
 import sys
 from container_manager_mcp.container_manager_agent import stream_chat, chat, node_chat
 
-# Attempt to import assuming dependencies are installed
 import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -22,17 +21,13 @@ async def main():
         agent = create_agent(
             provider="openai",
             model_id=os.getenv("MODEL_ID", "qwen/qwen3-coder-next"),
-            base_url=os.getenv(
-                "LLM_BASE_URL", "http://host.docker.internal:1234/v1"
-            ),  # 127.0.0.1
+            base_url=os.getenv("LLM_BASE_URL", "http://host.docker.internal:1234/v1"),
             api_key=os.getenv("LLM_API_KEY", "llama"),
-            mcp_url=os.getenv("MCP_URL", "http://localhost:8015/mcp"),  # 127.0.0.1
-            # mcp_config=None,
+            mcp_url=os.getenv("MCP_URL", "http://localhost:8015/mcp"),
         )
 
         print("Agent initialized successfully.")
 
-        # Define sample questions
         questions = [
             "Can you list the container images available on the host?",
             "List all the running containers."
@@ -44,7 +39,6 @@ async def main():
         for q in questions:
             print(f"\n\n\nUser: {q}")
             try:
-                # Only run one to test
                 await stream_chat(agent=agent, prompt=q)
                 await chat(agent=agent, prompt=q)
                 await node_chat(agent=agent, prompt=q)
