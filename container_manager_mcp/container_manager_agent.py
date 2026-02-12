@@ -7,6 +7,7 @@ import os
 import argparse
 import logging
 import uvicorn
+import httpx
 from typing import Optional, Any, List
 from contextlib import asynccontextmanager
 
@@ -38,12 +39,12 @@ from pydantic import ValidationError
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.ag_ui import AGUIAdapter
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()],  # Output to console
+    handlers=[logging.StreamHandler()],
 )
 logging.getLogger("pydantic_ai").setLevel(logging.INFO)
 logging.getLogger("fastmcp").setLevel(logging.INFO)
@@ -63,7 +64,6 @@ DEFAULT_SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", get_skills_path())
 DEFAULT_ENABLE_WEB_UI = to_boolean(os.getenv("ENABLE_WEB_UI", "False"))
 DEFAULT_SSL_VERIFY = to_boolean(os.getenv("SSL_VERIFY", "True"))
 
-# Model Settings
 DEFAULT_MAX_TOKENS = to_integer(os.getenv("MAX_TOKENS", "16384"))
 DEFAULT_TEMPERATURE = to_float(os.getenv("TEMPERATURE", "0.7"))
 DEFAULT_TOP_P = to_float(os.getenv("TOP_P", "1.0"))
@@ -83,9 +83,6 @@ AGENT_DESCRIPTION = (
     "A multi-agent system for managing container tasks via delegated specialists."
 )
 
-# -------------------------------------------------------------------------
-# 1. System Prompts
-# -------------------------------------------------------------------------
 
 SUPERVISOR_SYSTEM_PROMPT = os.environ.get(
     "SUPERVISOR_SYSTEM_PROMPT",
@@ -220,16 +217,12 @@ NETWORK_AGENT_PROMPT = os.environ.get(
     ),
 )
 
-# -------------------------------------------------------------------------
-# 2. Agent Creation Logic
-# -------------------------------------------------------------------------
-
 
 def create_agent(
     provider: str = DEFAULT_PROVIDER,
     model_id: str = DEFAULT_MODEL_ID,
-    base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
+    base_url: Optional[str] = DEFAULT_LLM_BASE_URL,
+    api_key: Optional[str] = DEFAULT_LLM_API_KEY,
     mcp_url: str = DEFAULT_MCP_URL,
     mcp_config: str = DEFAULT_MCP_CONFIG,
     skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
@@ -240,7 +233,6 @@ def create_agent(
     """
     logger.info("Initializing Multi-Agent System for Container Manager...")
 
-    # 1. Initialize the shared Model
     model = create_model(
         provider=provider,
         model_id=model_id,
@@ -263,29 +255,31 @@ def create_agent(
         extra_body=DEFAULT_EXTRA_BODY,
     )
 
-    # 2. Load ALL tools from MCP/Skills (Master Toolset)
     agent_toolsets = []
     if mcp_url:
         if "sse" in mcp_url.lower():
-            server = MCPServerSSE(mcp_url)
+            server = MCPServerSSE(
+                mcp_url, http_client=httpx.AsyncClient(verify=ssl_verify)
+            )
         else:
-            server = MCPServerStreamableHTTP(mcp_url)
+            server = MCPServerStreamableHTTP(
+                mcp_url, http_client=httpx.AsyncClient(verify=ssl_verify)
+            )
         agent_toolsets.append(server)
         logger.info(f"Connected to MCP Server: {mcp_url}")
     elif mcp_config:
         mcp_toolset = load_mcp_servers(mcp_config)
+        for server in mcp_toolset:
+            if hasattr(server, "http_client"):
+                server.http_client = httpx.AsyncClient(verify=ssl_verify)
         agent_toolsets.extend(mcp_toolset)
         logger.info(f"Connected to MCP Config JSON: {mcp_toolset}")
 
-    # Skills toolset
     if skills_directory and os.path.exists(skills_directory):
         agent_toolsets.append(SkillsToolset(directories=[str(skills_directory)]))
 
-    # 3. Create Sub-Agents with Filtered Toolsets
-
     child_agents = {}
 
-    # Define Tag -> Prompt map
     agent_defs = {
         "container_manager_info": (INFO_AGENT_PROMPT, "Info_Agent"),
         "image_management": (IMAGE_AGENT_PROMPT, "Image_Agent"),
@@ -321,7 +315,6 @@ def create_agent(
         )
         child_agents[tag] = child_agent
 
-    # 4. Create Supervisor Agent
     supervisor_agent = Agent(
         model=model,
         system_prompt=SUPERVISOR_SYSTEM_PROMPT,
@@ -330,7 +323,6 @@ def create_agent(
         deps_type=Any,
     )
 
-    # Define Delegation Tools
     @supervisor_agent.tool
     async def assign_task_to_info_agent(ctx: RunContext[Any], task: str) -> str:
         """Assign a task related to version or system info to the Info Agent."""
@@ -439,8 +431,8 @@ async def stream_chat(agent: Agent, prompt: str) -> None:
 def create_agent_server(
     provider: str = DEFAULT_PROVIDER,
     model_id: str = DEFAULT_MODEL_ID,
-    base_url: Optional[str] = None,
-    api_key: Optional[str] = None,
+    base_url: Optional[str] = DEFAULT_LLM_BASE_URL,
+    api_key: Optional[str] = DEFAULT_LLM_API_KEY,
     mcp_url: str = DEFAULT_MCP_URL,
     mcp_config: str = DEFAULT_MCP_CONFIG,
     skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
@@ -451,7 +443,12 @@ def create_agent_server(
     ssl_verify: bool = DEFAULT_SSL_VERIFY,
 ):
     print(
-        f"Starting {AGENT_NAME} with provider={provider}, model={model_id}, mcp={mcp_url} | {mcp_config}"
+        f"Starting {AGENT_NAME}:"
+        f"\tprovider={provider}"
+        f"\tmodel={model_id}"
+        f"\tbase_url={base_url}"
+        f"\tmcp={mcp_url} | {mcp_config}"
+        f"\tssl_verify={ssl_verify}"
     )
     agent = create_agent(
         provider=provider,
@@ -464,7 +461,6 @@ def create_agent_server(
         ssl_verify=ssl_verify,
     )
 
-    # Define Skills for Agent Card (High-level capabilities)
     if skills_directory and os.path.exists(skills_directory):
         skills = load_skills_from_directory(skills_directory)
         logger.info(f"Loaded {len(skills)} skills from {skills_directory}")
@@ -479,7 +475,6 @@ def create_agent_server(
                 output_modes=["text"],
             )
         ]
-    # Create A2A app explicitly before main app to bind lifespan
     a2a_app = agent.to_a2a(
         name=AGENT_NAME,
         description=AGENT_DESCRIPTION,
@@ -496,7 +491,6 @@ def create_agent_server(
         else:
             yield
 
-    # Create main FastAPI app
     app = FastAPI(
         title=f"{AGENT_NAME} - A2A + AG-UI Server",
         description=AGENT_DESCRIPTION,
@@ -508,15 +502,12 @@ def create_agent_server(
     async def health_check():
         return {"status": "OK"}
 
-    # Mount A2A as sub-app at /a2a
     app.mount("/a2a", a2a_app)
 
-    # Add AG-UI endpoint (POST to /ag-ui)
     @app.post("/ag-ui")
     async def ag_ui_endpoint(request: Request) -> Response:
         accept = request.headers.get("accept", SSE_CONTENT_TYPE)
         try:
-            # Parse incoming AG-UI RunAgentInput from request body
             run_input = AGUIAdapter.build_run_input(await request.body())
         except ValidationError as e:
             return Response(
@@ -525,21 +516,18 @@ def create_agent_server(
                 status_code=422,
             )
 
-        # Prune large messages from history
         if hasattr(run_input, "messages"):
             run_input.messages = prune_large_messages(run_input.messages)
 
-        # Create adapter and run the agent → stream AG-UI events
         adapter = AGUIAdapter(agent=agent, run_input=run_input, accept=accept)
-        event_stream = adapter.run_stream()  # Runs agent, yields events
-        sse_stream = adapter.encode_stream(event_stream)  # Encodes to SSE
+        event_stream = adapter.run_stream()
+        sse_stream = adapter.encode_stream(event_stream)
 
         return StreamingResponse(
             sse_stream,
             media_type=accept,
         )
 
-    # Mount Web UI if enabled
     if enable_web_ui:
         web_ui = agent.to_web(instructions=SUPERVISOR_SYSTEM_PROMPT)
         app.mount("/", web_ui)
@@ -554,7 +542,7 @@ def create_agent_server(
         app,
         host=host,
         port=port,
-        timeout_keep_alive=1800,  # 30 minute timeout
+        timeout_keep_alive=1800,
         timeout_graceful_shutdown=60,
         log_level="debug" if debug else "info",
     )
@@ -608,14 +596,13 @@ def agent_server():
         sys.exit(0)
 
     if args.debug:
-        # Force reconfiguration of logging
         for handler in logging.root.handlers[:]:
             logging.root.removeHandler(handler)
 
         logging.basicConfig(
             level=logging.DEBUG,
             format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-            handlers=[logging.StreamHandler()],  # Output to console
+            handlers=[logging.StreamHandler()],
             force=True,
         )
         logging.getLogger("pydantic_ai").setLevel(logging.DEBUG)
@@ -625,7 +612,6 @@ def agent_server():
         logger.setLevel(logging.DEBUG)
         logger.debug("Debug mode enabled")
 
-    # Create the agent with CLI args
     create_agent_server(
         provider=args.provider,
         model_id=args.model_id,

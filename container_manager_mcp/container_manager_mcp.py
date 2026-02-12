@@ -28,7 +28,7 @@ from container_manager_mcp.middlewares import (
     JWTClaimsLoggingMiddleware,
 )
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
@@ -37,7 +37,7 @@ config = {
     "enable_delegation": to_boolean(os.environ.get("ENABLE_DELEGATION", "False")),
     "audience": os.environ.get("AUDIENCE", None),
     "delegated_scopes": os.environ.get("DELEGATED_SCOPES", "api"),
-    "token_endpoint": None,  # Will be fetched dynamically from OIDC config
+    "token_endpoint": None,
     "oidc_client_id": os.environ.get("OIDC_CLIENT_ID", None),
     "oidc_client_secret": os.environ.get("OIDC_CLIENT_SECRET", None),
     "oidc_config_url": os.environ.get("OIDC_CONFIG_URL", None),
@@ -65,13 +65,10 @@ def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, st
     Returns:
         Tuple of (image, tag) where image includes registry/repository, tag is the tag or default_tag
     """
-    # Split on the last ':' to separate image and tag
     if ":" in image:
         parts = image.rsplit(":", 1)
         image_name, tag = parts[0], parts[1]
-        # Ensure tag is valid (not a port or malformed)
         if "/" in tag or not tag:
-            # If tag contains '/' or is empty, assume no tag was provided
             return image, default_tag
         return image_name, tag
     return image, default_tag
@@ -250,7 +247,6 @@ def register_tools(mcp: FastMCP):
         Returns: A dictionary with the pull status, including 'id' of the pulled image and any error messages.
         """
         logger = logging.getLogger("ContainerManager")
-        # Parse image string to separate image and tag
         parsed_image, parsed_tag = parse_image_string(image, tag)
         logger.debug(
             f"Pulling image {parsed_image}:{parsed_tag} for {manager_type}, silent: {silent}, log_file: {log_file}"
@@ -1064,8 +1060,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune system: {str(e)}")
             raise RuntimeError(f"Failed to prune system: {str(e)}")
 
-    # Swarm-specific tools
-
     @mcp.tool(
         annotations={
             "title": "Init Swarm",
@@ -1523,7 +1517,6 @@ def register_tools(mcp: FastMCP):
 def register_prompts(mcp: FastMCP):
     print(f"container_manager_mcp v{__version__}")
 
-    # Prompts
     @mcp.prompt
     def get_logs(
         container: str,
@@ -1564,7 +1557,6 @@ def container_manager_mcp():
         choices=["none", "static", "jwt", "oauth-proxy", "oidc-proxy", "remote-oauth"],
         help="Authentication type for MCP server: 'none' (disabled), 'static' (internal), 'jwt' (external token verification), 'oauth-proxy', 'oidc-proxy', 'remote-oauth' (external) (default: none)",
     )
-    # JWT/Token params
     parser.add_argument(
         "--token-jwks-uri", default=None, help="JWKS URI for JWT verification"
     )
@@ -1605,7 +1597,6 @@ def container_manager_mcp():
         default=os.getenv("FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES"),
         help="Comma-separated list of required scopes (e.g., containermanager.read,containermanager.write).",
     )
-    # OAuth Proxy params
     parser.add_argument(
         "--oauth-upstream-auth-endpoint",
         default=None,
@@ -1629,14 +1620,12 @@ def container_manager_mcp():
     parser.add_argument(
         "--oauth-base-url", default=None, help="Base URL for OAuth Proxy"
     )
-    # OIDC Proxy params
     parser.add_argument(
         "--oidc-config-url", default=None, help="OIDC configuration URL"
     )
     parser.add_argument("--oidc-client-id", default=None, help="OIDC client ID")
     parser.add_argument("--oidc-client-secret", default=None, help="OIDC client secret")
     parser.add_argument("--oidc-base-url", default=None, help="Base URL for OIDC Proxy")
-    # Remote OAuth params
     parser.add_argument(
         "--remote-auth-servers",
         default=None,
@@ -1645,13 +1634,11 @@ def container_manager_mcp():
     parser.add_argument(
         "--remote-base-url", default=None, help="Base URL for Remote OAuth"
     )
-    # Common
     parser.add_argument(
         "--allowed-client-redirect-uris",
         default=None,
         help="Comma-separated list of allowed client redirect URIs",
     )
-    # Eunomia params
     parser.add_argument(
         "--eunomia-type",
         default="none",
@@ -1666,7 +1653,6 @@ def container_manager_mcp():
     parser.add_argument(
         "--eunomia-remote-url", default=None, help="URL for remote Eunomia server"
     )
-    # Delegation params
     parser.add_argument(
         "--enable-delegation",
         action="store_true",
@@ -1737,7 +1723,6 @@ def container_manager_mcp():
         print(f"Error: Port {args.port} is out of valid range (0-65535).")
         sys.exit(1)
 
-    # Update config with CLI arguments
     config["enable_delegation"] = args.enable_delegation
     config["audience"] = args.audience or config["audience"]
     config["delegated_scopes"] = args.delegated_scopes or config["delegated_scopes"]
@@ -1747,7 +1732,6 @@ def container_manager_mcp():
         args.oidc_client_secret or config["oidc_client_secret"]
     )
 
-    # Configure delegation if enabled
     if config["enable_delegation"]:
         if args.auth_type != "oidc-proxy":
             logger.error("Token delegation requires auth-type=oidc-proxy")
@@ -1767,7 +1751,6 @@ def container_manager_mcp():
             )
             sys.exit(1)
 
-        # Fetch OIDC configuration to get token_endpoint
         try:
             logger.info(
                 "Fetching OIDC configuration",
@@ -1792,7 +1775,6 @@ def container_manager_mcp():
             )
             sys.exit(1)
 
-    # Set auth based on type
     auth = None
     allowed_uris = (
         args.allowed_client_redirect_uris.split(",")
@@ -1810,7 +1792,6 @@ def container_manager_mcp():
             }
         )
     elif args.auth_type == "jwt":
-        # Fallback to env vars if not provided via CLI
         jwks_uri = args.token_jwks_uri or os.getenv("FASTMCP_SERVER_AUTH_JWT_JWKS_URI")
         issuer = args.token_issuer or os.getenv("FASTMCP_SERVER_AUTH_JWT_ISSUER")
         audience = args.token_audience or os.getenv("FASTMCP_SERVER_AUTH_JWT_AUDIENCE")
@@ -1827,7 +1808,6 @@ def container_manager_mcp():
             logger.error("JWT requires --token-issuer and --token-audience")
             sys.exit(1)
 
-        # Load static public key from file if path is given
         if args.token_public_key and os.path.isfile(args.token_public_key):
             try:
                 with open(args.token_public_key, "r") as f:
@@ -1838,15 +1818,13 @@ def container_manager_mcp():
                 logger.error(f"Failed to read public key file: {e}")
                 sys.exit(1)
         elif args.token_public_key:
-            public_key_pem = args.token_public_key  # Inline PEM
+            public_key_pem = args.token_public_key
 
-        # Validation: Conflicting options
         if jwks_uri and (algorithm or secret_or_key):
             logger.warning(
                 "JWKS mode ignores --token-algorithm and --token-secret/--token-public-key"
             )
 
-        # HMAC mode
         if algorithm and algorithm.startswith("HS"):
             if not secret_or_key:
                 logger.error(f"HMAC algorithm {algorithm} requires --token-secret")
@@ -1858,7 +1836,6 @@ def container_manager_mcp():
         else:
             public_key = public_key_pem
 
-        # Required scopes
         required_scopes = None
         if args.required_scopes:
             required_scopes = [
@@ -1995,7 +1972,6 @@ def container_manager_mcp():
             base_url=args.remote_base_url,
         )
 
-    # === 2. Build Middleware List ===
     middlewares: List[
         Union[
             UserTokenMiddleware,
@@ -2014,7 +1990,7 @@ def container_manager_mcp():
         JWTClaimsLoggingMiddleware(),
     ]
     if config["enable_delegation"] or args.auth_type == "jwt":
-        middlewares.insert(0, UserTokenMiddleware(config=config))  # Must be first
+        middlewares.insert(0, UserTokenMiddleware(config=config))
 
     if args.eunomia_type in ["embedded", "remote"]:
         try:

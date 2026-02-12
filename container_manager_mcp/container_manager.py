@@ -14,7 +14,7 @@ from datetime import datetime
 import platform
 import traceback
 
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 
 try:
     import docker
@@ -43,7 +43,7 @@ class ContainerManagerBase(ABC):
             log_file = os.path.join(script_dir, "container_manager.log")
         logging.basicConfig(
             filename=log_file,
-            level=logging.DEBUG,  # Changed to DEBUG for more detailed logging
+            level=logging.DEBUG,
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(__name__)
@@ -80,25 +80,22 @@ class ContainerManagerBase(ABC):
         if not timestamp:
             return "unknown"
 
-        # Handle numeric timestamps (Unix timestamps in seconds)
         if isinstance(timestamp, (int, float)):
             try:
                 return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%dT%H:%M:%S")
             except (ValueError, OSError):
                 return "unknown"
 
-        # Handle string timestamps
         if isinstance(timestamp, str):
-            # Common ISO 8601-like formats to try
             formats = [
-                "%Y-%m-%dT%H:%M:%S",  # 2023-10-05T14:30:00
-                "%Y-%m-%d %H:%M:%S",  # 2023-10-05 14:30:00
-                "%Y-%m-%dT%H:%M:%S%z",  # 2023-10-05T14:30:00+0000
-                "%Y-%m-%d %H:%M:%S%z",  # 2023-10-05 14:30:00+0000
-                "%Y-%m-%dT%H:%M:%S.%f",  # 2023-10-05T14:30:00.123456
-                "%Y-%m-%d %H:%M:%S.%f",  # 2023-10-05 14:30:00.123456
-                "%Y-%m-%dT%H:%M:%S.%f%z",  # 2023-10-05T14:30:00.123456+0000
-                "%Y-%m-%d",  # 2023-10-05
+                "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%d %H:%M:%S",
+                "%Y-%m-%dT%H:%M:%S%z",
+                "%Y-%m-%d %H:%M:%S%z",
+                "%Y-%m-%dT%H:%M:%S.%f",
+                "%Y-%m-%d %H:%M:%S.%f",
+                "%Y-%m-%dT%H:%M:%S.%f%z",
+                "%Y-%m-%d",
             ]
             for fmt in formats:
                 try:
@@ -307,7 +304,6 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_system", params, error=e)
             raise RuntimeError(f"Failed to prune system: {str(e)}")
 
-    # Other DockerManager methods remain unchanged (omitted for brevity)
     def get_version(self) -> Dict:
         params = {}
         try:
@@ -428,7 +424,6 @@ class DockerManager(ContainerManagerBase):
         params = {"force": force, "all": all}
         try:
             if all:
-                # Manually remove all unused images
                 images = self.client.images.list(all=True)
                 removed = []
                 for img in images:
@@ -533,12 +528,12 @@ class DockerManager(ContainerManagerBase):
                 return result
             attrs = container.attrs
             port_mappings = []
-            if ports:  # Check if ports is not None
+            if ports:
                 network_settings = attrs.get("NetworkSettings", {})
                 container_ports = network_settings.get("Ports", {})
-                if container_ports:  # Check if Ports dictionary is not empty
+                if container_ports:
                     for container_port, host_ports in container_ports.items():
-                        if host_ports:  # Check if host_ports is not None or empty
+                        if host_ports:
                             for hp in host_ports:
                                 port_mappings.append(
                                     f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"
@@ -616,9 +611,7 @@ class DockerManager(ContainerManagerBase):
         try:
             container = self.client.containers.get(container_id)
             logs = container.logs(tail=tail).decode("utf-8")
-            self.log_action(
-                "get_container_logs", params, logs[:1000]
-            )  # Truncate for logging
+            self.log_action("get_container_logs", params, logs[:1000])
             return logs
         except Exception as e:
             self.log_action("get_container_logs", params, error=e)
@@ -1123,7 +1116,6 @@ class PodmanManager(ContainerManagerBase):
         params = {"force": force, "all": all}
         try:
             if all:
-                # Manually remove all unused images
                 images = self.client.images.list(all=True)
                 removed = []
                 for img in images:
@@ -1261,7 +1253,7 @@ class PodmanManager(ContainerManagerBase):
             )
             if all:
                 cmd.append("--all")
-                if all:  # Include volumes if all=True
+                if all:
                     cmd.append("--volumes")
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
@@ -1270,7 +1262,7 @@ class PodmanManager(ContainerManagerBase):
             pruned = {
                 "output": result.stdout.strip(),
                 "space_reclaimed": "Check output",
-                "images_removed": [],  # Podman CLI doesn't provide detailed breakdown
+                "images_removed": [],
                 "containers_removed": [],
                 "volumes_removed": [],
                 "networks_removed": [],
@@ -1459,9 +1451,9 @@ class PodmanManager(ContainerManagerBase):
                 return result
             attrs = container.attrs
             port_mappings = []
-            if ports:  # Check if ports is not None
+            if ports:
                 container_ports = attrs.get("Ports", [])
-                if container_ports:  # Check if Ports list is not empty
+                if container_ports:
                     port_mappings = [
                         f"{p.get('host_ip', '0.0.0.0')}:{p.get('host_port')}->{p.get('container_port')}/{p.get('protocol', 'tcp')}"
                         for p in container_ports
@@ -1512,9 +1504,7 @@ class PodmanManager(ContainerManagerBase):
         try:
             container = self.client.containers.get(container_id)
             logs = container.logs(tail=tail).decode("utf-8")
-            self.log_action(
-                "get_container_logs", params, logs[:1000]
-            )  # Truncate for logging
+            self.log_action("get_container_logs", params, logs[:1000])
             return logs
         except Exception as e:
             self.log_action("get_container_logs", params, error=e)
