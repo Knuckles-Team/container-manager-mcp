@@ -14,7 +14,7 @@ from datetime import datetime
 import platform
 import traceback
 
-__version__ = "1.3.7"
+__version__ = "1.3.8"
 
 try:
     import docker
@@ -1073,43 +1073,103 @@ class PodmanManager(ContainerManagerBase):
             self.logger.debug(f"Connection failed for {base_url}: {str(e)}")
             return None
 
+    def _get_podman_cli_sockets(self) -> List[str]:
+        """Get socket URLs from 'podman system connection list'."""
+        try:
+            # This works on Linux, WSL2, and Windows (if podman.exe is in PATH)
+            result = subprocess.run(
+                ["podman", "system", "connection", "list", "--format", "json"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                try:
+                    connections = json.loads(result.stdout)
+                    urls = []
+                    # Prioritize default connection
+                    for conn in connections:
+                        uri = conn.get("URI")
+                        if not uri:
+                            continue
+                        if conn.get("Default"):
+                            urls.insert(0, uri)
+                        else:
+                            urls.append(uri)
+                    return urls
+                except json.JSONDecodeError:
+                    return []
+        except Exception as e:
+            self.logger.debug(f"Failed to get sockets from podman CLI: {e}")
+        return []
+
     def _autodetect_podman_url(self) -> Optional[str]:
         """Autodetect the appropriate Podman socket URL based on platform."""
+        # 1. Environment Variable (Highest Priority)
         base_url = os.environ.get("CONTAINER_MANAGER_PODMAN_BASE_URL")
         if base_url:
             self.logger.info(
                 f"Using CONTAINER_MANAGER_PODMAN_BASE_URL from environment: {base_url}"
             )
             return base_url
+
+        socket_candidates = []
+
+        # 2. CLI-based Discovery (Most reliable)
+        cli_sockets = self._get_podman_cli_sockets()
+        if cli_sockets:
+            socket_candidates.extend(cli_sockets)
+
+        # 3. Platform-specific Fallbacks
         system = platform.system()
         is_wsl = self._is_wsl()
-        socket_candidates = []
+
         if system == "Windows" and not is_wsl:
-            if not self._is_podman_machine_running():
-                raise RuntimeError("Podman Machine is not running on Windows system")
+            # Named Pipes (Native Windows)
             socket_candidates.extend(
                 [
-                    "tcp://127.0.0.1:8080",
-                    "unix:///run/podman/podman.sock",
+                    "npipe:////./pipe/podman-machine-default",
+                    "npipe:////./pipe/podman-machine-default-root",
                     "npipe:////./pipe/docker_engine",
+                    "tcp://127.0.0.1:8080",
+                ]
+            )
+            # WSL Bridge Fallbacks
+            socket_candidates.extend(
+                [
                     "unix:///mnt/wsl/podman-sockets/podman-machine-default/podman-user.sock",
                     "unix:///mnt/wsl/podman-sockets/podman-machine-default/podman-root.sock",
                 ]
             )
         elif system == "Linux" or is_wsl:
             uid = os.getuid()
+            # Standard Linux/WSL Paths
             socket_candidates.extend(
                 [
                     f"unix:///run/user/{uid}/podman/podman.sock",
                     "unix:///run/podman/podman.sock",
-                    "unix:///mnt/wsl/podman-sockets/podman-machine-default/podman-user.sock",
-                    "unix:///mnt/wsl/podman-sockets/podman-machine-default/podman-root.sock",
+                    "unix:///var/run/podman/podman.sock",
                 ]
             )
+            # WSL Bridge Fallbacks (if applicable)
+            socket_candidates.extend(
+                [
+                    "/mnt/wsl/podman-sockets/podman-machine-default/podman-user.sock",
+                    "/mnt/wsl/podman-sockets/podman-machine-default/podman-root.sock",
+                ]
+            )
+
+        # 4. Attempt to connect to candidates
         for url in socket_candidates:
+            # Ensure unix sockets have the prefix
+            if url.startswith("/") and not url.startswith("unix://"):
+                url = f"unix://{url}"
+
             client = self._try_connect(url)
             if client:
+                self.logger.info(f"Autodetected Podman socket: {url}")
                 return url
+
         return None
 
     def prune_images(self, force: bool = False, all: bool = False) -> Dict:
