@@ -1,8 +1,10 @@
 ---
 services:
   container-manager-mcp:
-    image: docker.io/knucklessg1/container-manager:latest
-    # build: . # Debug
+    # image: docker.io/knucklessg1/container-manager:latest
+    build:
+      context: .
+      dockerfile: debug.Dockerfile
     container_name: container-manager-mcp
     hostname: container-manager-mcp
     command: [ "container-manager-mcp" ]
@@ -19,6 +21,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      - "PYTHONUNBUFFERED=1"
       - "HOST=0.0.0.0"
       - "PORT=8019"
       - "TRANSPORT=streamable-http"
@@ -47,8 +50,10 @@ services:
       start_period: 10s
 
   container-manager-agent:
-    image: docker.io/knucklessg1/container-manager:latest
-    # build: . # Debug
+    # image: docker.io/knucklessg1/container-manager:latest
+    build:
+      context: .
+      dockerfile: debug.Dockerfile
     container_name: container-manager-agent
     hostname: container-manager-agent
     command: [ "container-manager-agent" ]
@@ -63,6 +68,7 @@ services:
         max-file: "3"
     restart: always
     environment:
+      - "PYTHONUNBUFFERED=1"
       - "HOST=0.0.0.0"
       - "PORT=9019"
       # - "MCP_CONFIG=./container_manager_mcp/mcp_config.json" # Optionally specify your own file - Default will use MCP_URL in the pre-packaged mcp_config.json
