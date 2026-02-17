@@ -18,7 +18,6 @@ from pydantic_ai.mcp import (
     MCPServerSSE,
 )
 from pydantic_ai_skills import SkillsToolset
-from fasta2a import Skill
 from container_manager_mcp.utils import (
     to_integer,
     to_boolean,
@@ -27,7 +26,6 @@ from container_manager_mcp.utils import (
     to_dict,
     get_mcp_config_path,
     get_skills_path,
-    load_skills_from_directory,
     create_model,
     tool_in_tag,
     prune_large_messages,
@@ -39,7 +37,7 @@ from pydantic import ValidationError
 from pydantic_ai.ui import SSE_CONTENT_TYPE
 from pydantic_ai.ui.ag_ui import AGUIAdapter
 
-__version__ = "1.3.10"
+__version__ = "1.3.11"
 
 logging.basicConfig(
     level=logging.INFO,
@@ -60,7 +58,7 @@ DEFAULT_LLM_BASE_URL = os.getenv("LLM_BASE_URL", "http://host.docker.internal:12
 DEFAULT_LLM_API_KEY = os.getenv("LLM_API_KEY", "ollama")
 DEFAULT_MCP_URL = os.getenv("MCP_URL", None)
 DEFAULT_MCP_CONFIG = os.getenv("MCP_CONFIG", get_mcp_config_path())
-DEFAULT_SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", get_skills_path())
+DEFAULT_CUSTOM_SKILLS_DIRECTORY = os.getenv("CUSTOM_SKILLS_DIRECTORY", None)
 DEFAULT_ENABLE_WEB_UI = to_boolean(os.getenv("ENABLE_WEB_UI", "False"))
 DEFAULT_SSL_VERIFY = to_boolean(os.getenv("SSL_VERIFY", "True"))
 
@@ -225,7 +223,7 @@ def create_agent(
     api_key: Optional[str] = DEFAULT_LLM_API_KEY,
     mcp_url: str = DEFAULT_MCP_URL,
     mcp_config: str = DEFAULT_MCP_CONFIG,
-    skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
+    custom_skills_directory: Optional[str] = DEFAULT_CUSTOM_SKILLS_DIRECTORY,
     ssl_verify: bool = DEFAULT_SSL_VERIFY,
 ) -> Agent:
     """
@@ -284,8 +282,15 @@ def create_agent(
         agent_toolsets.extend(mcp_toolset)
         logger.info(f"Connected to MCP Config JSON: {mcp_toolset}")
 
-    if skills_directory and os.path.exists(skills_directory):
-        agent_toolsets.append(SkillsToolset(directories=[str(skills_directory)]))
+    # Always load default skills
+
+    skill_dirs = [get_skills_path()]
+
+    if custom_skills_directory and os.path.exists(custom_skills_directory):
+
+        skill_dirs.append(str(custom_skills_directory))
+
+    agent_toolsets.append(SkillsToolset(directories=skill_dirs))
 
     child_agents = {}
 
@@ -314,6 +319,57 @@ def create_agent(
             else:
                 pass
 
+        # Load specific skills for this tag
+        skill_dir_name = f"container-manager-{tag.replace('_', '-')}"
+
+        # Check custom skills directory
+        if custom_skills_directory:
+            skill_dir_path = os.path.join(custom_skills_directory, skill_dir_name)
+            if os.path.exists(skill_dir_path):
+                tag_toolsets.append(SkillsToolset(directories=[skill_dir_path]))
+
+        # Check default skills directory
+        default_skill_path = os.path.join(get_skills_path(), skill_dir_name)
+        if os.path.exists(default_skill_path):
+            tag_toolsets.append(SkillsToolset(directories=[default_skill_path]))
+
+        # Collect tool names for logging
+        all_tool_names = []
+        for ts in tag_toolsets:
+            try:
+                # Unwrap FilteredToolset
+                current_ts = ts
+                while hasattr(current_ts, "wrapped"):
+                    current_ts = current_ts.wrapped
+
+                # Check for .tools (e.g. SkillsToolset)
+                if hasattr(current_ts, "tools") and isinstance(current_ts.tools, dict):
+                    all_tool_names.extend(current_ts.tools.keys())
+                # Check for ._tools (some implementations might use private attr)
+                elif hasattr(current_ts, "_tools") and isinstance(
+                    current_ts._tools, dict
+                ):
+                    all_tool_names.extend(current_ts._tools.keys())
+                # Check for .load method (SkillsToolset)
+                elif hasattr(current_ts, "load") and callable(current_ts.load):
+                    try:
+                        skills = current_ts.load()
+                        for s in skills:
+                            if hasattr(s, "name"):
+                                all_tool_names.append(s.name)
+                            else:
+                                all_tool_names.append(str(s))
+                    except Exception:
+                        pass
+                else:
+                    # Fallback for MCP or others where tools are not available sync
+                    all_tool_names.append(f"<{type(current_ts).__name__}>")
+            except Exception as e:
+                logger.info(f"Unable to retrieve toolset: {e}")
+                pass
+
+        tool_list_str = ", ".join(all_tool_names)
+        logger.info(f"Available tools for {agent_name} ({tag}): {tool_list_str}")
         child_agent = Agent(
             model=model,
             system_prompt=system_prompt,
@@ -444,7 +500,7 @@ def create_agent_server(
     api_key: Optional[str] = DEFAULT_LLM_API_KEY,
     mcp_url: str = DEFAULT_MCP_URL,
     mcp_config: str = DEFAULT_MCP_CONFIG,
-    skills_directory: Optional[str] = DEFAULT_SKILLS_DIRECTORY,
+    custom_skills_directory: Optional[str] = DEFAULT_CUSTOM_SKILLS_DIRECTORY,
     debug: Optional[bool] = DEFAULT_DEBUG,
     host: Optional[str] = DEFAULT_HOST,
     port: Optional[int] = DEFAULT_PORT,
@@ -466,29 +522,16 @@ def create_agent_server(
         api_key=api_key,
         mcp_url=mcp_url,
         mcp_config=mcp_config,
-        skills_directory=skills_directory,
+        custom_skills_directory=custom_skills_directory,
         ssl_verify=ssl_verify,
     )
 
-    if skills_directory and os.path.exists(skills_directory):
-        skills = load_skills_from_directory(skills_directory)
-        logger.info(f"Loaded {len(skills)} skills from {skills_directory}")
-    else:
-        skills = [
-            Skill(
-                id="container_manager_agent",
-                name="Container Manager Supervisor",
-                description="Delegates container management tasks to specialist agents.",
-                tags=["container_manager"],
-                input_modes=["text"],
-                output_modes=["text"],
-            )
-        ]
+    # Skills are loaded per-agent based on tags
     a2a_app = agent.to_a2a(
         name=AGENT_NAME,
         description=AGENT_DESCRIPTION,
         version=__version__,
-        skills=skills,
+        skills=[],
         debug=debug,
     )
 
@@ -634,6 +677,7 @@ def agent_server():
         api_key=args.api_key,
         mcp_url=args.mcp_url,
         mcp_config=args.mcp_config,
+        custom_skills_directory=args.custom_skills_directory,
         debug=args.debug,
         host=args.host,
         port=args.port,
