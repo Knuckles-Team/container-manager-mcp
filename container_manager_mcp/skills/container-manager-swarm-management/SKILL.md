@@ -1,6 +1,7 @@
 ---
-name: container-manager-swarm
+name: container-manager-swarm-management
 description: Manages Docker Swarm. Use for init/leave, nodes/services. Triggers - clustering, orchestration. Note - Docker only.
+tags: [swarm-management]
 ---
 
 ### Overview

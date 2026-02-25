@@ -1,6 +1,7 @@
 ---
-name: container-manager-volumes
+name: container-manager-volume-management
 description: Manages volumes. Use for listing/creating/removing/pruning. Triggers - data persistence.
+tags: [volume-management]
 ---
 
 ### Overview

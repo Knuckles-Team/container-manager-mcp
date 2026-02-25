@@ -8,7 +8,11 @@ You are running a scheduled heartbeat. Perform these checks and report results c
 2. **Memory Review** — Read `MEMORY.md` and check for any pending follow-up tasks or action items. List any that are overdue.
 3. **Cron Log** — Read `CRON_LOG.md` and check for recent errors (❌). Summarize any failures from the last 24 hours.
 4. **Peer Agents** — Read `AGENTS.md` and note if any registered peers need attention.
-5. **Self-Diagnostics** — Report your current model, available tool count, and any anomalies.
+5. **Domain-Specific Checks**:
+   - **Container Health**: Identify any stopped, restarting, or crashing containers. If any are found, **capture and include their recent logs** to provide more context.
+   - **Resource Usage**: Flag any containers consuming unusually high CPU or RAM.
+   - **Updates**: Check for available image updates for running containers.
+6. **Self-Diagnostics** — Report your current model, available tool count, and any anomalies.
 
 ## Response Format
 

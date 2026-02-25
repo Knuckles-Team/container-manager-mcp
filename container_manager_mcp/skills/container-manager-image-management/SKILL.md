@@ -1,6 +1,7 @@
 ---
-name: container-manager-images
+name: container-manager-image-management
 description: Manages container images. Use for listing/pulling/removing/pruning images. Triggers - image ops, builds.
+tags: [image-management]
 ---
 
 ### Overview

@@ -1,6 +1,7 @@
 ---
-name: container-manager-containers
+name: container-manager-container-management
 description: Manages containers. Use for listing/running/stopping/removing/pruning. Triggers - runtime ops, scaling.
+tags: [container-management]
 ---
 
 ### Overview

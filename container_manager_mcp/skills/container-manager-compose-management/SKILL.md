@@ -1,6 +1,7 @@
 ---
-name: container-manager-compose
+name: container-manager-compose-management
 description: Manages Docker Compose. Use for up/down/ps/logs. Triggers - multi-container apps.
+tags: [compose-management]
 ---
 
 ### Overview

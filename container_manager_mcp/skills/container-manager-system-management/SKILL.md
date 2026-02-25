@@ -1,6 +1,7 @@
 ---
-name: container-manager-system
+name: container-manager-system-management
 description: Manages system resources. Use for full prune. Triggers - cleanup, optimization.
+tags: [system-management]
 ---
 
 ### Overview
