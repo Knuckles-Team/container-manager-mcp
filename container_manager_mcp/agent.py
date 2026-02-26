@@ -46,6 +46,15 @@ CHILD_AGENT_DEFS = {
     if tag not in ["supervisor", "default"]
 }
 
+# Disable universal skills by default for this project
+os.environ.setdefault("SYSTEM_TOOLS_ENABLE", "False")
+os.environ.setdefault("SYSTEMS_MANAGER_ENABLE", "False")
+os.environ.setdefault("WEBSITE_BUILDER_ENABLE", "False")
+os.environ.setdefault("WEB_ARTIFACTS_ENABLE", "False")
+os.environ.setdefault("SECURITY_TOOLS_ENABLE", "False")
+os.environ.setdefault("DEVELOPER_UTILITIES_ENABLE", "False")
+os.environ.setdefault("BROWSER_TOOLS_ENABLE", "False")
+
 DEFAULT_HOST = os.getenv("HOST", "0.0.0.0")
 DEFAULT_PORT = to_integer(os.getenv("PORT", "9000"))
 DEFAULT_DEBUG = to_boolean(os.getenv("DEBUG", "False"))

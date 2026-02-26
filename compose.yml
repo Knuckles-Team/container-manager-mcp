@@ -79,6 +79,13 @@ services:
       - "MODEL_ID=${MODEL_ID:-qwen/qwen3-coder-next}"
       - "DEBUG=False"
       - "ENABLE_WEB_UI=True"
+      - "SYSTEM_TOOLS_ENABLE=False"
+      - "SYSTEMS_MANAGER_ENABLE=False"
+      - "WEBSITE_BUILDER_ENABLE=False"
+      - "WEB_ARTIFACTS_ENABLE=False"
+      - "SECURITY_TOOLS_ENABLE=False"
+      - "DEVELOPER_UTILITIES_ENABLE=False"
+      - "BROWSER_TOOLS_ENABLE=False"
     ports:
       - "9019:9019"
     healthcheck:

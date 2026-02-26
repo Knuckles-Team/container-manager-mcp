@@ -1,7 +1,7 @@
 ---
-name: container-manager-system-management
+name: container-manager-mcp-system
 description: Manages system resources. Use for full prune. Triggers - cleanup, optimization.
-tags: [system-management]
+tags: [system]
 ---
 
 ### Overview

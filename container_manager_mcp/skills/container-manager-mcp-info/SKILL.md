@@ -1,7 +1,7 @@
 ---
-name: container-manager-container-manager-info
+name: container-manager-mcp-info
 description: Retrieves Container Manager info. Use for version/system details before ops. Triggers - setup checks, compatibility.
-tags: [container-manager-info]
+tags: [info]
 ---
 
 ### Overview

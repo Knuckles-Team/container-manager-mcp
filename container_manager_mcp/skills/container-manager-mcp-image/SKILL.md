@@ -1,7 +1,7 @@
 ---
-name: container-manager-image-management
+name: container-manager-mcp-image
 description: Manages container images. Use for listing/pulling/removing/pruning images. Triggers - image ops, builds.
-tags: [image-management]
+tags: [image]
 ---
 
 ### Overview

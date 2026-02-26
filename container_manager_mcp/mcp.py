@@ -70,7 +70,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_manager_info"},
+        tags={"info"},
     )
     async def get_version(
         manager_type: Optional[str] = Field(
@@ -112,7 +112,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_manager_info"},
+        tags={"info"},
     )
     async def get_info(
         manager_type: Optional[str] = Field(
@@ -154,7 +154,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"image_management"},
+        tags={"image"},
     )
     async def list_images(
         manager_type: Optional[str] = Field(
@@ -196,7 +196,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"image_management"},
+        tags={"image"},
     )
     async def pull_image(
         image: str = Field(
@@ -249,7 +249,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"image_management"},
+        tags={"image"},
     )
     async def remove_image(
         image: str = Field(description="Image name or ID to remove"),
@@ -293,7 +293,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"image_management"},
+        tags={"image"},
     )
     async def prune_images(
         all: bool = Field(description="Prune all unused images", default=False),
@@ -336,7 +336,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container"},
     )
     async def list_containers(
         all: bool = Field(
@@ -381,7 +381,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container"},
     )
     async def run_container(
         image: str = Field(description="Image to run"),
@@ -441,7 +441,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container"},
     )
     async def stop_container(
         container_id: str = Field(description="Container ID or name"),
@@ -485,7 +485,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container"},
     )
     async def remove_container(
         container_id: str = Field(description="Container ID or name"),
@@ -529,7 +529,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container"},
     )
     async def prune_containers(
         manager_type: Optional[str] = Field(
@@ -571,7 +571,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"log_management", "debug", "container_management"},
+        tags={"log", "debug", "container"},
     )
     async def get_container_logs(
         container_id: str = Field(description="Container ID or name"),
@@ -617,7 +617,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"container_management"},
+        tags={"container"},
     )
     async def exec_in_container(
         container_id: str = Field(description="Container ID or name"),
@@ -662,7 +662,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"volume_management"},
+        tags={"volume"},
     )
     async def list_volumes(
         manager_type: Optional[str] = Field(
@@ -704,7 +704,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"volume_management"},
+        tags={"volume"},
     )
     async def create_volume(
         name: str = Field(description="Volume name"),
@@ -747,7 +747,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"volume_management"},
+        tags={"volume"},
     )
     async def remove_volume(
         name: str = Field(description="Volume name"),
@@ -791,7 +791,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"volume_management"},
+        tags={"volume"},
     )
     async def prune_volumes(
         all: bool = Field(description="Remove all volumes (dangerous)", default=False),
@@ -834,7 +834,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"network_management"},
+        tags={"network"},
     )
     async def list_networks(
         manager_type: Optional[str] = Field(
@@ -876,7 +876,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"network_management"},
+        tags={"network"},
     )
     async def create_network(
         name: str = Field(description="Network name"),
@@ -922,7 +922,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"network_management"},
+        tags={"network"},
     )
     async def remove_network(
         network_id: str = Field(description="Network ID or name"),
@@ -965,7 +965,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"network_management"},
+        tags={"network"},
     )
     async def prune_networks(
         manager_type: Optional[str] = Field(
@@ -1007,7 +1007,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"system_management"},
+        tags={"system"},
     )
     async def prune_system(
         force: bool = Field(description="Force prune", default=False),
@@ -1051,7 +1051,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"swarm_management", "swarm"},
+        tags={"swarm"},
     )
     async def init_swarm(
         advertise_addr: Optional[str] = Field(
@@ -1098,7 +1098,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"swarm_management", "swarm"},
+        tags={"swarm"},
     )
     async def leave_swarm(
         force: bool = Field(description="Force leave", default=False),
@@ -1143,7 +1143,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"swarm_management", "swarm"},
+        tags={"swarm"},
     )
     async def list_nodes(
         manager_type: Optional[str] = Field(
@@ -1187,7 +1187,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"swarm_management", "swarm"},
+        tags={"swarm"},
     )
     async def list_services(
         manager_type: Optional[str] = Field(
@@ -1231,7 +1231,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"swarm_management", "swarm"},
+        tags={"swarm"},
     )
     async def create_service(
         name: str = Field(description="Service name"),
@@ -1284,7 +1284,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"swarm_management", "swarm"},
+        tags={"swarm"},
     )
     async def remove_service(
         service_id: str = Field(description="Service ID or name"),
@@ -1329,7 +1329,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": False,
             "openWorldHint": False,
         },
-        tags={"compose_management", "compose"},
+        tags={"compose"},
     )
     async def compose_up(
         compose_file: str = Field(description="Path to compose file"),
@@ -1374,7 +1374,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"compose_management", "compose"},
+        tags={"compose"},
     )
     async def compose_down(
         compose_file: str = Field(description="Path to compose file"),
@@ -1417,7 +1417,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"compose_management", "compose"},
+        tags={"compose"},
     )
     async def compose_ps(
         compose_file: str = Field(description="Path to compose file"),
@@ -1460,7 +1460,7 @@ def register_tools(mcp: FastMCP):
             "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"log_management", "compose", "compose_management"},
+        tags={"log", "compose"},
     )
     async def compose_logs(
         compose_file: str = Field(description="Path to compose file"),
@@ -1498,7 +1498,7 @@ def register_tools(mcp: FastMCP):
 
 
 def register_prompts(mcp: FastMCP):
-    print(f"container_manager_mcp v{__version__}")
+    print(f"mcp_server v{__version__}")
 
     @mcp.prompt
     def get_logs(
@@ -1510,7 +1510,7 @@ def register_prompts(mcp: FastMCP):
         return f"Get the logs for the following service: {container}"
 
 
-def container_manager_mcp():
+def mcp_server():
     parser = create_mcp_parser()
     parser.description = "Container Manager MCP Server"
     args = parser.parse_args()
@@ -1838,4 +1838,4 @@ def container_manager_mcp():
 
 
 if __name__ == "__main__":
-    container_manager_mcp()
+    mcp_server()

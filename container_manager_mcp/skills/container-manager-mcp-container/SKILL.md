@@ -1,7 +1,7 @@
 ---
-name: container-manager-container-management
+name: container-manager-mcp-container
 description: Manages containers. Use for listing/running/stopping/removing/pruning. Triggers - runtime ops, scaling.
-tags: [container-management]
+tags: [container]
 ---
 
 ### Overview

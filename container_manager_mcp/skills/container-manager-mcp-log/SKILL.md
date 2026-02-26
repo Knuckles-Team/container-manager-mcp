@@ -1,7 +1,7 @@
 ---
-name: container-manager-log-management
+name: container-manager-mcp-log
 description: Manages logs. Use for container/compose logs. Triggers - debugging, monitoring.
-tags: [log-management]
+tags: [log]
 ---
 
 ### Overview

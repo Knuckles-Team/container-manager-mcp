@@ -1,7 +1,7 @@
 ---
-name: container-manager-network-management
+name: container-manager-mcp-network
 description: Manages networks. Use for listing/creating/removing/pruning. Triggers - isolation, connectivity.
-tags: [network-management]
+tags: [network]
 ---
 
 ### Overview

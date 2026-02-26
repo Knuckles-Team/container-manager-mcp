@@ -1,7 +1,7 @@
 ---
-name: container-manager-volume-management
+name: container-manager-mcp-volume
 description: Manages volumes. Use for listing/creating/removing/pruning. Triggers - data persistence.
-tags: [volume-management]
+tags: [volume]
 ---
 
 ### Overview
