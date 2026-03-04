@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
 
+from dotenv import load_dotenv, find_dotenv
 import os
 import sys
 import logging
@@ -31,7 +32,7 @@ from agent_utilities.middlewares import (
     JWTClaimsLoggingMiddleware,
 )
 
-__version__ = "1.3.24"
+__version__ = "1.3.25"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
@@ -57,11 +58,12 @@ def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, st
     return image, default_tag
 
 
-def register_tools(mcp: FastMCP):
-    @mcp.custom_route("/health", methods=["GET"])
+def register_misc_tools(mcp: FastMCP):
     async def health_check(request: Request) -> JSONResponse:
         return JSONResponse({"status": "OK"})
 
+
+def register_info_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Get Version",
@@ -146,6 +148,8 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to get info: {str(e)}")
             raise RuntimeError(f"Failed to get info: {str(e)}")
 
+
+def register_image_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "List Images",
@@ -328,6 +332,8 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune images: {str(e)}")
             raise RuntimeError(f"Failed to prune images: {str(e)}")
 
+
+def register_container_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "List Containers",
@@ -565,6 +571,53 @@ def register_tools(mcp: FastMCP):
 
     @mcp.tool(
         annotations={
+            "title": "Exec in Container",
+            "readOnlyHint": False,
+            "destructiveHint": True,
+            "idempotentHint": False,
+            "openWorldHint": False,
+        },
+        tags={"container"},
+    )
+    async def exec_in_container(
+        container_id: str = Field(description="Container ID or name"),
+        command: List[str] = Field(description="Command to execute"),
+        detach: bool = Field(description="Detach execution", default=False),
+        manager_type: Optional[str] = Field(
+            description="Container manager: docker, podman (default: auto-detect)",
+            default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+        ),
+        silent: Optional[bool] = Field(
+            description="Suppress output",
+            default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+        ),
+        log_file: Optional[str] = Field(
+            description="Path to log file",
+            default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+        ),
+        ctx: Context = Field(
+            description="MCP context for progress reporting", default=None
+        ),
+    ) -> Dict:
+        """
+        Executes a command inside a running container.
+        Returns: A dictionary with execution results, including 'exit_code' and 'output' as string.
+        """
+        logger = logging.getLogger("ContainerManager")
+        logger.debug(
+            f"Executing {command} in container {container_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
+        )
+        try:
+            manager = create_manager(manager_type, silent, log_file)
+            return manager.exec_in_container(container_id, command, detach)
+        except Exception as e:
+            logger.error(f"Failed to exec in container: {str(e)}")
+            raise RuntimeError(f"Failed to exec in container: {str(e)}")
+
+
+def register_log_tools(mcp: FastMCP):
+    @mcp.tool(
+        annotations={
             "title": "Get Container Logs",
             "readOnlyHint": True,
             "destructiveHint": False,
@@ -611,18 +664,17 @@ def register_tools(mcp: FastMCP):
 
     @mcp.tool(
         annotations={
-            "title": "Exec in Container",
-            "readOnlyHint": False,
-            "destructiveHint": True,
-            "idempotentHint": False,
+            "title": "Compose Logs",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
             "openWorldHint": False,
         },
-        tags={"container"},
+        tags={"log", "compose"},
     )
-    async def exec_in_container(
-        container_id: str = Field(description="Container ID or name"),
-        command: List[str] = Field(description="Command to execute"),
-        detach: bool = Field(description="Detach execution", default=False),
+    async def compose_logs(
+        compose_file: str = Field(description="Path to compose file"),
+        service: Optional[str] = Field(description="Specific service", default=None),
         manager_type: Optional[str] = Field(
             description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -638,22 +690,24 @@ def register_tools(mcp: FastMCP):
         ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
-    ) -> Dict:
+    ) -> str:
         """
-        Executes a command inside a running container.
-        Returns: A dictionary with execution results, including 'exit_code' and 'output' as string.
+        Retrieves logs for services in a Docker Compose project.
+        Returns: A string containing combined log output, prefixed by service names; parse as text lines.
         """
         logger = logging.getLogger("ContainerManager")
         logger.debug(
-            f"Executing {command} in container {container_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
+            f"Compose logs {compose_file} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
             manager = create_manager(manager_type, silent, log_file)
-            return manager.exec_in_container(container_id, command, detach)
+            return manager.compose_logs(compose_file, service)
         except Exception as e:
-            logger.error(f"Failed to exec in container: {str(e)}")
-            raise RuntimeError(f"Failed to exec in container: {str(e)}")
+            logger.error(f"Failed to compose logs: {str(e)}")
+            raise RuntimeError(f"Failed to compose logs: {str(e)}")
 
+
+def register_volume_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "List Volumes",
@@ -826,6 +880,8 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune volumes: {str(e)}")
             raise RuntimeError(f"Failed to prune volumes: {str(e)}")
 
+
+def register_network_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "List Networks",
@@ -999,6 +1055,8 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune networks: {str(e)}")
             raise RuntimeError(f"Failed to prune networks: {str(e)}")
 
+
+def register_system_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Prune System",
@@ -1043,6 +1101,8 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to prune system: {str(e)}")
             raise RuntimeError(f"Failed to prune system: {str(e)}")
 
+
+def register_swarm_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Init Swarm",
@@ -1321,6 +1381,8 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to remove service: {str(e)}")
             raise RuntimeError(f"Failed to remove service: {str(e)}")
 
+
+def register_compose_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Compose Up",
@@ -1452,50 +1514,6 @@ def register_tools(mcp: FastMCP):
             logger.error(f"Failed to compose ps: {str(e)}")
             raise RuntimeError(f"Failed to compose ps: {str(e)}")
 
-    @mcp.tool(
-        annotations={
-            "title": "Compose Logs",
-            "readOnlyHint": True,
-            "destructiveHint": False,
-            "idempotentHint": True,
-            "openWorldHint": False,
-        },
-        tags={"log", "compose"},
-    )
-    async def compose_logs(
-        compose_file: str = Field(description="Path to compose file"),
-        service: Optional[str] = Field(description="Specific service", default=None),
-        manager_type: Optional[str] = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
-            default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-        ),
-        silent: Optional[bool] = Field(
-            description="Suppress output",
-            default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
-        ),
-        log_file: Optional[str] = Field(
-            description="Path to log file",
-            default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
-        ),
-        ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
-        ),
-    ) -> str:
-        """
-        Retrieves logs for services in a Docker Compose project.
-        Returns: A string containing combined log output, prefixed by service names; parse as text lines.
-        """
-        logger = logging.getLogger("ContainerManager")
-        logger.debug(
-            f"Compose logs {compose_file} for {manager_type}, silent: {silent}, log_file: {log_file}"
-        )
-        try:
-            manager = create_manager(manager_type, silent, log_file)
-            return manager.compose_logs(compose_file, service)
-        except Exception as e:
-            logger.error(f"Failed to compose logs: {str(e)}")
-            raise RuntimeError(f"Failed to compose logs: {str(e)}")
-
 
 def register_prompts(mcp: FastMCP):
     print(f"mcp_server v{__version__}")
@@ -1511,6 +1529,7 @@ def register_prompts(mcp: FastMCP):
 
 
 def mcp_server():
+    load_dotenv(find_dotenv())
     parser = create_mcp_parser()
     parser.description = "Container Manager MCP Server"
     args = parser.parse_args()
@@ -1813,7 +1832,36 @@ def mcp_server():
             sys.exit(1)
 
     mcp = FastMCP("ContainerManager", auth=auth)
-    register_tools(mcp)
+    DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
+    if DEFAULT_MISCTOOL:
+        register_misc_tools(mcp)
+    DEFAULT_INFOTOOL = to_boolean(os.getenv("INFOTOOL", "True"))
+    if DEFAULT_INFOTOOL:
+        register_info_tools(mcp)
+    DEFAULT_IMAGETOOL = to_boolean(os.getenv("IMAGETOOL", "True"))
+    if DEFAULT_IMAGETOOL:
+        register_image_tools(mcp)
+    DEFAULT_CONTAINERTOOL = to_boolean(os.getenv("CONTAINERTOOL", "True"))
+    if DEFAULT_CONTAINERTOOL:
+        register_container_tools(mcp)
+    DEFAULT_LOGTOOL = to_boolean(os.getenv("LOGTOOL", "True"))
+    if DEFAULT_LOGTOOL:
+        register_log_tools(mcp)
+    DEFAULT_VOLUMETOOL = to_boolean(os.getenv("VOLUMETOOL", "True"))
+    if DEFAULT_VOLUMETOOL:
+        register_volume_tools(mcp)
+    DEFAULT_NETWORKTOOL = to_boolean(os.getenv("NETWORKTOOL", "True"))
+    if DEFAULT_NETWORKTOOL:
+        register_network_tools(mcp)
+    DEFAULT_SYSTEMTOOL = to_boolean(os.getenv("SYSTEMTOOL", "True"))
+    if DEFAULT_SYSTEMTOOL:
+        register_system_tools(mcp)
+    DEFAULT_SWARMTOOL = to_boolean(os.getenv("SWARMTOOL", "True"))
+    if DEFAULT_SWARMTOOL:
+        register_swarm_tools(mcp)
+    DEFAULT_COMPOSETOOL = to_boolean(os.getenv("COMPOSETOOL", "True"))
+    if DEFAULT_COMPOSETOOL:
+        register_compose_tools(mcp)
     register_prompts(mcp)
 
     for mw in middlewares:
