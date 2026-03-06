@@ -1,54 +1,5 @@
 ---
 services:
-  container-manager-mcp:
-    # image: docker.io/knucklessg1/container-manager:latest
-    build:
-      context: .
-      dockerfile: debug.Dockerfile
-    container_name: container-manager-mcp
-    hostname: container-manager-mcp
-    command: [ "container-manager-mcp" ]
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - "PYTHONUNBUFFERED=1"
-      - "HOST=0.0.0.0"
-      - "PORT=8019"
-      - "TRANSPORT=streamable-http"
-      - "CONTAINER_MANAGER_TYPE=docker"
-    #      - AUTH_TYPE=oidc-proxy # Optional
-    #      - OIDC_CONFIG_URL=https://provider.com/.well-known/openid-configuration # Optional
-    #      - OIDC_CLIENT_ID=your-client-id # Optional
-    #      - OIDC_CLIENT_SECRET=your-client-secret # Optional
-    #      - OIDC_BASE_URL=https://your-server.com # Optional
-    #      - ALLOWED_CLIENT_REDIRECT_URIS=http://localhost:*,https://*.example.com/* # Optional
-    #      - ENABLE_DELEGATION=True # Optional
-    #      - AUDIENCE=https://yourinstance.gitlab.com # Optional
-    #      - DELEGATED_SCOPES='api user_impersonation' # Optional
-    #      - EUNOMIA_TYPE=embedded # Optional
-    #      - EUNOMIA_POLICY_FILE=/app/mcp_policies.json # Optional
-    #      - FASTMCP_SERVER_AUTH_JWT_ALGORITHM=HS256 # Optional
-    #      - FASTMCP_SERVER_AUTH_JWT_PUBLIC_KEY=your-shared-secret # Optional
-    #      - FASTMCP_SERVER_AUTH_JWT_REQUIRED_SCOPES=gitlab.read,gitlab.write # Optional
-    ports:
-      - "8019:8019"
-    healthcheck:
-      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8019/health')" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-
   container-manager-agent:
     # image: docker.io/knucklessg1/container-manager:latest
     build:
@@ -59,8 +10,6 @@ services:
     command: [ "container-manager-agent" ]
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      - container-manager-mcp
     logging:
       driver: json-file
       options:
@@ -70,9 +19,8 @@ services:
     environment:
       - "PYTHONUNBUFFERED=1"
       - "HOST=0.0.0.0"
-      - "PORT=9019"
-      # - "MCP_CONFIG=./container_manager_mcp/mcp_config.json" # Optionally specify your own file - Default will use MCP_URL in the pre-packaged mcp_config.json
-      - "MCP_URL=http://container-manager-mcp:8019/mcp"
+      - "PORT=9696"
+      - "TRANSPORT=stdio"
       - "PROVIDER=openai"
       - "LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:1234/v1}"
       - "LLM_API_KEY=${LLM_API_KEY:-llama}"
@@ -88,9 +36,9 @@ services:
       - "DEVELOPER_UTILITIES_ENABLE=False"
       - "BROWSER_TOOLS_ENABLE=False"
     ports:
-      - "9019:9019"
+      - "9696:9696"
     healthcheck:
-      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9019/health')" ]
+      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9696/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
