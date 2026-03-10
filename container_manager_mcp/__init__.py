@@ -6,8 +6,8 @@ import inspect
 
 MODULES = [
     "container_manager_mcp.container_manager",
-    "container_manager_mcp.mcp",
-    "container_manager_mcp.agent",
+    "container_manager_mcp.mcp_server",
+    "container_manager_mcp.agent_server",
 ]
 
 __all__ = []

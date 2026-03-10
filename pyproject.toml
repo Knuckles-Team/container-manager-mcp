@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "container-manager-mcp"
-version = "1.3.37"
+version = "1.3.39"
 description = "Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box!"
 readme = "README.md"
 authors = [{ name = "Audel Rouhi", email = "knucklessg1@gmail.com" }]
@@ -17,7 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3"]
 requires-python = ">=3.10"
 dependencies = [
-    "agent-utilities[mcp]>=0.2.23",
+    "agent-utilities[mcp]>=0.2.25",
     "docker>=7.1.0"]
 
 [project.optional-dependencies]
@@ -26,21 +26,24 @@ podman = [
 docker = [
     "docker>=7.1.0"]
 mcp = [
-    "agent-utilities[mcp]>=0.2.23"]
+    "agent-utilities[mcp]>=0.2.25"]
 agent = [
-    "agent-utilities[agent,logfire]>=0.2.23",
-    "container-manager-mcp[mcp]>=1.3.37"]
+    "agent-utilities[agent,logfire]>=0.2.25",
+    "container-manager-mcp[mcp]>=1.3.39"]
 all = [
-    "container-manager-mcp[docker,podman,mcp,agent]>=1.3.37"]
+    "container-manager-mcp[docker,podman,mcp,agent]>=1.3.39"]
 
 [project.scripts]
 container-manager = "container_manager_mcp.container_manager:container_manager"
-container-manager-mcp = "container_manager_mcp.mcp:mcp_server"
-container-manager-agent = "container_manager_mcp.agent:agent_server"
+container-manager-mcp = "container_manager_mcp.mcp_server:mcp_server"
+container-manager-agent = "container_manager_mcp.agent_server:agent_server"
 
 
 [tool.setuptools.package-data]
-container_manager_mcp = [ "mcp_config.json", "agent/**"]
+container_manager_mcp = [ "mcp_config.json", "agent_data/**"]
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.setuptools]
+include-package-data = true

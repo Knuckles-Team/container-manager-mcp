@@ -14,7 +14,7 @@ from datetime import datetime
 import platform
 import traceback
 
-__version__ = "1.3.37"
+__version__ = "1.3.39"
 
 try:
     import docker
@@ -1810,7 +1810,6 @@ def create_manager(
 def container_manager():
     print(f"container_manager v{__version__}")
     parser = argparse.ArgumentParser(
-        add_help=False,
         description="Container Manager: A tool to manage containers with Docker, Podman, and Docker Swarm!",
     )
     parser.add_argument("-s", "--silent", action="store_true", help="Suppress output")
@@ -1912,9 +1911,6 @@ def container_manager():
         "--remove-service", type=str, default=None, help="Service to remove"
     )
     parser.add_argument("--force", action="store_true", help="Force removal")
-    parser.add_argument("-h", "--help", action="store_true", help="Show help")
-
-    parser.add_argument("--help", action="store_true", help="Show usage")
 
     args = parser.parse_args()
 
