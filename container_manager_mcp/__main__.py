@@ -1,6 +1,4 @@
-#!/usr/bin/python
-# coding: utf-8
-from container_manager_mcp.mcp_server import container_manager_mcp
+from container_manager_mcp.agent_server import agent_server
 
 if __name__ == "__main__":
-    container_manager_mcp()
+    agent_server()
