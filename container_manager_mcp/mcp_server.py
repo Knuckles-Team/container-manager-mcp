@@ -5,7 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 import os
 import sys
 import logging
-from typing import Optional, List, Dict
+from typing import Any, Optional, List, Dict
 
 from pydantic import Field
 from starlette.requests import Request
@@ -16,10 +16,9 @@ from container_manager_mcp.container_manager import create_manager
 from agent_utilities.base_utilities import to_boolean
 from agent_utilities.mcp_utilities import (
     create_mcp_server,
-    config,
 )
 
-__version__ = "1.3.45"
+__version__ = "1.3.46"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
@@ -1503,7 +1502,7 @@ def register_compose_tools(mcp: FastMCP):
 
 
 def register_prompts(mcp: FastMCP):
-    print(f"mcp_server v{__version__}")
+    print(f"mcp_server v{__version__}", file=sys.stderr)
 
     @mcp.prompt
     def get_logs(
@@ -1515,7 +1514,8 @@ def register_prompts(mcp: FastMCP):
         return f"Get the logs for the following service: {container}"
 
 
-def mcp_server():
+def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
+    """Initialize and return the MCP instance, args, and middlewares."""
     load_dotenv(find_dotenv())
 
     args, mcp, middlewares = create_mcp_server(
@@ -1559,54 +1559,28 @@ def mcp_server():
     for mw in middlewares:
         mcp.add_middleware(mw)
 
-    print(f"Container Manager MCP v{__version__}")
-    print("\nStarting Container Manager MCP Server")
-    print(f"  Transport: {args.transport.upper()}")
-    print(f"  Auth: {args.auth_type}")
-    print(f"  Delegation: {'ON' if config['enable_delegation'] else 'OFF'}")
-    print(f"  Eunomia: {args.eunomia_type}")
+    # Collect tags for reporting
+    registered_tags = []
+    for tool in mcp.tools.values():
+        if hasattr(tool, "tags") and tool.tags:
+            registered_tags.extend(tool.tags)
 
-    DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
-    if DEFAULT_MISCTOOL:
-        register_misc_tools(mcp)
-    DEFAULT_INFOTOOL = to_boolean(os.getenv("INFOTOOL", "True"))
-    if DEFAULT_INFOTOOL:
-        register_info_tools(mcp)
-    DEFAULT_IMAGETOOL = to_boolean(os.getenv("IMAGETOOL", "True"))
-    if DEFAULT_IMAGETOOL:
-        register_image_tools(mcp)
-    DEFAULT_CONTAINERTOOL = to_boolean(os.getenv("CONTAINERTOOL", "True"))
-    if DEFAULT_CONTAINERTOOL:
-        register_container_tools(mcp)
-    DEFAULT_LOGTOOL = to_boolean(os.getenv("LOGTOOL", "True"))
-    if DEFAULT_LOGTOOL:
-        register_log_tools(mcp)
-    DEFAULT_VOLUMETOOL = to_boolean(os.getenv("VOLUMETOOL", "True"))
-    if DEFAULT_VOLUMETOOL:
-        register_volume_tools(mcp)
-    DEFAULT_NETWORKTOOL = to_boolean(os.getenv("NETWORKTOOL", "True"))
-    if DEFAULT_NETWORKTOOL:
-        register_network_tools(mcp)
-    DEFAULT_SYSTEMTOOL = to_boolean(os.getenv("SYSTEMTOOL", "True"))
-    if DEFAULT_SYSTEMTOOL:
-        register_system_tools(mcp)
-    DEFAULT_SWARMTOOL = to_boolean(os.getenv("SWARMTOOL", "True"))
-    if DEFAULT_SWARMTOOL:
-        register_swarm_tools(mcp)
-    DEFAULT_COMPOSETOOL = to_boolean(os.getenv("COMPOSETOOL", "True"))
-    if DEFAULT_COMPOSETOOL:
-        register_compose_tools(mcp)
-    register_prompts(mcp)
+    print(f"{args.name or 'container-manager-mcp'} MCP v{__version__}", file=sys.stderr)
+    print("\nStarting MCP Server", file=sys.stderr)
+    print(f"  Transport: {args.transport.upper()}", file=sys.stderr)
+    print(f"  Auth: {args.auth_type}", file=sys.stderr)
+    print(f"  Dynamic Tags Loaded: {len(set(registered_tags))}", file=sys.stderr)
 
-    for mw in middlewares:
-        mcp.add_middleware(mw)
+    return mcp, args, middlewares, registered_tags
 
-    print(f"Container Manager MCP v{__version__}")
-    print("\nStarting Container Manager MCP Server")
-    print(f"  Transport: {args.transport.upper()}")
-    print(f"  Auth: {args.auth_type}")
-    print(f"  Delegation: {'ON' if config['enable_delegation'] else 'OFF'}")
-    print(f"  Eunomia: {args.eunomia_type}")
+
+def mcp_server() -> None:
+    mcp, args, middlewares, registered_tags = get_mcp_instance()
+    print(f"{args.name or 'container-manager-mcp'} MCP v{__version__}", file=sys.stderr)
+    print("\nStarting MCP Server", file=sys.stderr)
+    print(f"  Transport: {args.transport.upper()}", file=sys.stderr)
+    print(f"  Auth: {args.auth_type}", file=sys.stderr)
+    print(f"  Dynamic Tags Loaded: {len(set(registered_tags))}", file=sys.stderr)
 
     if args.transport == "stdio":
         mcp.run(transport="stdio")
