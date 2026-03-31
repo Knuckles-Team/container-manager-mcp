@@ -4,7 +4,7 @@ This is the only file needed to enable graph mode for this agent.
 Provides TAG_PROMPTS and TAG_ENV_VARS for create_graph_agent_server().
 """
 
-# ── Tag → System Prompt Mapping ──────────────────────────────────────
+                                                                       
 TAG_PROMPTS: dict[str, str] = {
     "compose": (
         "You are a Container Manager Compose specialist. Help users manage and interact with Compose functionality using the available tools."
@@ -33,7 +33,7 @@ TAG_PROMPTS: dict[str, str] = {
 }
 
 
-# ── Tag → Environment Variable Mapping ────────────────────────────────
+                                                                        
 TAG_ENV_VARS: dict[str, str] = {
     "compose": "COMPOSETOOL",
     "container": "CONTAINERTOOL",

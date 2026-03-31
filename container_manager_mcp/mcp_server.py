@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# coding: utf-8
+
 
 from dotenv import load_dotenv, find_dotenv
 import os
@@ -18,7 +18,7 @@ from agent_utilities.mcp_utilities import (
     create_mcp_server,
 )
 
-__version__ = "1.3.47"
+__version__ = "1.3.48"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
@@ -1559,7 +1559,6 @@ def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
     for mw in middlewares:
         mcp.add_middleware(mw)
 
-    # Collect tags for reporting
     registered_tags = []
     for tool in mcp.tools.values():
         if hasattr(tool, "tags") and tool.tags:
