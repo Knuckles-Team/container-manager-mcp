@@ -18,7 +18,7 @@ from agent_utilities.mcp_utilities import (
     create_mcp_server,
 )
 
-__version__ = "1.3.50"
+__version__ = "1.3.51"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
