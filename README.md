@@ -116,7 +116,7 @@ This repository is actively maintained - Contributions are welcome!
 | --host            | Host to bind the server to (default: 0.0.0.0)    |
 | --port            | Port to bind the server to (default: 9000)       |
 | --provider        | LLM Provider: openai, anthropic, google, huggingface (default: openai) |
-| --model-id        | LLM Model ID (default: qwen3:4b)                 |
+| --model-id        | LLM Model ID (default: google/gemma-4-31b)                 |
 | --base-url        | LLM Base URL (for OpenAI compatible providers)   |
 | --api-key         | LLM API Key                                      |
 | --mcp-url         | MCP Server URL (default: http://localhost:8000/mcp) |
@@ -140,7 +140,7 @@ stateDiagram-v2
   DomainNode --> [*]: Domain Result
 ```
 
-- **RouterNode**: A fast, lightweight LLM (e.g., `nvidia/nemotron-3-super`) that classifies the user's query into one of the specialized domains.
+- **RouterNode**: A fast, lightweight LLM (e.g., `google/gemma-4-31b`) that classifies the user's query into one of the specialized domains.
 - **DomainNode**: The executor node. For the selected domain, it dynamically sets environment variables to temporarily enable ONLY the tools relevant to that domain, creating a highly focused sub-agent (e.g., `gpt-4o`) to complete the request. This preserves LLM context and prevents tool hallucination.
 
 ## Usage
@@ -187,7 +187,7 @@ docker run -d \
   -p 9000:9000 \
   -e PORT=9000 \
   -e PROVIDER=openai \
-  -e MODEL_ID=qwen3:4b \
+  -e MODEL_ID=google/gemma-4-31b \
   -e BASE_URL=http://host.docker.internal:11434/v1 \
   -e MCP_URL=http://host.docker.internal:8004/mcp \
   knucklessg1/container-manager:latest \
