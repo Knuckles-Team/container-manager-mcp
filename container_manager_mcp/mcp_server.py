@@ -6,6 +6,7 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
     try:
         from requests.exceptions import RequestsDependencyWarning
+
         warnings.filterwarnings("ignore", category=RequestsDependencyWarning)
     except ImportError:
         pass
@@ -21,8 +22,6 @@ import logging
 from typing import Any, Optional, List, Dict
 
 from pydantic import Field
-from starlette.requests import Request
-from starlette.responses import JSONResponse
 from fastmcp import FastMCP, Context
 from fastmcp.utilities.logging import get_logger
 from container_manager_mcp.container_manager import create_manager
@@ -31,7 +30,7 @@ from agent_utilities.mcp_utilities import (
     create_mcp_server,
 )
 
-__version__ = "1.3.53"
+__version__ = "1.3.54"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
@@ -58,8 +57,8 @@ def parse_image_string(image: str, default_tag: str = "latest") -> tuple[str, st
 
 
 def register_misc_tools(mcp: FastMCP):
-    async def health_check(request: Request) -> JSONResponse:
-        return JSONResponse({"status": "OK"})
+    pass
+    pass
 
 
 def register_info_tools(mcp: FastMCP):
@@ -86,7 +85,7 @@ def register_info_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -128,7 +127,7 @@ def register_info_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -172,7 +171,7 @@ def register_image_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> List[Dict]:
@@ -224,7 +223,7 @@ def register_image_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -269,7 +268,7 @@ def register_image_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -312,7 +311,7 @@ def register_image_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -359,7 +358,7 @@ def register_container_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> List[Dict]:
@@ -417,7 +416,7 @@ def register_container_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -463,7 +462,7 @@ def register_container_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -507,7 +506,7 @@ def register_container_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -549,7 +548,7 @@ def register_container_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -594,7 +593,7 @@ def register_container_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -642,7 +641,7 @@ def register_log_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> str:
@@ -686,7 +685,7 @@ def register_log_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> str:
@@ -730,7 +729,7 @@ def register_volume_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -773,7 +772,7 @@ def register_volume_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -817,7 +816,7 @@ def register_volume_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -860,7 +859,7 @@ def register_volume_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -904,7 +903,7 @@ def register_network_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> List[Dict]:
@@ -950,7 +949,7 @@ def register_network_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -993,7 +992,7 @@ def register_network_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1035,7 +1034,7 @@ def register_network_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1081,7 +1080,7 @@ def register_system_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1128,7 +1127,7 @@ def register_swarm_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1173,7 +1172,7 @@ def register_swarm_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1217,7 +1216,7 @@ def register_swarm_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> List[Dict]:
@@ -1261,7 +1260,7 @@ def register_swarm_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> List[Dict]:
@@ -1314,7 +1313,7 @@ def register_swarm_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1359,7 +1358,7 @@ def register_swarm_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> Dict:
@@ -1408,7 +1407,7 @@ def register_compose_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> str:
@@ -1451,7 +1450,7 @@ def register_compose_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> str:
@@ -1494,7 +1493,7 @@ def register_compose_tools(mcp: FastMCP):
             description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
         ),
-        ctx: Context = Field(
+        _ctx: Context = Field(
             description="MCP context for progress reporting", default=None
         ),
     ) -> str:
