@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
 
-import sys
-import logging
-import os
-from abc import ABC, abstractmethod
-from typing import List, Dict, Optional, Any
 import argparse
 import json
+import logging
+import os
+import platform
 import shutil
 import subprocess
-from datetime import datetime
-import platform
+import sys
 import traceback
+from abc import ABC, abstractmethod
+from datetime import datetime
+from typing import Any
 
 __version__ = "1.3.54"
 
@@ -32,8 +32,7 @@ except ImportError:
 
 
 class ContainerManagerBase(ABC):
-
-    def __init__(self, silent: bool = False, log_file: str = None):
+    def __init__(self, silent: bool = False, log_file: str | None = None):
         self.silent = silent
         self.setup_logging(log_file)
 
@@ -52,8 +51,8 @@ class ContainerManagerBase(ABC):
     def log_action(
         self,
         action: str,
-        params: Dict = None,
-        result: Any = None,
+        params: dict | None = None,
+        result: Any | None = None,
         error: Exception = None,
     ):
         self.logger.info(f"Performing action: {action} with params: {params}")
@@ -108,58 +107,58 @@ class ContainerManagerBase(ABC):
         return "unknown"
 
     @abstractmethod
-    def get_version(self) -> Dict:
+    def get_version(self) -> dict:
         pass
 
     @abstractmethod
-    def get_info(self) -> Dict:
+    def get_info(self) -> dict:
         pass
 
     @abstractmethod
-    def list_images(self) -> List[Dict]:
+    def list_images(self) -> list[dict]:
         pass
 
     @abstractmethod
     def pull_image(
-        self, image: str, tag: str = "latest", platform: Optional[str] = None
-    ) -> Dict:
+        self, image: str, tag: str = "latest", platform: str | None = None
+    ) -> dict:
         pass
 
     @abstractmethod
-    def remove_image(self, image: str, force: bool = False) -> Dict:
+    def remove_image(self, image: str, force: bool = False) -> dict:
         pass
 
     @abstractmethod
-    def prune_images(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_images(self, force: bool = False, all: bool = False) -> dict:
         pass
 
     @abstractmethod
-    def list_containers(self, all: bool = False) -> List[Dict]:
+    def list_containers(self, all: bool = False) -> list[dict]:
         pass
 
     @abstractmethod
     def run_container(
         self,
         image: str,
-        name: Optional[str] = None,
-        command: Optional[str] = None,
+        name: str | None = None,
+        command: str | None = None,
         detach: bool = False,
-        ports: Optional[Dict[str, str]] = None,
-        volumes: Optional[Dict[str, Dict]] = None,
-        environment: Optional[Dict[str, str]] = None,
-    ) -> Dict:
+        ports: dict[str, str] | None = None,
+        volumes: dict[str, dict] | None = None,
+        environment: dict[str, str] | None = None,
+    ) -> dict:
         pass
 
     @abstractmethod
-    def stop_container(self, container_id: str, timeout: int = 10) -> Dict:
+    def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         pass
 
     @abstractmethod
-    def remove_container(self, container_id: str, force: bool = False) -> Dict:
+    def remove_container(self, container_id: str, force: bool = False) -> dict:
         pass
 
     @abstractmethod
-    def prune_containers(self) -> Dict:
+    def prune_containers(self) -> dict:
         pass
 
     @abstractmethod
@@ -168,44 +167,44 @@ class ContainerManagerBase(ABC):
 
     @abstractmethod
     def exec_in_container(
-        self, container_id: str, command: List[str], detach: bool = False
-    ) -> Dict:
+        self, container_id: str, command: list[str], detach: bool = False
+    ) -> dict:
         pass
 
     @abstractmethod
-    def list_volumes(self) -> Dict:
+    def list_volumes(self) -> dict:
         pass
 
     @abstractmethod
-    def create_volume(self, name: str) -> Dict:
+    def create_volume(self, name: str) -> dict:
         pass
 
     @abstractmethod
-    def remove_volume(self, name: str, force: bool = False) -> Dict:
+    def remove_volume(self, name: str, force: bool = False) -> dict:
         pass
 
     @abstractmethod
-    def prune_volumes(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_volumes(self, force: bool = False, all: bool = False) -> dict:
         pass
 
     @abstractmethod
-    def list_networks(self) -> List[Dict]:
+    def list_networks(self) -> list[dict]:
         pass
 
     @abstractmethod
-    def create_network(self, name: str, driver: str = "bridge") -> Dict:
+    def create_network(self, name: str, driver: str = "bridge") -> dict:
         pass
 
     @abstractmethod
-    def remove_network(self, network_id: str) -> Dict:
+    def remove_network(self, network_id: str) -> dict:
         pass
 
     @abstractmethod
-    def prune_networks(self) -> Dict:
+    def prune_networks(self) -> dict:
         pass
 
     @abstractmethod
-    def prune_system(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_system(self, force: bool = False, all: bool = False) -> dict:
         pass
 
     @abstractmethod
@@ -223,23 +222,23 @@ class ContainerManagerBase(ABC):
         pass
 
     @abstractmethod
-    def compose_logs(self, compose_file: str, service: Optional[str] = None) -> str:
+    def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         pass
 
     @abstractmethod
-    def init_swarm(self, advertise_addr: Optional[str] = None) -> Dict:
+    def init_swarm(self, advertise_addr: str | None = None) -> dict:
         pass
 
     @abstractmethod
-    def leave_swarm(self, force: bool = False) -> Dict:
+    def leave_swarm(self, force: bool = False) -> dict:
         pass
 
     @abstractmethod
-    def list_nodes(self) -> List[Dict]:
+    def list_nodes(self) -> list[dict]:
         pass
 
     @abstractmethod
-    def list_services(self) -> List[Dict]:
+    def list_services(self) -> list[dict]:
         pass
 
     @abstractmethod
@@ -248,18 +247,18 @@ class ContainerManagerBase(ABC):
         name: str,
         image: str,
         replicas: int = 1,
-        ports: Optional[Dict[str, str]] = None,
-        mounts: Optional[List[str]] = None,
-    ) -> Dict:
+        ports: dict[str, str] | None = None,
+        mounts: list[str] | None = None,
+    ) -> dict:
         pass
 
     @abstractmethod
-    def remove_service(self, service_id: str) -> Dict:
+    def remove_service(self, service_id: str) -> dict:
         pass
 
 
 class DockerManager(ContainerManagerBase):
-    def __init__(self, silent: bool = False, log_file: str = None):
+    def __init__(self, silent: bool = False, log_file: str | None = None):
         super().__init__(silent, log_file)
         if docker is None:
             raise ImportError("Please install docker-py: pip install docker")
@@ -269,7 +268,7 @@ class DockerManager(ContainerManagerBase):
             self.logger.error(f"Failed to connect to Docker daemon: {str(e)}")
             raise RuntimeError(f"Failed to connect to Docker: {str(e)}")
 
-    def prune_system(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_system(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
         try:
             filters = {"until": None} if all else {}
@@ -304,8 +303,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_system", params, error=e)
             raise RuntimeError(f"Failed to prune system: {str(e)}")
 
-    def get_version(self) -> Dict:
-        params = {}
+    def get_version(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             version = self.client.version()
             result = {
@@ -321,8 +320,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("get_version", params, error=e)
             raise RuntimeError(f"Failed to get version: {str(e)}")
 
-    def get_info(self) -> Dict:
-        params = {}
+    def get_info(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             info = self.client.info()
             result = {
@@ -340,8 +339,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("get_info", params, error=e)
             raise RuntimeError(f"Failed to get info: {str(e)}")
 
-    def list_images(self) -> List[Dict]:
-        params = {}
+    def list_images(self) -> list[dict]:
+        params: dict[str, Any] = {}
         try:
             images = self.client.images.list()
             result = []
@@ -379,8 +378,8 @@ class DockerManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to list images: {str(e)}")
 
     def pull_image(
-        self, image: str, tag: str = "latest", platform: Optional[str] = None
-    ) -> Dict:
+        self, image: str, tag: str = "latest", platform: str | None = None
+    ) -> dict:
         params = {"image": image, "tag": tag, "platform": platform}
         try:
             img = self.client.images.pull(f"{image}:{tag}", platform=platform)
@@ -409,7 +408,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("pull_image", params, error=e)
             raise RuntimeError(f"Failed to pull image: {str(e)}")
 
-    def remove_image(self, image: str, force: bool = False) -> Dict:
+    def remove_image(self, image: str, force: bool = False) -> dict:
         params = {"image": image, "force": force}
         try:
             self.client.images.remove(image, force=force)
@@ -420,7 +419,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("remove_image", params, error=e)
             raise RuntimeError(f"Failed to remove image: {str(e)}")
 
-    def prune_images(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_images(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
         try:
             if all:
@@ -461,7 +460,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_images", params, error=e)
             raise RuntimeError(f"Failed to prune images: {str(e)}")
 
-    def list_containers(self, all: bool = False) -> List[Dict]:
+    def list_containers(self, all: bool = False) -> list[dict]:
         params = {"all": all}
         try:
             containers = self.client.containers.list(all=all)
@@ -496,13 +495,13 @@ class DockerManager(ContainerManagerBase):
     def run_container(
         self,
         image: str,
-        name: Optional[str] = None,
-        command: Optional[str] = None,
+        name: str | None = None,
+        command: str | None = None,
         detach: bool = False,
-        ports: Optional[Dict[str, str]] = None,
-        volumes: Optional[Dict[str, Dict]] = None,
-        environment: Optional[Dict[str, str]] = None,
-    ) -> Dict:
+        ports: dict[str, str] | None = None,
+        volumes: dict[str, dict] | None = None,
+        environment: dict[str, str] | None = None,
+    ) -> dict:
         params = {
             "image": image,
             "name": name,
@@ -554,7 +553,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("run_container", params, error=e)
             raise RuntimeError(f"Failed to run container: {str(e)}")
 
-    def stop_container(self, container_id: str, timeout: int = 10) -> Dict:
+    def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         params = {"container_id": container_id, "timeout": timeout}
         try:
             container = self.client.containers.get(container_id)
@@ -566,7 +565,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("stop_container", params, error=e)
             raise RuntimeError(f"Failed to stop container: {str(e)}")
 
-    def remove_container(self, container_id: str, force: bool = False) -> Dict:
+    def remove_container(self, container_id: str, force: bool = False) -> dict:
         params = {"container_id": container_id, "force": force}
         try:
             container = self.client.containers.get(container_id)
@@ -578,8 +577,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("remove_container", params, error=e)
             raise RuntimeError(f"Failed to remove container: {str(e)}")
 
-    def prune_containers(self) -> Dict:
-        params = {}
+    def prune_containers(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             result = self.client.containers.prune()
             self.logger.debug(f"Raw prune_containers result: {result}")
@@ -618,8 +617,8 @@ class DockerManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to get container logs: {str(e)}")
 
     def exec_in_container(
-        self, container_id: str, command: List[str], detach: bool = False
-    ) -> Dict:
+        self, container_id: str, command: list[str], detach: bool = False
+    ) -> dict:
         params = {"container_id": container_id, "command": command, "detach": detach}
         try:
             container = self.client.containers.get(container_id)
@@ -635,8 +634,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("exec_in_container", params, error=e)
             raise RuntimeError(f"Failed to exec in container: {str(e)}")
 
-    def list_volumes(self) -> Dict:
-        params = {}
+    def list_volumes(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             volumes = self.client.volumes.list()
             result = {
@@ -656,7 +655,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("list_volumes", params, error=e)
             raise RuntimeError(f"Failed to list volumes: {str(e)}")
 
-    def create_volume(self, name: str) -> Dict:
+    def create_volume(self, name: str) -> dict:
         params = {"name": name}
         try:
             volume = self.client.volumes.create(name=name)
@@ -673,7 +672,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("create_volume", params, error=e)
             raise RuntimeError(f"Failed to create volume: {str(e)}")
 
-    def remove_volume(self, name: str, force: bool = False) -> Dict:
+    def remove_volume(self, name: str, force: bool = False) -> dict:
         params = {"name": name, "force": force}
         try:
             volume = self.client.volumes.get(name)
@@ -685,7 +684,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("remove_volume", params, error=e)
             raise RuntimeError(f"Failed to remove volume: {str(e)}")
 
-    def prune_volumes(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_volumes(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
         try:
             if all:
@@ -724,8 +723,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_volumes", params, error=e)
             raise RuntimeError(f"Failed to prune volumes: {str(e)}")
 
-    def list_networks(self) -> List[Dict]:
-        params = {}
+    def list_networks(self) -> list[dict]:
+        params: dict[str, Any] = {}
         try:
             networks = self.client.networks.list()
             result = []
@@ -749,7 +748,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("list_networks", params, error=e)
             raise RuntimeError(f"Failed to list networks: {str(e)}")
 
-    def create_network(self, name: str, driver: str = "bridge") -> Dict:
+    def create_network(self, name: str, driver: str = "bridge") -> dict:
         params = {"name": name, "driver": driver}
         try:
             network = self.client.networks.create(name, driver=driver)
@@ -769,7 +768,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("create_network", params, error=e)
             raise RuntimeError(f"Failed to create network: {str(e)}")
 
-    def remove_network(self, network_id: str) -> Dict:
+    def remove_network(self, network_id: str) -> dict:
         params = {"network_id": network_id}
         try:
             network = self.client.networks.get(network_id)
@@ -781,8 +780,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("remove_network", params, error=e)
             raise RuntimeError(f"Failed to remove network: {str(e)}")
 
-    def prune_networks(self) -> Dict:
-        params = {}
+    def prune_networks(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             result = self.client.networks.prune()
             if result is None:
@@ -845,7 +844,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("compose_ps", params, error=e)
             raise RuntimeError(f"Failed to compose ps: {str(e)}")
 
-    def compose_logs(self, compose_file: str, service: Optional[str] = None) -> str:
+    def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         params = {"compose_file": compose_file, "service": service}
         try:
             cmd = ["docker", "compose", "-f", compose_file, "logs"]
@@ -860,7 +859,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("compose_logs", params, error=e)
             raise RuntimeError(f"Failed to compose logs: {str(e)}")
 
-    def init_swarm(self, advertise_addr: Optional[str] = None) -> Dict:
+    def init_swarm(self, advertise_addr: str | None = None) -> dict:
         params = {"advertise_addr": advertise_addr}
         try:
             swarm_id = self.client.swarm.init(advertise_addr=advertise_addr)
@@ -871,7 +870,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("init_swarm", params, error=e)
             raise RuntimeError(f"Failed to init swarm: {str(e)}")
 
-    def leave_swarm(self, force: bool = False) -> Dict:
+    def leave_swarm(self, force: bool = False) -> dict:
         params = {"force": force}
         try:
             self.client.swarm.leave(force=force)
@@ -882,8 +881,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("leave_swarm", params, error=e)
             raise RuntimeError(f"Failed to leave swarm: {str(e)}")
 
-    def list_nodes(self) -> List[Dict]:
-        params = {}
+    def list_nodes(self) -> list[dict]:
+        params: dict[str, Any] = {}
         try:
             nodes = self.client.nodes.list()
             result = []
@@ -909,8 +908,8 @@ class DockerManager(ContainerManagerBase):
             self.log_action("list_nodes", params, error=e)
             raise RuntimeError(f"Failed to list nodes: {str(e)}")
 
-    def list_services(self) -> List[Dict]:
-        params = {}
+    def list_services(self) -> list[dict]:
+        params: dict[str, Any] = {}
         try:
             services = self.client.services.list()
             result = []
@@ -951,9 +950,9 @@ class DockerManager(ContainerManagerBase):
         name: str,
         image: str,
         replicas: int = 1,
-        ports: Optional[Dict[str, str]] = None,
-        mounts: Optional[List[str]] = None,
-    ) -> Dict:
+        ports: dict[str, str] | None = None,
+        mounts: list[str] | None = None,
+    ) -> dict:
         params = {
             "name": name,
             "image": image,
@@ -1009,7 +1008,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("create_service", params, error=e)
             raise RuntimeError(f"Failed to create service: {str(e)}")
 
-    def remove_service(self, service_id: str) -> Dict:
+    def remove_service(self, service_id: str) -> dict:
         params = {"service_id": service_id}
         try:
             service = self.client.services.get(service_id)
@@ -1023,7 +1022,7 @@ class DockerManager(ContainerManagerBase):
 
 
 class PodmanManager(ContainerManagerBase):
-    def __init__(self, silent: bool = False, log_file: Optional[str] = None):
+    def __init__(self, silent: bool = False, log_file: str | None = None):
         super().__init__(silent, log_file)
         if PodmanClient is None:
             raise ImportError("Please install podman-py: pip install podman")
@@ -1045,7 +1044,7 @@ class PodmanManager(ContainerManagerBase):
     def _is_wsl(self) -> bool:
         """Check if running inside WSL2."""
         try:
-            with open("/proc/version", "r") as f:
+            with open("/proc/version") as f:
                 return "WSL" in f.read()
         except FileNotFoundError:
             return "WSL_DISTRO_NAME" in os.environ
@@ -1063,7 +1062,7 @@ class PodmanManager(ContainerManagerBase):
         except (subprocess.SubprocessError, FileNotFoundError):
             return False
 
-    def _try_connect(self, base_url: str) -> Optional[PodmanClient]:
+    def _try_connect(self, base_url: str) -> PodmanClient | None:
         """Attempt to connect to Podman with the given base_url."""
         try:
             client = PodmanClient(base_url=base_url)
@@ -1073,10 +1072,9 @@ class PodmanManager(ContainerManagerBase):
             self.logger.debug(f"Connection failed for {base_url}: {str(e)}")
             return None
 
-    def _get_podman_cli_sockets(self) -> List[str]:
+    def _get_podman_cli_sockets(self) -> list[str]:
         """Get socket URLs from 'podman system connection list'."""
         try:
-
             result = subprocess.run(
                 ["podman", "system", "connection", "list", "--format", "json"],
                 capture_output=True,
@@ -1103,7 +1101,7 @@ class PodmanManager(ContainerManagerBase):
             self.logger.debug(f"Failed to get sockets from podman CLI: {e}")
         return []
 
-    def _autodetect_podman_url(self) -> Optional[str]:
+    def _autodetect_podman_url(self) -> str | None:
         """Autodetect the appropriate Podman socket URL based on platform."""
 
         base_url = os.environ.get("CONTAINER_MANAGER_PODMAN_BASE_URL")
@@ -1123,7 +1121,6 @@ class PodmanManager(ContainerManagerBase):
         is_wsl = self._is_wsl()
 
         if system == "Windows" and not is_wsl:
-
             socket_candidates.extend(
                 [
                     "npipe:////./pipe/podman-machine-default",
@@ -1158,7 +1155,6 @@ class PodmanManager(ContainerManagerBase):
             )
 
         for url in socket_candidates:
-
             if url.startswith("/") and not url.startswith("unix://"):
                 url = f"unix://{url}"
 
@@ -1169,7 +1165,7 @@ class PodmanManager(ContainerManagerBase):
 
         return None
 
-    def prune_images(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_images(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
         try:
             if all:
@@ -1211,8 +1207,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_images", params, error=e)
             raise RuntimeError(f"Failed to prune images: {str(e)}")
 
-    def prune_containers(self) -> Dict:
-        params = {}
+    def prune_containers(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             result = self.client.containers.prune()
             self.logger.debug(f"Raw prune_containers result: {result}")
@@ -1240,7 +1236,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_containers", params, error=e)
             raise RuntimeError(f"Failed to prune containers: {str(e)}")
 
-    def prune_volumes(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_volumes(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
         try:
             if all:
@@ -1280,8 +1276,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_volumes", params, error=e)
             raise RuntimeError(f"Failed to prune volumes: {str(e)}")
 
-    def prune_networks(self) -> Dict:
-        params = {}
+    def prune_networks(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             result = self.client.networks.prune()
             if result is None:
@@ -1300,7 +1296,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_networks", params, error=e)
             raise RuntimeError(f"Failed to prune networks: {str(e)}")
 
-    def prune_system(self, force: bool = False, all: bool = False) -> Dict:
+    def prune_system(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
         try:
             cmd = (
@@ -1330,8 +1326,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_system", params, error=e)
             raise RuntimeError(f"Failed to prune system: {str(e)}")
 
-    def get_version(self) -> Dict:
-        params = {}
+    def get_version(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             version = self.client.version()
             result = {
@@ -1347,8 +1343,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("get_version", params, error=e)
             raise RuntimeError(f"Failed to get version: {str(e)}")
 
-    def get_info(self) -> Dict:
-        params = {}
+    def get_info(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             info = self.client.info()
             host = info.get("host", {})
@@ -1367,8 +1363,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("get_info", params, error=e)
             raise RuntimeError(f"Failed to get info: {str(e)}")
 
-    def list_images(self) -> List[Dict]:
-        params = {}
+    def list_images(self) -> list[dict]:
+        params: dict[str, Any] = {}
         try:
             images = self.client.images.list()
             result = []
@@ -1402,8 +1398,8 @@ class PodmanManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to list images: {str(e)}")
 
     def pull_image(
-        self, image: str, tag: str = "latest", platform: Optional[str] = None
-    ) -> Dict:
+        self, image: str, tag: str = "latest", platform: str | None = None
+    ) -> dict:
         params = {"image": image, "tag": tag, "platform": platform}
         try:
             img = self.client.images.pull(f"{image}:{tag}", platform=platform)
@@ -1432,7 +1428,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("pull_image", params, error=e)
             raise RuntimeError(f"Failed to pull image: {str(e)}")
 
-    def remove_image(self, image: str, force: bool = False) -> Dict:
+    def remove_image(self, image: str, force: bool = False) -> dict:
         params = {"image": image, "force": force}
         try:
             self.client.images.remove(image, force=force)
@@ -1443,7 +1439,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("remove_image", params, error=e)
             raise RuntimeError(f"Failed to remove image: {str(e)}")
 
-    def list_containers(self, all: bool = False) -> List[Dict]:
+    def list_containers(self, all: bool = False) -> list[dict]:
         params = {"all": all}
         try:
             containers = self.client.containers.list(all=all)
@@ -1476,13 +1472,13 @@ class PodmanManager(ContainerManagerBase):
     def run_container(
         self,
         image: str,
-        name: Optional[str] = None,
-        command: Optional[str] = None,
+        name: str | None = None,
+        command: str | None = None,
         detach: bool = False,
-        ports: Optional[Dict[str, str]] = None,
-        volumes: Optional[Dict[str, Dict]] = None,
-        environment: Optional[Dict[str, str]] = None,
-    ) -> Dict:
+        ports: dict[str, str] | None = None,
+        volumes: dict[str, dict] | None = None,
+        environment: dict[str, str] | None = None,
+    ) -> dict:
         params = {
             "image": image,
             "name": name,
@@ -1532,7 +1528,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("run_container", params, error=e)
             raise RuntimeError(f"Failed to run container: {str(e)}")
 
-    def stop_container(self, container_id: str, timeout: int = 10) -> Dict:
+    def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         params = {"container_id": container_id, "timeout": timeout}
         try:
             container = self.client.containers.get(container_id)
@@ -1544,7 +1540,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("stop_container", params, error=e)
             raise RuntimeError(f"Failed to stop container: {str(e)}")
 
-    def remove_container(self, container_id: str, force: bool = False) -> Dict:
+    def remove_container(self, container_id: str, force: bool = False) -> dict:
         params = {"container_id": container_id, "force": force}
         try:
             container = self.client.containers.get(container_id)
@@ -1568,8 +1564,8 @@ class PodmanManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to get container logs: {str(e)}")
 
     def exec_in_container(
-        self, container_id: str, command: List[str], detach: bool = False
-    ) -> Dict:
+        self, container_id: str, command: list[str], detach: bool = False
+    ) -> dict:
         params = {"container_id": container_id, "command": command, "detach": detach}
         try:
             container = self.client.containers.get(container_id)
@@ -1585,8 +1581,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("exec_in_container", params, error=e)
             raise RuntimeError(f"Failed to exec in container: {str(e)}")
 
-    def list_volumes(self) -> Dict:
-        params = {}
+    def list_volumes(self) -> dict:
+        params: dict[str, Any] = {}
         try:
             volumes = self.client.volumes.list()
             result = {
@@ -1606,7 +1602,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("list_volumes", params, error=e)
             raise RuntimeError(f"Failed to list volumes: {str(e)}")
 
-    def create_volume(self, name: str) -> Dict:
+    def create_volume(self, name: str) -> dict:
         params = {"name": name}
         try:
             volume = self.client.volumes.create(name=name)
@@ -1623,7 +1619,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("create_volume", params, error=e)
             raise RuntimeError(f"Failed to create volume: {str(e)}")
 
-    def remove_volume(self, name: str, force: bool = False) -> Dict:
+    def remove_volume(self, name: str, force: bool = False) -> dict:
         params = {"name": name, "force": force}
         try:
             volume = self.client.volumes.get(name)
@@ -1635,8 +1631,8 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("remove_volume", params, error=e)
             raise RuntimeError(f"Failed to remove volume: {str(e)}")
 
-    def list_networks(self) -> List[Dict]:
-        params = {}
+    def list_networks(self) -> list[dict]:
+        params: dict[str, Any] = {}
         try:
             networks = self.client.networks.list()
             result = []
@@ -1660,7 +1656,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("list_networks", params, error=e)
             raise RuntimeError(f"Failed to list networks: {str(e)}")
 
-    def create_network(self, name: str, driver: str = "bridge") -> Dict:
+    def create_network(self, name: str, driver: str = "bridge") -> dict:
         params = {"name": name, "driver": driver}
         try:
             network = self.client.networks.create(name, driver=driver)
@@ -1680,7 +1676,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("create_network", params, error=e)
             raise RuntimeError(f"Failed to create network: {str(e)}")
 
-    def remove_network(self, network_id: str) -> Dict:
+    def remove_network(self, network_id: str) -> dict:
         params = {"network_id": network_id}
         try:
             network = self.client.networks.get(network_id)
@@ -1737,7 +1733,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("compose_ps", params, error=e)
             raise RuntimeError(f"Failed to compose ps: {str(e)}")
 
-    def compose_logs(self, compose_file: str, service: Optional[str] = None) -> str:
+    def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         params = {"compose_file": compose_file, "service": service}
         try:
             cmd = ["podman-compose", "-f", compose_file, "logs"]
@@ -1752,16 +1748,16 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("compose_logs", params, error=e)
             raise RuntimeError(f"Failed to compose logs: {str(e)}")
 
-    def init_swarm(self, advertise_addr: Optional[str] = None) -> Dict:
+    def init_swarm(self, advertise_addr: str | None = None) -> dict:
         raise NotImplementedError("Swarm not supported in Podman")
 
-    def leave_swarm(self, force: bool = False) -> Dict:
+    def leave_swarm(self, force: bool = False) -> dict:
         raise NotImplementedError("Swarm not supported in Podman")
 
-    def list_nodes(self) -> List[Dict]:
+    def list_nodes(self) -> list[dict]:
         raise NotImplementedError("Swarm not supported in Podman")
 
-    def list_services(self) -> List[Dict]:
+    def list_services(self) -> list[dict]:
         raise NotImplementedError("Swarm not supported in Podman")
 
     def create_service(
@@ -1769,12 +1765,12 @@ class PodmanManager(ContainerManagerBase):
         name: str,
         image: str,
         replicas: int = 1,
-        ports: Optional[Dict[str, str]] = None,
-        mounts: Optional[List[str]] = None,
-    ) -> Dict:
+        ports: dict[str, str] | None = None,
+        mounts: list[str] | None = None,
+    ) -> dict:
         raise NotImplementedError("Swarm not supported in Podman")
 
-    def remove_service(self, service_id: str) -> Dict:
+    def remove_service(self, service_id: str) -> dict:
         raise NotImplementedError("Swarm not supported in Podman")
 
 
@@ -1783,7 +1779,7 @@ def is_app_installed(app_name: str = "docker") -> bool:
 
 
 def create_manager(
-    manager_type: Optional[str] = None, silent: bool = False, log_file: str = None
+    manager_type: str | None = None, silent: bool = False, log_file: str | None = None
 ) -> ContainerManagerBase:
     if manager_type is None:
         manager_type = os.environ.get("CONTAINER_MANAGER_TYPE", None)
@@ -1916,7 +1912,6 @@ def container_manager():
         sys.exit(0)
 
     if hasattr(args, "help") and args.help:
-
         parser.print_help()
 
         sys.exit(0)
