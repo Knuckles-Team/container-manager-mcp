@@ -31,11 +31,6 @@ from dotenv import find_dotenv, load_dotenv
 from fastmcp import Context, FastMCP
 from fastmcp.utilities.logging import get_logger
 from pydantic import Field
-<<<<<<< HEAD
-=======
-
-from container_manager_mcp.container_manager import create_manager
->>>>>>> 89fca55 (chore: manual fixes)
 
 from container_manager_mcp.container_manager import create_manager
 
@@ -103,7 +98,7 @@ def register_info_tools(mcp: FastMCP):
         Returns: A dictionary with keys like 'version', 'api_version', etc., detailing the manager's version.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Getting version for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -112,7 +107,7 @@ def register_info_tools(mcp: FastMCP):
             )
             return manager.get_version()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to get version: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to get version: {str(e)}")
             raise RuntimeError(f"Failed to get version: {str(e)}") from e
 
     @mcp.tool(
@@ -147,7 +142,7 @@ def register_info_tools(mcp: FastMCP):
         Returns: A dictionary containing system info such as OS, architecture, storage driver, and more.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Getting info for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -156,7 +151,7 @@ def register_info_tools(mcp: FastMCP):
             )
             return manager.get_info()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to get info: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to get info: {str(e)}")
             raise RuntimeError(f"Failed to get info: {str(e)}") from e
 
 
@@ -193,7 +188,7 @@ def register_image_tools(mcp: FastMCP):
         Returns: A list of dictionaries, each with image details like 'id', 'tags', 'created', 'size'.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Listing images for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -202,7 +197,7 @@ def register_image_tools(mcp: FastMCP):
             )
             return manager.list_images()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to list images: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to list images: {str(e)}")
             raise RuntimeError(f"Failed to list images: {str(e)}") from e
 
     @mcp.tool(
@@ -217,6 +212,7 @@ def register_image_tools(mcp: FastMCP):
     )
     async def pull_image(
         image: str = Field(
+            await ctx_progress(_ctx, 0, 100)
             description="Image name to pull (e.g., nginx, registry.arpa/ubuntu/ubuntu:latest)."
         ),
         tag: str = Field(
@@ -248,16 +244,17 @@ def register_image_tools(mcp: FastMCP):
         """
         logger = logging.getLogger("ContainerManager")
         parsed_image, parsed_tag = parse_image_string(image, tag)
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Pulling image {parsed_image}:{parsed_tag} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
             manager = create_manager(
                 manager_type, silent if silent is not None else False, log_file
             )
+            await ctx_progress(_ctx, 100, 100)
             return manager.pull_image(parsed_image, parsed_tag, platform)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to pull image: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to pull image: {str(e)}")
             raise RuntimeError(f"Failed to pull image: {str(e)}") from e
 
     @mcp.tool(
@@ -297,7 +294,7 @@ def register_image_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Removing image {image} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -306,7 +303,7 @@ def register_image_tools(mcp: FastMCP):
             )
             return manager.remove_image(image, force)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to remove image: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to remove image: {str(e)}")
             raise RuntimeError(f"Failed to remove image: {str(e)}") from e
 
     @mcp.tool(
@@ -345,7 +342,7 @@ def register_image_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Pruning images for {manager_type}, all: {all}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -354,7 +351,7 @@ def register_image_tools(mcp: FastMCP):
             )
             return manager.prune_images(all=all)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to prune images: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to prune images: {str(e)}")
             raise RuntimeError(f"Failed to prune images: {str(e)}") from e
 
 
@@ -394,7 +391,7 @@ def register_container_tools(mcp: FastMCP):
         Returns: A list of dictionaries, each with container details like 'id', 'name', 'status', 'image'.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Listing containers for {manager_type}, all: {all}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -403,7 +400,7 @@ def register_container_tools(mcp: FastMCP):
             )
             return manager.list_containers(all)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to list containers: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to list containers: {str(e)}")
             raise RuntimeError(f"Failed to list containers: {str(e)}") from e
 
     @mcp.tool(
@@ -418,6 +415,7 @@ def register_container_tools(mcp: FastMCP):
     )
     async def run_container(
         image: str = Field(description="Image to run"),
+        await ctx_progress(_ctx, 0, 100)
         name: str | None = Field(description="Container name", default=None),
         command: str | None = Field(
             description="Command to run in container", default=None
@@ -454,18 +452,19 @@ def register_container_tools(mcp: FastMCP):
         Returns: A dictionary with the container's ID and status after starting.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Running container from {image} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
             manager = create_manager(
                 manager_type, silent if silent is not None else False, log_file
             )
+            await ctx_progress(_ctx, 100, 100)
             return manager.run_container(
                 image, name, command, detach, ports, volumes, environment
             )
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to run container: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to run container: {str(e)}")
             raise RuntimeError(f"Failed to run container: {str(e)}") from e
 
     @mcp.tool(
@@ -505,7 +504,7 @@ def register_container_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Stopping container {container_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -514,7 +513,7 @@ def register_container_tools(mcp: FastMCP):
             )
             return manager.stop_container(container_id, timeout)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to stop container: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to stop container: {str(e)}")
             raise RuntimeError(f"Failed to stop container: {str(e)}") from e
 
     @mcp.tool(
@@ -554,7 +553,7 @@ def register_container_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Removing container {container_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -563,7 +562,7 @@ def register_container_tools(mcp: FastMCP):
             )
             return manager.remove_container(container_id, force)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to remove container: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to remove container: {str(e)}")
             raise RuntimeError(f"Failed to remove container: {str(e)}") from e
 
     @mcp.tool(
@@ -601,7 +600,7 @@ def register_container_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Pruning containers for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -610,7 +609,7 @@ def register_container_tools(mcp: FastMCP):
             )
             return manager.prune_containers()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to prune containers: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to prune containers: {str(e)}")
             raise RuntimeError(f"Failed to prune containers: {str(e)}") from e
 
     @mcp.tool(
@@ -648,7 +647,7 @@ def register_container_tools(mcp: FastMCP):
         Returns: A dictionary with execution results, including 'exit_code' and 'output' as string.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Executing {command} in container {container_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -657,7 +656,7 @@ def register_container_tools(mcp: FastMCP):
             )
             return manager.exec_in_container(container_id, command, detach)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to exec in container: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to exec in container: {str(e)}")
             raise RuntimeError(f"Failed to exec in container: {str(e)}") from e
 
 
@@ -698,7 +697,7 @@ def register_log_tools(mcp: FastMCP):
         Returns: A string containing the log output, parse as plain text lines.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Getting logs for container {container_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -707,7 +706,7 @@ def register_log_tools(mcp: FastMCP):
             )
             return manager.get_container_logs(container_id, tail)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to get container logs: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to get container logs: {str(e)}")
             raise RuntimeError(f"Failed to get container logs: {str(e)}") from e
 
     @mcp.tool(
@@ -744,7 +743,7 @@ def register_log_tools(mcp: FastMCP):
         Returns: A string containing combined log output, prefixed by service names; parse as text lines.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Compose logs {compose_file} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -753,7 +752,7 @@ def register_log_tools(mcp: FastMCP):
             )
             return manager.compose_logs(compose_file, service)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to compose logs: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to compose logs: {str(e)}")
             raise RuntimeError(f"Failed to compose logs: {str(e)}") from e
 
 
@@ -790,7 +789,7 @@ def register_volume_tools(mcp: FastMCP):
         Returns: A dictionary with 'volumes' as a list of dicts containing name, driver, mountpoint, etc.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Listing volumes for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -799,7 +798,7 @@ def register_volume_tools(mcp: FastMCP):
             )
             return manager.list_volumes()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to list volumes: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to list volumes: {str(e)}")
             raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
 
     @mcp.tool(
@@ -835,7 +834,7 @@ def register_volume_tools(mcp: FastMCP):
         Returns: A dictionary with details of the created volume, like 'name' and 'mountpoint'.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Creating volume {name} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -844,7 +843,7 @@ def register_volume_tools(mcp: FastMCP):
             )
             return manager.create_volume(name)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to create volume: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to create volume: {str(e)}")
             raise RuntimeError(f"Failed to create volume: {str(e)}") from e
 
     @mcp.tool(
@@ -884,7 +883,7 @@ def register_volume_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Removing volume {name} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -893,7 +892,7 @@ def register_volume_tools(mcp: FastMCP):
             )
             return manager.remove_volume(name, force)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to remove volume: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to remove volume: {str(e)}")
             raise RuntimeError(f"Failed to remove volume: {str(e)}") from e
 
     @mcp.tool(
@@ -932,7 +931,7 @@ def register_volume_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Pruning volumes for {manager_type}, all: {all}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -941,7 +940,7 @@ def register_volume_tools(mcp: FastMCP):
             )
             return manager.prune_volumes(all=all)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to prune volumes: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to prune volumes: {str(e)}")
             raise RuntimeError(f"Failed to prune volumes: {str(e)}") from e
 
 
@@ -978,7 +977,7 @@ def register_network_tools(mcp: FastMCP):
         Returns: A list of dictionaries, each with network details like 'id', 'name', 'driver', 'scope'.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Listing networks for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -987,7 +986,7 @@ def register_network_tools(mcp: FastMCP):
             )
             return manager.list_networks()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to list networks: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to list networks: {str(e)}")
             raise RuntimeError(f"Failed to list networks: {str(e)}") from e
 
     @mcp.tool(
@@ -1026,7 +1025,7 @@ def register_network_tools(mcp: FastMCP):
         Returns: A dictionary with the created network's ID and details.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Creating network {name} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1035,7 +1034,7 @@ def register_network_tools(mcp: FastMCP):
             )
             return manager.create_network(name, driver)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to create network: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to create network: {str(e)}")
             raise RuntimeError(f"Failed to create network: {str(e)}") from e
 
     @mcp.tool(
@@ -1074,7 +1073,7 @@ def register_network_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Removing network {network_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1083,7 +1082,7 @@ def register_network_tools(mcp: FastMCP):
             )
             return manager.remove_network(network_id)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to remove network: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to remove network: {str(e)}")
             raise RuntimeError(f"Failed to remove network: {str(e)}") from e
 
     @mcp.tool(
@@ -1121,7 +1120,7 @@ def register_network_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Pruning networks for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1130,7 +1129,7 @@ def register_network_tools(mcp: FastMCP):
             )
             return manager.prune_networks()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to prune networks: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to prune networks: {str(e)}")
             raise RuntimeError(f"Failed to prune networks: {str(e)}") from e
 
 
@@ -1172,7 +1171,7 @@ def register_system_tools(mcp: FastMCP):
             return {"status": "cancelled", "message": "Operation cancelled by user"}
         await ctx_progress(ctx, 0, 100)
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Pruning system for {manager_type}, force: {force}, all: {all}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1181,7 +1180,7 @@ def register_system_tools(mcp: FastMCP):
             )
             return manager.prune_system(force, all)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to prune system: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to prune system: {str(e)}")
             raise RuntimeError(f"Failed to prune system: {str(e)}") from e
 
 
@@ -1223,7 +1222,7 @@ def register_swarm_tools(mcp: FastMCP):
         if manager_type and manager_type != "docker":
             raise ValueError("Swarm operations are only supported on Docker")
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Initializing swarm for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1232,7 +1231,7 @@ def register_swarm_tools(mcp: FastMCP):
             )
             return manager.init_swarm(advertise_addr)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to init swarm: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to init swarm: {str(e)}")
             raise RuntimeError(f"Failed to init swarm: {str(e)}") from e
 
     @mcp.tool(
@@ -1270,7 +1269,7 @@ def register_swarm_tools(mcp: FastMCP):
         if manager_type and manager_type != "docker":
             raise ValueError("Swarm operations are only supported on Docker")
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Leaving swarm for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1279,7 +1278,7 @@ def register_swarm_tools(mcp: FastMCP):
             )
             return manager.leave_swarm(force)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to leave swarm: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to leave swarm: {str(e)}")
             raise RuntimeError(f"Failed to leave swarm: {str(e)}") from e
 
     @mcp.tool(
@@ -1316,7 +1315,7 @@ def register_swarm_tools(mcp: FastMCP):
         if manager_type and manager_type != "docker":
             raise ValueError("Swarm operations are only supported on Docker")
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Listing nodes for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1325,7 +1324,7 @@ def register_swarm_tools(mcp: FastMCP):
             )
             return manager.list_nodes()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to list nodes: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to list nodes: {str(e)}")
             raise RuntimeError(f"Failed to list nodes: {str(e)}") from e
 
     @mcp.tool(
@@ -1362,7 +1361,7 @@ def register_swarm_tools(mcp: FastMCP):
         if manager_type and manager_type != "docker":
             raise ValueError("Swarm operations are only supported on Docker")
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Listing services for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1371,7 +1370,7 @@ def register_swarm_tools(mcp: FastMCP):
             )
             return manager.list_services()
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to list services: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to list services: {str(e)}")
             raise RuntimeError(f"Failed to list services: {str(e)}") from e
 
     @mcp.tool(
@@ -1417,7 +1416,7 @@ def register_swarm_tools(mcp: FastMCP):
         if manager_type and manager_type != "docker":
             raise ValueError("Swarm operations are only supported on Docker")
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Creating service {name} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1426,7 +1425,7 @@ def register_swarm_tools(mcp: FastMCP):
             )
             return manager.create_service(name, image, replicas, ports, mounts)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to create service: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to create service: {str(e)}")
             raise RuntimeError(f"Failed to create service: {str(e)}") from e
 
     @mcp.tool(
@@ -1467,7 +1466,7 @@ def register_swarm_tools(mcp: FastMCP):
         if manager_type and manager_type != "docker":
             raise ValueError("Swarm operations are only supported on Docker")
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Removing service {service_id} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1476,7 +1475,7 @@ def register_swarm_tools(mcp: FastMCP):
             )
             return manager.remove_service(service_id)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to remove service: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to remove service: {str(e)}")
             raise RuntimeError(f"Failed to remove service: {str(e)}") from e
 
 
@@ -1516,7 +1515,7 @@ def register_compose_tools(mcp: FastMCP):
         Returns: A string with the output of the compose up command, parse for status messages.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Compose up {compose_file} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1525,7 +1524,7 @@ def register_compose_tools(mcp: FastMCP):
             )
             return manager.compose_up(compose_file, detach, build)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to compose up: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to compose up: {str(e)}")
             raise RuntimeError(f"Failed to compose up: {str(e)}") from e
 
     @mcp.tool(
@@ -1561,7 +1560,7 @@ def register_compose_tools(mcp: FastMCP):
         Returns: A string with the output of the compose down command, parse for status messages.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Compose down {compose_file} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1570,7 +1569,7 @@ def register_compose_tools(mcp: FastMCP):
             )
             return manager.compose_down(compose_file)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to compose down: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to compose down: {str(e)}")
             raise RuntimeError(f"Failed to compose down: {str(e)}") from e
 
     @mcp.tool(
@@ -1606,7 +1605,7 @@ def register_compose_tools(mcp: FastMCP):
         Returns: A string in table format listing name, command, state, ports; parse as text table.
         """
         logger = logging.getLogger("ContainerManager")
-        logger.debug(
+        ctx_log(_ctx, logger, "debug",
             f"Compose ps {compose_file} for {manager_type}, silent: {silent}, log_file: {log_file}"
         )
         try:
@@ -1615,7 +1614,7 @@ def register_compose_tools(mcp: FastMCP):
             )
             return manager.compose_ps(compose_file)
         except Exception as e:
-            ctx_log(ctx, logger, "error", f"Failed to compose ps: {str(e)}")
+            ctx_log(_ctx, logger, "error", f"Failed to compose ps: {str(e)}")
             raise RuntimeError(f"Failed to compose ps: {str(e)}") from e
 
 
@@ -1682,9 +1681,7 @@ def get_mcp_instance() -> tuple[Any, Any, Any, Any]:
     tools_dict = (
         mcp._tools
         if hasattr(mcp, "_tools")
-        else mcp.get_tools()
-        if hasattr(mcp, "get_tools")
-        else {}
+        else mcp.get_tools() if hasattr(mcp, "get_tools") else {}
     )
     for tool in tools_dict.values():
         if hasattr(tool, "tags") and tool.tags:

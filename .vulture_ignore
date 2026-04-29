@@ -1,0 +1,4 @@
+DEFAULT_AGENT_DESCRIPTION
+DEFAULT_AGENT_SYSTEM_PROMPT
+_is_podman_machine_running
+get_logs
