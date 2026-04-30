@@ -1,7 +1,8 @@
-import pytest
-from unittest.mock import patch, MagicMock
-import inspect
 import asyncio
+import inspect
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 
 @pytest.fixture
@@ -69,8 +70,9 @@ def test_container_manager_brute_force(mock_container_deps):
 
 
 def test_mcp_server_coverage(mock_container_deps):
-    from container_manager_mcp.mcp_server import get_mcp_instance
     from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
+
+    from container_manager_mcp.mcp_server import get_mcp_instance
 
     # Patch RateLimitingMiddleware to do nothing
     async def mock_on_request(self, context, call_next):
@@ -132,8 +134,8 @@ def test_mcp_server_coverage(mock_container_deps):
 
 
 def test_agent_server_coverage():
-    from container_manager_mcp import agent_server
     import container_manager_mcp.agent_server as mod
+    from container_manager_mcp import agent_server
 
     with patch(
         "container_manager_mcp.agent_server.create_graph_agent_server"

@@ -2,15 +2,16 @@
 """Tests for container_manager module."""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from container_manager_mcp.container_manager import (
     ContainerManagerBase,
     DockerManager,
     PodmanManager,
-    is_app_installed,
-    create_manager,
     container_manager,
+    create_manager,
+    is_app_installed,
 )
 
 

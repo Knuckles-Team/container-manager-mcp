@@ -39,7 +39,7 @@ from container_manager_mcp.container_manager import create_manager
 
 from container_manager_mcp.container_manager import create_manager
 
-__version__ = "1.3.54"
+__version__ = "1.4.0"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)

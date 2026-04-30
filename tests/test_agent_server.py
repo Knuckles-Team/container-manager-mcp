@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Tests for agent_server module."""
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 
 class TestAgentServer:

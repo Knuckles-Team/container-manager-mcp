@@ -2,23 +2,24 @@
 """Tests for mcp_server module."""
 
 from unittest.mock import MagicMock, patch
+
 from fastmcp import FastMCP
 
 from container_manager_mcp.mcp_server import (
-    parse_image_string,
-    register_misc_tools,
-    register_info_tools,
-    register_image_tools,
-    register_container_tools,
-    register_log_tools,
-    register_volume_tools,
-    register_network_tools,
-    register_system_tools,
-    register_swarm_tools,
-    register_compose_tools,
-    register_prompts,
     get_mcp_instance,
     mcp_server,
+    parse_image_string,
+    register_compose_tools,
+    register_container_tools,
+    register_image_tools,
+    register_info_tools,
+    register_log_tools,
+    register_misc_tools,
+    register_network_tools,
+    register_prompts,
+    register_swarm_tools,
+    register_system_tools,
+    register_volume_tools,
 )
 
 

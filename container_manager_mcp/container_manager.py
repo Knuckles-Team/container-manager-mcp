@@ -14,7 +14,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 
-__version__ = "1.3.54"
+__version__ = "1.4.0"
 
 try:
     import docker
