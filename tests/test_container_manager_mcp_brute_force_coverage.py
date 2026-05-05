@@ -30,7 +30,10 @@ def mock_container_deps():
 def test_container_manager_brute_force(mock_container_deps):
     from container_manager_mcp.container_manager import DockerManager, PodmanManager
 
-    managers = [DockerManager(silent=True), PodmanManager(silent=True)]
+    with patch.object(
+        PodmanManager, "_autodetect_podman_url", return_value="unix:///tmp/dummy.sock"
+    ):
+        managers = [DockerManager(silent=True), PodmanManager(silent=True)]
 
     common_kwargs = {
         "container_id": "test_id",
@@ -62,14 +65,15 @@ def test_container_manager_brute_force(mock_container_deps):
                 kwargs = {k: v for k, v in common_kwargs.items() if k in sig.parameters}
                 for p_name, p in sig.parameters.items():
                     if p.default == inspect.Parameter.empty and p_name not in kwargs:
-                        kwargs[p_name] = "test" if p.annotation == str else 1
+                        kwargs[p_name] = "test" if p.annotation is str else 1
             try:
                 method(**kwargs)
-            except:
+            except Exception:
                 pass
 
 
 def test_mcp_server_coverage(mock_container_deps):
+    _ = mock_container_deps
     from fastmcp.server.middleware.rate_limiting import RateLimitingMiddleware
 
     from container_manager_mcp.mcp_server import get_mcp_instance
@@ -112,7 +116,7 @@ def test_mcp_server_coverage(mock_container_deps):
                             ]:
                                 if p_name not in target_params:
                                     target_params[p_name] = (
-                                        "test" if p.annotation == str else 1
+                                        "test" if p.annotation is str else 1
                                     )
 
                         has_kwargs = any(
@@ -127,7 +131,7 @@ def test_mcp_server_coverage(mock_container_deps):
                             }
 
                         await mcp.call_tool(tool.name, target_params)
-                    except:
+                    except Exception:
                         pass
 
             asyncio.run(run_tools())

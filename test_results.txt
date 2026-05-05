@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.7, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/apps/workspace/agent-packages/agents/container-manager-mcp
+configfile: pytest.ini
+testpaths: tests
+plugins: logfire-4.32.1, cov-7.1.0, anyio-4.12.0, timeout-2.4.0, env-1.6.0, asyncio-1.3.0, hypothesis-6.152.3, langsmith-0.7.37, typeguard-4.4.2
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 182 items
+
+tests/test_agent_server.py .........                                     [  4%]
+tests/test_container_manager.py ........................................ [ 26%]
+.................................................................        [ 62%]
+tests/test_container_manager_mcp_brute_force_coverage.py ....            [ 64%]
+tests/test_init.py .....                                                 [ 67%]
+tests/test_integration.py s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.ss..             [ 86%]
+tests/test_mcp_server.py ........................                        [ 99%]
+tests/test_placeholder.py .                                              [100%]
+
+======================= 165 passed, 17 skipped in 55.96s =======================

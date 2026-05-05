@@ -392,7 +392,7 @@ class TestDockerManager:
     @patch("container_manager_mcp.container_manager.docker")
     def test_init_docker_not_installed(self, mock_docker):
         """Test initialization when docker is not installed."""
-        mock_docker = None
+        _ = mock_docker
         with patch("container_manager_mcp.container_manager.docker", None):
             with pytest.raises(ImportError, match="Please install docker-py"):
                 DockerManager()
@@ -713,7 +713,7 @@ class TestDockerManager:
 
         assert len(result) == 1
         assert (
-            result[0]["id"] == "234567890abc"
+            result[0]["id"] == "abcdef123456"
         )  # Updated to match actual extraction logic
         assert result[0]["image"] == "nginx:latest"
         assert result[0]["name"] == "test_container"
@@ -727,9 +727,11 @@ class TestDockerManager:
         mock_docker.from_env.return_value = mock_client
 
         manager = DockerManager()
-        result = manager.list_containers(all=True)
+        _ = manager.list_containers(all=True)
 
-        mock_client.containers.list.assert_called_once_with(all=True)
+        mock_client.containers.list.assert_called_once_with(
+            all=True, ignore_removed=True
+        )
 
     @patch("container_manager_mcp.container_manager.docker")
     def test_list_containers_error(self, mock_docker):
@@ -1021,9 +1023,9 @@ class TestDockerManager:
         manager = DockerManager()
         result = manager.list_volumes()
 
-        assert len(result["volumes"]) == 1
-        assert result["volumes"][0]["name"] == "test_volume"
-        assert result["volumes"][0]["driver"] == "local"
+        assert len(result) == 1
+        assert result[0]["name"] == "test_volume"
+        assert result[0]["driver"] == "local"
 
     @patch("container_manager_mcp.container_manager.docker")
     def test_list_volumes_error(self, mock_docker):

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "container-manager-mcp"
-version = "1.4.0"
+version = "1.6.0"
 description = "Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box!"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
@@ -21,8 +21,8 @@ text = "MIT"
 podman = [ "podman>=5.6.0",]
 docker = [ "docker>=7.1.0",]
 mcp = [ "agent-utilities[mcp]>=0.2.31",]
-agent = [ "agent-utilities[agent,logfire]>=0.2.31", "container-manager-mcp[mcp]>=1.4.0",]
-all = [ "container-manager-mcp[docker,podman,mcp,agent]>=1.4.0",]
+agent = [ "agent-utilities[agent,logfire]>=0.2.31", "container-manager-mcp[mcp]>=1.6.0",]
+all = [ "container-manager-mcp[docker,podman,mcp,agent]>=1.6.0",]
 test = [ "pytest", "pytest-asyncio",]
 
 [project.scripts]
@@ -50,3 +50,11 @@ ignore = [ "E402", "E501", "B008",]
 
 [tool.setuptools.packages.find]
 where = [ ".",]
+
+[tool.vulture]
+exclude = [".venv", "venv", "tests/"]
+
+[dependency-groups]
+dev = [
+    "pytest-timeout>=2.4.0",
+]

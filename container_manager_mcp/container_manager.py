@@ -14,7 +14,14 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 
-__version__ = "1.4.0"
+from container_manager_mcp.models import (
+    ContainerInfo,
+    ImageInfo,
+    NetworkInfo,
+    VolumeInfo,
+)
+
+__version__ = "1.6.0"
 
 try:
     import docker
@@ -114,7 +121,7 @@ class ContainerManagerBase(ABC):
         pass
 
     @abstractmethod
-    def list_images(self) -> list[dict]:
+    def list_images(self) -> list[ImageInfo]:
         pass
 
     @abstractmethod
@@ -132,7 +139,7 @@ class ContainerManagerBase(ABC):
         pass
 
     @abstractmethod
-    def list_containers(self, all: bool = False) -> list[dict]:
+    def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         pass
 
     @abstractmethod
@@ -171,11 +178,11 @@ class ContainerManagerBase(ABC):
         pass
 
     @abstractmethod
-    def list_volumes(self) -> dict:
+    def list_volumes(self) -> list[VolumeInfo]:
         pass
 
     @abstractmethod
-    def create_volume(self, name: str) -> dict:
+    def create_volume(self, name: str) -> VolumeInfo:
         pass
 
     @abstractmethod
@@ -187,11 +194,11 @@ class ContainerManagerBase(ABC):
         pass
 
     @abstractmethod
-    def list_networks(self) -> list[dict]:
+    def list_networks(self) -> list[NetworkInfo]:
         pass
 
     @abstractmethod
-    def create_network(self, name: str, driver: str = "bridge") -> dict:
+    def create_network(self, name: str, driver: str = "bridge") -> NetworkInfo:
         pass
 
     @abstractmethod
@@ -287,13 +294,22 @@ class DockerManager(ContainerManagerBase):
                     [img["Id"][7:19] for img in result.get("ImagesDeleted", [])]
                 ),
                 "containers_removed": (
-                    [c["Id"][7:19] for c in result.get("ContainersDeleted", [])]
+                    [
+                        (c.get("Id", "")[:12] if isinstance(c, dict) else str(c)[:12])
+                        for c in (result.get("ContainersDeleted") or [])
+                    ]
                 ),
                 "volumes_removed": (
-                    [v["Name"] for v in result.get("VolumesDeleted", [])]
+                    [
+                        (v.get("Name", "") if isinstance(v, dict) else str(v))
+                        for v in (result.get("VolumesDeleted") or [])
+                    ]
                 ),
                 "networks_removed": (
-                    [n["Id"][7:19] for n in result.get("NetworksDeleted", [])]
+                    [
+                        (n.get("Id", "")[:12] if isinstance(n, dict) else str(n)[:12])
+                        for n in (result.get("NetworksDeleted") or [])
+                    ]
                 ),
             }
             self.log_action("prune_system", params, pruned)
@@ -338,7 +354,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("get_info", params, error=e)
             raise RuntimeError(f"Failed to get info: {str(e)}") from e
 
-    def list_images(self) -> list[dict]:
+    def list_images(self) -> list[ImageInfo]:
         params: dict[str, Any] = {}
         try:
             images = self.client.images.list()
@@ -368,9 +384,9 @@ class DockerManager(ContainerManagerBase):
                     "created": created_str,
                     "size": size_str,
                 }
-                result.append(simplified)
+                result.append(ImageInfo(**simplified))
 
-            self.log_action("list_images", params, result)
+            self.log_action("list_images", params, [i.model_dump() for i in result])
             return result
         except Exception as e:
             self.log_action("list_images", params, error=e)
@@ -452,7 +468,18 @@ class DockerManager(ContainerManagerBase):
                 pruned = {
                     "space_reclaimed": self._format_size(space_reclaimed),
                     "images_removed": (
-                        [img["Id"][7:19] for img in result.get("ImagesDeleted", [])]
+                        [
+                            (
+                                (
+                                    img.get("Deleted")
+                                    or img.get("Untagged")
+                                    or img.get("Id", "")
+                                )[-12:]
+                                if isinstance(img, dict)
+                                else str(img)[-12:]
+                            )
+                            for img in (result.get("ImagesDeleted") or [])
+                        ]
                     ),
                 }
                 result = pruned
@@ -462,10 +489,10 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_images", params, error=e)
             raise RuntimeError(f"Failed to prune images: {str(e)}") from e
 
-    def list_containers(self, all: bool = False) -> list[dict]:
+    def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         params = {"all": all}
         try:
-            containers = self.client.containers.list(all=all)
+            containers = self.client.containers.list(all=all, ignore_removed=True)
             result = []
             for c in containers:
                 attrs = c.attrs
@@ -475,20 +502,20 @@ class DockerManager(ContainerManagerBase):
                     if host_ports:
                         for hp in host_ports:
                             port_mappings.append(
-                                f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"
+                                f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"  # nosec B104
                             )
                 created = attrs.get("Created", None)
                 created_str = self._parse_timestamp(created)
                 simplified = {
-                    "id": attrs.get("Id", "unknown")[7:19],
+                    "id": attrs.get("Id", "unknown")[:12],
                     "image": attrs.get("Config", {}).get("Image", "unknown"),
                     "name": attrs.get("Name", "unknown").lstrip("/"),
                     "status": attrs.get("State", {}).get("Status", "unknown"),
                     "ports": ", ".join(port_mappings) if port_mappings else "none",
                     "created": created_str,
                 }
-                result.append(simplified)
-            self.log_action("list_containers", params, result)
+                result.append(ContainerInfo(**simplified))
+            self.log_action("list_containers", params, [c.model_dump() for c in result])
             return result
         except Exception as e:
             self.log_action("list_containers", params, error=e)
@@ -537,12 +564,12 @@ class DockerManager(ContainerManagerBase):
                         if host_ports:
                             for hp in host_ports:
                                 port_mappings.append(
-                                    f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"
+                                    f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"  # nosec B104
                                 )
             created = attrs.get("Created", None)
             created_str = self._parse_timestamp(created)
             result = {
-                "id": attrs.get("Id", "unknown")[7:19],
+                "id": attrs.get("Id", "unknown")[:12],
                 "image": attrs.get("Config", {}).get("Image", image),
                 "name": attrs.get("Name", name or "unknown").lstrip("/"),
                 "status": attrs.get("State", {}).get("Status", "unknown"),
@@ -589,7 +616,10 @@ class DockerManager(ContainerManagerBase):
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "containers_removed": (
-                    [c["Id"][7:19] for c in result.get("ContainersDeleted", [])]
+                    [
+                        (c.get("Id", "")[:12] if isinstance(c, dict) else str(c)[:12])
+                        for c in (result.get("ContainersDeleted") or [])
+                    ]
                 ),
             }
             self.log_action("prune_containers", params, pruned)
@@ -636,39 +666,41 @@ class DockerManager(ContainerManagerBase):
             self.log_action("exec_in_container", params, error=e)
             raise RuntimeError(f"Failed to exec in container: {str(e)}") from e
 
-    def list_volumes(self) -> dict:
+    def list_volumes(self) -> list[VolumeInfo]:
         params: dict[str, Any] = {}
         try:
             volumes = self.client.volumes.list()
-            result = {
-                "volumes": [
-                    {
+            result = [
+                VolumeInfo(
+                    **{
                         "name": v.attrs.get("Name", "unknown"),
                         "driver": v.attrs.get("Driver", "unknown"),
                         "mountpoint": v.attrs.get("Mountpoint", "unknown"),
                         "created": v.attrs.get("CreatedAt", "unknown"),
                     }
-                    for v in volumes
-                ]
-            }
-            self.log_action("list_volumes", params, result)
+                )
+                for v in volumes
+            ]
+            self.log_action("list_volumes", params, [v.model_dump() for v in result])
             return result
         except Exception as e:
             self.log_action("list_volumes", params, error=e)
             raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
 
-    def create_volume(self, name: str) -> dict:
+    def create_volume(self, name: str) -> VolumeInfo:
         params = {"name": name}
         try:
             volume = self.client.volumes.create(name=name)
             attrs = volume.attrs
-            result = {
-                "name": attrs.get("Name", name),
-                "driver": attrs.get("Driver", "unknown"),
-                "mountpoint": attrs.get("Mountpoint", "unknown"),
-                "created": attrs.get("CreatedAt", "unknown"),
-            }
-            self.log_action("create_volume", params, result)
+            result = VolumeInfo(
+                **{
+                    "name": attrs.get("Name", name),
+                    "driver": attrs.get("Driver", "unknown"),
+                    "mountpoint": attrs.get("Mountpoint", "unknown"),
+                    "created": attrs.get("CreatedAt", "unknown"),
+                }
+            )
+            self.log_action("create_volume", params, result.model_dump())
             return result
         except Exception as e:
             self.log_action("create_volume", params, error=e)
@@ -716,7 +748,10 @@ class DockerManager(ContainerManagerBase):
                 pruned = {
                     "space_reclaimed": self._format_size(space_reclaimed),
                     "volumes_removed": (
-                        [v["Name"] for v in result.get("VolumesDeleted", [])]
+                        [
+                            (v.get("Name", "") if isinstance(v, dict) else str(v))
+                            for v in (result.get("VolumesDeleted") or [])
+                        ]
                     ),
                 }
                 result = pruned
@@ -726,7 +761,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_volumes", params, error=e)
             raise RuntimeError(f"Failed to prune volumes: {str(e)}") from e
 
-    def list_networks(self) -> list[dict]:
+    def list_networks(self) -> list[NetworkInfo]:
         params: dict[str, Any] = {}
         try:
             networks = self.client.networks.list()
@@ -737,35 +772,37 @@ class DockerManager(ContainerManagerBase):
                 created = attrs.get("Created", None)
                 created_str = self._parse_timestamp(created)
                 simplified = {
-                    "id": attrs.get("Id", "unknown")[7:19],
+                    "id": attrs.get("Id", "unknown")[:12],
                     "name": attrs.get("Name", "unknown"),
                     "driver": attrs.get("Driver", "unknown"),
                     "scope": attrs.get("Scope", "unknown"),
                     "containers": containers,
                     "created": created_str,
                 }
-                result.append(simplified)
-            self.log_action("list_networks", params, result)
+                result.append(NetworkInfo(**simplified))
+            self.log_action("list_networks", params, [n.model_dump() for n in result])
             return result
         except Exception as e:
             self.log_action("list_networks", params, error=e)
             raise RuntimeError(f"Failed to list networks: {str(e)}") from e
 
-    def create_network(self, name: str, driver: str = "bridge") -> dict:
+    def create_network(self, name: str, driver: str = "bridge") -> NetworkInfo:
         params = {"name": name, "driver": driver}
         try:
             network = self.client.networks.create(name, driver=driver)
             attrs = network.attrs
             created = attrs.get("Created", None)
             created_str = self._parse_timestamp(created)
-            result = {
-                "id": attrs.get("Id", "unknown")[7:19],
-                "name": attrs.get("Name", name),
-                "driver": attrs.get("Driver", driver),
-                "scope": attrs.get("Scope", "unknown"),
-                "created": created_str,
-            }
-            self.log_action("create_network", params, result)
+            result = NetworkInfo(
+                **{
+                    "id": attrs.get("Id", "unknown")[:12],
+                    "name": attrs.get("Name", name),
+                    "driver": attrs.get("Driver", driver),
+                    "scope": attrs.get("Scope", "unknown"),
+                    "created": created_str,
+                }
+            )
+            self.log_action("create_network", params, result.model_dump())
             return result
         except Exception as e:
             self.log_action("create_network", params, error=e)
@@ -793,7 +830,10 @@ class DockerManager(ContainerManagerBase):
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "networks_removed": (
-                    [n["Id"][7:19] for n in result.get("NetworksDeleted", [])]
+                    [
+                        (n.get("Id", "")[:12] if isinstance(n, dict) else str(n)[:12])
+                        for n in (result.get("NetworksDeleted") or [])
+                    ]
                 ),
             }
             self.log_action("prune_networks", params, pruned)
@@ -1057,7 +1097,7 @@ class PodmanManager(ContainerManagerBase):
     def _is_podman_machine_running(self) -> bool:
         """Check if Podman machine is running (for Windows/WSL2)."""
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B607 B603
                 ["podman", "machine", "list", "--format", "{{.Running}}"],
                 capture_output=True,
                 text=True,
@@ -1080,7 +1120,7 @@ class PodmanManager(ContainerManagerBase):
     def _get_podman_cli_sockets(self) -> list[str]:
         """Get socket URLs from 'podman system connection list'."""
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B607 B603
                 ["podman", "system", "connection", "list", "--format", "json"],
                 capture_output=True,
                 text=True,
@@ -1223,7 +1263,10 @@ class PodmanManager(ContainerManagerBase):
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "containers_removed": (
-                    [c["Id"][7:19] for c in result.get("ContainersDeleted", [])]
+                    [
+                        (c.get("Id", "")[:12] if isinstance(c, dict) else str(c)[:12])
+                        for c in (result.get("ContainersDeleted") or [])
+                    ]
                     or [c["Id"][7:19] for c in result.get("ContainersRemoved", [])]
                 ),
             }
@@ -1385,7 +1428,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("get_info", params, error=e)
             raise RuntimeError(f"Failed to get info: {str(e)}") from e
 
-    def list_images(self) -> list[dict]:
+    def list_images(self) -> list[ImageInfo]:
         params: dict[str, Any] = {}
         try:
             images = self.client.images.list()
@@ -1412,8 +1455,8 @@ class PodmanManager(ContainerManagerBase):
                     "created": created_str,
                     "size": size_str,
                 }
-                result.append(simplified)
-            self.log_action("list_images", params, result)
+                result.append(ImageInfo(**simplified))
+            self.log_action("list_images", params, [i.model_dump() for i in result])
             return result
         except Exception as e:
             self.log_action("list_images", params, error=e)
@@ -1463,7 +1506,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("remove_image", params, error=e)
             raise RuntimeError(f"Failed to remove image: {str(e)}") from e
 
-    def list_containers(self, all: bool = False) -> list[dict]:
+    def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         params = {"all": all}
         try:
             containers = self.client.containers.list(all=all)
@@ -1479,15 +1522,15 @@ class PodmanManager(ContainerManagerBase):
                 created = attrs.get("Created", None)
                 created_str = self._parse_timestamp(created)
                 simplified = {
-                    "id": attrs.get("Id", "unknown")[7:19],
+                    "id": attrs.get("Id", "unknown")[:12],
                     "image": attrs.get("Image", "unknown"),
                     "name": attrs.get("Names", ["unknown"])[0].lstrip("/"),
                     "status": attrs.get("State", "unknown"),
                     "ports": ", ".join(port_mappings) if port_mappings else "none",
                     "created": created_str,
                 }
-                result.append(simplified)
-            self.log_action("list_containers", params, result)
+                result.append(ContainerInfo(**simplified))
+            self.log_action("list_containers", params, [c.model_dump() for c in result])
             return result
         except Exception as e:
             self.log_action("list_containers", params, error=e)
@@ -1625,39 +1668,41 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("exec_in_container", params, error=e)
             raise RuntimeError(f"Failed to exec in container: {str(e)}") from e
 
-    def list_volumes(self) -> dict:
+    def list_volumes(self) -> list[VolumeInfo]:
         params: dict[str, Any] = {}
         try:
             volumes = self.client.volumes.list()
-            result = {
-                "volumes": [
-                    {
+            result = [
+                VolumeInfo(
+                    **{
                         "name": v.attrs.get("Name", "unknown"),
                         "driver": v.attrs.get("Driver", "unknown"),
                         "mountpoint": v.attrs.get("Mountpoint", "unknown"),
                         "created": v.attrs.get("CreatedAt", "unknown"),
                     }
-                    for v in volumes
-                ]
-            }
-            self.log_action("list_volumes", params, result)
+                )
+                for v in volumes
+            ]
+            self.log_action("list_volumes", params, [v.model_dump() for v in result])
             return result
         except Exception as e:
             self.log_action("list_volumes", params, error=e)
             raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
 
-    def create_volume(self, name: str) -> dict:
+    def create_volume(self, name: str) -> VolumeInfo:
         params = {"name": name}
         try:
             volume = self.client.volumes.create(name=name)
             attrs = volume.attrs
-            result = {
-                "name": attrs.get("Name", name),
-                "driver": attrs.get("Driver", "unknown"),
-                "mountpoint": attrs.get("Mountpoint", "unknown"),
-                "created": attrs.get("CreatedAt", "unknown"),
-            }
-            self.log_action("create_volume", params, result)
+            result = VolumeInfo(
+                **{
+                    "name": attrs.get("Name", name),
+                    "driver": attrs.get("Driver", "unknown"),
+                    "mountpoint": attrs.get("Mountpoint", "unknown"),
+                    "created": attrs.get("CreatedAt", "unknown"),
+                }
+            )
+            self.log_action("create_volume", params, result.model_dump())
             return result
         except Exception as e:
             self.log_action("create_volume", params, error=e)
@@ -1675,7 +1720,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("remove_volume", params, error=e)
             raise RuntimeError(f"Failed to remove volume: {str(e)}") from e
 
-    def list_networks(self) -> list[dict]:
+    def list_networks(self) -> list[NetworkInfo]:
         params: dict[str, Any] = {}
         try:
             networks = self.client.networks.list()
@@ -1688,35 +1733,37 @@ class PodmanManager(ContainerManagerBase):
                 # Try different possible name field locations for Podman compatibility
                 name = attrs.get("Name") or attrs.get("name") or net.name or "unknown"
                 simplified = {
-                    "id": attrs.get("Id", "unknown")[7:19],
+                    "id": attrs.get("Id", "unknown")[:12],
                     "name": name,
                     "driver": attrs.get("Driver", "unknown"),
                     "scope": attrs.get("Scope", "unknown"),
                     "containers": containers,
                     "created": created_str,
                 }
-                result.append(simplified)
-            self.log_action("list_networks", params, result)
+                result.append(NetworkInfo(**simplified))
+            self.log_action("list_networks", params, [n.model_dump() for n in result])
             return result
         except Exception as e:
             self.log_action("list_networks", params, error=e)
             raise RuntimeError(f"Failed to list networks: {str(e)}") from e
 
-    def create_network(self, name: str, driver: str = "bridge") -> dict:
+    def create_network(self, name: str, driver: str = "bridge") -> NetworkInfo:
         params = {"name": name, "driver": driver}
         try:
             network = self.client.networks.create(name, driver=driver)
             attrs = network.attrs
             created = attrs.get("Created", None)
             created_str = self._parse_timestamp(created)
-            result = {
-                "id": attrs.get("Id", "unknown")[7:19],
-                "name": attrs.get("Name", name),
-                "driver": attrs.get("Driver", driver),
-                "scope": attrs.get("Scope", "unknown"),
-                "created": created_str,
-            }
-            self.log_action("create_network", params, result)
+            result = NetworkInfo(
+                **{
+                    "id": attrs.get("Id", "unknown")[:12],
+                    "name": attrs.get("Name", name),
+                    "driver": attrs.get("Driver", driver),
+                    "scope": attrs.get("Scope", "unknown"),
+                    "created": created_str,
+                }
+            )
+            self.log_action("create_network", params, result.model_dump())
             return result
         except Exception as e:
             self.log_action("create_network", params, error=e)

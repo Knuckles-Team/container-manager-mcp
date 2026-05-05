@@ -8,6 +8,7 @@ Tests will be skipped if the required runtime is not available.
 import os
 import subprocess
 import time
+from unittest.mock import patch
 
 import pytest
 
@@ -286,7 +287,7 @@ class TestContainerManagerIntegration:
         # List volumes to verify
         volumes = manager.list_volumes()
         assert volumes is not None
-        volume_names = [v["name"] for v in volumes.get("volumes", [])]
+        volume_names = [v["name"] for v in volumes]
         assert volume_name in volume_names
 
         # Clean up
@@ -562,7 +563,7 @@ class TestHelperFunctionsIntegration:
         """Test is_app_installed function."""
         # Mock shutil.which to simulate app presence
         with patch("shutil.which", return_value="/usr/bin/podman"):
-            assert is_app_installed("podman") == True
+            assert is_app_installed("podman")
 
         with patch("shutil.which", return_value=None):
-            assert is_app_installed("nonexistent_app_12345") == False
+            assert not is_app_installed("nonexistent_app_12345")
