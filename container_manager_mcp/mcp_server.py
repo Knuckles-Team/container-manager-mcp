@@ -34,7 +34,7 @@ from pydantic import Field
 
 from container_manager_mcp.container_manager import create_manager
 
-__version__ = "1.8.0"
+__version__ = "1.8.1"
 
 logger = get_logger(name="TokenMiddleware")
 logger.setLevel(logging.DEBUG)
