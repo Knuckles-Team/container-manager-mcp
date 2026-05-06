@@ -1,10 +1,10 @@
 {
   "mcpServers": {
     "container-manager-mcp": {
-      "command": "container-manager-mcp",
+      "command": "uv",
       "args": [
-        "--transport",
-        "stdio"
+        "run",
+        "container-manager-mcp"
       ],
       "env": {
         "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
@@ -20,7 +20,16 @@
         "VOLUMETOOL": "${ VOLUMETOOL:-True }",
         "CONTAINER_MANAGER_LOG_FILE": "${CONTAINER_MANAGER_LOG_FILE}",
         "CONTAINER_MANAGER_SILENT": "${CONTAINER_MANAGER_SILENT}",
-        "CONTAINER_MANAGER_TYPE": "${CONTAINER_MANAGER_TYPE}"
+        "CONTAINER_MANAGER_TYPE": "${CONTAINER_MANAGER_TYPE}",
+        "AGENT_DESCRIPTION": "<YOUR_AGENT_DESCRIPTION>",
+        "AGENT_SYSTEM_PROMPT": "<YOUR_AGENT_SYSTEM_PROMPT>",
+        "CONTAINER_MANAGER_PODMAN_BASE_URL": "<YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL>",
+        "DEFAULT_AGENT_NAME": "<YOUR_DEFAULT_AGENT_NAME>",
+        "LLM_API_KEY": "<YOUR_LLM_API_KEY>",
+        "LLM_BASE_URL": "<YOUR_LLM_BASE_URL>",
+        "MCP_URL": "<YOUR_MCP_URL>",
+        "MODEL_ID": "<YOUR_MODEL_ID>",
+        "SPECIALIST_TOOL": "True"
       }
     }
   }

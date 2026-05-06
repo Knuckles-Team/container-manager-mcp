@@ -1,0 +1,35 @@
+{
+  "mcpServers": {
+    "container-manager-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "container-manager-mcp"
+      ],
+      "env": {
+        "CONTAINER_MANAGER_PODMAN_BASE_URL": "<YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL>",
+        "CONTAINER_MANAGER_TYPE": "<YOUR_CONTAINER_MANAGER_TYPE>",
+        "AGENT_DESCRIPTION": "<YOUR_AGENT_DESCRIPTION>",
+        "AGENT_SYSTEM_PROMPT": "<YOUR_AGENT_SYSTEM_PROMPT>",
+        "COMPOSETOOL": "True",
+        "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_LOG_FILE": "<YOUR_CONTAINER_MANAGER_LOG_FILE>",
+        "CONTAINER_MANAGER_SILENT": "<YOUR_CONTAINER_MANAGER_SILENT>",
+        "DEFAULT_AGENT_NAME": "<YOUR_DEFAULT_AGENT_NAME>",
+        "IMAGETOOL": "True",
+        "INFOTOOL": "True",
+        "LLM_API_KEY": "<YOUR_LLM_API_KEY>",
+        "LLM_BASE_URL": "<YOUR_LLM_BASE_URL>",
+        "LOGTOOL": "True",
+        "MCP_URL": "<YOUR_MCP_URL>",
+        "MISCTOOL": "True",
+        "MODEL_ID": "<YOUR_MODEL_ID>",
+        "NETWORKTOOL": "True",
+        "SPECIALIST_TOOL": "True",
+        "SWARMTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "VOLUMETOOL": "True"
+      }
+    }
+  }
+}

@@ -21,7 +21,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 1.6.0*
+*Version: 1.7.0*
 
 ## Overview
 
@@ -360,3 +360,92 @@ This project is licensed under the MIT License - see the [LICENSE](https://githu
 
 ![GitHub followers](https://img.shields.io/github/followers/Knucklessg1)
 ![GitHub User's stars](https://img.shields.io/github/stars/Knucklessg1)
+
+
+## MCP Configuration Examples
+
+### 1. Standard IO (stdio) Deployment
+
+```json
+{
+  "mcpServers": {
+    "container-manager-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "container-manager-mcp"
+      ],
+      "env": {
+        "AGENT_DESCRIPTION": "<YOUR_AGENT_DESCRIPTION>",
+        "AGENT_SYSTEM_PROMPT": "<YOUR_AGENT_SYSTEM_PROMPT>",
+        "COMPOSETOOL": "True",
+        "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_LOG_FILE": "<YOUR_CONTAINER_MANAGER_LOG_FILE>",
+        "CONTAINER_MANAGER_PODMAN_BASE_URL": "<YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL>",
+        "CONTAINER_MANAGER_SILENT": "<YOUR_CONTAINER_MANAGER_SILENT>",
+        "CONTAINER_MANAGER_TYPE": "<YOUR_CONTAINER_MANAGER_TYPE>",
+        "DEFAULT_AGENT_NAME": "<YOUR_DEFAULT_AGENT_NAME>",
+        "IMAGETOOL": "True",
+        "INFOTOOL": "True",
+        "LLM_API_KEY": "<YOUR_LLM_API_KEY>",
+        "LLM_BASE_URL": "<YOUR_LLM_BASE_URL>",
+        "LOGTOOL": "True",
+        "MCP_URL": "<YOUR_MCP_URL>",
+        "MISCTOOL": "True",
+        "MODEL_ID": "<YOUR_MODEL_ID>",
+        "NETWORKTOOL": "True",
+        "SPECIALIST_TOOL": "True",
+        "SWARMTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "VOLUMETOOL": "True"
+      }
+    }
+  }
+}
+```
+
+### 2. Streamable HTTP (SSE) Deployment
+
+```json
+{
+  "mcpServers": {
+    "container-manager-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "container-manager-mcp",
+        "--transport",
+        "http",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ],
+      "env": {
+        "AGENT_DESCRIPTION": "<YOUR_AGENT_DESCRIPTION>",
+        "AGENT_SYSTEM_PROMPT": "<YOUR_AGENT_SYSTEM_PROMPT>",
+        "COMPOSETOOL": "True",
+        "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_LOG_FILE": "<YOUR_CONTAINER_MANAGER_LOG_FILE>",
+        "CONTAINER_MANAGER_PODMAN_BASE_URL": "<YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL>",
+        "CONTAINER_MANAGER_SILENT": "<YOUR_CONTAINER_MANAGER_SILENT>",
+        "CONTAINER_MANAGER_TYPE": "<YOUR_CONTAINER_MANAGER_TYPE>",
+        "DEFAULT_AGENT_NAME": "<YOUR_DEFAULT_AGENT_NAME>",
+        "IMAGETOOL": "True",
+        "INFOTOOL": "True",
+        "LLM_API_KEY": "<YOUR_LLM_API_KEY>",
+        "LLM_BASE_URL": "<YOUR_LLM_BASE_URL>",
+        "LOGTOOL": "True",
+        "MCP_URL": "<YOUR_MCP_URL>",
+        "MISCTOOL": "True",
+        "MODEL_ID": "<YOUR_MODEL_ID>",
+        "NETWORKTOOL": "True",
+        "SPECIALIST_TOOL": "True",
+        "SWARMTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "VOLUMETOOL": "True"
+      }
+    }
+  }
+}
+```
