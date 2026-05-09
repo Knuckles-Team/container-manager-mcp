@@ -21,7 +21,7 @@ from container_manager_mcp.models import (
     VolumeInfo,
 )
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 
 try:
     import docker
