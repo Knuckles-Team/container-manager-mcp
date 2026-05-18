@@ -3,8 +3,8 @@ services:
   container-manager-agent:
     # image: docker.io/knucklessg1/container-manager:latest
     build:
-      context: .
-      dockerfile: debug.Dockerfile
+      context: ..
+      dockerfile: docker/debug.Dockerfile
     container_name: container-manager-agent
     hostname: container-manager-agent
     command: [ "container-manager-agent" ]

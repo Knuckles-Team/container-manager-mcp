@@ -3,8 +3,8 @@ services:
   container-manager-mcp:
     # image: docker.io/knucklessg1/container-manager:latest
     build:
-      context: .
-      dockerfile: debug.Dockerfile
+      context: ..
+      dockerfile: docker/debug.Dockerfile
     container_name: container-manager-mcp
     hostname: container-manager-mcp
     command: [ "container-manager-mcp" ]
@@ -17,7 +17,7 @@ services:
         max-file: "3"
     restart: always
     env_file:
-      - .env
+      - ../.env
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
@@ -53,8 +53,8 @@ services:
   container-manager-agent:
     # image: docker.io/knucklessg1/container-manager:latest
     build:
-      context: .
-      dockerfile: debug.Dockerfile
+      context: ..
+      dockerfile: docker/debug.Dockerfile
     container_name: container-manager-agent
     hostname: container-manager-agent
     command: [ "container-manager-agent" ]

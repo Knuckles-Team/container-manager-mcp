@@ -44,64 +44,21 @@ This repository is actively maintained - Contributions are welcome!
 
 ## MCP
 
-### MCP Tools
+### Available MCP Tools
 
-- `get_version`: Retrieve version information of the container runtime
-- `get_info`: Get system information about the container runtime
-- `list_images`: List all available images
-- `pull_image`: Pull an image from a registry
-- `remove_image`: Remove an image
-- `list_containers`: List running or all containers
-- `run_container`: Run a new container
-- `stop_container`: Stop a running container
-- `remove_container`: Remove a container
-- `get_container_logs`: Retrieve logs from a container
-- `exec_in_container`: Execute a command in a container
-- `list_volumes`: List all volumes
-- `create_volume`: Create a new volume
-- `remove_volume`: Remove a volume
-- `list_networks`: List all networks
-- `create_network`: Create a new network
-- `remove_network`: Remove a network
-- `compose_up`: Start services defined in a Compose file
-- `compose_down`: Stop and remove services defined in a Compose file
-- `compose_ps`: List containers for a Compose project
-- `compose_logs`: View logs for a Compose project or specific service
-- `init_swarm`: Initialize a Docker Swarm
-- `leave_swarm`: Leave a Docker Swarm
-- `list_nodes`: List nodes in a Docker Swarm
-- `list_services`: List services in a Docker Swarm
-- `create_service`: Create a new service in a Docker Swarm
-- `remove_service`: Remove a service from a Docker Swarm
+This server utilizes dynamic Action-Routed tools to optimize token overhead and maximize IDE compatibility.
 
-
-### MCP CLI
-
-| Short Flag | Long Flag                          | Description                                                                 |
-|------------|------------------------------------|-----------------------------------------------------------------------------|
-| -h         | --help                             | Display help information                                                    |
-| -t         | --transport                        | Transport method: 'stdio', 'http', or 'sse' [legacy] (default: stdio)       |
-| -s         | --host                             | Host address for HTTP transport (default: 0.0.0.0)                          |
-| -p         | --port                             | Port number for HTTP transport (default: 8000)                              |
-|            | --auth-type                        | Authentication type: 'none', 'static', 'jwt', 'oauth-proxy', 'oidc-proxy', 'remote-oauth' (default: none) |
-|            | --token-jwks-uri                   | JWKS URI for JWT verification                                              |
-|            | --token-issuer                     | Issuer for JWT verification                                                |
-|            | --token-audience                   | Audience for JWT verification                                              |
-|            | --oauth-upstream-auth-endpoint     | Upstream authorization endpoint for OAuth Proxy                             |
-|            | --oauth-upstream-token-endpoint    | Upstream token endpoint for OAuth Proxy                                    |
-|            | --oauth-upstream-client-id         | Upstream client ID for OAuth Proxy                                         |
-|            | --oauth-upstream-client-secret     | Upstream client secret for OAuth Proxy                                     |
-|            | --oauth-base-url                   | Base URL for OAuth Proxy                                                   |
-|            | --oidc-config-url                  | OIDC configuration URL                                                     |
-|            | --oidc-client-id                   | OIDC client ID                                                             |
-|            | --oidc-client-secret               | OIDC client secret                                                         |
-|            | --oidc-base-url                    | Base URL for OIDC Proxy                                                    |
-|            | --remote-auth-servers              | Comma-separated list of authorization servers for Remote OAuth             |
-|            | --remote-base-url                  | Base URL for Remote OAuth                                                  |
-|            | --allowed-client-redirect-uris     | Comma-separated list of allowed client redirect URIs                       |
-|            | --eunomia-type                     | Eunomia authorization type: 'none', 'embedded', 'remote' (default: none)   |
-|            | --eunomia-policy-file              | Policy file for embedded Eunomia (default: mcp_policies.json)              |
-|            | --eunomia-remote-url               | URL for remote Eunomia server                                              |
+| Tool Name | Description |
+|-----------|-------------|
+| `container_compose` | Consolidated Action-Routed tool for compose. Methods: compose_up, compose_down, compose_ps |
+| `container_container` | Consolidated Action-Routed tool for container. Methods: stop_container, run_container, remove_container, prune_containers, exec_in_container, list_containers |
+| `container_image` | Consolidated Action-Routed tool for image. Methods: prune_images, remove_image, pull_image, list_images |
+| `container_info` | Consolidated Action-Routed tool for info. Methods: get_version, get_info |
+| `container_log` | Consolidated Action-Routed tool for log. Methods: compose_logs |
+| `container_network` | Consolidated Action-Routed tool for network. Methods: prune_networks, create_network, list_networks, remove_network |
+| `container_swarm` | Consolidated Action-Routed tool for swarm. Methods: list_nodes, list_services, init_swarm, remove_service, create_service, leave_swarm |
+| `container_system` | Consolidated Action-Routed tool for system. Methods: prune_system |
+| `container_volume` | Consolidated Action-Routed tool for volume. Methods: list_volumes, remove_volume, prune_volumes, create_volume |
 
 ## A2A Agent
 

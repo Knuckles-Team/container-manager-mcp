@@ -1,0 +1,73 @@
+# Tasks: Code Enhancement: container-manager-mcp
+
+Generated: 2026-05-12T14:14:40.981001+00:00
+Skipped informational: 5
+
+- [ ] [P] **T001** [Dependency Audit] Minor update: podman 5.6.0 (constraint — not installed) -> 5.8.0
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T002** [Codebase Optimization] 4 functions exceed 200 lines (actionable refactoring targets): container_manager
+  - Priority: P2-Medium | Effort: Large
+- [ ] [P] **T003** [Codebase Optimization] Monolithic: container_manager.py (2276L) — 2 functions with high complexity (wor
+  - Priority: P1-High | Effort: Large
+- [ ] [P] **T004** [Codebase Optimization] Monolithic: mcp_server.py (1728L) — 3 functions with high complexity (worst: reg
+  - Priority: P1-High | Effort: Large
+- [ ] [P] **T005** [Codebase Optimization] 13 functions with nesting depth >4
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T006** [Test Coverage] Test suite lacks intent diversity (only one type)
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T007** [Test Coverage] 19 potential doc-test drift items
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T008** [Documentation & Governance] README.md missing sections: installation
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T009** [Documentation & Governance] README missing: Has a Table of Contents
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T010** [Documentation & Governance] README missing: References /docs directory material
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T011** [Architecture & Design Patterns] SRP: 4 modules exceed 500 lines (god modules)
+  - Priority: P2-Medium | Effort: Large
+- [ ] [P] **T012** [Architecture & Design Patterns] SRP: 8 classes have >15 methods
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T013** [Architecture & Design Patterns] No discernible layer architecture (no domain/service/adapter separation)
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T014** [Architecture & Design Patterns] Low dependency injection ratio: 8%
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T015** [Concept Traceability] Low traceability ratio: 0% concepts fully traced
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T016** [Concept Traceability] 168 test functions missing concept markers
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T017** [Concept Traceability] 117 significant functions (>10 lines) missing concept markers in docstrings
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T018** [Linting & Formatting] Total lint findings: 51 (high/error: 50, medium/warning: 1, low: 0)
+  - Priority: P1-High | Effort: Medium
+- [ ] [P] **T019** [Pre-Commit Compliance] 1 hook(s) may be outdated: ruff-pre-commit
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T020** [Test Execution] 3 test execution error(s)
+  - Priority: P1-High | Effort: Medium
+- [ ] [P] **T021** [Directory Organization] 2 rogue/throwaway scripts detected (fix_*, validate_*, patch_*, etc.): scripts/v
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T022** [Changelog Audit] CHANGELOG.md is missing — create one following Keep a Changelog format
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T023** [Changelog Audit] CHANGELOG.md is missing
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T024** [Pytest Quality] 2 test files exceed 500 lines — split into focused modules
+  - Priority: P2-Medium | Effort: Large
+- [ ] [P] **T025** [Pytest Quality] 1 test files have >30 tests — too dense
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T026** [Pytest Quality] Test directory lacks subdirectory organization (consider unit/, integration/, e2
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T027** [Pytest Quality] Missing conftest.py for shared fixtures
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T028** [Pytest Quality] No shared fixtures in conftest.py
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T029** [Pytest Quality] 4 tests have no assertions
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T030** [Pytest Quality] 83 tests use weak assertions (assert result is not None, assert True, etc.)
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T031** [Pytest Quality] 3 tests exceed 100 lines — likely doing too much per test
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T032** [Environment Variables] Partial env var documentation: 57% coverage
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T033** [Environment Variables] Undocumented env vars: BROWSER_TOOLS_ENABLE, DEVELOPER_UTILITIES_ENABLE, ENABLE_
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T034** [Environment Variables] 17 Python env vars not in .env.example: COMPOSETOOL, CONTAINERTOOL, CONTAINER_MA
+  - Priority: P2-Medium | Effort: Medium

@@ -1,8 +1,23 @@
 import asyncio
 import inspect
+import sys
+import types
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+# Ensure a 'podman' module exists in sys.modules so patch() can resolve it
+# even when podman-py is not installed. The production code (container_manager.py)
+# handles this with try/except ImportError, but unittest.mock.patch needs the
+# parent module to be importable.
+if "podman" not in sys.modules:
+    _fake_podman = types.ModuleType("podman")
+    _fake_podman.PodmanClient = MagicMock  # type: ignore[attr-defined]
+    _fake_errors = types.ModuleType("podman.errors")
+    _fake_errors.PodmanError = Exception  # type: ignore[attr-defined]
+    _fake_podman.errors = _fake_errors  # type: ignore[attr-defined]
+    sys.modules["podman"] = _fake_podman
+    sys.modules["podman.errors"] = _fake_errors
 
 
 @pytest.fixture
@@ -30,8 +45,18 @@ def mock_container_deps():
 def test_container_manager_brute_force(mock_container_deps):
     from container_manager_mcp.container_manager import DockerManager, PodmanManager
 
-    with patch.object(
-        PodmanManager, "_autodetect_podman_url", return_value="unix:///tmp/dummy.sock"
+    # PodmanClient is None at module level when podman-py isn't installed.
+    # Patch it to a MagicMock so PodmanManager.__init__'s guard check passes.
+    with (
+        patch(
+            "container_manager_mcp.container_manager.PodmanClient",
+            MagicMock(),
+        ),
+        patch.object(
+            PodmanManager,
+            "_autodetect_podman_url",
+            return_value="unix:///tmp/dummy.sock",
+        ),
     ):
         managers = [DockerManager(silent=True), PodmanManager(silent=True)]
 
@@ -83,8 +108,8 @@ def test_mcp_server_coverage(mock_container_deps):
         return await call_next(context)
 
     with patch.object(RateLimitingMiddleware, "on_request", mock_on_request):
-        # Patch create_manager in mcp_server to return a mock manager
-        with patch("container_manager_mcp.mcp_server.create_manager") as mock_cm:
+        # Patch get_client in mcp_server to return a mock manager
+        with patch("container_manager_mcp.mcp_server.get_client") as mock_cm:
             mock_manager = MagicMock()
             mock_cm.return_value = mock_manager
 

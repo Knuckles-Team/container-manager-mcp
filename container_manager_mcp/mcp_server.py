@@ -78,19 +78,19 @@ def register_info_tools(mcp: FastMCP):
     )
     async def get_version(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -122,19 +122,19 @@ def register_info_tools(mcp: FastMCP):
     )
     async def get_info(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -168,19 +168,19 @@ def register_image_tools(mcp: FastMCP):
     )
     async def list_images(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> list[dict]:
         """
@@ -215,26 +215,26 @@ def register_image_tools(mcp: FastMCP):
             description="Image name to pull (e.g., nginx, registry.arpa/ubuntu/ubuntu:latest)."
         ),
         tag: str = Field(
-            description="Image tag (overridden if tag is included in image string)",
             default="latest",
+            description="Image tag (overridden if tag is included in image string)",
         ),
         platform: str | None = Field(
-            description="Platform (e.g., linux/amd64)", default=None
+            default=None, description="Platform (e.g., linux/amd64)"
         ),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -267,21 +267,21 @@ def register_image_tools(mcp: FastMCP):
     )
     async def remove_image(
         image: str = Field(description="Image name or ID to remove"),
-        force: bool = Field(description="Force removal", default=False),
+        force: bool = Field(default=False, description="Force removal"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -315,21 +315,21 @@ def register_image_tools(mcp: FastMCP):
         tags={"image"},
     )
     async def prune_images(
-        all: bool = Field(description="Prune all unused images", default=False),
+        all: bool = Field(default=False, description="Prune all unused images"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -366,22 +366,22 @@ def register_container_tools(mcp: FastMCP):
     )
     async def list_containers(
         all: bool = Field(
-            description="Show all containers (default running only)", default=False
+            default=False, description="Show all containers (default running only)"
         ),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> list[dict]:
         """
@@ -413,35 +413,35 @@ def register_container_tools(mcp: FastMCP):
     )
     async def run_container(
         image: str = Field(description="Image to run"),
-        name: str | None = Field(description="Container name", default=None),
+        name: str | None = Field(default=None, description="Container name"),
         command: str | None = Field(
-            description="Command to run in container", default=None
+            default=None, description="Command to run in container"
         ),
-        detach: bool = Field(description="Run in detached mode", default=False),
+        detach: bool = Field(default=False, description="Run in detached mode"),
         ports: dict[str, str] | None = Field(
-            description="Port mappings {container_port: host_port}", default=None
+            default=None, description="Port mappings {container_port: host_port}"
         ),
         volumes: dict[str, dict] | None = Field(
-            description="Volume mappings {/host/path: {bind: /container/path, mode: rw}}",
             default=None,
+            description="Volume mappings {/host/path: {bind: /container/path, mode: rw}}",
         ),
         environment: dict[str, str] | None = Field(
-            description="Environment variables", default=None
+            default=None, description="Environment variables"
         ),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -475,21 +475,21 @@ def register_container_tools(mcp: FastMCP):
     )
     async def stop_container(
         container_id: str = Field(description="Container ID or name"),
-        timeout: int = Field(description="Timeout in seconds", default=10),
+        timeout: int = Field(default=10, description="Timeout in seconds"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -524,21 +524,21 @@ def register_container_tools(mcp: FastMCP):
     )
     async def remove_container(
         container_id: str = Field(description="Container ID or name"),
-        force: bool = Field(description="Force removal", default=False),
+        force: bool = Field(default=False, description="Force removal"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -573,19 +573,19 @@ def register_container_tools(mcp: FastMCP):
     )
     async def prune_containers(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -621,21 +621,21 @@ def register_container_tools(mcp: FastMCP):
     async def exec_in_container(
         container_id: str = Field(description="Container ID or name"),
         command: list[str] = Field(description="Command to execute"),
-        detach: bool = Field(description="Detach execution", default=False),
+        detach: bool = Field(default=False, description="Detach execution"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -670,22 +670,22 @@ def register_log_tools(mcp: FastMCP):
     async def get_container_logs(
         container_id: str = Field(description="Container ID or name"),
         tail: str = Field(
-            description="Number of lines to show from the end (or 'all')", default="all"
+            default="all", description="Number of lines to show from the end (or 'all')"
         ),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> str:
         """
@@ -717,21 +717,21 @@ def register_log_tools(mcp: FastMCP):
     )
     async def compose_logs(
         compose_file: str = Field(description="Path to compose file"),
-        service: str | None = Field(description="Specific service", default=None),
+        service: str | None = Field(default=None, description="Specific service"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> str:
         """
@@ -765,19 +765,19 @@ def register_volume_tools(mcp: FastMCP):
     )
     async def list_volumes(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -810,19 +810,19 @@ def register_volume_tools(mcp: FastMCP):
     async def create_volume(
         name: str = Field(description="Volume name"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -854,21 +854,21 @@ def register_volume_tools(mcp: FastMCP):
     )
     async def remove_volume(
         name: str = Field(description="Volume name"),
-        force: bool = Field(description="Force removal", default=False),
+        force: bool = Field(default=False, description="Force removal"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -902,21 +902,21 @@ def register_volume_tools(mcp: FastMCP):
         tags={"volume"},
     )
     async def prune_volumes(
-        all: bool = Field(description="Remove all volumes (dangerous)", default=False),
+        all: bool = Field(default=False, description="Remove all volumes (dangerous)"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -953,19 +953,19 @@ def register_network_tools(mcp: FastMCP):
     )
     async def list_networks(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> list[dict]:
         """
@@ -998,22 +998,22 @@ def register_network_tools(mcp: FastMCP):
     async def create_network(
         name: str = Field(description="Network name"),
         driver: str = Field(
-            description="Network driver (e.g., bridge)", default="bridge"
+            default="bridge", description="Network driver (e.g., bridge)"
         ),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1046,19 +1046,19 @@ def register_network_tools(mcp: FastMCP):
     async def remove_network(
         network_id: str = Field(description="Network ID or name"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1093,19 +1093,19 @@ def register_network_tools(mcp: FastMCP):
     )
     async def prune_networks(
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1141,22 +1141,22 @@ def register_system_tools(mcp: FastMCP):
         tags={"system"},
     )
     async def prune_system(
-        force: bool = Field(description="Force prune", default=False),
-        all: bool = Field(description="Prune all unused resources", default=False),
+        force: bool = Field(default=False, description="Force prune"),
+        all: bool = Field(default=False, description="Prune all unused resources"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1193,22 +1193,22 @@ def register_swarm_tools(mcp: FastMCP):
     )
     async def init_swarm(
         advertise_addr: str | None = Field(
-            description="Advertise address", default=None
+            default=None, description="Advertise address"
         ),
         manager_type: str | None = Field(
-            description="Container manager: must be docker for swarm (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: must be docker for swarm (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1241,21 +1241,21 @@ def register_swarm_tools(mcp: FastMCP):
         tags={"swarm"},
     )
     async def leave_swarm(
-        force: bool = Field(description="Force leave", default=False),
+        force: bool = Field(default=False, description="Force leave"),
         manager_type: str | None = Field(
-            description="Container manager: must be docker for swarm (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: must be docker for swarm (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1289,19 +1289,19 @@ def register_swarm_tools(mcp: FastMCP):
     )
     async def list_nodes(
         manager_type: str | None = Field(
-            description="Container manager: must be docker for swarm (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: must be docker for swarm (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> list[dict]:
         """
@@ -1335,19 +1335,19 @@ def register_swarm_tools(mcp: FastMCP):
     )
     async def list_services(
         manager_type: str | None = Field(
-            description="Container manager: must be docker for swarm (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: must be docker for swarm (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> list[dict]:
         """
@@ -1382,27 +1382,27 @@ def register_swarm_tools(mcp: FastMCP):
     async def create_service(
         name: str = Field(description="Service name"),
         image: str = Field(description="Image for the service"),
-        replicas: int = Field(description="Number of replicas", default=1),
+        replicas: int = Field(default=1, description="Number of replicas"),
         ports: dict[str, str] | None = Field(
-            description="Port mappings {target: published}", default=None
+            default=None, description="Port mappings {target: published}"
         ),
         mounts: list[str] | None = Field(
-            description="Mounts [source:target:mode]", default=None
+            default=None, description="Mounts [source:target:mode]"
         ),
         manager_type: str | None = Field(
-            description="Container manager: must be docker for swarm (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: must be docker for swarm (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1437,19 +1437,19 @@ def register_swarm_tools(mcp: FastMCP):
     async def remove_service(
         service_id: str = Field(description="Service ID or name"),
         manager_type: str | None = Field(
-            description="Container manager: must be docker for swarm (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: must be docker for swarm (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> dict:
         """
@@ -1488,22 +1488,22 @@ def register_compose_tools(mcp: FastMCP):
     )
     async def compose_up(
         compose_file: str = Field(description="Path to compose file"),
-        detach: bool = Field(description="Detach mode", default=True),
-        build: bool = Field(description="Build images", default=False),
+        detach: bool = Field(default=True, description="Detach mode"),
+        build: bool = Field(default=False, description="Build images"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> str:
         """
@@ -1536,19 +1536,19 @@ def register_compose_tools(mcp: FastMCP):
     async def compose_down(
         compose_file: str = Field(description="Path to compose file"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> str:
         """
@@ -1581,19 +1581,19 @@ def register_compose_tools(mcp: FastMCP):
     async def compose_ps(
         compose_file: str = Field(description="Path to compose file"),
         manager_type: str | None = Field(
-            description="Container manager: docker, podman (default: auto-detect)",
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
         ),
         silent: bool | None = Field(
-            description="Suppress output",
             default=to_boolean(os.environ.get("CONTAINER_MANAGER_SILENT", False)),
+            description="Suppress output",
         ),
         log_file: str | None = Field(
-            description="Path to log file",
             default=os.environ.get("CONTAINER_MANAGER_LOG_FILE", None),
+            description="Path to log file",
         ),
         _ctx: Context = Field(
-            description="MCP context for progress reporting", default=None
+            default=None, description="MCP context for progress reporting"
         ),
     ) -> str:
         """
