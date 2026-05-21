@@ -21,7 +21,7 @@ from container_manager_mcp.models import (
     VolumeInfo,
 )
 
-__version__ = "1.12.0"
+__version__ = "1.12.1"
 
 try:
     from docker.errors import DockerException
@@ -169,7 +169,7 @@ class ContainerManagerBase(ABC):
         pass
 
     @abstractmethod
-    def get_container_logs(self, container_id: str, tail: str = "all") -> str:
+    def get_container_logs(self, container_id: str, tail: str = "50") -> str:
         pass
 
     @abstractmethod
@@ -638,7 +638,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_containers", params, error=e)
             raise RuntimeError(f"Failed to prune containers: {str(e)}") from e
 
-    def get_container_logs(self, container_id: str, tail: str = "all") -> str:
+    def get_container_logs(self, container_id: str, tail: str = "50") -> str:
         params = {"container_id": container_id, "tail": tail}
         try:
             container = self.client.containers.get(container_id)
@@ -1626,7 +1626,7 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("remove_container", params, error=e)
             raise RuntimeError(f"Failed to remove container: {str(e)}") from e
 
-    def get_container_logs(self, container_id: str, tail: str = "all") -> str:
+    def get_container_logs(self, container_id: str, tail: str = "50") -> str:
         params = {"container_id": container_id, "tail": tail}
         try:
             container = self.client.containers.get(container_id)
@@ -1944,7 +1944,7 @@ def container_manager():
     parser.add_argument(
         "--get-container-logs", type=str, default=None, help="Container logs"
     )
-    parser.add_argument("--tail", type=str, default="all", help="Tail lines")
+    parser.add_argument("--tail", type=str, default="50", help="Tail lines")
     parser.add_argument(
         "--exec-in-container", type=str, default=None, help="Container to exec"
     )

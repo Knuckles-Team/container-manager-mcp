@@ -27,7 +27,6 @@ def mock_container_deps():
         patch("podman.PodmanClient") as mock_podman,
         patch("shutil.which", return_value="/usr/bin/docker"),
     ):
-
         # Mock Docker Client
         docker_client = mock_docker.return_value
         docker_client.containers.list.return_value = []
@@ -164,11 +163,9 @@ def test_mcp_server_coverage(mock_container_deps):
 
 def test_agent_server_coverage():
     import container_manager_mcp.agent_server as mod
-    from container_manager_mcp import agent_server
+    from container_manager_mcp.agent_server import agent_server
 
-    with patch(
-        "container_manager_mcp.agent_server.create_graph_agent_server"
-    ) as mock_s:
+    with patch("agent_utilities.create_agent_server") as mock_s:
         with patch("sys.argv", ["agent_server.py"]):
             if inspect.isfunction(agent_server):
                 agent_server()

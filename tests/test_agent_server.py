@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 class TestAgentServer:
     """Tests for agent_server module."""
 
-    @patch("container_manager_mcp.agent_server.create_graph_agent_server")
+    @patch("container_manager_mcp.agent_server.create_agent_server")
     @patch("container_manager_mcp.agent_server.create_agent_parser")
     @patch("container_manager_mcp.agent_server.load_identity")
     @patch("container_manager_mcp.agent_server.initialize_workspace")
@@ -64,7 +64,7 @@ class TestAgentServer:
         assert call_kwargs["provider"] == "openai"
         assert call_kwargs["model_id"] == "gpt-4"
 
-    @patch("container_manager_mcp.agent_server.create_graph_agent_server")
+    @patch("container_manager_mcp.agent_server.create_agent_server")
     @patch("container_manager_mcp.agent_server.create_agent_parser")
     @patch("container_manager_mcp.agent_server.load_identity")
     @patch("container_manager_mcp.agent_server.initialize_workspace")
@@ -112,7 +112,7 @@ class TestAgentServer:
         call_kwargs = mock_create_server.call_args[1]
         assert call_kwargs["debug"] is True
 
-    @patch("container_manager_mcp.agent_server.create_graph_agent_server")
+    @patch("container_manager_mcp.agent_server.create_agent_server")
     @patch("container_manager_mcp.agent_server.create_agent_parser")
     @patch("container_manager_mcp.agent_server.load_identity")
     @patch("container_manager_mcp.agent_server.initialize_workspace")
@@ -160,7 +160,7 @@ class TestAgentServer:
         call_kwargs = mock_create_server.call_args[1]
         assert call_kwargs["enable_web_ui"] is True
 
-    @patch("container_manager_mcp.agent_server.create_graph_agent_server")
+    @patch("container_manager_mcp.agent_server.create_agent_server")
     @patch("container_manager_mcp.agent_server.create_agent_parser")
     @patch("container_manager_mcp.agent_server.load_identity")
     @patch("container_manager_mcp.agent_server.initialize_workspace")
@@ -208,7 +208,7 @@ class TestAgentServer:
         call_kwargs = mock_create_server.call_args[1]
         assert call_kwargs["mcp_config"] == "/custom/path/mcp_config.json"
 
-    @patch("container_manager_mcp.agent_server.create_graph_agent_server")
+    @patch("container_manager_mcp.agent_server.create_agent_server")
     @patch("container_manager_mcp.agent_server.create_agent_parser")
     @patch("container_manager_mcp.agent_server.load_identity")
     @patch("container_manager_mcp.agent_server.initialize_workspace")
