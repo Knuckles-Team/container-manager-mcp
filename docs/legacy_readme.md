@@ -96,36 +96,7 @@ Configure your IDE's `mcp.json` to launch the MCP server via `uvx`:
 ```
 
 #### Streamable-HTTP Transport (Recommended for production deployments)
-Configure your client's `mcp.json` to launch the Streamable-HTTP server via `uvx` with explicit host and port definition:
-
-```json
-{
-  "mcpServers": {
-    "container-manager-mcp": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "container-manager-mcp",
-        "container-manager-mcp"
-      ],
-      "env": {
-        "TRANSPORT": "streamable-http",
-        "HOST": "0.0.0.0",
-        "PORT": "8000",
-        "SYSTEM_TOOLS_ENABLE": "your_system_tools_enable_here",
-        "SYSTEMS_MANAGER_ENABLE": "your_systems_manager_enable_here",
-        "WEBSITE_BUILDER_ENABLE": "your_website_builder_enable_here",
-        "WEB_ARTIFACTS_ENABLE": "your_web_artifacts_enable_here",
-        "SECURITY_TOOLS_ENABLE": "your_security_tools_enable_here",
-        "DEVELOPER_UTILITIES_ENABLE": "your_developer_utilities_enable_here",
-        "BROWSER_TOOLS_ENABLE": "your_browser_tools_enable_here"
-      }
-    }
-  }
-}
-```
-
-Alternatively, connect to a pre-deployed remote or local Streamable-HTTP instance:
+To run the server as a long-running Streamable-HTTP service:
 
 ```json
 {

@@ -23,7 +23,8 @@ docker = [ "docker>=7.1.0",]
 mcp = [ "agent-utilities[mcp]>=0.11.0",]
 agent = [ "agent-utilities[agent,logfire]>=0.11.0", "container-manager-mcp[mcp]>=1.9.0",]
 all = [ "container-manager-mcp[docker,podman,mcp,agent]>=1.9.0",]
-test = [ "pytest", "pytest-asyncio", "pytest-cov",]
+test = [
+    "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]
 
 [project.scripts]
 container-manager-mcp = "container_manager_mcp.mcp_server:mcp_server"
