@@ -264,16 +264,48 @@ class ContainerManagerBase(ABC):
         pass
 
 
+def resolve_host_from_inventory(host: str) -> dict:
+    from tunnel_manager.tunnel_manager import HostManager
+    hm = HostManager()
+    if not hm.hosts:
+        raise FileNotFoundError(f"No valid hosts configuration or inventory found (attempted: {hm.config_file})")
+        
+    if host not in hm.hosts:
+        raise ValueError(f"Host '{host}' not configured in inventory ({hm.config_file})")
+        
+    hinfo = hm.hosts[host]
+    return {
+        "hostname": hinfo.get("hostname"),
+        "user": hinfo.get("user", "genius"),
+        "port": hinfo.get("port", 22),
+        "identity_file": hinfo.get("key_path") or hinfo.get("identity_file"),
+        "password": hinfo.get("password"),
+    }
+
+
+
 class DockerManager(ContainerManagerBase):
-    def __init__(self, silent: bool = False, log_file: str | None = None):
+    def __init__(self, host: str | None = None, silent: bool = False, log_file: str | None = None):
         super().__init__(silent, log_file)
         if docker is None:
             raise ImportError("Please install docker-py: pip install docker")
         try:
-            self.client = docker.from_env()
-        except DockerException as e:
+            if host:
+                host_info = resolve_host_from_inventory(host)
+                user = host_info.get("user", "genius")
+                hostname = host_info.get("hostname")
+                port = host_info.get("port", 22)
+                if not hostname:
+                    raise ValueError(f"No hostname specified for host '{host}' in configuration")
+                
+                base_url = f"ssh://{user}@{hostname}:{port}"
+                self.logger.info(f"Connecting to remote Docker daemon at {base_url}")
+                self.client = docker.DockerClient(base_url=base_url)
+            else:
+                self.client = docker.from_env()
+        except Exception as e:
             self.logger.error(f"Failed to connect to Docker daemon: {str(e)}")
-            raise RuntimeError(f"Failed to connect to Docker: {str(e)}") from e
+            raise RuntimeError(f"Host '{host or 'localhost'}' is offline or unreachable via SSH, or Docker daemon is not running: {str(e)}") from e
 
     def prune_system(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
@@ -1873,8 +1905,10 @@ def is_app_installed(app_name: str = "docker") -> bool:
 
 
 def create_manager(
-    manager_type: str | None = None, silent: bool = False, log_file: str | None = None
+    manager_type: str | None = None, silent: bool = False, log_file: str | None = None, host: str | None = None
 ) -> ContainerManagerBase:
+    if host is None:
+        host = os.environ.get("CONTAINER_MANAGER_HOST", None)
     if manager_type is None:
         manager_type = os.environ.get("CONTAINER_MANAGER_TYPE", None)
     if manager_type is None:
@@ -1887,8 +1921,10 @@ def create_manager(
             "No supported container manager detected. Set CONTAINER_MANAGER_TYPE or install Docker/Podman."
         )
     if manager_type.lower() in ["docker", "swarm"]:
-        return DockerManager(silent=silent, log_file=log_file)
+        return DockerManager(host=host, silent=silent, log_file=log_file)
     elif manager_type.lower() == "podman":
+        if host:
+            raise NotImplementedError("Multi-host support is not implemented for Podman")
         return PodmanManager(silent=silent, log_file=log_file)
     else:
         raise ValueError(f"Unsupported container manager type: {manager_type}")

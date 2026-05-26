@@ -2,14 +2,23 @@ import asyncio
 import inspect
 import sys
 import types
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Ensure a 'podman' module exists in sys.modules so patch() can resolve it
-# even when podman-py is not installed. The production code (container_manager.py)
-# handles this with try/except ImportError, but unittest.mock.patch needs the
-# parent module to be importable.
+# Ensure 'docker' and 'podman' modules exist in sys.modules so patch() can resolve them
+# even when docker-py or podman-py is not installed. The production code handles this
+# with try/except ImportError, but unittest.mock.patch needs the parent module to be importable.
+if "docker" not in sys.modules or not hasattr(sys.modules.get("docker"), "from_env"):
+    _fake_docker = types.ModuleType("docker")
+    _fake_docker.from_env = MagicMock  # type: ignore[attr-defined]
+    _fake_docker_errors = types.ModuleType("docker.errors")
+    _fake_docker_errors.DockerException = Exception  # type: ignore[attr-defined]
+    _fake_docker.errors = _fake_docker_errors  # type: ignore[attr-defined]
+    sys.modules["docker"] = _fake_docker
+    sys.modules["docker.errors"] = _fake_docker_errors
+
 if "podman" not in sys.modules:
     _fake_podman = types.ModuleType("podman")
     _fake_podman.PodmanClient = MagicMock  # type: ignore[attr-defined]
@@ -22,23 +31,29 @@ if "podman" not in sys.modules:
 
 @pytest.fixture
 def mock_container_deps():
+    mock_docker = MagicMock()
+    mock_podman = MagicMock()
     with (
-        patch("docker.from_env") as mock_docker,
-        patch("podman.PodmanClient") as mock_podman,
+        patch(
+            "container_manager_mcp.container_manager.docker", mock_docker, create=True
+        ),
+        patch(
+            "container_manager_mcp.container_manager.podman", mock_podman, create=True
+        ),
         patch("shutil.which", return_value="/usr/bin/docker"),
     ):
         # Mock Docker Client
-        docker_client = mock_docker.return_value
+        docker_client = mock_docker.from_env.return_value
         docker_client.containers.list.return_value = []
         docker_client.images.list.return_value = []
         docker_client.volumes.list.return_value = []
         docker_client.networks.list.return_value = []
 
         # Mock Podman Client
-        podman_client = mock_podman.return_value
+        podman_client = mock_podman.PodmanClient.return_value
         podman_client.containers.list.return_value = []
 
-        yield mock_docker, mock_podman
+        yield mock_docker.from_env, mock_podman.PodmanClient
 
 
 def test_container_manager_brute_force(mock_container_deps):
@@ -107,13 +122,13 @@ def test_mcp_server_coverage(mock_container_deps):
         return await call_next(context)
 
     with patch.object(RateLimitingMiddleware, "on_request", mock_on_request):
-        # Patch get_client in mcp_server to return a mock manager
-        with patch("container_manager_mcp.mcp_server.get_client") as mock_cm:
+        # Patch create_manager in mcp_server to return a mock manager
+        with patch("container_manager_mcp.mcp_server.create_manager") as mock_cm:
             mock_manager = MagicMock()
             mock_cm.return_value = mock_manager
 
             mcp_data = get_mcp_instance()
-            mcp = mcp_data[0] if isinstance(mcp_data, tuple) else mcp_data
+            mcp = mcp_data[1] if isinstance(mcp_data, tuple) else mcp_data
 
             async def run_tools():
                 tool_objs = (
@@ -123,7 +138,7 @@ def test_mcp_server_coverage(mock_container_deps):
                 )
                 for tool in tool_objs:
                     try:
-                        target_params = {
+                        target_params: dict[str, Any] = {
                             "container_id": "test_id",
                             "image": "nginx",
                             "tag": "latest",
@@ -161,17 +176,48 @@ def test_mcp_server_coverage(mock_container_deps):
             asyncio.run(run_tools())
 
 
-def test_agent_server_coverage():
-    import container_manager_mcp.agent_server as mod
+@patch("container_manager_mcp.agent_server.create_agent_server")
+@patch("container_manager_mcp.agent_server.create_agent_parser")
+@patch("container_manager_mcp.agent_server.load_identity")
+@patch("container_manager_mcp.agent_server.initialize_workspace")
+def test_agent_server_coverage(
+    _mock_init_workspace,
+    mock_load_identity,
+    mock_create_parser,
+    mock_create_server,
+):
     from container_manager_mcp.agent_server import agent_server
 
-    with patch("agent_utilities.create_agent_server") as mock_s:
-        with patch("sys.argv", ["agent_server.py"]):
-            if inspect.isfunction(agent_server):
-                agent_server()
-            else:
-                mod.agent_server()
-            assert mock_s.called
+    mock_load_identity.return_value = {
+        "name": "Test Agent",
+        "description": "Test Description",
+        "content": "Test system prompt",
+    }
+    mock_parser = MagicMock()
+    mock_args = MagicMock()
+    mock_args.debug = False
+    mock_args.mcp_url = "http://localhost:8000/mcp"
+    mock_args.mcp_config = None
+    mock_args.host = "0.0.0.0"
+    mock_args.port = 9000
+    mock_args.provider = "openai"
+    mock_args.model_id = "gpt-4"
+    mock_args.base_url = None
+    mock_args.api_key = None
+    mock_args.custom_skills_directory = None
+    mock_args.web = False
+    mock_args.otel = False
+    mock_args.otel_endpoint = None
+    mock_args.otel_headers = None
+    mock_args.otel_public_key = None
+    mock_args.otel_secret_key = None
+    mock_args.otel_protocol = None
+    mock_parser.parse_args.return_value = mock_args
+    mock_create_parser.return_value = mock_parser
+
+    with patch("sys.argv", ["agent_server.py"]):
+        agent_server()
+        assert mock_create_server.called
 
 
 def test_main_coverage():

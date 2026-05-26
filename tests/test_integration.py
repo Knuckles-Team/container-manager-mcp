@@ -22,6 +22,13 @@ from container_manager_mcp.container_manager import (
 
 def check_docker_available():
     """Check if Docker is available and running."""
+    try:
+        import docker
+
+        if docker is None:
+            return False
+    except ImportError:
+        return False
     if not is_app_installed("docker"):
         return False
     try:
@@ -38,6 +45,13 @@ def check_docker_available():
 
 def check_podman_available():
     """Check if Podman is available and running."""
+    try:
+        import podman
+
+        if podman is None:
+            return False
+    except ImportError:
+        return False
     if not is_app_installed("podman"):
         return False
     try:

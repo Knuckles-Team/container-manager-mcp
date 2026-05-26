@@ -403,7 +403,7 @@ class TestDockerManager:
         from docker.errors import DockerException
 
         mock_docker.from_env.side_effect = DockerException("Connection failed")
-        with pytest.raises(RuntimeError, match="Failed to connect to Docker"):
+        with pytest.raises(RuntimeError, match="Host 'localhost' is offline or unreachable via SSH, or Docker daemon is not running"):
             DockerManager()
 
     @patch("container_manager_mcp.container_manager.docker")
@@ -936,7 +936,7 @@ class TestDockerManager:
         result = manager.get_container_logs("container_id")
 
         assert result == "Container log output"
-        mock_container.logs.assert_called_once_with(tail="all")
+        mock_container.logs.assert_called_once_with(tail="50")
 
     @patch("container_manager_mcp.container_manager.docker")
     def test_get_container_logs_with_tail(self, mock_docker):

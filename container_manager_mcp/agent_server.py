@@ -14,20 +14,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+from agent_utilities import (
+    build_system_prompt_from_workspace,
+    create_agent_parser,
+    create_agent_server,
+    initialize_workspace,
+    load_identity,
+)
+
 DEFAULT_AGENT_NAME = None
 DEFAULT_AGENT_DESCRIPTION = None
 DEFAULT_AGENT_SYSTEM_PROMPT = None
 
 
 def agent_server():
-    from agent_utilities import (
-        build_system_prompt_from_workspace,
-        create_agent_parser,
-        create_agent_server,
-        initialize_workspace,
-        load_identity,
-    )
-
     global DEFAULT_AGENT_NAME, DEFAULT_AGENT_DESCRIPTION, DEFAULT_AGENT_SYSTEM_PROMPT
     initialize_workspace()
     meta = load_identity()

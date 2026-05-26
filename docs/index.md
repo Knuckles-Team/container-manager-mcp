@@ -41,6 +41,12 @@ This repository is actively maintained - Contributions are welcome!
 - Comprehensive logging and error handling
 - Extensible architecture for additional container runtimes
 - Multi-agent A2A system for delegated container management
+- **Zero-Script Multi-Host Container Routing**: Securely route Docker Swarm, network, volume, image, and compose operations to remote host engines over SSH standard tunneling.
+
+## Multi-Host Configuration
+
+Container-Manager-Mcp allows routing tool calls directly to remote target engines using standard `ssh://` endpoints.
+See the detailed [Multi-Host Architecture and Configuration Guide](multi_host.md) for setup and use instructions.
 
 ## MCP
 

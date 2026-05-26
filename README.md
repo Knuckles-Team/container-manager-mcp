@@ -39,11 +39,22 @@
 
 ---
 
+## Multi-Host & Zero-Script Remote Docker Orchestration
+
+`container-manager-mcp` allows a single master instance of the MCP server on your controller to route container and volume operations securely to remote hosts over SSH standard tunneling.
+
+- **Unified Inventory**: Connection endpoints are loaded dynamically from XDG `~/.config/agent_utilities/inventory.yaml`.
+- **Zero TCP Socket Exposure**: Operations route directly over the standard SSH channel securely, removing the need to expose Docker socket TCP ports.
+
+To configure and utilize the multi-host remote routing, see the detailed [Multi-Host Architecture Guide](docs/multi_host.md).
+
+---
+
 ## CLI or API
 
 This agent wraps the Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box! API. You can interact with it programmatically or via its integrated execution entrypoints.
 
-Detailed instructions on how to use the underlying API wrappers, extended schema bindings, and developer SDK references are maintained in [docs/index.md](file:///home/apps/workspace/agent-packages/agents/container-manager-mcp/docs/index.md).
+Detailed instructions on how to use the underlying API wrappers, extended schema bindings, and developer SDK references are maintained in [docs/index.md](docs/index.md).
 
 ---
 
@@ -54,17 +65,38 @@ This server utilizes dynamic Action-Routed tools to optimize token overhead and 
 ### Available MCP Tools
 | Tool Module | Toggle Env Var | Enabled by Default | Description & Nested Methods |
 |-------------|----------------|--------------------|------------------------------|
-| **Info** | `INFOTOOL` | `True` | Manage container manager info operations. Action-routed methods: `get_version`, `get_info`. |
-| **Image** | `IMAGETOOL` | `True` | Manage container images. Action-routed methods: `list_images`, `pull_image`, `remove_image`, `prune_images`. |
-| **Container** | `CONTAINERTOOL` | `True` | Manage container operations. Action-routed methods: `list_containers`, `get_container_logs`, `stop_container`, `remove_container`, `prune_containers`, `exec_in_container`. |
-| **Volume** | `VOLUMETOOL` | `True` | Manage volume operations. Action-routed methods: `list_volumes`, `create_volume`, `remove_volume`, `prune_volumes`. |
-| **Network** | `NETWORKTOOL` | `True` | Manage network operations. Action-routed methods: `list_networks`, `create_network`, `remove_network`, `prune_networks`. |
-| **Swarm** | `SWARMTOOL` | `True` | Manage swarm operations. Action-routed methods: `init_swarm`, `leave_swarm`, `list_nodes`, `list_services`, `create_service`, `remove_service`. |
-| **System** | `SYSTEMTOOL` | `True` | Manage container manager system operations. Action-routed methods: `prune_system`, `get_info`, `get_version`. |
-| **Compose** | `COMPOSETOOL` | `True` | Manage docker-compose or podman-compose operations. Action-routed methods: `up`, `down`, `ps`, `logs`. |
-| **Misc** | `MISCTOOL` | `True` | Initialize and return the MCP instance. |
+| **Info** | `INFO_TOOL` | `True` | Manage container manager info operations. Action-routed methods: `get_info`, `get_version`. |
+| **Image** | `IMAGE_TOOL` | `True` | Manage container images. Action-routed methods: `list_images`, `prune_images`, `pull_image`, `remove_image`. |
+| **Container** | `CONTAINER_TOOL` | `True` | Manage container operations. Action-routed methods: `exec_in_container`, `get_container_logs`, `list_containers`, `prune_containers`, `remove_container`, `stop_container`. |
+| **Volume** | `VOLUME_TOOL` | `True` | Manage volume operations. Action-routed methods: `create_volume`, `list_volumes`, `prune_volumes`, `remove_volume`. |
+| **Network** | `NETWORK_TOOL` | `True` | Manage network operations. Action-routed methods: `create_network`, `list_networks`, `prune_networks`, `remove_network`. |
+| **Swarm** | `SWARM_TOOL` | `True` | Manage swarm operations. Action-routed methods: `create_service`, `init_swarm`, `leave_swarm`, `list_nodes`, `list_services`, `remove_service`. |
+| **System** | `SYSTEM_TOOL` | `True` | Manage container manager system operations. Action-routed methods: `get_info`, `get_version`, `prune_system`. |
+| **Compose** | `COMPOSE_TOOL` | `True` | Manage docker-compose or podman-compose operations. Action-routed methods: `down`, `logs`, `ps`, `up`. |
+| **Misc** | `MISC_TOOL` | `True` | Manage container manager mcp misc operations. |
 
-Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](file:///home/apps/workspace/agent-packages/agents/container-manager-mcp/docs/mcp.md).
+Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
+
+### Dynamic Tool Selection & Visibility
+
+This MCP server supports dynamic toolset selection and visibility filtering at runtime. This allows you to restrict the set of exposed tools in order to prevent blowing up the LLM's context window.
+
+You can configure tool filtering via multiple input channels:
+
+- **CLI Arguments:** Pass `--tools` or `--toolsets` (or their disabled counterparts `--disabled-tools` and `--disabled-toolsets`) during startup.
+- **Environment Variables:** Define standard environment variables:
+  - `MCP_ENABLED_TOOLS` / `MCP_DISABLED_TOOLS`
+  - `MCP_ENABLED_TAGS` / `MCP_DISABLED_TAGS`
+- **HTTP SSE Request Headers:** Pass custom headers during transport initialization:
+  - `x-mcp-enabled-tools` / `x-mcp-disabled-tools`
+  - `x-mcp-enabled-tags` / `x-mcp-disabled-tags`
+- **HTTP SSE Request Query Parameters:** Append query parameters directly to your transport connection URL:
+  - `?tools=tool1,tool2`
+  - `?tags=tag1`
+
+When query strings or parameters are supplied, an LLM-free **Knowledge Graph resolution layer** (using `DynamicToolOrchestrator`) matches query intents against known tool tags, names, or descriptions, with safe fallback and automated 24-hour background cache refreshing.
+
+---
 
 ### MCP Configuration Examples
 
@@ -246,7 +278,7 @@ services:
 
 ```
 
-Detailed graph node architecture explanations, custom skill configurations, and agentic trace guides are available in [docs/agent.md](file:///home/apps/workspace/agent-packages/agents/container-manager-mcp/docs/agent.md).
+Detailed graph node architecture explanations, custom skill configurations, and agentic trace guides are available in [docs/agent.md](docs/agent.md).
 
 ---
 

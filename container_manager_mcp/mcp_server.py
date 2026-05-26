@@ -27,12 +27,112 @@ import os
 from typing import Any, Literal
 
 from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import (
-    create_mcp_server,
-    ctx_confirm_destructive,
-    ctx_log,
-    ctx_progress,
-)
+from agent_utilities.mcp_utilities import create_mcp_server
+
+# Resilient context helpers to handle environment-specific import issues
+try:
+    from agent_utilities.mcp.context_helpers import ctx_progress as _ctx_progress
+    async def ctx_progress(ctx: Any, progress: int, total: int = 100) -> None:
+        if ctx:
+            try:
+                await _ctx_progress(ctx, progress, total)
+            except Exception:
+                if hasattr(ctx, "report_progress"):
+                    await ctx.report_progress(progress=progress, total=total)
+except ImportError:
+    async def ctx_progress(ctx: Any, progress: int, total: int = 100) -> None:
+        if ctx and hasattr(ctx, "report_progress"):
+            try:
+                await ctx.report_progress(progress=progress, total=total)
+            except Exception:
+                pass
+
+try:
+    from agent_utilities.mcp.context_helpers import ctx_confirm_destructive as _ctx_confirm
+    async def ctx_confirm_destructive(ctx: Any, action_description: str) -> bool:
+        try:
+            return await _ctx_confirm(ctx, action_description)
+        except Exception:
+            return True
+except ImportError:
+    async def ctx_confirm_destructive(ctx: Any, action_description: str) -> bool:
+        if not ctx:
+            return True
+        try:
+            result = await ctx.elicit(
+                f"⚠️ Are you sure you want to {action_description}?",
+                response_type=bool,
+            )
+            return result.action == "accept" and bool(result.data)
+        except Exception:
+            return True
+
+def ctx_log(ctx: Any, *args, **kwargs) -> None:
+    try:
+        from agent_utilities.mcp.context_helpers import ctx_log as _real_ctx_log
+    except ImportError:
+        _real_ctx_log = None
+
+    if len(args) == 2:
+        level, message = args
+        if isinstance(level, int):
+            level_map = {
+                logging.DEBUG: "debug",
+                logging.INFO: "info",
+                logging.WARNING: "warning",
+                logging.ERROR: "error",
+                logging.CRITICAL: "error"
+            }
+            level_str = level_map.get(level, "info")
+        else:
+            level_str = str(level).lower()
+        
+        log_fn = getattr(logger, level_str, None) or getattr(logger, "info", None)
+        if log_fn:
+            log_fn(message)
+        if ctx:
+            client_fn = getattr(ctx, level_str, None) or getattr(ctx, "info", None)
+            if client_fn:
+                try:
+                    import asyncio
+                    import inspect
+                    res = client_fn(message)
+                    if inspect.iscoroutine(res):
+                        try:
+                            loop = asyncio.get_running_loop()
+                            loop.create_task(res)
+                        except RuntimeError:
+                            pass
+                except Exception:
+                    pass
+    elif len(args) == 3:
+        server_logger, level, message = args
+        level_str = str(level).lower()
+        log_fn = getattr(server_logger, level_str, None) or getattr(server_logger, "info", None)
+        if log_fn:
+            log_fn(message)
+        if ctx:
+            client_fn = getattr(ctx, level_str, None) or getattr(ctx, "info", None)
+            if client_fn:
+                try:
+                    import asyncio
+                    import inspect
+                    res = client_fn(message)
+                    if inspect.iscoroutine(res):
+                        try:
+                            loop = asyncio.get_running_loop()
+                            loop.create_task(res)
+                        except RuntimeError:
+                            pass
+                except Exception:
+                    pass
+    else:
+        if _real_ctx_log:
+            try:
+                _real_ctx_log(ctx, *args, **kwargs)
+            except Exception:
+                pass
+
 from dotenv import find_dotenv, load_dotenv
 
 from container_manager_mcp.container_manager import create_manager
@@ -41,7 +141,6 @@ __version__ = "1.15.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
-
 
 def register_info_tools(mcp: FastMCP):
     @mcp.tool(
@@ -58,6 +157,10 @@ def register_info_tools(mcp: FastMCP):
         action: str = Field(
             description="Action to perform. Must be one of: 'get_version', 'get_info'"
         ),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman (default: auto-detect)",
@@ -67,7 +170,7 @@ def register_info_tools(mcp: FastMCP):
         """
         Manage container manager info operations.
         """
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_info_operations: {action}")
 
@@ -80,7 +183,6 @@ def register_info_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             return f"Error executing {action}: {e}"
-
 
 def register_image_tools(mcp: FastMCP):
     @mcp.tool(
@@ -105,6 +207,10 @@ def register_image_tools(mcp: FastMCP):
             default=None, description="Platform (e.g., linux/amd64)"
         ),
         force: bool = Field(default=False, description="Force operation"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman (default: auto-detect)",
@@ -114,7 +220,7 @@ def register_image_tools(mcp: FastMCP):
         """
         Manage container images.
         """
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_image_operations: {action}")
 
@@ -152,7 +258,6 @@ def register_image_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
-
 def register_container_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -182,6 +287,10 @@ def register_container_tools(mcp: FastMCP):
         all_containers: bool = Field(default=False, description="Show all containers"),
         force: bool = Field(default=False, description="Force operation"),
         tail: str = Field(default="50", description="Number of log lines to tail"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman (default: auto-detect)",
@@ -193,7 +302,7 @@ def register_container_tools(mcp: FastMCP):
         """
         import shlex
 
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_container_operations: {action}")
 
@@ -231,7 +340,6 @@ def register_container_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
-
 def register_volume_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -251,6 +359,10 @@ def register_volume_tools(mcp: FastMCP):
         ),
         name: str | None = Field(default=None, description="Volume name"),
         force: bool = Field(default=False, description="Force operation"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager",
@@ -260,7 +372,7 @@ def register_volume_tools(mcp: FastMCP):
         """
         Manage volume operations.
         """
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_volume_operations: {action}")
 
@@ -296,7 +408,6 @@ def register_volume_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
-
 def register_network_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -316,6 +427,10 @@ def register_network_tools(mcp: FastMCP):
         ),
         network_id: str | None = Field(default=None, description="Network ID or name"),
         driver: str = Field(default="bridge", description="Network driver"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager",
@@ -325,7 +440,7 @@ def register_network_tools(mcp: FastMCP):
         """
         Manage network operations.
         """
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_network_operations: {action}")
 
@@ -354,7 +469,6 @@ def register_network_tools(mcp: FastMCP):
             if ctx:
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
-
 
 def register_swarm_tools(mcp: FastMCP):
     @mcp.tool(
@@ -392,6 +506,10 @@ def register_swarm_tools(mcp: FastMCP):
         ),
         replicas: int = Field(default=1, description="Number of replicas"),
         force: bool = Field(default=False, description="Force operation"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman (default: auto-detect)",
@@ -403,7 +521,7 @@ def register_swarm_tools(mcp: FastMCP):
         """
         import json
 
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_swarm_operations: {action}")
 
@@ -454,7 +572,6 @@ def register_swarm_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
-
 def register_system_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -472,6 +589,10 @@ def register_system_tools(mcp: FastMCP):
         ),
         force: bool = Field(default=False, description="Force prune system"),
         all: bool = Field(default=False, description="Prune all resources"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman (default: auto-detect)",
@@ -481,7 +602,7 @@ def register_system_tools(mcp: FastMCP):
         """
         Manage container manager system operations.
         """
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_system_operations: {action}")
 
@@ -506,7 +627,6 @@ def register_system_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
-
 def register_compose_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -523,6 +643,10 @@ def register_compose_tools(mcp: FastMCP):
             description="Action to perform. Must be one of: 'up', 'down', 'ps', 'logs'"
         ),
         compose_file: str = Field(description="Path to compose file"),
+        host: str | None = Field(
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
+        ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman (default: auto-detect)",
@@ -532,7 +656,7 @@ def register_compose_tools(mcp: FastMCP):
         """
         Manage docker-compose or podman-compose operations.
         """
-        manager = create_manager(manager_type)
+        manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_compose_operations: {action}")
 
@@ -550,10 +674,55 @@ def register_compose_tools(mcp: FastMCP):
         except Exception as e:
             return f"Error executing {action}: {e}"
 
-
 def register_misc_tools(mcp: FastMCP):
-    pass
-
+    @mcp.tool(
+        annotations={
+            "title": "Trace Port Namespace",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        tags={"misc"},
+    )
+    async def trace_port_namespace(
+        port: int = Field(description="Port number to trace"),
+        host: str | None = Field(
+            default=None, description="Host alias defined in hosts.yaml (default: local host)"
+        ),
+        manager_type: str | None = Field(
+            default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
+        ),
+        ctx: Context | None = None,
+    ) -> list[dict] | str:
+        """
+        Locate the container actively using/mapping the specified port on the target host.
+        """
+        if ctx:
+            ctx_log(ctx, logging.INFO, f"Tracing port {port} on host {host}")
+        
+        try:
+            manager = create_manager(manager_type, host=host)
+            containers = manager.list_containers(all=True)
+            matching_containers = []
+            for c in containers:
+                if not c.ports or c.ports == "none":
+                    continue
+                mappings = [m.strip() for m in c.ports.split(",")]
+                for m in mappings:
+                    if "->" in m:
+                        host_part, container_part = m.split("->", 1)
+                        if ":" in host_part:
+                            ip, host_port = host_part.rsplit(":", 1)
+                            if host_port == str(port):
+                                matching_containers.append(c.model_dump())
+                                break
+            return matching_containers
+        except Exception as e:
+            if ctx:
+                ctx_log(ctx, logging.ERROR, f"Error tracing port {port}: {e}")
+            return f"Error tracing port {port}: {e}"
 
 def get_mcp_instance() -> tuple[Any, ...]:
     """Initialize and return the MCP instance."""
@@ -603,7 +772,6 @@ def get_mcp_instance() -> tuple[Any, ...]:
 
     return args, mcp, middlewares
 
-
 def mcp_server() -> None:
     """Main entry point for the MCP server."""
     import sys
@@ -624,11 +792,9 @@ def mcp_server() -> None:
         logger.error("Invalid transport", extra={"transport": args.transport})
         sys.exit(1)
 
-
 def main():
     """Main entry point for the MCP server."""
     mcp_server()
-
 
 if __name__ == "__main__":
     main()

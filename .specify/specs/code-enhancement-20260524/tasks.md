@@ -1,0 +1,91 @@
+# Tasks: Code Enhancement: container-manager-mcp
+
+Generated: 2026-05-24T04:17:16.173620+00:00
+Skipped informational: 4
+
+- [ ] [P] **T001** [Dependency Audit] Minor update: agent-utilities 0.2.40 (installed) -> 0.16.0
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T002** [Dependency Audit] Minor update: pytest-xdist 3.6.0 (constraint — not installed) -> 3.8.0
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T003** [Dependency Audit] Minor update: podman 5.6.0 (constraint — not installed) -> 5.8.0
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T004** [Codebase Optimization] 2 functions exceed 200 lines (actionable refactoring targets): container_manager
+  - Priority: P2-Medium | Effort: Large
+- [ ] [P] **T005** [Codebase Optimization] Monolithic: container_manager.py (2320L) — 2 functions with high complexity (wor
+  - Priority: P1-High | Effort: Large
+- [ ] [P] **T006** [Codebase Optimization] Monolithic: mcp_server.py (634L) — 5 functions with high complexity (worst: regi
+  - Priority: P1-High | Effort: Large
+- [ ] [P] **T007** [Codebase Optimization] 37 functions with nesting depth >4
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T008** [Test Coverage] Test suite lacks intent diversity (only one type)
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T009** [Test Coverage] 12 potential doc-test drift items
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T010** [Documentation & Governance] README.md missing sections: usage|quick start
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T011** [Documentation & Governance] 2 broken internal links in README.md
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T012** [Documentation & Governance] README missing: Has a Table of Contents
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T013** [Documentation & Governance] README missing: Has usage examples with code blocks
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T014** [Architecture & Design Patterns] SRP: 4 modules exceed 500 lines (god modules)
+  - Priority: P2-Medium | Effort: Large
+- [ ] [P] **T015** [Architecture & Design Patterns] SRP: 8 classes have >15 methods
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T016** [Architecture & Design Patterns] No discernible layer architecture (no domain/service/adapter separation)
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T017** [Concept Traceability] Low traceability ratio: 0% concepts fully traced
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T018** [Concept Traceability] 17 orphaned concepts (only in one source)
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T019** [Concept Traceability] 151 test functions missing concept markers
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T020** [Concept Traceability] 106 significant functions (>10 lines) missing concept markers in docstrings
+  - Priority: P4-Enhancement | Effort: Small
+- [ ] [P] **T021** [Linting & Formatting] Total lint findings: 0 (high/error: 0, medium/warning: 0, low: 0)
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T022** [Pre-Commit Compliance] 1 hook(s) may be outdated: ruff-pre-commit
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T023** [Directory Organization] 2 rogue/throwaway scripts detected (fix_*, validate_*, patch_*, etc.): scripts/v
+  - Priority: P4-Enhancement | Effort: Medium
+- [ ] [P] **T024** [Version Sync Analysis] Found 15 file(s) with version '1.15.0' that are NOT tracked in .bumpversion.cfg:
+  - Priority: P2-Medium | Effort: Small
+- [ ] [P] **T025** [Version Sync Analysis]   - .mypy_cache/3.13/pydantic/_migration.meta.json
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T026** [Version Sync Analysis]   - .mypy_cache/3.13/pydantic/errors.meta.json
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T027** [Version Sync Analysis]   - .mypy_cache/3.13/pydantic/functional_validators.meta.json
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T028** [Version Sync Analysis]   - .mypy_cache/3.13/pydantic/__init__.meta.json
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T029** [Version Sync Analysis]   - .mypy_cache/3.13/pydantic/warnings.meta.json
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T030** [Version Sync Analysis]   ... and 10 more.
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T031** [Changelog Audit] CHANGELOG.md exists but could not be parsed — check format compliance
+  - Priority: P3-Low | Effort: Medium
+- [ ] [P] **T032** [Changelog Audit] No changelog entries within the last 30 days
+  - Priority: P3-Low | Effort: Medium
+- [ ] [P] **T033** [Changelog Audit] keepachangelog not installed — pip install 'universal-skills[code-enhancer]'
+  - Priority: P3-Low | Effort: Small
+- [ ] [P] **T034** [Pytest Quality] 2 test files exceed 500 lines — split into focused modules
+  - Priority: P2-Medium | Effort: Large
+- [ ] [P] **T035** [Pytest Quality] 1 test files have >30 tests — too dense
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T036** [Pytest Quality] Test directory lacks subdirectory organization (consider unit/, integration/, e2
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T037** [Pytest Quality] 5 tests have no assertions
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T038** [Pytest Quality] 79 tests use weak assertions (assert result is not None, assert True, etc.)
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T039** [Pytest Quality] 3 tests exceed 100 lines — likely doing too much per test
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T040** [Environment Variables] Partial env var documentation: 39% coverage
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T041** [Environment Variables] Undocumented env vars: AUTH_TYPE, COMPOSETOOL, CONTAINERTOOL, CONTAINER_MANAGER_
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T042** [Environment Variables] 6 Python env vars not in .env.example: CONTAINER_MANAGER_PODMAN_BASE_URL, CONTAI
+  - Priority: P2-Medium | Effort: Medium
+- [ ] [P] **T043** [analyze_xdg_kg] Analysis error: No module named 'agent_utilities.knowledge_graph'
+  - Priority: P1-High | Effort: Medium
