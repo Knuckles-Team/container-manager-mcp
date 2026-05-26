@@ -32,6 +32,7 @@ from agent_utilities.mcp_utilities import create_mcp_server
 # Resilient context helpers to handle environment-specific import issues
 try:
     from agent_utilities.mcp.context_helpers import ctx_progress as _ctx_progress
+
     async def ctx_progress(ctx: Any, progress: int, total: int = 100) -> None:
         if ctx:
             try:
@@ -39,7 +40,9 @@ try:
             except Exception:
                 if hasattr(ctx, "report_progress"):
                     await ctx.report_progress(progress=progress, total=total)
+
 except ImportError:
+
     async def ctx_progress(ctx: Any, progress: int, total: int = 100) -> None:
         if ctx and hasattr(ctx, "report_progress"):
             try:
@@ -47,14 +50,20 @@ except ImportError:
             except Exception:
                 pass
 
+
 try:
-    from agent_utilities.mcp.context_helpers import ctx_confirm_destructive as _ctx_confirm
+    from agent_utilities.mcp.context_helpers import (
+        ctx_confirm_destructive as _ctx_confirm,
+    )
+
     async def ctx_confirm_destructive(ctx: Any, action_description: str) -> bool:
         try:
             return await _ctx_confirm(ctx, action_description)
         except Exception:
             return True
+
 except ImportError:
+
     async def ctx_confirm_destructive(ctx: Any, action_description: str) -> bool:
         if not ctx:
             return True
@@ -66,6 +75,7 @@ except ImportError:
             return result.action == "accept" and bool(result.data)
         except Exception:
             return True
+
 
 def ctx_log(ctx: Any, *args, **kwargs) -> None:
     try:
@@ -81,12 +91,12 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
                 logging.INFO: "info",
                 logging.WARNING: "warning",
                 logging.ERROR: "error",
-                logging.CRITICAL: "error"
+                logging.CRITICAL: "error",
             }
             level_str = level_map.get(level, "info")
         else:
             level_str = str(level).lower()
-        
+
         log_fn = getattr(logger, level_str, None) or getattr(logger, "info", None)
         if log_fn:
             log_fn(message)
@@ -96,6 +106,7 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
                 try:
                     import asyncio
                     import inspect
+
                     res = client_fn(message)
                     if inspect.iscoroutine(res):
                         try:
@@ -108,7 +119,9 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
     elif len(args) == 3:
         server_logger, level, message = args
         level_str = str(level).lower()
-        log_fn = getattr(server_logger, level_str, None) or getattr(server_logger, "info", None)
+        log_fn = getattr(server_logger, level_str, None) or getattr(
+            server_logger, "info", None
+        )
         if log_fn:
             log_fn(message)
         if ctx:
@@ -117,6 +130,7 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
                 try:
                     import asyncio
                     import inspect
+
                     res = client_fn(message)
                     if inspect.iscoroutine(res):
                         try:
@@ -133,6 +147,7 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
             except Exception:
                 pass
 
+
 from dotenv import find_dotenv, load_dotenv
 
 from container_manager_mcp.container_manager import create_manager
@@ -141,6 +156,7 @@ __version__ = "1.15.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
+
 
 def register_info_tools(mcp: FastMCP):
     @mcp.tool(
@@ -183,6 +199,7 @@ def register_info_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             return f"Error executing {action}: {e}"
+
 
 def register_image_tools(mcp: FastMCP):
     @mcp.tool(
@@ -257,6 +274,7 @@ def register_image_tools(mcp: FastMCP):
             if ctx:
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
+
 
 def register_container_tools(mcp: FastMCP):
     @mcp.tool(
@@ -340,6 +358,7 @@ def register_container_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
+
 def register_volume_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -408,6 +427,7 @@ def register_volume_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
+
 def register_network_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -469,6 +489,7 @@ def register_network_tools(mcp: FastMCP):
             if ctx:
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
+
 
 def register_swarm_tools(mcp: FastMCP):
     @mcp.tool(
@@ -572,6 +593,7 @@ def register_swarm_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
+
 def register_system_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -627,6 +649,7 @@ def register_system_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
             return f"Error executing {action}: {e}"
 
+
 def register_compose_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -674,6 +697,7 @@ def register_compose_tools(mcp: FastMCP):
         except Exception as e:
             return f"Error executing {action}: {e}"
 
+
 def register_misc_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -688,7 +712,8 @@ def register_misc_tools(mcp: FastMCP):
     async def trace_port_namespace(
         port: int = Field(description="Port number to trace"),
         host: str | None = Field(
-            default=None, description="Host alias defined in hosts.yaml (default: local host)"
+            default=None,
+            description="Host alias defined in hosts.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -701,7 +726,7 @@ def register_misc_tools(mcp: FastMCP):
         """
         if ctx:
             ctx_log(ctx, logging.INFO, f"Tracing port {port} on host {host}")
-        
+
         try:
             manager = create_manager(manager_type, host=host)
             containers = manager.list_containers(all=True)
@@ -723,6 +748,7 @@ def register_misc_tools(mcp: FastMCP):
             if ctx:
                 ctx_log(ctx, logging.ERROR, f"Error tracing port {port}: {e}")
             return f"Error tracing port {port}: {e}"
+
 
 def get_mcp_instance() -> tuple[Any, ...]:
     """Initialize and return the MCP instance."""
@@ -772,6 +798,7 @@ def get_mcp_instance() -> tuple[Any, ...]:
 
     return args, mcp, middlewares
 
+
 def mcp_server() -> None:
     """Main entry point for the MCP server."""
     import sys
@@ -792,9 +819,11 @@ def mcp_server() -> None:
         logger.error("Invalid transport", extra={"transport": args.transport})
         sys.exit(1)
 
+
 def main():
     """Main entry point for the MCP server."""
     mcp_server()
+
 
 if __name__ == "__main__":
     main()

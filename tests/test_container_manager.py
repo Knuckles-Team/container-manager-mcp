@@ -403,7 +403,10 @@ class TestDockerManager:
         from docker.errors import DockerException
 
         mock_docker.from_env.side_effect = DockerException("Connection failed")
-        with pytest.raises(RuntimeError, match="Host 'localhost' is offline or unreachable via SSH, or Docker daemon is not running"):
+        with pytest.raises(
+            RuntimeError,
+            match="Host 'localhost' is offline or unreachable via SSH, or Docker daemon is not running",
+        ):
             DockerManager()
 
     @patch("container_manager_mcp.container_manager.docker")

@@ -6,7 +6,7 @@ This document describes the design, configuration, and execution lifecycle of th
 
 ## 1. Architectural Overview
 
-Managing Docker, Docker Swarm, and Podman containers across multiple servers typically requires installing and exposing Docker ports globally, or setting up complex TLS credentials on every single remote host. 
+Managing Docker, Docker Swarm, and Podman containers across multiple servers typically requires installing and exposing Docker ports globally, or setting up complex TLS credentials on every single remote host.
 
 `container-manager-mcp` bypasses this complexity by leveraging **Docker over SSH** (using standard `ssh://` endpoints) coupled with a unified local inventory configuration:
 
