@@ -152,7 +152,7 @@ from dotenv import find_dotenv, load_dotenv
 
 from container_manager_mcp.container_manager import create_manager
 
-__version__ = "1.16.0"
+__version__ = "1.17.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
