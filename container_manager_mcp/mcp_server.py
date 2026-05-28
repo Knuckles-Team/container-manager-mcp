@@ -152,7 +152,7 @@ from dotenv import find_dotenv, load_dotenv
 
 from container_manager_mcp.container_manager import create_manager
 
-__version__ = "1.15.0"
+__version__ = "1.16.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
@@ -175,7 +175,7 @@ def register_info_tools(mcp: FastMCP):
         ),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -226,7 +226,7 @@ def register_image_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -307,7 +307,7 @@ def register_container_tools(mcp: FastMCP):
         tail: str = Field(default="50", description="Number of log lines to tail"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -380,7 +380,7 @@ def register_volume_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -449,7 +449,7 @@ def register_network_tools(mcp: FastMCP):
         driver: str = Field(default="bridge", description="Network driver"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -529,7 +529,7 @@ def register_swarm_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -613,7 +613,7 @@ def register_system_tools(mcp: FastMCP):
         all: bool = Field(default=False, description="Prune all resources"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -668,7 +668,7 @@ def register_compose_tools(mcp: FastMCP):
         compose_file: str = Field(description="Path to compose file"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -713,7 +713,7 @@ def register_misc_tools(mcp: FastMCP):
         port: int = Field(description="Port number to trace"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in hosts.yaml (default: local host)",
+            description="Host alias defined in inventory.yaml (default: local host)",
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),

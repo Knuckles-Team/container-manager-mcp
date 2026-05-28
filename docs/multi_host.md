@@ -53,14 +53,13 @@ This virtual namespacing maintains a single centralized executable on the contro
 
 ## 2. Configuration & Inventory Schema
 
-Host connection definitions are parsed from `inventory.yaml`. The XDG-standard directories are searched by default to achieve a single source of truth.
+Host connection definitions are parsed from `inventory.yaml`. The XDG-standard directory is searched by default to achieve a single source of truth.
 
 ### Search Paths:
-1. `~/.config/agent_utilities/inventory.yaml`
-2. `~/.tunnel_manager/hosts.yaml` (legacy fallback)
+1. `~/.config/agent-utilities/inventory.yaml`
 
 ### `inventory.yaml` Format:
-Create or edit your inventory file at `~/.config/agent_utilities/inventory.yaml`:
+Create or edit your inventory file at `~/.config/agent-utilities/inventory.yaml`:
 
 ```yaml
 hosts:
@@ -68,12 +67,12 @@ hosts:
     hostname: "192.168.1.10"
     port: 22
     user: "ubuntu"
-    key_path: "/home/genius/.ssh/id_rsa"
+    key_path: "/home/user/.ssh/id_rsa"
   node-beta:
     hostname: "10.0.0.5"
     port: 2222
     user: "admin"
-    identity_file: "/home/genius/.ssh/id_ed25519"
+    identity_file: "/home/user/.ssh/id_ed25519"
 ```
 
 ---
