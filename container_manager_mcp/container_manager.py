@@ -21,7 +21,7 @@ from container_manager_mcp.models import (
     VolumeInfo,
 )
 
-__version__ = "1.33.4"
+__version__ = "1.35.0"
 
 try:
     from docker.errors import DockerException
