@@ -1,2 +1,2 @@
-agent-utilities[mcp]>=0.40.0
+agent-utilities[mcp]>=0.41.0
 docker>=7.1.0
