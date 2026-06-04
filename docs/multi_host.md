@@ -34,7 +34,7 @@ graph TD
 
     subgraph Centralized Controller Layer (Zero Remote Daemons)
         D -->|Prefills Target Host Env| E[Centralized Container Manager Instance]
-        E -->|Routes Docker-over-SSH| F[Docker Daemon on Target Host: &lt;host&gt;]
+        E -->|Routes Docker-over-SSH| F["Docker Daemon on Target Host: &lt;host&gt;"]
     end
 
     style D fill:#f9f,stroke:#333,stroke-width:2px

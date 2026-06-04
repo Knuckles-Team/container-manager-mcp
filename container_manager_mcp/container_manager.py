@@ -21,14 +21,14 @@ from container_manager_mcp.models import (
     VolumeInfo,
 )
 
-__version__ = "1.35.0"
+__version__ = "1.37.0"
 
 try:
     from docker.errors import DockerException
 
-    import docker
+    import docker  # type: ignore
 except ImportError:
-    docker = None
+    docker = None  # type: ignore
     DockerException = Exception
 
 try:
@@ -152,8 +152,13 @@ class ContainerManagerBase(ABC):
         detach: bool = False,
         ports: dict[str, str] | None = None,
         volumes: dict[str, dict] | None = None,
-        environment: dict[str, str] | None = None,
+        environment: dict[str, str] | list[str] | None = None,
+        labels: dict[str, str] | None = None,
     ) -> dict:
+        pass
+
+    @abstractmethod
+    def inspect_container(self, container_id: str) -> dict:
         pass
 
     @abstractmethod
@@ -308,9 +313,9 @@ class DockerManager(ContainerManagerBase):
 
                 base_url = f"ssh://{user}@{hostname}:{port}"
                 self.logger.info(f"Connecting to remote Docker daemon at {base_url}")
-                self.client = docker.DockerClient(base_url=base_url)
+                self.client = docker.DockerClient(base_url=base_url)  # type: ignore
             else:
-                self.client = docker.from_env()
+                self.client = docker.from_env()  # type: ignore
         except Exception as e:
             self.logger.error(f"Failed to connect to Docker daemon: {str(e)}")
             raise RuntimeError(
@@ -503,7 +508,7 @@ class DockerManager(ContainerManagerBase):
                 filters = {"dangling": True} if not all else {}
                 result = self.client.images.prune(filters=filters)
                 if result is None:
-                    result = {"SpaceReclaimed": 0, "ImagesDeleted": []}
+                    result = {"SpaceReclaimed": 0, "ImagesDeleted": []}  # type: ignore
                 self.logger.debug(f"Raw prune_images result: {result}")
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
@@ -572,7 +577,8 @@ class DockerManager(ContainerManagerBase):
         detach: bool = False,
         ports: dict[str, str] | None = None,
         volumes: dict[str, dict] | None = None,
-        environment: dict[str, str] | None = None,
+        environment: dict[str, str] | list[str] | None = None,
+        labels: dict[str, str] | None = None,
     ) -> dict:
         params = {
             "image": image,
@@ -582,16 +588,18 @@ class DockerManager(ContainerManagerBase):
             "ports": ports,
             "volumes": volumes,
             "environment": environment,
+            "labels": labels,
         }
         try:
-            container = self.client.containers.run(
-                image=image,
-                command=command,
+            container = self.client.containers.run(  # type: ignore
+                image,
                 name=name,
+                command=command,
                 detach=detach,
                 ports=ports,
                 volumes=volumes,
                 environment=environment,
+                labels=labels,
             )
             if not detach:
                 result = {"output": container.decode("utf-8") if container else ""}
@@ -624,6 +632,17 @@ class DockerManager(ContainerManagerBase):
         except Exception as e:
             self.log_action("run_container", params, error=e)
             raise RuntimeError(f"Failed to run container: {str(e)}") from e
+
+    def inspect_container(self, container_id: str) -> dict:
+        params = {"container_id": container_id}
+        try:
+            container = self.client.containers.get(container_id)
+            result = container.attrs
+            self.log_action("inspect_container", params, {"id": container_id})
+            return result
+        except Exception as e:
+            self.log_action("inspect_container", params, error=e)
+            raise RuntimeError(f"Failed to inspect container: {str(e)}") from e
 
     def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         params = {"container_id": container_id, "timeout": timeout}
@@ -783,7 +802,7 @@ class DockerManager(ContainerManagerBase):
             else:
                 result = self.client.volumes.prune()
                 if result is None:
-                    result = {"SpaceReclaimed": 0, "VolumesDeleted": []}
+                    result = {"SpaceReclaimed": 0, "VolumesDeleted": []}  # type: ignore
                 self.logger.debug(f"Raw prune_volumes result: {result}")
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
@@ -1058,7 +1077,8 @@ class DockerManager(ContainerManagerBase):
                     }
                     for container_port, host_port in ports.items()
                 ]
-                endpoint_spec = docker.types.EndpointSpec(ports=port_list)
+                if docker is not None:
+                    endpoint_spec = docker.types.EndpointSpec(ports=port_list)  # type: ignore
             service = self.client.services.create(
                 image,
                 name=name,
@@ -1277,7 +1297,7 @@ class PodmanManager(ContainerManagerBase):
                 filters = {"dangling": True} if not all else {}
                 result = self.client.images.prune(filters=filters)
                 if result is None:
-                    result = {"SpaceReclaimed": 0, "ImagesRemoved": []}
+                    result = {"SpaceReclaimed": 0, "ImagesRemoved": []}  # type: ignore
                 self.logger.debug(f"Raw prune_images result: {result}")
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
@@ -1302,7 +1322,7 @@ class PodmanManager(ContainerManagerBase):
             result = self.client.containers.prune()
             self.logger.debug(f"Raw prune_containers result: {result}")
             if result is None:
-                result = {"SpaceReclaimed": 0, "ContainersDeleted": []}
+                result = {"SpaceReclaimed": 0, "ContainersDeleted": []}  # type: ignore
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "containers_removed": (
@@ -1350,7 +1370,7 @@ class PodmanManager(ContainerManagerBase):
             else:
                 result = self.client.volumes.prune()
                 if result is None:
-                    result = {"SpaceReclaimed": 0, "VolumesRemoved": []}
+                    result = {"SpaceReclaimed": 0, "VolumesRemoved": []}  # type: ignore
                 self.logger.debug(f"Raw prune_volumes result: {result}")
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
@@ -1587,7 +1607,8 @@ class PodmanManager(ContainerManagerBase):
         detach: bool = False,
         ports: dict[str, str] | None = None,
         volumes: dict[str, dict] | None = None,
-        environment: dict[str, str] | None = None,
+        environment: dict[str, str] | list[str] | None = None,
+        labels: dict[str, str] | None = None,
     ) -> dict:
         params = {
             "image": image,
@@ -1597,6 +1618,7 @@ class PodmanManager(ContainerManagerBase):
             "ports": ports,
             "volumes": volumes,
             "environment": environment,
+            "labels": labels,
         }
         try:
             # Build kwargs, filtering out None values for podman-py compatibility
@@ -1612,6 +1634,8 @@ class PodmanManager(ContainerManagerBase):
                 run_kwargs["volumes"] = volumes
             if environment is not None:
                 run_kwargs["environment"] = environment
+            if labels is not None:
+                run_kwargs["labels"] = labels
 
             container = self.client.containers.run(image, **run_kwargs)
             if not detach:
@@ -1643,6 +1667,17 @@ class PodmanManager(ContainerManagerBase):
         except Exception as e:
             self.log_action("run_container", params, error=e)
             raise RuntimeError(f"Failed to run container: {str(e)}") from e
+
+    def inspect_container(self, container_id: str) -> dict:
+        params = {"container_id": container_id}
+        try:
+            container = self.client.containers.get(container_id)
+            result = container.attrs
+            self.log_action("inspect_container", params, {"id": container_id})
+            return result
+        except Exception as e:
+            self.log_action("inspect_container", params, error=e)
+            raise RuntimeError(f"Failed to inspect container: {str(e)}") from e
 
     def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         params = {"container_id": container_id, "timeout": timeout}
@@ -1885,16 +1920,16 @@ class PodmanManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to compose logs: {str(e)}") from e
 
     def init_swarm(self, advertise_addr: str | None = None) -> dict:
-        raise NotImplementedError("Swarm not supported in Podman")
+        raise RuntimeError("Swarm not supported in Podman")
 
     def leave_swarm(self, force: bool = False) -> dict:
-        raise NotImplementedError("Swarm not supported in Podman")
+        raise RuntimeError("Swarm not supported in Podman")
 
     def list_nodes(self) -> list[dict]:
-        raise NotImplementedError("Swarm not supported in Podman")
+        raise RuntimeError("Swarm not supported in Podman")
 
     def list_services(self) -> list[dict]:
-        raise NotImplementedError("Swarm not supported in Podman")
+        raise RuntimeError("Swarm not supported in Podman")
 
     def create_service(
         self,
@@ -1904,10 +1939,10 @@ class PodmanManager(ContainerManagerBase):
         ports: dict[str, str] | None = None,
         mounts: list[str] | None = None,
     ) -> dict:
-        raise NotImplementedError("Swarm not supported in Podman")
+        raise RuntimeError("Swarm not supported in Podman")
 
     def remove_service(self, service_id: str) -> dict:
-        raise NotImplementedError("Swarm not supported in Podman")
+        raise RuntimeError("Swarm not supported in Podman")
 
 
 def is_app_installed(app_name: str = "docker") -> bool:
