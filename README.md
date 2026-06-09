@@ -22,6 +22,10 @@
 
 *Version: 1.40.0*
 
+> **Documentation** — Installation, deployment, usage across the API, CLI, MCP, and
+> A2A agent interfaces, and the multi-host control plane are maintained in the
+> [official documentation](https://knuckles-team.github.io/container-manager-mcp/).
+
 ---
 
 ## Overview
@@ -311,6 +315,26 @@ uv pip install container-manager-mcp[all]
 # Using standard pip
 python -m pip install container-manager-mcp[all]
 ```
+
+---
+
+## Documentation
+
+The complete documentation is published as the
+[official documentation site](https://knuckles-team.github.io/container-manager-mcp/)
+and is the recommended reference for installation, deployment, and day-to-day
+operation.
+
+| Page | Contents |
+|---|---|
+| [Installation](https://knuckles-team.github.io/container-manager-mcp/installation/) | pip, source, extras, prebuilt Docker image |
+| [Deployment](https://knuckles-team.github.io/container-manager-mcp/deployment/) | run the MCP and agent servers, Compose, Caddy + Technitium, env config |
+| [Usage](https://knuckles-team.github.io/container-manager-mcp/usage/) | the MCP tools, the `DockerManager` API, the CLI |
+| [Overview](https://knuckles-team.github.io/container-manager-mcp/overview/) | ecosystem role, enterprise readiness, architecture |
+| [Multi-Host](https://knuckles-team.github.io/container-manager-mcp/multi_host/) | zero-script Docker-over-SSH control plane |
+| [Concepts](https://knuckles-team.github.io/container-manager-mcp/concepts/) | concept registry (`CONCEPT:CMGR-*`) |
+
+`AGENTS.md` is the canonical contributor/agent guidance.
 
 ---
 
