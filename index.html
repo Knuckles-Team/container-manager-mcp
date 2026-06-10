@@ -6,7 +6,11 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
+        <meta name="description" content="Manage Docker, Docker Swarm, and Podman containers — the container-orchestration MCP server and A2A agent for the agent-utilities ecosystem.">
       
+      
+      
+        <link rel="canonical" href="https://knuckles-team.github.io/container-manager-mcp/">
       
       
       
@@ -16,7 +20,7 @@
         
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="https://raw.githubusercontent.com/squidfunk/mkdocs-material/master/material/templates/assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
@@ -72,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#container-manager-a2a-ag-ui-mcp" class="md-skip">
+        <a href="#container-manager-mcp" class="md-skip">
           Skip to content
         </a>
       
@@ -86,12 +90,12 @@
 
   
 
-<header class="md-header md-header--shadow" data-md-component="header">
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href="." title="container-manager-mcp" class="md-header__button md-logo" aria-label="container-manager-mcp" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
 
     </a>
     <label class="md-header__button md-icon" for="__drawer">
@@ -121,9 +125,19 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
       </label>
     
@@ -131,7 +145,7 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
     
       <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
@@ -164,6 +178,11 @@
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
       </label>
       <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
         
         <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
           
@@ -203,13 +222,157 @@
     
   </nav>
   
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="overview/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="installation/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Installation
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="deployment/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="usage/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Usage (API / CLI / MCP)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="multi_host/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Multi-Host
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="concepts/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Concepts
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
 </header>
     
     <div class="md-container" data-md-component="container">
       
       
-        
-          
         
       
       <main class="md-main" data-md-component="main">
@@ -223,13 +386,15 @@
                     
 
 
+  
 
-<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
     <a href="." title="container-manager-mcp" class="md-nav__button md-logo" aria-label="container-manager-mcp" data-md-component="logo">
       
   
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.5 17c-.14 0-.26 0-.39.04L17.5 13.8c.45-.45.75-1.09.75-1.8a2.5 2.5 0 0 0-2.5-2.5c-.14 0-.25 0-.4.04L13.74 6.3c.47-.46.76-1.09.76-1.8a2.5 2.5 0 0 0-5 0c0 .7.29 1.34.76 1.79L8.65 9.54c-.15-.04-.26-.04-.4-.04a2.5 2.5 0 0 0-2.5 2.5c0 .71.29 1.34.75 1.79l-1.61 3.25C4.76 17 4.64 17 4.5 17a2.5 2.5 0 0 0 0 5A2.5 2.5 0 0 0 7 19.5c0-.7-.29-1.34-.76-1.79l1.62-3.25c.14.04.26.04.39.04s.25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0A2.5 2.5 0 0 0 12 17c-.13 0-.26 0-.39.04L10 13.8c.45-.45.75-1.09.75-1.8 0-.7-.29-1.33-.75-1.79l1.61-3.25c.13.04.26.04.39.04s.26 0 .39-.04L14 10.21a2.5 2.5 0 0 0 1.75 4.29c.13 0 .25 0 .38-.04l1.63 3.25c-.47.45-.76 1.09-.76 1.79a2.5 2.5 0 0 0 5 0 2.5 2.5 0 0 0-2.5-2.5m-15 3.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m8.5-1c0 .55-.45 1-1 1s-1-.45-1-1 .45-1 1-1 1 .45 1 1M7.25 12c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1M11 4.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m3.75 7.5c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m4.75 8.5c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/></svg>
 
     </a>
     container-manager-mcp
@@ -327,10 +492,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#explore-the-documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Explore the documentation
       
     </span>
   </a>
@@ -338,336 +503,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#multi-host-configuration" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Multi-Host Configuration
+        Quick start
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mcp-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#a2a-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A2A Agent
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="A2A Agent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#a2a-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A2A CLI
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="A2A CLI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Endpoints
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#graph-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graph Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-as-an-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using as an MCP Server
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Using as an MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#run-in-stdio-mode-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run in stdio mode (default):
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-in-http-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run in HTTP mode:
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deploy-mcp-server-as-a-service" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deploy MCP Server as a Service
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Deploy MCP Server as a Service">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Docker Run
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-a2a-agent-docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run A2A Agent (Docker):
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Docker Compose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configure-mcpjson-for-ai-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configure mcp.json for AI Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-python-package" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install Python Package
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Test">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development-and-contribution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development and Contribution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        License
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#repository-owners" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Repository Owners
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-configuration-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Configuration Examples
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP Configuration Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-standard-io-stdio-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Standard IO (stdio) Deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-streamable-http-sse-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Streamable HTTP (SSE) Deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -694,6 +536,141 @@
     
   
     Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage (API / CLI / MCP)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="multi_host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Host
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
   
 
     
@@ -744,10 +721,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#features" class="md-nav__link">
+  <a href="#explore-the-documentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Features
+        Explore the documentation
       
     </span>
   </a>
@@ -755,336 +732,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#multi-host-configuration" class="md-nav__link">
+  <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Multi-Host Configuration
+        Quick start
       
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#mcp-tools" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Tools
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP CLI
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#a2a-agent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A2A Agent
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="A2A Agent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#a2a-cli" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        A2A CLI
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="A2A CLI">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#endpoints" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Endpoints
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#graph-architecture" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Graph Architecture
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Usage">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-as-an-mcp-server" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using as an MCP Server
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Using as an MCP Server">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#run-in-stdio-mode-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run in stdio mode (default):
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-in-http-mode" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run in HTTP mode:
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#deploy-mcp-server-as-a-service" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Deploy MCP Server as a Service
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Deploy MCP Server as a Service">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-run" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Docker Run
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#run-a2a-agent-docker" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Run A2A Agent (Docker):
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#using-docker-compose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Using Docker Compose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#configure-mcpjson-for-ai-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Configure mcp.json for AI Integration
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#install-python-package" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install Python Package
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#test" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Test
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Test">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#dependencies" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Dependencies
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development-and-contribution" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Development and Contribution
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#license" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        License
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#repository-owners" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Repository Owners
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#mcp-configuration-examples" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        MCP Configuration Examples
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="MCP Configuration Examples">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-standard-io-stdio-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Standard IO (stdio) Deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-streamable-http-sse-deployment" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Streamable HTTP (SSE) Deployment
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1108,493 +762,54 @@
   
 
 
-<h1 id="container-manager-a2a-ag-ui-mcp">Container Manager - A2A | AG-UI | MCP<a class="headerlink" href="#container-manager-a2a-ag-ui-mcp" title="Permanent link">&para;</a></h1>
-<p><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/container-manager-mcp" />
+<h1 id="container-manager-mcp">container-manager-mcp<a class="headerlink" href="#container-manager-mcp" title="Permanent link">&para;</a></h1>
+<p>Manage Docker, Docker Swarm, and Podman containers through a typed <strong>MCP server</strong>
+and an integrated <strong>A2A agent</strong> — local or across a fleet of hosts over SSH.</p>
+<div class="admonition info">
+<p class="admonition-title">Official documentation</p>
+<p>This site is the canonical reference for <code>container-manager-mcp</code>, maintained
+alongside every release.</p>
+</div>
+<p><a href="https://pypi.org/project/container-manager-mcp/"><img alt="PyPI" src="https://img.shields.io/pypi/v/container-manager-mcp" /></a>
 <img alt="MCP Server" src="https://badge.mcpx.dev?type=server" title="MCP Server" />
-<img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dd/container-manager-mcp" />
-<img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub forks" src="https://img.shields.io/github/forks/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Knuckles-Team/container-manager-mcp" />
-<img alt="PyPI - License" src="https://img.shields.io/pypi/l/container-manager-mcp" />
-<img alt="GitHub" src="https://img.shields.io/github/license/Knuckles-Team/container-manager-mcp" /></p>
-<p><img alt="GitHub last commit (by committer)" src="https://img.shields.io/github/last-commit/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub pull requests" src="https://img.shields.io/github/issues-pr/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub closed pull requests" src="https://img.shields.io/github/issues-pr-closed/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub issues" src="https://img.shields.io/github/issues/Knuckles-Team/container-manager-mcp" /></p>
-<p><img alt="GitHub top language" src="https://img.shields.io/github/languages/top/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub language count" src="https://img.shields.io/github/languages/count/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/Knuckles-Team/container-manager-mcp" />
-<img alt="GitHub repo file count (file type)" src="https://img.shields.io/github/directory-file-count/Knuckles-Team/container-manager-mcp" />
-<img alt="PyPI - Wheel" src="https://img.shields.io/pypi/wheel/container-manager-mcp" />
-<img alt="PyPI - Implementation" src="https://img.shields.io/pypi/implementation/container-manager-mcp" /></p>
-<p><em>Version: 1.9.0</em></p>
+<a href="https://github.com/Knuckles-Team/container-manager-mcp/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/pypi/l/container-manager-mcp" /></a>
+<a href="https://github.com/Knuckles-Team/container-manager-mcp"><img alt="GitHub" src="https://img.shields.io/badge/source-GitHub-181717?logo=github" /></a></p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Container Manager provides a robust universal interface to manage Docker and Podman containers, networks, volumes,
-and Docker Swarm services, enabling programmatic and remote container management.</p>
-<p>This is package contains an MCP Server + A2A Server Out of the Box!</p>
-<p>This repository is actively maintained - Contributions are welcome!</p>
-<h2 id="features">Features<a class="headerlink" href="#features" title="Permanent link">&para;</a></h2>
+<p><code>container-manager-mcp</code> exposes the Docker and Podman engines as a compact set of
+<strong>action-routed MCP tools</strong> an agent or IDE can call, plus a Pydantic-AI graph agent
+for conversational orchestration. It provides:</p>
 <ul>
-<li>Manage Docker and Podman containers, images, volumes, and networks</li>
-<li>Support for Docker Swarm operations</li>
-<li>Support for Docker Compose and Podman Compose operations</li>
-<li>FastMCP server for remote API access</li>
-<li>Comprehensive logging and error handling</li>
-<li>Extensible architecture for additional container runtimes</li>
-<li>Multi-agent A2A system for delegated container management</li>
-<li><strong>Zero-Script Multi-Host Container Routing</strong>: Securely route Docker Swarm, network, volume, image, and compose operations to remote host engines over SSH standard tunneling.</li>
+<li><strong><code>DockerManager</code> / <code>PodmanManager</code></strong> — typed Python facades over the Docker and
+  Podman engines covering images, containers, volumes, networks, Swarm services, and
+  Compose stacks.</li>
+<li><strong>Action-routed MCP tools</strong> — consolidated, togglable tool modules (info, image,
+  container, volume, network, swarm, system, compose) that minimize LLM context
+  overhead.</li>
+<li><strong>Zero-script multi-host control</strong> — route any operation to a remote host over a
+  standard SSH channel, with no Docker TCP socket exposed, driven from a unified
+  <code>inventory.yaml</code>.</li>
 </ul>
-<h2 id="multi-host-configuration">Multi-Host Configuration<a class="headerlink" href="#multi-host-configuration" title="Permanent link">&para;</a></h2>
-<p>Container-Manager-Mcp allows routing tool calls directly to remote target engines using standard <code>ssh://</code> endpoints.
-See the detailed <a href="multi_host/">Multi-Host Architecture and Configuration Guide</a> for setup and use instructions.</p>
-<h2 id="mcp">MCP<a class="headerlink" href="#mcp" title="Permanent link">&para;</a></h2>
-<h3 id="mcp-tools">MCP Tools<a class="headerlink" href="#mcp-tools" title="Permanent link">&para;</a></h3>
+<h2 id="explore-the-documentation">Explore the documentation<a class="headerlink" href="#explore-the-documentation" title="Permanent link">&para;</a></h2>
+<div class="grid cards">
 <ul>
-<li><code>get_version</code>: Retrieve version information of the container runtime</li>
-<li><code>get_info</code>: Get system information about the container runtime</li>
-<li><code>list_images</code>: List all available images</li>
-<li><code>pull_image</code>: Pull an image from a registry</li>
-<li><code>remove_image</code>: Remove an image</li>
-<li><code>list_containers</code>: List running or all containers</li>
-<li><code>run_container</code>: Run a new container</li>
-<li><code>stop_container</code>: Stop a running container</li>
-<li><code>remove_container</code>: Remove a container</li>
-<li><code>get_container_logs</code>: Retrieve logs from a container</li>
-<li><code>exec_in_container</code>: Execute a command in a container</li>
-<li><code>list_volumes</code>: List all volumes</li>
-<li><code>create_volume</code>: Create a new volume</li>
-<li><code>remove_volume</code>: Remove a volume</li>
-<li><code>list_networks</code>: List all networks</li>
-<li><code>create_network</code>: Create a new network</li>
-<li><code>remove_network</code>: Remove a network</li>
-<li><code>compose_up</code>: Start services defined in a Compose file</li>
-<li><code>compose_down</code>: Stop and remove services defined in a Compose file</li>
-<li><code>compose_ps</code>: List containers for a Compose project</li>
-<li><code>compose_logs</code>: View logs for a Compose project or specific service</li>
-<li><code>init_swarm</code>: Initialize a Docker Swarm</li>
-<li><code>leave_swarm</code>: Leave a Docker Swarm</li>
-<li><code>list_nodes</code>: List nodes in a Docker Swarm</li>
-<li><code>list_services</code>: List services in a Docker Swarm</li>
-<li><code>create_service</code>: Create a new service in a Docker Swarm</li>
-<li><code>remove_service</code>: Remove a service from a Docker Swarm</li>
+<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m13.13 22.19-1.63-3.83c1.57-.58 3.04-1.36 4.4-2.27zM5.64 12.5l-3.83-1.63 6.1-2.77C7 9.46 6.22 10.93 5.64 12.5M21.61 2.39S16.66.269 11 5.93c-2.19 2.19-3.5 4.6-4.35 6.71-.28.75-.09 1.57.46 2.13l2.13 2.12c.55.56 1.37.74 2.12.46A19.1 19.1 0 0 0 18.07 13c5.66-5.66 3.54-10.61 3.54-10.61m-7.07 7.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0c.77.78.78 2.05 0 2.83s-2.05.78-2.83 0m-5.66 7.07-1.41-1.41zM6.24 22l3.64-3.64c-.34-.09-.67-.24-.97-.45L4.83 22zM2 22h1.41l4.77-4.76-1.42-1.41L2 20.59zm0-2.83 4.09-4.08c-.21-.3-.36-.62-.45-.97L2 17.76z"/></svg></span> <strong><a href="installation/">Installation</a></strong> — pip, source, extras, and the prebuilt Docker image.</li>
+<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 19h1a1 1 0 0 1 1 1h7v2h-7a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1H2v-2h7a1 1 0 0 1 1-1h1v-2H4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-7zM4 3h16a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1m5 4h1V5H9zm0 8h1v-2H9zM5 5v2h2V5zm0 8v2h2v-2z"/></svg></span> <strong><a href="deployment/">Deployment</a></strong> — run the MCP and agent servers, Docker Compose, Caddy + Technitium.</li>
+<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 19V7H4v12zm0-16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm-7 14v-2h5v2zm-3.42-4L5.57 9H8.4l3.3 3.3c.39.39.39 1.03 0 1.42L8.42 17H5.59z"/></svg></span> <strong><a href="usage/">Usage</a></strong> — the MCP tools, the <code>DockerManager</code> Python API, and the CLI.</li>
+<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2v6h2v3H5c-1.11 0-2 .89-2 2v3H1v6h6v-6H5v-3h6v3H9v6h6v-6h-2v-3h6v3h-2v6h6v-6h-2v-3c0-1.11-.89-2-2-2h-6V8h2V2z"/></svg></span> <strong><a href="overview/">Overview</a></strong> — ecosystem role, enterprise readiness, and architecture.</li>
+<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 1c-1.11 0-2 .89-2 2v4c0 1.11.89 2 2 2H1v2h12V9h-3c1.11 0 2-.89 2-2V3c0-1.11-.89-2-2-2zm0 2h6v4H4zM3 13v7h7v-2H5v-5zm11 0c-1.11 0-2 .89-2 2v4c0 1.11.89 2 2 2h-3v2h12v-2h-3c1.11 0 2-.89 2-2v-4c0-1.11-.89-2-2-2zm0 2h6v4h-6z"/></svg></span> <strong><a href="multi_host/">Multi-Host</a></strong> — zero-script Docker-over-SSH control plane.</li>
+<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.5 9A1.5 1.5 0 0 0 7 7.5 1.5 1.5 0 0 0 5.5 6 1.5 1.5 0 0 0 4 7.5 1.5 1.5 0 0 0 5.5 9m11.91 2.58c.36.36.59.86.59 1.42 0 .55-.22 1.05-.59 1.41l-5 5a1.996 1.996 0 0 1-2.83 0l-6.99-6.99C2.22 12.05 2 11.55 2 11V6c0-1.11.89-2 2-2h5c.55 0 1.05.22 1.41.58zm-3.87-5.87 1-1 6.87 6.87c.37.36.59.87.59 1.42s-.22 1.05-.58 1.41l-5.38 5.38-1-1L20.75 13z"/></svg></span> <strong><a href="concepts/">Concepts</a></strong> — the <code>CONCEPT:CMGR-*</code> registry.</li>
 </ul>
-<h3 id="mcp-cli">MCP CLI<a class="headerlink" href="#mcp-cli" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Short Flag</th>
-<th>Long Flag</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>-h</td>
-<td>--help</td>
-<td>Display help information</td>
-</tr>
-<tr>
-<td>-t</td>
-<td>--transport</td>
-<td>Transport method: 'stdio', 'http', or 'sse' [legacy] (default: stdio)</td>
-</tr>
-<tr>
-<td>-s</td>
-<td>--host</td>
-<td>Host address for HTTP transport (default: 0.0.0.0)</td>
-</tr>
-<tr>
-<td>-p</td>
-<td>--port</td>
-<td>Port number for HTTP transport (default: 8000)</td>
-</tr>
-<tr>
-<td></td>
-<td>--auth-type</td>
-<td>Authentication type: 'none', 'static', 'jwt', 'oauth-proxy', 'oidc-proxy', 'remote-oauth' (default: none)</td>
-</tr>
-<tr>
-<td></td>
-<td>--token-jwks-uri</td>
-<td>JWKS URI for JWT verification</td>
-</tr>
-<tr>
-<td></td>
-<td>--token-issuer</td>
-<td>Issuer for JWT verification</td>
-</tr>
-<tr>
-<td></td>
-<td>--token-audience</td>
-<td>Audience for JWT verification</td>
-</tr>
-<tr>
-<td></td>
-<td>--oauth-upstream-auth-endpoint</td>
-<td>Upstream authorization endpoint for OAuth Proxy</td>
-</tr>
-<tr>
-<td></td>
-<td>--oauth-upstream-token-endpoint</td>
-<td>Upstream token endpoint for OAuth Proxy</td>
-</tr>
-<tr>
-<td></td>
-<td>--oauth-upstream-client-id</td>
-<td>Upstream client ID for OAuth Proxy</td>
-</tr>
-<tr>
-<td></td>
-<td>--oauth-upstream-client-secret</td>
-<td>Upstream client secret for OAuth Proxy</td>
-</tr>
-<tr>
-<td></td>
-<td>--oauth-base-url</td>
-<td>Base URL for OAuth Proxy</td>
-</tr>
-<tr>
-<td></td>
-<td>--oidc-config-url</td>
-<td>OIDC configuration URL</td>
-</tr>
-<tr>
-<td></td>
-<td>--oidc-client-id</td>
-<td>OIDC client ID</td>
-</tr>
-<tr>
-<td></td>
-<td>--oidc-client-secret</td>
-<td>OIDC client secret</td>
-</tr>
-<tr>
-<td></td>
-<td>--oidc-base-url</td>
-<td>Base URL for OIDC Proxy</td>
-</tr>
-<tr>
-<td></td>
-<td>--remote-auth-servers</td>
-<td>Comma-separated list of authorization servers for Remote OAuth</td>
-</tr>
-<tr>
-<td></td>
-<td>--remote-base-url</td>
-<td>Base URL for Remote OAuth</td>
-</tr>
-<tr>
-<td></td>
-<td>--allowed-client-redirect-uris</td>
-<td>Comma-separated list of allowed client redirect URIs</td>
-</tr>
-<tr>
-<td></td>
-<td>--eunomia-type</td>
-<td>Eunomia authorization type: 'none', 'embedded', 'remote' (default: none)</td>
-</tr>
-<tr>
-<td></td>
-<td>--eunomia-policy-file</td>
-<td>Policy file for embedded Eunomia (default: mcp_policies.json)</td>
-</tr>
-<tr>
-<td></td>
-<td>--eunomia-remote-url</td>
-<td>URL for remote Eunomia server</td>
-</tr>
-</tbody>
-</table>
-<h2 id="a2a-agent">A2A Agent<a class="headerlink" href="#a2a-agent" title="Permanent link">&para;</a></h2>
-<h3 id="a2a-cli">A2A CLI<a class="headerlink" href="#a2a-cli" title="Permanent link">&para;</a></h3>
-<h4 id="endpoints">Endpoints<a class="headerlink" href="#endpoints" title="Permanent link">&para;</a></h4>
-<ul>
-<li><strong>Web UI</strong>: <code>http://localhost:8000/</code> (if enabled)</li>
-<li><strong>A2A</strong>: <code>http://localhost:8000/a2a</code> (Discovery: <code>/a2a/.well-known/agent.json</code>)</li>
-<li><strong>AG-UI</strong>: <code>http://localhost:8000/ag-ui</code> (POST)</li>
-</ul>
-<table>
-<thead>
-<tr>
-<th>Long Flag</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>--host</td>
-<td>Host to bind the server to (default: 0.0.0.0)</td>
-</tr>
-<tr>
-<td>--port</td>
-<td>Port to bind the server to (default: 9000)</td>
-</tr>
-<tr>
-<td>--provider</td>
-<td>LLM Provider: openai, anthropic, google, huggingface (default: openai)</td>
-</tr>
-<tr>
-<td>--model-id</td>
-<td>LLM Model ID (default: nvidia/nemotron-3-super)</td>
-</tr>
-<tr>
-<td>--base-url</td>
-<td>LLM Base URL (for OpenAI compatible providers)</td>
-</tr>
-<tr>
-<td>--api-key</td>
-<td>LLM API Key</td>
-</tr>
-<tr>
-<td>--mcp-url</td>
-<td>MCP Server URL (default: http://localhost:8000/mcp)</td>
-</tr>
-<tr>
-<td>--web</td>
-<td>Enable Pydantic AI Web UI</td>
-</tr>
-</tbody>
-</table>
-<h2 id="graph-architecture">Graph Architecture<a class="headerlink" href="#graph-architecture" title="Permanent link">&para;</a></h2>
-<p>This agent uses <code>pydantic-graph</code> orchestration for intelligent routing and optimal context management.</p>
-<pre class="mermaid"><code>---
-title: Container Manager MCP Graph Agent
----
-stateDiagram-v2
-  [*] --&gt; RouterNode: User Query
-  RouterNode --&gt; DomainNode: Classified Domain
-  RouterNode --&gt; [*]: Low confidence / Error
-  DomainNode --&gt; [*]: Domain Result</code></pre>
-<ul>
-<li><strong>RouterNode</strong>: A fast, lightweight LLM (e.g., <code>nvidia/nemotron-3-super</code>) that classifies the user's query into one of the specialized domains.</li>
-<li><strong>DomainNode</strong>: The executor node. For the selected domain, it dynamically sets environment variables to temporarily enable ONLY the tools relevant to that domain, creating a highly focused sub-agent (e.g., <code>gpt-4o</code>) to complete the request. This preserves LLM context and prevents tool hallucination.</li>
-</ul>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<h3 id="using-as-an-mcp-server">Using as an MCP Server<a class="headerlink" href="#using-as-an-mcp-server" title="Permanent link">&para;</a></h3>
-<p>The MCP Server can be run in two modes: <code>stdio</code> (for local testing) or <code>http</code> (for networked access). To start the server, use the following commands:</p>
-<h4 id="run-in-stdio-mode-default">Run in stdio mode (default):<a class="headerlink" href="#run-in-stdio-mode-default" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>container-manager-mcp
-</code></pre></div>
-<h4 id="run-in-http-mode">Run in HTTP mode:<a class="headerlink" href="#run-in-http-mode" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>container-manager-mcp<span class="w"> </span>--transport<span class="w"> </span><span class="s2">&quot;http&quot;</span><span class="w">  </span>--host<span class="w"> </span><span class="s2">&quot;0.0.0.0&quot;</span><span class="w">  </span>--port<span class="w"> </span><span class="s2">&quot;8000&quot;</span>
-</code></pre></div>
-<h3 id="deploy-mcp-server-as-a-service">Deploy MCP Server as a Service<a class="headerlink" href="#deploy-mcp-server-as-a-service" title="Permanent link">&para;</a></h3>
-<p>The ServiceNow MCP server can be deployed using Docker, with configurable authentication, middleware, and Eunomia authorization.</p>
-<h4 id="using-docker-run">Using Docker Run<a class="headerlink" href="#using-docker-run" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>pull<span class="w"> </span>knucklessg1/container-manager:latest
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>--name<span class="w"> </span>container-manager-mcp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8004</span>:8004<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">HOST</span><span class="o">=</span><span class="m">0</span>.0.0.0<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">PORT</span><span class="o">=</span><span class="m">8004</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">TRANSPORT</span><span class="o">=</span>streamable-http<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">AUTH_TYPE</span><span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">EUNOMIA_TYPE</span><span class="o">=</span>none<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">  </span>knucklessg1/container-manager:latest
-</code></pre></div>
-<h4 id="run-a2a-agent-docker">Run A2A Agent (Docker):<a class="headerlink" href="#run-a2a-agent-docker" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>--name<span class="w"> </span>container-manager-agent<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">9000</span>:9000<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">PORT</span><span class="o">=</span><span class="m">9000</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">PROVIDER</span><span class="o">=</span>openai<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">MODEL_ID</span><span class="o">=</span>nvidia/nemotron-3-super<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">BASE_URL</span><span class="o">=</span>http://host.docker.internal:11434/v1<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">MCP_URL</span><span class="o">=</span>http://host.docker.internal:8004/mcp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">  </span>knucklessg1/container-manager:latest<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">  </span>container-manager-agent
-</code></pre></div>
-<p>For advanced authentication (e.g., JWT, OAuth Proxy, OIDC Proxy, Remote OAuth) or Eunomia, add the relevant environment variables:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span>--name<span class="w"> </span>container-manager-mcp<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">8004</span>:8004<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">HOST</span><span class="o">=</span><span class="m">0</span>.0.0.0<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">PORT</span><span class="o">=</span><span class="m">8004</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">TRANSPORT</span><span class="o">=</span>streamable-http<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">AUTH_TYPE</span><span class="o">=</span>oidc-proxy<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">OIDC_CONFIG_URL</span><span class="o">=</span>https://provider.com/.well-known/openid-configuration<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">OIDC_CLIENT_ID</span><span class="o">=</span>your-client-id<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">OIDC_CLIENT_SECRET</span><span class="o">=</span>your-client-secret<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">OIDC_BASE_URL</span><span class="o">=</span>https://your-server.com<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">ALLOWED_CLIENT_REDIRECT_URIS</span><span class="o">=</span>http://localhost:*,https://*.example.com/*<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">EUNOMIA_TYPE</span><span class="o">=</span>embedded<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span>-e<span class="w"> </span><span class="nv">EUNOMIA_POLICY_FILE</span><span class="o">=</span>/app/mcp_policies.json<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">  </span>knucklessg1/container-manager:latest
-</code></pre></div>
-<h4 id="using-docker-compose">Using Docker Compose<a class="headerlink" href="#using-docker-compose" title="Permanent link">&para;</a></h4>
-<p>Create a <code>docker-compose.yml</code> file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nt">container-manager-mcp</span><span class="p">:</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">knucklessg1/container-manager:latest</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HOST=0.0.0.0</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PORT=8004</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRANSPORT=streamable-http</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AUTH_TYPE=none</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EUNOMIA_TYPE=none</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8004:8004</span>
-</code></pre></div>
-<p>For advanced setups with authentication and Eunomia:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nt">services</span><span class="p">:</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">container-manager-mcp</span><span class="p">:</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">knucklessg1/container-manager:latest</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">HOST=0.0.0.0</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PORT=8004</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">TRANSPORT=streamable-http</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">AUTH_TYPE=oidc-proxy</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OIDC_CONFIG_URL=https://provider.com/.well-known/openid-configuration</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OIDC_CLIENT_ID=your-client-id</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OIDC_CLIENT_SECRET=your-client-secret</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">OIDC_BASE_URL=https://your-server.com</span>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ALLOWED_CLIENT_REDIRECT_URIS=http://localhost:*,https://*.example.com/*</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EUNOMIA_TYPE=embedded</span>
-<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EUNOMIA_POLICY_FILE=/app/mcp_policies.json</span>
-<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
-<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8004:8004</span>
-<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a><span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
-<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">./mcp_policies.json:/app/mcp_policies.json</span>
-</code></pre></div>
-<p>Run the service:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>docker-compose<span class="w"> </span>up<span class="w"> </span>-d
-</code></pre></div>
-<h4 id="configure-mcpjson-for-ai-integration">Configure <code>mcp.json</code> for AI Integration<a class="headerlink" href="#configure-mcpjson-for-ai-integration" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="nt">&quot;container_manager&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uv&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">        </span><span class="s2">&quot;run&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">        </span><span class="s2">&quot;--with&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">        </span><span class="s2">&quot;container-manager-mcp&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">        </span><span class="s2">&quot;container-manager-mcp&quot;</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">      </span><span class="p">],</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_SILENT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;False&quot;</span><span class="p">,</span><span class="w">                                  </span><span class="c1">//Optional</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_LOG_FILE&quot;</span><span class="p">:</span><span class="w"> </span><span class="nt">&quot;~/Documents/container_manager_mcp.log&quot;</span><span class="w"> </span><span class="c1">//Optional</span>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_TYPE&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;podman&quot;</span><span class="p">,</span><span class="w">                                   </span><span class="c1">//Optional</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_PODMAN_BASE_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tcp://127.0.0.1:8080&quot;</span><span class="w">           </span><span class="c1">//Optional</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="w">      </span><span class="p">},</span>
-<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a><span class="w">      </span><span class="nt">&quot;timeout&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">200000</span>
-<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a><span class="p">}</span>
-</code></pre></div>
-<h2 id="install-python-package">Install Python Package<a class="headerlink" href="#install-python-package" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>container-manager-mcp
-</code></pre></div>
-<p>or</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>container-manager-mcp
-</code></pre></div>
-<h2 id="test">Test<a class="headerlink" href="#test" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>container-manager-mcp<span class="w"> </span>--transport<span class="w"> </span>streamable-http<span class="w"> </span>--host<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--port<span class="w"> </span><span class="m">8080</span>
-</code></pre></div>
-<p>This starts the MCP server using HTTP transport on localhost port 8080.</p>
-<p>To interact with the MCP server programmatically, you can use a FastMCP client or make HTTP requests to the exposed endpoints. Example using curl to pull an image:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://127.0.0.1:8080/pull_image<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;image&quot;: &quot;nginx&quot;, &quot;tag&quot;: &quot;latest&quot;, &quot;manager_type&quot;: &quot;docker&quot;}&#39;</span>
-</code></pre></div>
-<p>Install the Python package:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>container-manager-mcp
-</code></pre></div>
-<h3 id="dependencies">Dependencies<a class="headerlink" href="#dependencies" title="Permanent link">&para;</a></h3>
-<ul>
-<li>Python 3.7+</li>
-<li><code>fastmcp</code> for MCP server functionality</li>
-<li><code>docker</code> for Docker support</li>
-<li><code>podman</code> for Podman support</li>
-<li><code>pydantic</code> for data validation</li>
-</ul>
-<p>Install dependencies:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>fastmcp<span class="w"> </span>docker<span class="w"> </span>podman<span class="w"> </span>pydantic
-</code></pre></div>
-<p>Ensure Docker or Podman is installed and running on your system.</p>
-<h2 id="development-and-contribution">Development and Contribution<a class="headerlink" href="#development-and-contribution" title="Permanent link">&para;</a></h2>
-<p>Contributions are welcome! To contribute:</p>
-<ol>
-<li>Fork the repository</li>
-<li>Create a feature branch (<code>git checkout -b feature/your-feature</code>)</li>
-<li>Commit your changes (<code>git commit -am 'Add your feature'</code>)</li>
-<li>Push to the branch (<code>git push origin feature/your-feature</code>)</li>
-<li>Create a new Pull Request</li>
-</ol>
-<p>Please ensure your code follows the project's coding standards and includes appropriate tests.</p>
-<h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
-<p>This project is licensed under the MIT License - see the <a href="https://github.com/Knuckles-Team/container-manager-mcp/blob/main/LICENSE">LICENSE</a> file for details.</p>
-<h2 id="repository-owners">Repository Owners<a class="headerlink" href="#repository-owners" title="Permanent link">&para;</a></h2>
-<p><img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=Knucklessg1&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" /></p>
-<p><img alt="GitHub followers" src="https://img.shields.io/github/followers/Knucklessg1" />
-<img alt="GitHub User's stars" src="https://img.shields.io/github/stars/Knucklessg1" /></p>
-<h2 id="mcp-configuration-examples">MCP Configuration Examples<a class="headerlink" href="#mcp-configuration-examples" title="Permanent link">&para;</a></h2>
-<h3 id="1-standard-io-stdio-deployment">1. Standard IO (stdio) Deployment<a class="headerlink" href="#1-standard-io-stdio-deployment" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="nt">&quot;container-manager-mcp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uv&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">        </span><span class="s2">&quot;run&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">        </span><span class="s2">&quot;container-manager-mcp&quot;</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">      </span><span class="p">],</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">        </span><span class="nt">&quot;COMPOSETOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">        </span><span class="nt">&quot;CONTAINERTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_LOG_FILE&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_LOG_FILE&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_PODMAN_BASE_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_SILENT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_SILENT&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_TYPE&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_TYPE&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">        </span><span class="nt">&quot;IMAGETOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="w">        </span><span class="nt">&quot;INFOTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="w">        </span><span class="nt">&quot;LOGTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">        </span><span class="nt">&quot;MISCTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w">        </span><span class="nt">&quot;NETWORKTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="w">        </span><span class="nt">&quot;SPECIALIST_TOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="w">        </span><span class="nt">&quot;SWARMTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="w">        </span><span class="nt">&quot;SYSTEMTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="w">        </span><span class="nt">&quot;VOLUMETOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span>
-<a id="__codelineno-15-25" name="__codelineno-15-25" href="#__codelineno-15-25"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-15-26" name="__codelineno-15-26" href="#__codelineno-15-26"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-15-27" name="__codelineno-15-27" href="#__codelineno-15-27"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-15-28" name="__codelineno-15-28" href="#__codelineno-15-28"></a><span class="p">}</span>
-</code></pre></div>
-<h3 id="2-streamable-http-sse-deployment">2. Streamable HTTP (SSE) Deployment<a class="headerlink" href="#2-streamable-http-sse-deployment" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="p">{</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">  </span><span class="nt">&quot;mcpServers&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="nt">&quot;container-manager-mcp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="w">      </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;uv&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="w">      </span><span class="nt">&quot;args&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="w">        </span><span class="s2">&quot;run&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="w">        </span><span class="s2">&quot;container-manager-mcp&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a><span class="w">        </span><span class="s2">&quot;--transport&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a><span class="w">        </span><span class="s2">&quot;http&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a><span class="w">        </span><span class="s2">&quot;--host&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a><span class="w">        </span><span class="s2">&quot;0.0.0.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-12" name="__codelineno-16-12" href="#__codelineno-16-12"></a><span class="w">        </span><span class="s2">&quot;--port&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-13" name="__codelineno-16-13" href="#__codelineno-16-13"></a><span class="w">        </span><span class="s2">&quot;8000&quot;</span>
-<a id="__codelineno-16-14" name="__codelineno-16-14" href="#__codelineno-16-14"></a><span class="w">      </span><span class="p">],</span>
-<a id="__codelineno-16-15" name="__codelineno-16-15" href="#__codelineno-16-15"></a><span class="w">      </span><span class="nt">&quot;env&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-16-16" name="__codelineno-16-16" href="#__codelineno-16-16"></a><span class="w">        </span><span class="nt">&quot;COMPOSETOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-17" name="__codelineno-16-17" href="#__codelineno-16-17"></a><span class="w">        </span><span class="nt">&quot;CONTAINERTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-18" name="__codelineno-16-18" href="#__codelineno-16-18"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_LOG_FILE&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_LOG_FILE&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-19" name="__codelineno-16-19" href="#__codelineno-16-19"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_PODMAN_BASE_URL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-20" name="__codelineno-16-20" href="#__codelineno-16-20"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_SILENT&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_SILENT&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-21" name="__codelineno-16-21" href="#__codelineno-16-21"></a><span class="w">        </span><span class="nt">&quot;CONTAINER_MANAGER_TYPE&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;&lt;YOUR_CONTAINER_MANAGER_TYPE&gt;&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-22" name="__codelineno-16-22" href="#__codelineno-16-22"></a><span class="w">        </span><span class="nt">&quot;IMAGETOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-23" name="__codelineno-16-23" href="#__codelineno-16-23"></a><span class="w">        </span><span class="nt">&quot;INFOTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-24" name="__codelineno-16-24" href="#__codelineno-16-24"></a><span class="w">        </span><span class="nt">&quot;LOGTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-25" name="__codelineno-16-25" href="#__codelineno-16-25"></a><span class="w">        </span><span class="nt">&quot;MISCTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-26" name="__codelineno-16-26" href="#__codelineno-16-26"></a><span class="w">        </span><span class="nt">&quot;NETWORKTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-27" name="__codelineno-16-27" href="#__codelineno-16-27"></a><span class="w">        </span><span class="nt">&quot;SPECIALIST_TOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-28" name="__codelineno-16-28" href="#__codelineno-16-28"></a><span class="w">        </span><span class="nt">&quot;SWARMTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-29" name="__codelineno-16-29" href="#__codelineno-16-29"></a><span class="w">        </span><span class="nt">&quot;SYSTEMTOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-30" name="__codelineno-16-30" href="#__codelineno-16-30"></a><span class="w">        </span><span class="nt">&quot;VOLUMETOOL&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;True&quot;</span>
-<a id="__codelineno-16-31" name="__codelineno-16-31" href="#__codelineno-16-31"></a><span class="w">      </span><span class="p">}</span>
-<a id="__codelineno-16-32" name="__codelineno-16-32" href="#__codelineno-16-32"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-16-33" name="__codelineno-16-33" href="#__codelineno-16-33"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-16-34" name="__codelineno-16-34" href="#__codelineno-16-34"></a><span class="p">}</span>
-</code></pre></div>
+</div>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;container-manager-mcp[all]&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>container-manager-mcp<span class="w">              </span><span class="c1"># stdio MCP server (default transport)</span>
+</span></code></pre></div>
+<p>Run it as a network server:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>container-manager-mcp<span class="w"> </span>--transport<span class="w"> </span>streamable-http<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span>
+</span></code></pre></div>
+<p>See <strong><a href="installation/">Installation</a></strong> and <strong><a href="deployment/">Deployment</a></strong> for the
+full matrix (PyPI extras, Docker image, all transports, the agent server, reverse
+proxy, and DNS).</p>
 
 
 
@@ -1612,6 +827,8 @@ stateDiagram-v2
             </div>
           
           
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
@@ -1625,14 +842,69 @@ stateDiagram-v2
       
         <footer class="md-footer">
   
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+        
+          
+          <a href="overview/" class="md-footer__link md-footer__link--next" aria-label="Next: Overview">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Overview
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; Knuckles-Team — MIT licensed
+    </div>
   
   
     Made with
     <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
       Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Knuckles-Team/container-manager-mcp" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/container-manager-mcp/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
     </a>
   
 </div>
@@ -1646,11 +918,13 @@ stateDiagram-v2
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
     
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.code.annotate"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.top", "navigation.tracking", "navigation.instant", "navigation.instant.progress", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
       <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
