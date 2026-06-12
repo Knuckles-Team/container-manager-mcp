@@ -269,6 +269,31 @@ class ContainerManagerBase(ABC):
         pass
 
 
+def list_inventory_hosts() -> dict:
+    """List the host aliases available for the ``host`` parameter.
+
+    Each alias targets a remote machine's Docker daemon over SSH
+    (``ssh://<user>@<hostname>:<port>``), resolved from the tunnel-manager
+    inventory (``~/.config/agent-utilities/inventory.yaml``). Omit ``host`` to
+    use the local Docker socket."""
+    from tunnel_manager.tunnel_manager import HostManager
+
+    hm = HostManager()
+    hosts = {
+        name: {
+            "hostname": info.get("hostname"),
+            "user": info.get("user", "genius"),
+            "port": info.get("port", 22),
+        }
+        for name, info in (hm.hosts or {}).items()
+    }
+    return {
+        "inventory_path": getattr(hm, "config_file", None),
+        "count": len(hosts),
+        "hosts": hosts,
+    }
+
+
 def resolve_host_from_inventory(host: str) -> dict:
     from tunnel_manager.tunnel_manager import HostManager
 
@@ -280,7 +305,8 @@ def resolve_host_from_inventory(host: str) -> dict:
 
     if host not in hm.hosts:
         raise ValueError(
-            f"Host '{host}' not configured in inventory ({hm.config_file})"
+            f"Host '{host}' not configured in inventory ({hm.config_file}). "
+            f"Available hosts: {sorted(hm.hosts)} — or call cm_list_hosts."
         )
 
     hinfo = hm.hosts[host]
