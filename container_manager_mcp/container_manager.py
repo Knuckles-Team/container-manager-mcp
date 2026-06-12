@@ -1152,6 +1152,247 @@ class DockerManager(ContainerManagerBase):
             self.log_action("remove_service", params, error=e)
             raise RuntimeError(f"Failed to remove service: {str(e)}") from e
 
+    # ------------------------------------------------------------------
+    # Swarm node operations
+    # ------------------------------------------------------------------
+    def _resolve_node(self, node_id: str):
+        """Resolve a swarm node by full/short ID or hostname."""
+        try:
+            return self.client.nodes.get(node_id)
+        except Exception:
+            for node in self.client.nodes.list():
+                attrs = node.attrs
+                hostname = attrs.get("Description", {}).get("Hostname")
+                if (
+                    attrs.get("ID", "").startswith(node_id)
+                    or hostname == node_id
+                    or attrs.get("Spec", {}).get("Name") == node_id
+                ):
+                    return node
+            raise RuntimeError(f"Node '{node_id}' not found") from None
+
+    @staticmethod
+    def _node_summary(node) -> dict:
+        attrs = node.attrs
+        spec = attrs.get("Spec", {})
+        desc = attrs.get("Description", {})
+        status = attrs.get("Status", {})
+        return {
+            "id": attrs.get("ID", "unknown"),
+            "hostname": desc.get("Hostname", "unknown"),
+            "role": spec.get("Role", "unknown"),
+            "availability": spec.get("Availability", "unknown"),
+            "state": status.get("State", "unknown"),
+            "addr": status.get("Addr", "unknown"),
+            "labels": spec.get("Labels", {}) or {},
+            "engine_version": desc.get("Engine", {}).get("EngineVersion", "unknown"),
+            "platform": desc.get("Platform", {}),
+            "manager": attrs.get("ManagerStatus"),
+        }
+
+    def inspect_node(self, node_id: str) -> dict:
+        params = {"node_id": node_id}
+        try:
+            node = self._resolve_node(node_id)
+            result = self._node_summary(node)
+            self.log_action("inspect_node", params, result)
+            return result
+        except Exception as e:
+            self.log_action("inspect_node", params, error=e)
+            raise RuntimeError(f"Failed to inspect node: {str(e)}") from e
+
+    def update_node(
+        self,
+        node_id: str,
+        labels: dict[str, str] | None = None,
+        role: str | None = None,
+        availability: str | None = None,
+        replace_labels: bool = False,
+    ) -> dict:
+        """Update a node's labels (merge by default), role, or availability.
+
+        ``role`` is one of ``manager``/``worker`` (promote/demote);
+        ``availability`` is ``active``/``pause``/``drain``.
+        """
+        params = {
+            "node_id": node_id,
+            "labels": labels,
+            "role": role,
+            "availability": availability,
+            "replace_labels": replace_labels,
+        }
+        try:
+            node = self._resolve_node(node_id)
+            spec = dict(node.attrs.get("Spec", {}) or {})
+            current_labels = dict(spec.get("Labels") or {})
+            if labels is not None:
+                current_labels = (
+                    dict(labels) if replace_labels else {**current_labels, **labels}
+                )
+            new_spec: dict[str, Any] = {
+                "Availability": availability or spec.get("Availability", "active"),
+                "Role": role or spec.get("Role", "worker"),
+                "Labels": current_labels,
+            }
+            if spec.get("Name"):
+                new_spec["Name"] = spec["Name"]
+            node.update(new_spec)
+            node.reload()
+            result = self._node_summary(node)
+            self.log_action("update_node", params, result)
+            return result
+        except Exception as e:
+            self.log_action("update_node", params, error=e)
+            raise RuntimeError(f"Failed to update node: {str(e)}") from e
+
+    def remove_node(self, node_id: str, force: bool = False) -> dict:
+        params = {"node_id": node_id, "force": force}
+        try:
+            node = self._resolve_node(node_id)
+            self.client.api.remove_node(node.id, force=force)
+            result = {"removed": node.id}
+            self.log_action("remove_node", params, result)
+            return result
+        except Exception as e:
+            self.log_action("remove_node", params, error=e)
+            raise RuntimeError(f"Failed to remove node: {str(e)}") from e
+
+    # ------------------------------------------------------------------
+    # Swarm service operations
+    # ------------------------------------------------------------------
+    def inspect_service(self, service_id: str) -> dict:
+        params = {"service_id": service_id}
+        try:
+            service = self.client.services.get(service_id)
+            result = service.attrs
+            self.log_action("inspect_service", params, {"id": service.id})
+            return result
+        except Exception as e:
+            self.log_action("inspect_service", params, error=e)
+            raise RuntimeError(f"Failed to inspect service: {str(e)}") from e
+
+    def scale_service(self, service_id: str, replicas: int) -> dict:
+        params = {"service_id": service_id, "replicas": replicas}
+        try:
+            service = self.client.services.get(service_id)
+            service.scale(replicas)
+            result = {"service": service.id, "replicas": replicas, "scaled": True}
+            self.log_action("scale_service", params, result)
+            return result
+        except Exception as e:
+            self.log_action("scale_service", params, error=e)
+            raise RuntimeError(f"Failed to scale service: {str(e)}") from e
+
+    def update_service(
+        self,
+        service_id: str,
+        image: str | None = None,
+        replicas: int | None = None,
+        env: list[str] | None = None,
+        constraints: list[str] | None = None,
+        labels: dict[str, str] | None = None,
+        force: bool = False,
+    ) -> dict:
+        """Update a service in place, preserving unspecified spec fields.
+
+        Performs a read-modify-write of the full service spec so that env,
+        mounts, networks and other settings are not reset to defaults (the
+        footgun of the high-level ``Service.update``).
+        """
+        params = {
+            "service_id": service_id,
+            "image": image,
+            "replicas": replicas,
+            "env": env,
+            "constraints": constraints,
+            "labels": labels,
+            "force": force,
+        }
+        try:
+            service = self.client.services.get(service_id)
+            attrs = service.attrs
+            spec = dict(attrs.get("Spec", {}) or {})
+            version = attrs.get("Version", {}).get("Index")
+            task_template = dict(spec.get("TaskTemplate", {}) or {})
+            container_spec = dict(task_template.get("ContainerSpec", {}) or {})
+            if image:
+                container_spec["Image"] = image
+            if env is not None:
+                container_spec["Env"] = env
+            task_template["ContainerSpec"] = container_spec
+            if constraints is not None:
+                placement = dict(task_template.get("Placement", {}) or {})
+                placement["Constraints"] = constraints
+                task_template["Placement"] = placement
+            if force:
+                task_template["ForceUpdate"] = (
+                    int(task_template.get("ForceUpdate", 0) or 0) + 1
+                )
+            mode = spec.get("Mode")
+            if replicas is not None and isinstance(mode, dict) and "Replicated" in mode:
+                mode = {"Replicated": {"Replicas": replicas}}
+            new_labels = spec.get("Labels")
+            if labels is not None:
+                new_labels = {**(spec.get("Labels") or {}), **labels}
+            self.client.api.update_service(
+                service.id,
+                version,
+                task_template=task_template,
+                name=spec.get("Name"),
+                labels=new_labels,
+                mode=mode,
+                endpoint_spec=spec.get("EndpointSpec"),
+            )
+            result = {
+                "service": service.id,
+                "updated": True,
+                "image": container_spec.get("Image"),
+            }
+            self.log_action("update_service", params, result)
+            return result
+        except Exception as e:
+            self.log_action("update_service", params, error=e)
+            raise RuntimeError(f"Failed to update service: {str(e)}") from e
+
+    def service_ps(self, service_id: str) -> list[dict]:
+        params = {"service_id": service_id}
+        try:
+            service = self.client.services.get(service_id)
+            result = []
+            for t in service.tasks():
+                status = t.get("Status", {})
+                result.append(
+                    {
+                        "id": t.get("ID", "")[:12],
+                        "node": t.get("NodeID", "")[:12],
+                        "desired_state": t.get("DesiredState", "unknown"),
+                        "state": status.get("State", "unknown"),
+                        "error": status.get("Err", ""),
+                        "timestamp": status.get("Timestamp", "unknown"),
+                    }
+                )
+            self.log_action("service_ps", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("service_ps", params, error=e)
+            raise RuntimeError(f"Failed to list service tasks: {str(e)}") from e
+
+    def service_logs(self, service_id: str, tail: int = 100) -> dict:
+        params = {"service_id": service_id, "tail": tail}
+        try:
+            service = self.client.services.get(service_id)
+            raw = service.logs(stdout=True, stderr=True, tail=tail, timestamps=True)
+            if isinstance(raw, bytes):
+                text = raw.decode(errors="replace")
+            else:
+                text = b"".join(raw).decode(errors="replace")
+            result = {"service": service.id, "logs": text}
+            self.log_action("service_logs", params, {"service": service.id})
+            return result
+        except Exception as e:
+            self.log_action("service_logs", params, error=e)
+            raise RuntimeError(f"Failed to get service logs: {str(e)}") from e
+
 
 class PodmanManager(ContainerManagerBase):
     def __init__(self, silent: bool = False, log_file: str | None = None):
@@ -1968,6 +2209,46 @@ class PodmanManager(ContainerManagerBase):
         raise RuntimeError("Swarm not supported in Podman")
 
     def remove_service(self, service_id: str) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def inspect_node(self, node_id: str) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def update_node(
+        self,
+        node_id: str,
+        labels: dict[str, str] | None = None,
+        role: str | None = None,
+        availability: str | None = None,
+        replace_labels: bool = False,
+    ) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def remove_node(self, node_id: str, force: bool = False) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def inspect_service(self, service_id: str) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def scale_service(self, service_id: str, replicas: int) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def update_service(
+        self,
+        service_id: str,
+        image: str | None = None,
+        replicas: int | None = None,
+        env: list[str] | None = None,
+        constraints: list[str] | None = None,
+        labels: dict[str, str] | None = None,
+        force: bool = False,
+    ) -> dict:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def service_ps(self, service_id: str) -> list[dict]:
+        raise RuntimeError("Swarm not supported in Podman")
+
+    def service_logs(self, service_id: str, tail: int = 100) -> dict:
         raise RuntimeError("Swarm not supported in Podman")
 
 
