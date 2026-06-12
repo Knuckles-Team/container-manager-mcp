@@ -1,2 +1,2 @@
 agent-utilities[mcp]>=0.47.0
-docker>=7.1.0
+docker[ssh]>=7.1.0
