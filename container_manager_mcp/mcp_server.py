@@ -150,12 +150,51 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
 
 from dotenv import find_dotenv, load_dotenv
 
-from container_manager_mcp.container_manager import create_manager
+from container_manager_mcp.container_manager import (
+    create_manager,
+    list_inventory_hosts,
+)
 
 __version__ = "1.41.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
+
+
+def register_inventory_tools(mcp: FastMCP):
+    @mcp.tool(
+        annotations={
+            "title": "List Container Hosts",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": False,
+        },
+        tags={"inventory"},
+    )
+    async def cm_list_hosts(ctx: Context | None = None) -> dict:
+        """List the host aliases you can pass as ``host`` to any cm_* operation
+        to manage a REMOTE machine's Docker (via Docker-over-SSH).
+
+        Every cm_* tool accepts ``host``: omit it to use the local Docker
+        socket, or pass an alias here to target another machine — e.g. a swarm
+        MANAGER node for cluster ops — without deploying a container-manager on
+        each box. Aliases come from the tunnel-manager inventory
+        (``~/.config/agent-utilities/inventory.yaml``) and connect as
+        ``ssh://<user>@<hostname>:<port>``.
+        """
+        try:
+            return list_inventory_hosts()
+        except Exception as e:  # missing/empty inventory, etc.
+            return {
+                "error": str(e),
+                "hosts": {},
+                "hint": (
+                    "No inventory configured. Add hosts to "
+                    "~/.config/agent-utilities/inventory.yaml (tunnel-manager "
+                    "format) and ensure SSH keys are available."
+                ),
+            }
 
 
 def register_info_tools(mcp: FastMCP):
@@ -175,7 +214,13 @@ def register_info_tools(mcp: FastMCP):
         ),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -226,7 +271,13 @@ def register_image_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -307,7 +358,13 @@ def register_container_tools(mcp: FastMCP):
         tail: str = Field(default="50", description="Number of log lines to tail"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -380,7 +437,13 @@ def register_volume_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -449,7 +512,13 @@ def register_network_tools(mcp: FastMCP):
         driver: str = Field(default="bridge", description="Network driver"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -529,7 +598,13 @@ def register_swarm_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -613,7 +688,13 @@ def register_system_tools(mcp: FastMCP):
         all: bool = Field(default=False, description="Prune all resources"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -668,7 +749,13 @@ def register_compose_tools(mcp: FastMCP):
         compose_file: str = Field(description="Path to compose file"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -713,7 +800,13 @@ def register_misc_tools(mcp: FastMCP):
         port: int = Field(description="Port number to trace"),
         host: str | None = Field(
             default=None,
-            description="Host alias defined in inventory.yaml (default: local host)",
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the "
+                "LOCAL Docker socket. Call cm_list_hosts to see the available "
+                "aliases. Note: swarm-cluster actions (list_nodes/services) "
+                "must target a swarm MANAGER node."
+            ),
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
@@ -760,6 +853,10 @@ def get_mcp_instance() -> tuple[Any, ...]:
     )
 
     # We maintain these default configurations for backwards compatibility
+    # Inventory/host discovery is always on — it advertises remote-host targeting.
+    if to_boolean(os.getenv("INVENTORYTOOL", "True")):
+        register_inventory_tools(mcp)
+
     DEFAULT_INFOTOOL = to_boolean(os.getenv("INFOTOOL", "True"))
     if DEFAULT_INFOTOOL:
         register_info_tools(mcp)
