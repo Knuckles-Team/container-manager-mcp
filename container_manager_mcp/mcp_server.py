@@ -576,13 +576,62 @@ def register_swarm_tools(mcp: FastMCP):
             "init_swarm",
             "leave_swarm",
             "list_nodes",
+            "inspect_node",
+            "update_node",
+            "remove_node",
             "list_services",
+            "inspect_service",
             "create_service",
+            "update_service",
+            "scale_service",
+            "service_ps",
+            "service_logs",
             "remove_service",
         ] = Field(
-            description="Action to perform. Must be one of: 'init_swarm', 'leave_swarm', 'list_nodes', 'list_services', 'create_service', 'remove_service'"
+            description=(
+                "Action to perform. Cluster actions ('list_nodes', 'inspect_node', "
+                "'update_node', 'remove_node', '*_service') must target a swarm "
+                "MANAGER (set 'host'). 'update_node' sets labels/role/availability "
+                "(e.g. add the poweredge=true label or drain a node); 'update_service' "
+                "/'scale_service' change a running service in place; 'service_ps'/"
+                "'service_logs' inspect tasks and logs."
+            )
         ),
         service_id: str | None = Field(default=None, description="Service ID or name"),
+        node_id: str | None = Field(
+            default=None,
+            description="Node ID, short ID, or hostname (for *_node actions)",
+        ),
+        labels: str | None = Field(
+            default=None,
+            description=(
+                'Labels as a JSON object, e.g. \'{"poweredge": "true"}\'. For '
+                "update_node these are node labels (merged unless replace_labels); "
+                "for update_service these are service labels (merged)."
+            ),
+        ),
+        replace_labels: bool = Field(
+            default=False,
+            description="update_node: replace all labels instead of merging",
+        ),
+        role: str | None = Field(
+            default=None, description="update_node: 'manager' or 'worker'"
+        ),
+        availability: str | None = Field(
+            default=None,
+            description="update_node: 'active', 'pause', or 'drain'",
+        ),
+        env: str | None = Field(
+            default=None,
+            description="update_service: environment as a JSON list of 'KEY=VALUE'",
+        ),
+        constraints: str | None = Field(
+            default=None,
+            description="update_service: placement constraints as a JSON list",
+        ),
+        tail: int = Field(
+            default=100, description="service_logs: number of log lines to tail"
+        ),
         advertise_addr: str | None = Field(
             default=None, description="Advertise address for init_swarm"
         ),
@@ -661,6 +710,66 @@ def register_swarm_tools(mcp: FastMCP):
                         "message": "Operation cancelled by user",
                     }
                 return manager.remove_service(service_id)
+            elif action == "inspect_node":
+                if not node_id:
+                    return "Error: 'node_id' is required"
+                return manager.inspect_node(node_id)
+            elif action == "update_node":
+                if not node_id:
+                    return "Error: 'node_id' is required"
+                p_labels = json.loads(labels) if labels else None
+                if not any([p_labels, role, availability]):
+                    return (
+                        "Error: provide at least one of 'labels', 'role', "
+                        "or 'availability'"
+                    )
+                return manager.update_node(
+                    node_id,
+                    labels=p_labels,
+                    role=role,
+                    availability=availability,
+                    replace_labels=replace_labels,
+                )
+            elif action == "remove_node":
+                if not node_id:
+                    return "Error: 'node_id' is required"
+                if ctx and not await ctx_confirm_destructive(ctx, "remove node"):
+                    return {
+                        "status": "cancelled",
+                        "message": "Operation cancelled by user",
+                    }
+                return manager.remove_node(node_id, force=force)
+            elif action == "inspect_service":
+                if not service_id:
+                    return "Error: 'service_id' is required"
+                return manager.inspect_service(service_id)
+            elif action == "scale_service":
+                if not service_id:
+                    return "Error: 'service_id' is required"
+                return manager.scale_service(service_id, replicas)
+            elif action == "update_service":
+                if not service_id:
+                    return "Error: 'service_id' is required"
+                p_env = json.loads(env) if env else None
+                p_constraints = json.loads(constraints) if constraints else None
+                p_labels = json.loads(labels) if labels else None
+                return manager.update_service(
+                    service_id,
+                    image=image,
+                    replicas=replicas if replicas != 1 else None,
+                    env=p_env,
+                    constraints=p_constraints,
+                    labels=p_labels,
+                    force=force,
+                )
+            elif action == "service_ps":
+                if not service_id:
+                    return "Error: 'service_id' is required"
+                return manager.service_ps(service_id)
+            elif action == "service_logs":
+                if not service_id:
+                    return "Error: 'service_id' is required"
+                return manager.service_logs(service_id, tail=tail)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
