@@ -269,6 +269,55 @@ class ContainerManagerBase(ABC):
         pass
 
 
+    @abstractmethod
+    def inspect_node(self, node_id: str) -> dict:
+        pass
+
+    @abstractmethod
+    def update_node(
+        self,
+        node_id: str,
+        labels: dict[str, str] | None = None,
+        role: str | None = None,
+        availability: str | None = None,
+        replace_labels: bool = False,
+    ) -> dict:
+        pass
+
+    @abstractmethod
+    def remove_node(self, node_id: str, force: bool = False) -> dict:
+        pass
+
+    @abstractmethod
+    def inspect_service(self, service_id: str) -> dict:
+        pass
+
+    @abstractmethod
+    def scale_service(self, service_id: str, replicas: int) -> dict:
+        pass
+
+    @abstractmethod
+    def update_service(
+        self,
+        service_id: str,
+        image: str | None = None,
+        replicas: int | None = None,
+        env: list[str] | None = None,
+        constraints: list[str] | None = None,
+        labels: dict[str, str] | None = None,
+        force: bool = False,
+    ) -> dict:
+        pass
+
+    @abstractmethod
+    def service_ps(self, service_id: str) -> list[dict]:
+        pass
+
+    @abstractmethod
+    def service_logs(self, service_id: str, tail: int = 100) -> dict:
+        pass
+
+
 def list_inventory_hosts() -> dict:
     """List the host aliases available for the ``host`` parameter.
 

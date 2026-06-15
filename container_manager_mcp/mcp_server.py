@@ -81,7 +81,7 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
     try:
         from agent_utilities.mcp.context_helpers import ctx_log as _real_ctx_log
     except ImportError:
-        _real_ctx_log = None
+        _real_ctx_log = None  # type: ignore[assignment]
 
     if len(args) == 2:
         level, message = args
@@ -141,7 +141,7 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
                 except Exception:
                     pass
     else:
-        if _real_ctx_log:
+        if _real_ctx_log is not None:
             try:
                 _real_ctx_log(ctx, *args, **kwargs)
             except Exception:
