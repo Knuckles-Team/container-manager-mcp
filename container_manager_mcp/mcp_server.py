@@ -27,7 +27,9 @@ import os
 from typing import Any, Literal
 
 from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server
+from agent_utilities.mcp_utilities import create_mcp_server, resolve_action
+
+_SERVICE = "container-manager-mcp"
 
 # Resilient context helpers to handle environment-specific import issues
 try:
@@ -231,6 +233,10 @@ def register_info_tools(mcp: FastMCP):
         """
         Manage container manager info operations.
         """
+        resolved = resolve_action(action, ["get_version", "get_info"], service=_SERVICE)
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_info_operations: {action}")
@@ -288,6 +294,14 @@ def register_image_tools(mcp: FastMCP):
         """
         Manage container images.
         """
+        resolved = resolve_action(
+            action,
+            ["list_images", "pull_image", "remove_image", "prune_images"],
+            service=_SERVICE,
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_image_operations: {action}")
@@ -377,6 +391,21 @@ def register_container_tools(mcp: FastMCP):
         """
         import shlex
 
+        resolved = resolve_action(
+            action,
+            [
+                "list_containers",
+                "get_container_logs",
+                "stop_container",
+                "remove_container",
+                "prune_containers",
+                "exec_in_container",
+            ],
+            service=_SERVICE,
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_container_operations: {action}")
@@ -454,6 +483,14 @@ def register_volume_tools(mcp: FastMCP):
         """
         Manage volume operations.
         """
+        resolved = resolve_action(
+            action,
+            ["list_volumes", "create_volume", "remove_volume", "prune_volumes"],
+            service=_SERVICE,
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_volume_operations: {action}")
@@ -529,6 +566,14 @@ def register_network_tools(mcp: FastMCP):
         """
         Manage network operations.
         """
+        resolved = resolve_action(
+            action,
+            ["list_networks", "create_network", "remove_network", "prune_networks"],
+            service=_SERVICE,
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_network_operations: {action}")
@@ -666,6 +711,29 @@ def register_swarm_tools(mcp: FastMCP):
         """
         import json
 
+        resolved = resolve_action(
+            action,
+            [
+                "init_swarm",
+                "leave_swarm",
+                "list_nodes",
+                "inspect_node",
+                "update_node",
+                "remove_node",
+                "list_services",
+                "inspect_service",
+                "create_service",
+                "update_service",
+                "scale_service",
+                "service_ps",
+                "service_logs",
+                "remove_service",
+            ],
+            service=_SERVICE,
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_swarm_operations: {action}")
@@ -814,6 +882,12 @@ def register_system_tools(mcp: FastMCP):
         """
         Manage container manager system operations.
         """
+        resolved = resolve_action(
+            action, ["prune_system", "get_info", "get_version"], service=_SERVICE
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_system_operations: {action}")
@@ -855,7 +929,9 @@ def register_compose_tools(mcp: FastMCP):
         action: str = Field(
             description="Action to perform. Must be one of: 'up', 'down', 'ps', 'logs'"
         ),
-        compose_file: str = Field(description="Path to compose file"),
+        compose_file: str | None = Field(
+            default=None, description="Path to compose file"
+        ),
         host: str | None = Field(
             default=None,
             description=(
@@ -875,6 +951,14 @@ def register_compose_tools(mcp: FastMCP):
         """
         Manage docker-compose or podman-compose operations.
         """
+        resolved = resolve_action(
+            action, ["up", "down", "ps", "logs"], service=_SERVICE
+        )
+        if isinstance(resolved, dict):
+            return resolved
+        action = resolved
+        if not compose_file:
+            return "Error: 'compose_file' is required"
         manager = create_manager(manager_type, host=host)
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_compose_operations: {action}")
