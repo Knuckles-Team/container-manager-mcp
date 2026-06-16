@@ -56,7 +56,7 @@ def register_swarm_tools(mcp: FastMCP):
         force: bool = Field(default=False, description="Force operation"),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str | list:

@@ -34,7 +34,7 @@ def register_compose_tools(mcp: FastMCP):
         compose_file: str = Field(description="Path to compose file"),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str | list:

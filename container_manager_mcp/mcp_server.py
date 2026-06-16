@@ -230,7 +230,7 @@ def register_info_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str:
@@ -291,7 +291,7 @@ def register_image_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | list | str:
@@ -388,7 +388,7 @@ def register_container_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str | list:
@@ -716,7 +716,7 @@ def register_swarm_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str | list:
@@ -892,7 +892,7 @@ def register_system_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str:
@@ -961,7 +961,7 @@ def register_compose_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> dict | str | list:
@@ -1020,7 +1020,7 @@ def register_misc_tools(mcp: FastMCP):
         ),
         manager_type: str | None = Field(
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
-            description="Container manager: docker, podman (default: auto-detect)",
+            description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
         ctx: Context | None = None,
     ) -> list[dict] | str:
