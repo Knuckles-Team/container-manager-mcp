@@ -11,6 +11,7 @@ from agent_utilities.mcp_utilities import (
     ctx_confirm_destructive,
     ctx_log,
     ctx_progress,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -64,31 +65,37 @@ def register_container_tools(mcp: FastMCP):
 
         try:
             if action == "list_containers":
-                return manager.list_containers(all=all_containers)
+                return await run_blocking(manager.list_containers, all=all_containers)
             elif action == "get_container_logs":
                 if not container_id:
                     return "Error: 'container_id' is required"
-                return manager.get_container_logs(container_id, tail=tail)
+                return await run_blocking(
+                    manager.get_container_logs, container_id, tail=tail
+                )
             elif action == "stop_container":
                 if not container_id:
                     return "Error: 'container_id' is required"
-                return manager.stop_container(container_id)
+                return await run_blocking(manager.stop_container, container_id)
             elif action == "remove_container":
                 if not container_id:
                     return "Error: 'container_id' is required"
                 if ctx and not await ctx_confirm_destructive(ctx, "remove container"):
                     return {"status": "cancelled"}
-                return manager.remove_container(container_id, force=force)
+                return await run_blocking(
+                    manager.remove_container, container_id, force=force
+                )
             elif action == "prune_containers":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune containers"):
                     return {"status": "cancelled"}
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_containers()
+                return await run_blocking(manager.prune_containers)
             elif action == "exec_in_container":
                 if not container_id or not command:
                     return "Error: 'container_id' and 'command' required"
-                return manager.exec_in_container(container_id, shlex.split(command))
+                return await run_blocking(
+                    manager.exec_in_container, container_id, shlex.split(command)
+                )
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:

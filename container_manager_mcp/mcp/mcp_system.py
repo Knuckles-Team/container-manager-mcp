@@ -11,6 +11,7 @@ from agent_utilities.mcp_utilities import (
     ctx_confirm_destructive,
     ctx_log,
     ctx_progress,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -57,11 +58,11 @@ def register_system_tools(mcp: FastMCP):
                             "message": "Operation cancelled by user",
                         }
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_system(force=force, all=all)
+                return await run_blocking(manager.prune_system, force=force, all=all)
             elif action == "get_info":
-                return manager.get_info()
+                return await run_blocking(manager.get_info)
             elif action == "get_version":
-                return manager.get_version()
+                return await run_blocking(manager.get_version)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:

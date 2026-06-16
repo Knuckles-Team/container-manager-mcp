@@ -11,6 +11,7 @@ from agent_utilities.mcp_utilities import (
     ctx_confirm_destructive,
     ctx_log,
     ctx_progress,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -56,13 +57,15 @@ def register_image_tools(mcp: FastMCP):
 
         try:
             if action == "list_images":
-                return manager.list_images()
+                return await run_blocking(manager.list_images)
             elif action == "pull_image":
                 if not image:
                     return "Error: 'image' is required for pull_image"
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.pull_image(image, tag=tag, platform=platform)
+                return await run_blocking(
+                    manager.pull_image, image, tag=tag, platform=platform
+                )
             elif action == "remove_image":
                 if not image:
                     return "Error: 'image' is required for remove_image"
@@ -71,7 +74,7 @@ def register_image_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_image(image, force=force)
+                return await run_blocking(manager.remove_image, image, force=force)
             elif action == "prune_images":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune images"):
                     return {
@@ -80,7 +83,7 @@ def register_image_tools(mcp: FastMCP):
                     }
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_images()
+                return await run_blocking(manager.prune_images)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
