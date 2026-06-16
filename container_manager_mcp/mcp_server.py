@@ -27,7 +27,11 @@ import os
 from typing import Any, Literal
 
 from agent_utilities.base_utilities import to_boolean
-from agent_utilities.mcp_utilities import create_mcp_server, resolve_action
+from agent_utilities.mcp_utilities import (
+    create_mcp_server,
+    resolve_action,
+    run_blocking,
+)
 
 _SERVICE = "container-manager-mcp"
 
@@ -243,9 +247,9 @@ def register_info_tools(mcp: FastMCP):
 
         try:
             if action == "get_version":
-                return manager.get_version()
+                return await run_blocking(manager.get_version)
             elif action == "get_info":
-                return manager.get_info()
+                return await run_blocking(manager.get_info)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -308,13 +312,15 @@ def register_image_tools(mcp: FastMCP):
 
         try:
             if action == "list_images":
-                return manager.list_images()
+                return await run_blocking(manager.list_images)
             elif action == "pull_image":
                 if not image:
                     return "Error: 'image' is required for pull_image"
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.pull_image(image, tag=tag, platform=platform)
+                return await run_blocking(
+                    manager.pull_image, image, tag=tag, platform=platform
+                )
             elif action == "remove_image":
                 if not image:
                     return "Error: 'image' is required for remove_image"
@@ -323,7 +329,7 @@ def register_image_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_image(image, force=force)
+                return await run_blocking(manager.remove_image, image, force=force)
             elif action == "prune_images":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune images"):
                     return {
@@ -332,7 +338,7 @@ def register_image_tools(mcp: FastMCP):
                     }
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_images()
+                return await run_blocking(manager.prune_images)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -412,31 +418,37 @@ def register_container_tools(mcp: FastMCP):
 
         try:
             if action == "list_containers":
-                return manager.list_containers(all=all_containers)
+                return await run_blocking(manager.list_containers, all=all_containers)
             elif action == "get_container_logs":
                 if not container_id:
                     return "Error: 'container_id' is required"
-                return manager.get_container_logs(container_id, tail=tail)
+                return await run_blocking(
+                    manager.get_container_logs, container_id, tail=tail
+                )
             elif action == "stop_container":
                 if not container_id:
                     return "Error: 'container_id' is required"
-                return manager.stop_container(container_id)
+                return await run_blocking(manager.stop_container, container_id)
             elif action == "remove_container":
                 if not container_id:
                     return "Error: 'container_id' is required"
                 if ctx and not await ctx_confirm_destructive(ctx, "remove container"):
                     return {"status": "cancelled"}
-                return manager.remove_container(container_id, force=force)
+                return await run_blocking(
+                    manager.remove_container, container_id, force=force
+                )
             elif action == "prune_containers":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune containers"):
                     return {"status": "cancelled"}
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_containers()
+                return await run_blocking(manager.prune_containers)
             elif action == "exec_in_container":
                 if not container_id or not command:
                     return "Error: 'container_id' and 'command' required"
-                return manager.exec_in_container(container_id, shlex.split(command))
+                return await run_blocking(
+                    manager.exec_in_container, container_id, shlex.split(command)
+                )
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -497,11 +509,11 @@ def register_volume_tools(mcp: FastMCP):
 
         try:
             if action == "list_volumes":
-                return manager.list_volumes()
+                return await run_blocking(manager.list_volumes)
             elif action == "create_volume":
                 if not name:
                     return "Error: 'name' is required for create_volume"
-                return manager.create_volume(name)
+                return await run_blocking(manager.create_volume, name)
             elif action == "remove_volume":
                 if not name:
                     return "Error: 'name' is required"
@@ -510,7 +522,7 @@ def register_volume_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_volume(name, force=force)
+                return await run_blocking(manager.remove_volume, name, force=force)
             elif action == "prune_volumes":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune volumes"):
                     return {
@@ -519,7 +531,7 @@ def register_volume_tools(mcp: FastMCP):
                     }
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_volumes()
+                return await run_blocking(manager.prune_volumes)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -580,23 +592,25 @@ def register_network_tools(mcp: FastMCP):
 
         try:
             if action == "list_networks":
-                return manager.list_networks()
+                return await run_blocking(manager.list_networks)
             elif action == "create_network":
                 if not network_id:
                     return "Error: 'network_id' is required for create_network"
-                return manager.create_network(network_id, driver=driver)
+                return await run_blocking(
+                    manager.create_network, network_id, driver=driver
+                )
             elif action == "remove_network":
                 if not network_id:
                     return "Error: 'network_id' is required"
                 if ctx and not await ctx_confirm_destructive(ctx, "remove network"):
                     return {"status": "cancelled"}
-                return manager.remove_network(network_id)
+                return await run_blocking(manager.remove_network, network_id)
             elif action == "prune_networks":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune networks"):
                     return {"status": "cancelled"}
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_networks()
+                return await run_blocking(manager.prune_networks)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -745,24 +759,25 @@ def register_swarm_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.init_swarm(advertise_addr)
+                return await run_blocking(manager.init_swarm, advertise_addr)
             elif action == "leave_swarm":
                 if ctx and not await ctx_confirm_destructive(ctx, "leave swarm"):
                     return {
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.leave_swarm(force=force)
+                return await run_blocking(manager.leave_swarm, force=force)
             elif action == "list_nodes":
-                return manager.list_nodes()
+                return await run_blocking(manager.list_nodes)
             elif action == "list_services":
-                return manager.list_services()
+                return await run_blocking(manager.list_services)
             elif action == "create_service":
                 if not name or not image:
                     return "Error: 'name' and 'image' are required for create_service"
                 p_ports = json.loads(ports) if ports else None
                 p_mounts = json.loads(mounts) if mounts else None
-                return manager.create_service(
+                return await run_blocking(
+                    manager.create_service,
                     name=name,
                     image=image,
                     ports=p_ports,
@@ -777,11 +792,11 @@ def register_swarm_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_service(service_id)
+                return await run_blocking(manager.remove_service, service_id)
             elif action == "inspect_node":
                 if not node_id:
                     return "Error: 'node_id' is required"
-                return manager.inspect_node(node_id)
+                return await run_blocking(manager.inspect_node, node_id)
             elif action == "update_node":
                 if not node_id:
                     return "Error: 'node_id' is required"
@@ -791,7 +806,8 @@ def register_swarm_tools(mcp: FastMCP):
                         "Error: provide at least one of 'labels', 'role', "
                         "or 'availability'"
                     )
-                return manager.update_node(
+                return await run_blocking(
+                    manager.update_node,
                     node_id,
                     labels=p_labels,
                     role=role,
@@ -806,22 +822,23 @@ def register_swarm_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_node(node_id, force=force)
+                return await run_blocking(manager.remove_node, node_id, force=force)
             elif action == "inspect_service":
                 if not service_id:
                     return "Error: 'service_id' is required"
-                return manager.inspect_service(service_id)
+                return await run_blocking(manager.inspect_service, service_id)
             elif action == "scale_service":
                 if not service_id:
                     return "Error: 'service_id' is required"
-                return manager.scale_service(service_id, replicas)
+                return await run_blocking(manager.scale_service, service_id, replicas)
             elif action == "update_service":
                 if not service_id:
                     return "Error: 'service_id' is required"
                 p_env = json.loads(env) if env else None
                 p_constraints = json.loads(constraints) if constraints else None
                 p_labels = json.loads(labels) if labels else None
-                return manager.update_service(
+                return await run_blocking(
+                    manager.update_service,
                     service_id,
                     image=image,
                     replicas=replicas if replicas != 1 else None,
@@ -833,11 +850,11 @@ def register_swarm_tools(mcp: FastMCP):
             elif action == "service_ps":
                 if not service_id:
                     return "Error: 'service_id' is required"
-                return manager.service_ps(service_id)
+                return await run_blocking(manager.service_ps, service_id)
             elif action == "service_logs":
                 if not service_id:
                     return "Error: 'service_id' is required"
-                return manager.service_logs(service_id, tail=tail)
+                return await run_blocking(manager.service_logs, service_id, tail=tail)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -901,11 +918,11 @@ def register_system_tools(mcp: FastMCP):
                             "message": "Operation cancelled by user",
                         }
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_system(force=force, all=all)
+                return await run_blocking(manager.prune_system, force=force, all=all)
             elif action == "get_info":
-                return manager.get_info()
+                return await run_blocking(manager.get_info)
             elif action == "get_version":
-                return manager.get_version()
+                return await run_blocking(manager.get_version)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -965,13 +982,13 @@ def register_compose_tools(mcp: FastMCP):
 
         try:
             if action == "up":
-                return manager.compose_up(compose_file)
+                return await run_blocking(manager.compose_up, compose_file)
             elif action == "down":
-                return manager.compose_down(compose_file)
+                return await run_blocking(manager.compose_down, compose_file)
             elif action == "ps":
-                return manager.compose_ps(compose_file)
+                return await run_blocking(manager.compose_ps, compose_file)
             elif action == "logs":
-                return manager.compose_logs(compose_file)
+                return await run_blocking(manager.compose_logs, compose_file)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
@@ -1015,7 +1032,7 @@ def register_misc_tools(mcp: FastMCP):
 
         try:
             manager = create_manager(manager_type, host=host)
-            containers = manager.list_containers(all=True)
+            containers = await run_blocking(manager.list_containers, all=True)
             matching_containers = []
             for c in containers:
                 if not c.ports or c.ports == "none":

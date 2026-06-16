@@ -8,6 +8,7 @@ import os
 
 from agent_utilities.mcp_utilities import (
     ctx_log,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -46,13 +47,13 @@ def register_compose_tools(mcp: FastMCP):
 
         try:
             if action == "up":
-                return manager.compose_up(compose_file)
+                return await run_blocking(manager.compose_up, compose_file)
             elif action == "down":
-                return manager.compose_down(compose_file)
+                return await run_blocking(manager.compose_down, compose_file)
             elif action == "ps":
-                return manager.compose_ps(compose_file)
+                return await run_blocking(manager.compose_ps, compose_file)
             elif action == "logs":
-                return manager.compose_logs(compose_file)
+                return await run_blocking(manager.compose_logs, compose_file)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:

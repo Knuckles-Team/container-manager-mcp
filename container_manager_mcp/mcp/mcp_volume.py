@@ -11,6 +11,7 @@ from agent_utilities.mcp_utilities import (
     ctx_confirm_destructive,
     ctx_log,
     ctx_progress,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -52,11 +53,11 @@ def register_volume_tools(mcp: FastMCP):
 
         try:
             if action == "list_volumes":
-                return manager.list_volumes()
+                return await run_blocking(manager.list_volumes)
             elif action == "create_volume":
                 if not name:
                     return "Error: 'name' is required for create_volume"
-                return manager.create_volume(name)
+                return await run_blocking(manager.create_volume, name)
             elif action == "remove_volume":
                 if not name:
                     return "Error: 'name' is required"
@@ -65,7 +66,7 @@ def register_volume_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_volume(name, force=force)
+                return await run_blocking(manager.remove_volume, name, force=force)
             elif action == "prune_volumes":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune volumes"):
                     return {
@@ -74,7 +75,7 @@ def register_volume_tools(mcp: FastMCP):
                     }
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_volumes()
+                return await run_blocking(manager.prune_volumes)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:

@@ -16,6 +16,7 @@ import logging
 import os
 from typing import Any
 
+from agent_utilities.mcp_utilities import run_blocking
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
@@ -91,7 +92,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
             manager = create_manager(manager_type, silent=False, log_file=None)
 
             # Pull image
-            manager.pull_image(image)
+            await run_blocking(manager.pull_image, image)
 
             # Build run arguments
             container_name = name or f"specialist-{image.split('/')[-1].split(':')[0]}"
@@ -99,7 +100,8 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
             port_bindings = {v: k for k, v in port_map.items()}
 
             # Run container
-            result = manager.run_container(
+            result = await run_blocking(
+                manager.run_container,
                 image=image,
                 name=container_name,
                 detach=True,
@@ -146,7 +148,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
         try:
             manager = create_manager(manager_type, silent=False, log_file=None)
-            manager.stop_container(container_id)
+            await run_blocking(manager.stop_container, container_id)
             result = {
                 "success": True,
                 "container_id": container_id,
@@ -154,7 +156,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
             }
 
             if remove:
-                manager.remove_container(container_id, force=True)
+                await run_blocking(manager.remove_container, container_id, force=True)
                 result["status"] = "removed"
 
             return result
@@ -184,7 +186,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
         try:
             manager = create_manager(manager_type, silent=False, log_file=None)
-            info = manager.inspect_container(container_id)
+            info = await run_blocking(manager.inspect_container, container_id)
             state = info.get("State", {})
             return {
                 "container_id": container_id,
@@ -220,7 +222,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
         try:
             manager = create_manager(manager_type, silent=False, log_file=None)
-            all_containers = manager.list_containers(all=True)
+            all_containers = await run_blocking(manager.list_containers, all=True)
 
             specialists = []
             for c in all_containers:

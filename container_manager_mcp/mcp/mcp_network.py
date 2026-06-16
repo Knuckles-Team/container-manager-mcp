@@ -11,6 +11,7 @@ from agent_utilities.mcp_utilities import (
     ctx_confirm_destructive,
     ctx_log,
     ctx_progress,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -52,23 +53,25 @@ def register_network_tools(mcp: FastMCP):
 
         try:
             if action == "list_networks":
-                return manager.list_networks()
+                return await run_blocking(manager.list_networks)
             elif action == "create_network":
                 if not network_id:
                     return "Error: 'network_id' is required for create_network"
-                return manager.create_network(network_id, driver=driver)
+                return await run_blocking(
+                    manager.create_network, network_id, driver=driver
+                )
             elif action == "remove_network":
                 if not network_id:
                     return "Error: 'network_id' is required"
                 if ctx and not await ctx_confirm_destructive(ctx, "remove network"):
                     return {"status": "cancelled"}
-                return manager.remove_network(network_id)
+                return await run_blocking(manager.remove_network, network_id)
             elif action == "prune_networks":
                 if ctx and not await ctx_confirm_destructive(ctx, "prune networks"):
                     return {"status": "cancelled"}
                 if ctx:
                     await ctx_progress(ctx, 0, 100)
-                return manager.prune_networks()
+                return await run_blocking(manager.prune_networks)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:

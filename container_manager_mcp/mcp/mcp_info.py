@@ -8,6 +8,7 @@ import os
 
 from agent_utilities.mcp_utilities import (
     ctx_log,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -45,9 +46,9 @@ def register_info_tools(mcp: FastMCP):
 
         try:
             if action == "get_version":
-                return manager.get_version()
+                return await run_blocking(manager.get_version)
             elif action == "get_info":
-                return manager.get_info()
+                return await run_blocking(manager.get_info)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:

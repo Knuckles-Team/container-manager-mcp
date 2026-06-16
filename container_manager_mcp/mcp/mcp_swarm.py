@@ -10,6 +10,7 @@ from typing import Literal
 from agent_utilities.mcp_utilities import (
     ctx_confirm_destructive,
     ctx_log,
+    run_blocking,
 )
 from fastmcp import Context, FastMCP
 from pydantic import Field
@@ -75,24 +76,25 @@ def register_swarm_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.init_swarm(advertise_addr)
+                return await run_blocking(manager.init_swarm, advertise_addr)
             elif action == "leave_swarm":
                 if ctx and not await ctx_confirm_destructive(ctx, "leave swarm"):
                     return {
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.leave_swarm(force=force)
+                return await run_blocking(manager.leave_swarm, force=force)
             elif action == "list_nodes":
-                return manager.list_nodes()
+                return await run_blocking(manager.list_nodes)
             elif action == "list_services":
-                return manager.list_services()
+                return await run_blocking(manager.list_services)
             elif action == "create_service":
                 if not name or not image:
                     return "Error: 'name' and 'image' are required for create_service"
                 p_ports = json.loads(ports) if ports else None
                 p_mounts = json.loads(mounts) if mounts else None
-                return manager.create_service(
+                return await run_blocking(
+                    manager.create_service,
                     name=name,
                     image=image,
                     ports=p_ports,
@@ -107,7 +109,7 @@ def register_swarm_tools(mcp: FastMCP):
                         "status": "cancelled",
                         "message": "Operation cancelled by user",
                     }
-                return manager.remove_service(service_id)
+                return await run_blocking(manager.remove_service, service_id)
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
