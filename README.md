@@ -20,7 +20,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 1.43.0*
+*Version: 1.44.0*
 
 > **Documentation** — Installation, deployment, usage across the API, CLI, MCP, and
 > A2A agent interfaces, and the multi-host control plane are maintained in the
