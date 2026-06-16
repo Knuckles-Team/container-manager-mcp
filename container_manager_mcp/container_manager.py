@@ -2332,6 +2332,10 @@ def create_manager(
                 "Multi-host support is not implemented for Podman"
             )
         return PodmanManager(silent=silent, log_file=log_file)
+    elif manager_type.lower() in ["kubernetes", "k8s", "rke2", "k3s"]:
+        from container_manager_mcp.k8s_manager import KubernetesManager
+
+        return KubernetesManager(context=host, silent=silent, log_file=log_file)
     else:
         raise ValueError(f"Unsupported container manager type: {manager_type}")
 
