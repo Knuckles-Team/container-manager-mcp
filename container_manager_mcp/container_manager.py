@@ -268,7 +268,6 @@ class ContainerManagerBase(ABC):
     def remove_service(self, service_id: str) -> dict:
         pass
 
-
     @abstractmethod
     def inspect_node(self, node_id: str) -> dict:
         pass
