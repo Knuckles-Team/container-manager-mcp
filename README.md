@@ -47,7 +47,7 @@
 
 `container-manager-mcp` allows a single master instance of the MCP server on your controller to route container and volume operations securely to remote hosts over SSH standard tunneling.
 
-- **Unified Inventory**: Connection endpoints are loaded dynamically from XDG `~/.config/agent_utilities/inventory.yaml`.
+- **Unified Inventory**: Connection endpoints are loaded dynamically from XDG `~/.config/agent-utilities/inventory.yaml`.
 - **Zero TCP Socket Exposure**: Operations route directly over the standard SSH channel securely, removing the need to expose Docker socket TCP ports.
 
 To configure and utilize the multi-host remote routing, see the detailed [Multi-Host Architecture Guide](docs/multi_host.md).
