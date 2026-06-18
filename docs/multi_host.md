@@ -59,21 +59,28 @@ Host connection definitions are parsed from `inventory.yaml`. The XDG-standard d
 1. `~/.config/agent-utilities/inventory.yaml`
 
 ### `inventory.yaml` Format:
-Create or edit your inventory file at `~/.config/agent-utilities/inventory.yaml`:
+Create or edit your inventory file at `~/.config/agent-utilities/inventory.yaml`. Host
+aliases are **top-level keys** (no `hosts:` wrapper) — this is the flat form the shared
+`HostManager` loader expects:
 
 ```yaml
-hosts:
-  node-alpha:
-    hostname: "192.168.1.10"
-    port: 22
-    user: "ubuntu"
-    key_path: "/home/user/.ssh/id_rsa"
-  node-beta:
-    hostname: "10.0.0.5"
-    port: 2222
-    user: "admin"
-    identity_file: "/home/user/.ssh/id_ed25519"
+node-alpha:
+  hostname: "192.168.1.10"
+  port: 22
+  user: "ubuntu"
+  key_path: "/home/user/.ssh/id_rsa"
+node-beta:
+  hostname: "10.0.0.5"
+  port: 2222
+  user: "admin"
+  identity_file: "/home/user/.ssh/id_ed25519"
 ```
+
+The richer **Ansible-style** layout (group `vars`, `children`) is also supported —
+see tunnel-manager's [inventory tutorial](https://knuckles-team.github.io/tunnel-manager/inventory/)
+and `inventory.example.yaml` for the full schema and recognized keys. Because the file
+is shared, the same inventory drives `tunnel-manager`, `systems-manager`, and the
+`ssh-bootstrap` skill — define each host once.
 
 ---
 
