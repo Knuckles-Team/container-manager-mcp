@@ -24,12 +24,13 @@ warnings.filterwarnings("ignore", category=DeprecationWarning, module="authlib.*
 
 import logging
 import os
+import sys
 from typing import Any, Literal
 
-from agent_utilities.base_utilities import to_boolean
 from agent_utilities.mcp_utilities import (
     create_mcp_server,
     load_config,
+    register_tool_surface,
     resolve_action,
     run_blocking,
 )
@@ -155,8 +156,8 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
                 pass
 
 
-
 from container_manager_mcp.container_manager import (
+    ContainerManagerBase,
     create_manager,
     list_inventory_hosts,
 )
@@ -1062,46 +1063,17 @@ def get_mcp_instance() -> tuple[Any, ...]:
         instructions="Container Manager MCP Server - Manage Docker and Podman containers, images, volumes, networks, and swarm.",
     )
 
-    # We maintain these default configurations for backwards compatibility
-    # Inventory/host discovery is always on — it advertises remote-host targeting.
-    if to_boolean(os.getenv("INVENTORYTOOL", "True")):
-        register_inventory_tools(mcp)
-
-    DEFAULT_INFOTOOL = to_boolean(os.getenv("INFOTOOL", "True"))
-    if DEFAULT_INFOTOOL:
-        register_info_tools(mcp)
-
-    DEFAULT_IMAGETOOL = to_boolean(os.getenv("IMAGETOOL", "True"))
-    if DEFAULT_IMAGETOOL:
-        register_image_tools(mcp)
-
-    DEFAULT_CONTAINERTOOL = to_boolean(os.getenv("CONTAINERTOOL", "True"))
-    if DEFAULT_CONTAINERTOOL:
-        register_container_tools(mcp)
-
-    DEFAULT_VOLUMETOOL = to_boolean(os.getenv("VOLUMETOOL", "True"))
-    if DEFAULT_VOLUMETOOL:
-        register_volume_tools(mcp)
-
-    DEFAULT_NETWORKTOOL = to_boolean(os.getenv("NETWORKTOOL", "True"))
-    if DEFAULT_NETWORKTOOL:
-        register_network_tools(mcp)
-
-    DEFAULT_SWARMTOOL = to_boolean(os.getenv("SWARMTOOL", "True"))
-    if DEFAULT_SWARMTOOL:
-        register_swarm_tools(mcp)
-
-    DEFAULT_SYSTEMTOOL = to_boolean(os.getenv("SYSTEMTOOL", "True"))
-    if DEFAULT_SYSTEMTOOL:
-        register_system_tools(mcp)
-
-    DEFAULT_COMPOSETOOL = to_boolean(os.getenv("COMPOSETOOL", "True"))
-    if DEFAULT_COMPOSETOOL:
-        register_compose_tools(mcp)
-
-    DEFAULT_MISCTOOL = to_boolean(os.getenv("MISCTOOL", "True"))
-    if DEFAULT_MISCTOOL:
-        register_misc_tools(mcp)
+    # Tools target the per-call manager from create_manager(host=...), not a
+    # Depends(get_client) client; condensed gates each register_*_tools via
+    # setting("<TAG>TOOL", True). ContainerManagerBase is passed as the closest
+    # importable client class for the verbose tier.
+    register_tool_surface(
+        mcp,
+        client_cls=ContainerManagerBase,
+        get_client=create_manager,
+        service=_SERVICE,
+        tools_module=sys.modules[__name__],
+    )
 
     return args, mcp, middlewares
 
