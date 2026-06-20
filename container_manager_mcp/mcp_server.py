@@ -29,6 +29,7 @@ from typing import Any, Literal
 from agent_utilities.base_utilities import to_boolean
 from agent_utilities.mcp_utilities import (
     create_mcp_server,
+    load_config,
     resolve_action,
     run_blocking,
 )
@@ -154,7 +155,6 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
                 pass
 
 
-from dotenv import find_dotenv, load_dotenv
 
 from container_manager_mcp.container_manager import (
     create_manager,
@@ -1055,7 +1055,7 @@ def register_misc_tools(mcp: FastMCP):
 
 def get_mcp_instance() -> tuple[Any, ...]:
     """Initialize and return the MCP instance."""
-    load_dotenv(find_dotenv())
+    load_config()
     args, mcp, middlewares = create_mcp_server(
         name="container-manager-mcp",
         version=__version__,
