@@ -67,17 +67,26 @@ Detailed instructions on how to use the underlying API wrappers, extended schema
 This server utilizes dynamic Action-Routed tools to optimize token overhead and maximize IDE compatibility.
 
 ### Available MCP Tools
-| Tool Module | Toggle Env Var | Enabled by Default | Description & Nested Methods |
-|-------------|----------------|--------------------|------------------------------|
-| **Info** | `INFO_TOOL` | `True` | Manage container manager info operations. Action-routed methods: `get_info`, `get_version`. |
-| **Image** | `IMAGE_TOOL` | `True` | Manage container images. Action-routed methods: `list_images`, `prune_images`, `pull_image`, `remove_image`. |
-| **Container** | `CONTAINER_TOOL` | `True` | Manage container operations. Action-routed methods: `exec_in_container`, `get_container_logs`, `list_containers`, `prune_containers`, `remove_container`, `stop_container`. |
-| **Volume** | `VOLUME_TOOL` | `True` | Manage volume operations. Action-routed methods: `create_volume`, `list_volumes`, `prune_volumes`, `remove_volume`. |
-| **Network** | `NETWORK_TOOL` | `True` | Manage network operations. Action-routed methods: `create_network`, `list_networks`, `prune_networks`, `remove_network`. |
-| **Swarm** | `SWARM_TOOL` | `True` | Manage swarm operations. Action-routed methods: `create_service`, `init_swarm`, `leave_swarm`, `list_nodes`, `list_services`, `remove_service`. |
-| **System** | `SYSTEM_TOOL` | `True` | Manage container manager system operations. Action-routed methods: `get_info`, `get_version`, `prune_system`. |
-| **Compose** | `COMPOSE_TOOL` | `True` | Manage docker-compose or podman-compose operations. Action-routed methods: `down`, `logs`, `ps`, `up`. |
-| **Misc** | `MISC_TOOL` | `True` | Manage container manager mcp misc operations. |
+
+_Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hook)._
+
+<!-- MCP-TOOLS-TABLE:START -->
+
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `cm_compose_operations` | `COMPOSETOOL` | Manage docker-compose or podman-compose operations. |
+| `cm_container_operations` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_image_operations` | `IMAGETOOL` | Manage container images. |
+| `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
+| `cm_list_hosts` | `INVENTORYTOOL` | List the host aliases you can pass as ``host`` to any cm_* operation |
+| `cm_network_operations` | `NETWORKTOOL` | Manage network operations. |
+| `cm_swarm_operations` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_system_operations` | `SYSTEMTOOL` | Manage container manager system operations. |
+| `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
+| `trace_port_namespace` | `MISCTOOL` | Locate the container actively using/mapping the specified port on the target host. |
+
+_10 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
+<!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
 
