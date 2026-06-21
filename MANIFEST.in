@@ -1,1 +1,1 @@
-include README.md include requirements.txt recursive-include container_manager_mcp *.py
+include README.md include requirements.txt recursive-include container_manager_mcp *.py *.json *.md *.yaml *.yml
