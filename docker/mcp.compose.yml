@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   container-manager-mcp-mcp:
-    image: knucklessg1/container-manager-mcp:latest
+    image: knucklessg1/container-manager-mcp:mcp
     container_name: container-manager-mcp-mcp
     hostname: container-manager-mcp-mcp
     restart: always
