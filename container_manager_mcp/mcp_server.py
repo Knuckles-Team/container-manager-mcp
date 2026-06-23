@@ -374,6 +374,14 @@ def register_container_tools(mcp: FastMCP):
             default=None, description="Container ID or name"
         ),
         command: str | None = Field(default=None, description="Command to execute"),
+        binary: bool = Field(
+            default=False,
+            description=(
+                "For exec_in_container: return base64'd stdout bytes ('output_b64') "
+                "instead of UTF-8 text, so binary output (e.g. a screenshot PNG) "
+                "survives uncorrupted."
+            ),
+        ),
         all_containers: bool = Field(default=False, description="Show all containers"),
         force: bool = Field(default=False, description="Force operation"),
         tail: str = Field(default="50", description="Number of log lines to tail"),
@@ -448,7 +456,10 @@ def register_container_tools(mcp: FastMCP):
                 if not container_id or not command:
                     return "Error: 'container_id' and 'command' required"
                 return await run_blocking(
-                    manager.exec_in_container, container_id, shlex.split(command)
+                    manager.exec_in_container,
+                    container_id,
+                    shlex.split(command),
+                    binary=binary,
                 )
             else:
                 return f"Error: Unknown action '{action}'"

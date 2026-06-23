@@ -2,6 +2,7 @@
 
 
 import argparse
+import base64
 import json
 import logging
 import os
@@ -37,6 +38,37 @@ try:
 except ImportError:
     PodmanClient = None
     PodmanError = Exception
+
+
+def _build_exec_result(
+    container: Any, command: list[str], detach: bool, binary: bool
+) -> dict:
+    """Run ``command`` in ``container`` and shape the result dict.
+
+    Shared by the Docker and Podman managers so the exec logic lives once.
+    Binary mode (CONCEPT:ECO-4.94) demuxes stdout/stderr and base64-encodes the
+    stdout bytes so non-text output (e.g. a screenshot PNG from ``maim`` /
+    ``scrot -o /dev/stdout``) survives the JSON boundary uncorrupted — used by
+    the computer-use actuator driving a gui-sandbox over the ssh:// docker socket.
+    """
+    if binary:
+        exit_code, output = container.exec_run(command, detach=detach, demux=True)
+        stdout_bytes, stderr_bytes = output if output else (None, None)
+        return {
+            "exit_code": exit_code,
+            "output_b64": (
+                base64.b64encode(stdout_bytes).decode("ascii") if stdout_bytes else None
+            ),
+            "stderr": stderr_bytes.decode("utf-8", "replace") if stderr_bytes else None,
+            "command": command,
+            "binary": True,
+        }
+    exit_code, output = container.exec_run(command, detach=detach)
+    return {
+        "exit_code": exit_code,
+        "output": output.decode("utf-8") if output and not detach else None,
+        "command": command,
+    }
 
 
 class ContainerManagerBase(ABC):
@@ -179,7 +211,11 @@ class ContainerManagerBase(ABC):
 
     @abstractmethod
     def exec_in_container(
-        self, container_id: str, command: list[str], detach: bool = False
+        self,
+        container_id: str,
+        command: list[str],
+        detach: bool = False,
+        binary: bool = False,
     ) -> dict:
         pass
 
@@ -785,18 +821,28 @@ class DockerManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to get container logs: {str(e)}") from e
 
     def exec_in_container(
-        self, container_id: str, command: list[str], detach: bool = False
+        self,
+        container_id: str,
+        command: list[str],
+        detach: bool = False,
+        binary: bool = False,
     ) -> dict:
-        params = {"container_id": container_id, "command": command, "detach": detach}
+        params = {
+            "container_id": container_id,
+            "command": command,
+            "detach": detach,
+            "binary": binary,
+        }
         try:
             container = self.client.containers.get(container_id)
-            exit_code, output = container.exec_run(command, detach=detach)
-            result = {
-                "exit_code": exit_code,
-                "output": output.decode("utf-8") if output and not detach else None,
-                "command": command,
-            }
-            self.log_action("exec_in_container", params, result)
+            result = _build_exec_result(container, command, detach, binary)
+            # Don't log a full base64 PNG — summarise binary results.
+            log_result = (
+                {"exit_code": result["exit_code"], "binary": True}
+                if binary
+                else result
+            )
+            self.log_action("exec_in_container", params, log_result)
             return result
         except Exception as e:
             self.log_action("exec_in_container", params, error=e)
@@ -2044,18 +2090,28 @@ class PodmanManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to get container logs: {str(e)}") from e
 
     def exec_in_container(
-        self, container_id: str, command: list[str], detach: bool = False
+        self,
+        container_id: str,
+        command: list[str],
+        detach: bool = False,
+        binary: bool = False,
     ) -> dict:
-        params = {"container_id": container_id, "command": command, "detach": detach}
+        params = {
+            "container_id": container_id,
+            "command": command,
+            "detach": detach,
+            "binary": binary,
+        }
         try:
             container = self.client.containers.get(container_id)
-            exit_code, output = container.exec_run(command, detach=detach)
-            result = {
-                "exit_code": exit_code,
-                "output": output.decode("utf-8") if output and not detach else None,
-                "command": command,
-            }
-            self.log_action("exec_in_container", params, result)
+            result = _build_exec_result(container, command, detach, binary)
+            # Don't log a full base64 PNG — summarise binary results.
+            log_result = (
+                {"exit_code": result["exit_code"], "binary": True}
+                if binary
+                else result
+            )
+            self.log_action("exec_in_container", params, log_result)
             return result
         except Exception as e:
             self.log_action("exec_in_container", params, error=e)
