@@ -1011,7 +1011,7 @@ such as <code>list_containers</code> (no <code>host</code>) from your MCP client
 containers on the controller. Once that works, add remote hosts (next section).</p>
 <h2 id="5-remote-hosts">5. Remote hosts<a class="headerlink" href="#5-remote-hosts" title="Permanent link">&para;</a></h2>
 <p>Remote operation uses <strong>Docker-over-SSH</strong> and the <strong>same shared inventory</strong> as
-tunnel-manager — <code>~/.config/agent-utilities/inventory.yaml</code>. Define each host once
+tunnel-manager — <code>~/.config/agent-utilities/inventory.yml</code> (<code>.yaml</code> legacy fallback). Define each host once
 there (see the <a href="https://knuckles-team.github.io/tunnel-manager/inventory/">tunnel-manager inventory tutorial</a>),
 then pass the alias as the <code>host</code> argument to any tool (or set <code>CONTAINER_MANAGER_HOST</code>).
 The full lifecycle, virtual-host namespacing via the multiplexer, and SSH key

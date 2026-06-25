@@ -899,7 +899,7 @@ a remote daemon over SSH.</p>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="n">nodes</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">()</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">services</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">list_services</span><span class="p">()</span>
 </span></code></pre></div>
-<p>Target a remote host defined in <code>~/.config/agent-utilities/inventory.yaml</code>:</p>
+<p>Target a remote host defined in <code>~/.config/agent-utilities/inventory.yml</code> (<code>.yaml</code> legacy fallback):</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">cm</span> <span class="o">=</span> <span class="n">DockerManager</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s2">&quot;node-alpha&quot;</span><span class="p">)</span>   <span class="c1"># connects over ssh://user@host:port</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">remote_containers</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">list_containers</span><span class="p">(</span><span class="nb">all</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
