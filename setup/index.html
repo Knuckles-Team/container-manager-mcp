@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://knuckles-team.github.io/container-manager-mcp/multi_host/">
+        <link rel="canonical" href="https://knuckles-team.github.io/container-manager-mcp/setup/">
       
       
-        <link rel="prev" href="../usage/">
+        <link rel="prev" href="../installation/">
       
       
-        <link rel="next" href="../concepts/">
+        <link rel="next" href="../deployment/">
       
       
         
@@ -27,7 +27,7 @@
     
     
       
-        <title>Multi-Host - container-manager-mcp</title>
+        <title>Setup (install, wire, remote hosts) - container-manager-mcp</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#multi-host-remote-docker-architecture" class="md-skip">
+        <a href="#setup" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Multi-Host
+              Setup (install, wire, remote hosts)
             
           </span>
         </div>
@@ -291,9 +291,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../setup/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -348,11 +350,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../multi_host/" class="md-tabs__link">
         
   
   
@@ -520,10 +520,37 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../setup/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup (install, wire, remote hosts)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -539,6 +566,120 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Install
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Install">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uvx-recommended-zero-install-run-on-demand" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        uvx (recommended — zero install, run on demand)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pip-uv-persistent-install" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pip / uv (persistent install)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container-pre-built-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container (pre-built image)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-wire-it-into-an-mcp-client" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Wire it into an MCP client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-quickstart-local-socket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Quickstart (local socket)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-remote-hosts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Remote hosts
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -601,37 +742,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Multi-Host
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../multi_host/" class="md-nav__link">
         
   
   
@@ -647,126 +761,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-architectural-overview" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Architectural Overview
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="1. Architectural Overview">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pre-bound-virtual-host-namespacing-multiplexer-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-bound Virtual Host Namespacing (Multiplexer Integration)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#key-design-pillars" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Design Pillars:
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-configuration-inventory-schema" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Configuration &amp; Inventory Schema
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Configuration &amp; Inventory Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#search-paths" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Search Paths:
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inventoryyaml-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inventory.yaml Format:
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-remote-client-hooking-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Remote Client Hooking Lifecycle
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-usage-in-mcp-clients-eg-cursor-claude-desktop" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Usage in MCP Clients (e.g. Cursor / Claude Desktop)
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -825,22 +819,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-architectural-overview" class="md-nav__link">
+  <a href="#1-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Architectural Overview
+        1. Install
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="1. Architectural Overview">
+    <nav class="md-nav" aria-label="1. Install">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pre-bound-virtual-host-namespacing-multiplexer-integration" class="md-nav__link">
+  <a href="#uvx-recommended-zero-install-run-on-demand" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pre-bound Virtual Host Namespacing (Multiplexer Integration)
+        uvx (recommended — zero install, run on demand)
       
     </span>
   </a>
@@ -848,10 +842,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#key-design-pillars" class="md-nav__link">
+  <a href="#pip-uv-persistent-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Design Pillars:
+        pip / uv (persistent install)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#container-pre-built-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Container (pre-built image)
       
     </span>
   </a>
@@ -864,49 +869,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-configuration-inventory-schema" class="md-nav__link">
+  <a href="#2-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Configuration &amp; Inventory Schema
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="2. Configuration &amp; Inventory Schema">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#search-paths" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Search Paths:
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#inventoryyaml-format" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        inventory.yaml Format:
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-remote-client-hooking-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Remote Client Hooking Lifecycle
+        2. Configuration
       
     </span>
   </a>
@@ -914,10 +880,32 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-usage-in-mcp-clients-eg-cursor-claude-desktop" class="md-nav__link">
+  <a href="#3-wire-it-into-an-mcp-client" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Usage in MCP Clients (e.g. Cursor / Claude Desktop)
+        3. Wire it into an MCP client
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-quickstart-local-socket" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Quickstart (local socket)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-remote-hosts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Remote hosts
       
     </span>
   </a>
@@ -944,90 +932,93 @@
   
 
 
-<h1 id="multi-host-remote-docker-architecture">Multi-Host Remote Docker Architecture<a class="headerlink" href="#multi-host-remote-docker-architecture" title="Permanent link">&para;</a></h1>
-<p>This document describes the design, configuration, and execution lifecycle of the <strong>Zero-Script Multi-Host Container Control Plane</strong> within <code>container-manager-mcp</code>.</p>
-<hr />
-<h2 id="1-architectural-overview">1. Architectural Overview<a class="headerlink" href="#1-architectural-overview" title="Permanent link">&para;</a></h2>
-<p>Managing Docker, Docker Swarm, and Podman containers across multiple servers typically requires installing and exposing Docker ports globally, or setting up complex TLS credentials on every single remote host.</p>
-<p><code>container-manager-mcp</code> bypasses this complexity by leveraging <strong>Docker over SSH</strong> (using standard <code>ssh://</code> endpoints) coupled with a unified local inventory configuration:</p>
-<pre class="mermaid"><code>graph TD
-    A[MCP Client / IDE] --&gt;|mcp_tool_call host='node-alpha'| B[Container Manager Controller Host]
-    B --&gt;|1. Resolve Connection info| C[(inventory.yaml)]
-    B --&gt;|2. Construct SSH endpoint| D[docker.DockerClient base_url='ssh://...']
-    D --&gt;|3. Native Remote Docker API| E[Docker Daemon on node-alpha]
-    E --&gt;|4. Return Container Stats/State| B
-    B --&gt;|5. Return Tool Result| A</code></pre>
-<h3 id="pre-bound-virtual-host-namespacing-multiplexer-integration">Pre-bound Virtual Host Namespacing (Multiplexer Integration)<a class="headerlink" href="#pre-bound-virtual-host-namespacing-multiplexer-integration" title="Permanent link">&para;</a></h3>
-<p>To optimize the developer and AI agent experience in IDEs (like Antigravity), we avoid requiring the AI agent to remember to supply <code>host</code> explicitly on every call. Instead, the <code>mcp-multiplexer</code> reads <code>inventory.yaml</code> and exposes host-specific <strong>pre-bound virtual sub-servers</strong> using namespaced prefixes (e.g. <code>cnt_r510__list_containers</code>).</p>
-<pre class="mermaid"><code>graph TD
-    subgraph Client / IDE Layer
-        A[MCP Client or IDE] --&gt;|Interact with| B[Unified mcp-multiplexer]
-        B --&gt;|Dynamically parses| C[(inventory.yaml)]
-        B --&gt;|Generates namespaced virtual servers| D["cnt_&amp;lt;host&amp;gt;__ (Virtual Subprocess)"]
-    end
-
-    subgraph Centralized Controller Layer (Zero Remote Daemons)
-        D --&gt;|Prefills Target Host Env| E[Centralized Container Manager Instance]
-        E --&gt;|Routes Docker-over-SSH| F["Docker Daemon on Target Host: &amp;lt;host&amp;gt;"]
-    end
-
-    style D fill:#f9f,stroke:#333,stroke-width:2px
-    style E fill:#bbf,stroke:#333,stroke-width:2px
-    style F fill:#bfb,stroke:#333,stroke-width:2px</code></pre>
-<p>This virtual namespacing maintains a single centralized executable on the controller host with zero remote daemons.</p>
-<h3 id="key-design-pillars">Key Design Pillars:<a class="headerlink" href="#key-design-pillars" title="Permanent link">&para;</a></h3>
-<ul>
-<li><strong>Centralized Master Instance</strong>: Run a single master instance of <code>container-manager-mcp</code> on the controller.</li>
-<li><strong>Zero TLS/TCP Exposes</strong>: There is no need to open Docker's TCP socket port (<code>2376</code>/<code>2375</code>) on remote hosts. Remote communication is fully encrypted and transported over standard SSH (port <code>22</code>).</li>
-<li><strong>Shared Unified Inventory</strong>: Shares the same standard <code>inventory.yaml</code> utilized by <code>systems-manager</code> and <code>tunnel-manager</code>.</li>
-</ul>
-<hr />
-<h2 id="2-configuration-inventory-schema">2. Configuration &amp; Inventory Schema<a class="headerlink" href="#2-configuration-inventory-schema" title="Permanent link">&para;</a></h2>
-<p>Host connection definitions are parsed from <code>inventory.yaml</code>. The XDG-standard directory is searched by default to achieve a single source of truth.</p>
-<h3 id="search-paths">Search Paths:<a class="headerlink" href="#search-paths" title="Permanent link">&para;</a></h3>
-<ol>
-<li><code>~/.config/agent-utilities/inventory.yaml</code></li>
-</ol>
-<h3 id="inventoryyaml-format"><code>inventory.yaml</code> Format:<a class="headerlink" href="#inventoryyaml-format" title="Permanent link">&para;</a></h3>
-<p>Create or edit your inventory file at <code>~/.config/agent-utilities/inventory.yaml</code>. Host
-aliases are <strong>top-level keys</strong> (no <code>hosts:</code> wrapper) — this is the flat form the shared
-<code>HostManager</code> loader expects:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">node-alpha</span><span class="p">:</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;192.168.1.10&quot;</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">22</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;ubuntu&quot;</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="nt">key_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/home/user/.ssh/id_rsa&quot;</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nt">node-beta</span><span class="p">:</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="nt">hostname</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;10.0.0.5&quot;</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2222</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span><span class="nt">user</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;admin&quot;</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">identity_file</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;/home/user/.ssh/id_ed25519&quot;</span>
+<h1 id="setup">Setup<a class="headerlink" href="#setup" title="Permanent link">&para;</a></h1>
+<p>A step-by-step guide to installing <code>container-manager-mcp</code>, wiring it into an MCP
+client, and pointing it at remote hosts. For the deep dive on the multi-host control
+plane see <a href="../multi_host/">Multi-Host</a>.</p>
+<h2 id="1-install">1. Install<a class="headerlink" href="#1-install" title="Permanent link">&para;</a></h2>
+<p><code>container-manager-mcp</code> is published to PyPI and exposes two console scripts —
+<code>container-manager-mcp</code> (the FastMCP server) and <code>container-manager-agent</code> (the A2A
+agent). Pick the install style that fits:</p>
+<h3 id="uvx-recommended-zero-install-run-on-demand">uvx (recommended — zero install, run on demand)<a class="headerlink" href="#uvx-recommended-zero-install-run-on-demand" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Docker tools only (lightweight):</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>uvx<span class="w"> </span>--from<span class="w"> </span>container-manager-mcp<span class="w"> </span>container-manager-mcp<span class="w"> </span>--help
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># With podman + kubernetes extras:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>uvx<span class="w"> </span>--from<span class="w"> </span><span class="s2">&quot;container-manager-mcp[all]&quot;</span><span class="w"> </span>container-manager-mcp
 </span></code></pre></div>
-<p>The richer <strong>Ansible-style</strong> layout (group <code>vars</code>, <code>children</code>) is also supported —
-see tunnel-manager's <a href="https://knuckles-team.github.io/tunnel-manager/inventory/">inventory tutorial</a>
-and <code>inventory.example.yaml</code> for the full schema and recognized keys. Because the file
-is shared, the same inventory drives <code>tunnel-manager</code>, <code>systems-manager</code>, and the
-<code>ssh-bootstrap</code> skill — define each host once.</p>
-<hr />
-<h2 id="3-remote-client-hooking-lifecycle">3. Remote Client Hooking Lifecycle<a class="headerlink" href="#3-remote-client-hooking-lifecycle" title="Permanent link">&para;</a></h2>
-<p>When a tool is invoked with a non-empty <code>host</code> parameter (e.g., <code>host="node-alpha"</code>):
-1. <code>container-manager-mcp</code> intercepts the tool request and parses <code>node-alpha</code> from the local inventory.
-2. It constructs the SSH URL: <code>ssh://user@hostname:port</code>.
-3. It passes this connection URL to <code>docker.DockerClient(base_url=...)</code>.
-4. The client routes all subsequent API commands (list images, pull images, deploy stacks, prune volumes) securely over the SSH tunnel.</p>
-<hr />
-<h2 id="4-usage-in-mcp-clients-eg-cursor-claude-desktop">4. Usage in MCP Clients (e.g. Cursor / Claude Desktop)<a class="headerlink" href="#4-usage-in-mcp-clients-eg-cursor-claude-desktop" title="Permanent link">&para;</a></h2>
-<p>Pass the target <code>host</code> argument as part of standard tool payloads:</p>
-<div class="language-json highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;cm_container_operations&quot;</span><span class="p">,</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">  </span><span class="nt">&quot;arguments&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;list_containers&quot;</span><span class="p">,</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">    </span><span class="nt">&quot;all_containers&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="nt">&quot;host&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;node-alpha&quot;</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="w">  </span><span class="p">}</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">}</span>
+<p><code>uvx</code> resolves the package and its <code>tunnel-manager</code> dependency from PyPI into an
+ephemeral environment and runs the console script — nothing is installed globally.
+Because the package name equals the script name, <code>uvx container-manager-mcp</code> also works.</p>
+<h3 id="pip-uv-persistent-install">pip / uv (persistent install)<a class="headerlink" href="#pip-uv-persistent-install" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;container-manager-mcp[all]&quot;</span><span class="w">     </span><span class="c1"># or: python -m pip install &quot;container-manager-mcp[all]&quot;</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>container-manager-mcp<span class="w"> </span>--help
 </span></code></pre></div>
-<p>This ensures full isolation, extreme simplicity, and zero configuration drift across your application environment.</p>
+<h3 id="container-pre-built-image">Container (pre-built image)<a class="headerlink" href="#container-pre-built-image" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>-i<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span>-v<span class="w"> </span><span class="nv">$HOME</span>/.config/agent-utilities:/root/.config/agent-utilities:ro<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span>-v<span class="w"> </span><span class="nv">$HOME</span>/.ssh:/root/.ssh:ro<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">  </span>knucklessg1/container-manager-mcp:latest
+</span></code></pre></div>
+<h2 id="2-configuration">2. Configuration<a class="headerlink" href="#2-configuration" title="Permanent link">&para;</a></h2>
+<p>The server is configured by CLI flags or environment variables:</p>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CONTAINER_MANAGER_TYPE</code></td>
+<td>Runtime: <code>docker</code> (default), <code>podman</code>, <code>docker-swarm</code>.</td>
+</tr>
+<tr>
+<td><code>CONTAINER_MANAGER_HOST</code></td>
+<td>Default remote host alias (else operate on the local socket).</td>
+</tr>
+<tr>
+<td><code>CONTAINER_MANAGER_PODMAN_BASE_URL</code></td>
+<td>Explicit Podman socket URL when using podman.</td>
+</tr>
+<tr>
+<td><code>COMPOSE_TOOL</code></td>
+<td><code>docker-compose</code> (default) or <code>podman-compose</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Transport/auth flags (<code>-t</code>, <code>-H</code>, <code>-p</code>, <code>--auth-type</code>, …) mirror the rest of the MCP
+fleet — see <code>container-manager-mcp --help</code>.</p>
+<h2 id="3-wire-it-into-an-mcp-client">3. Wire it into an MCP client<a class="headerlink" href="#3-wire-it-into-an-mcp-client" title="Permanent link">&para;</a></h2>
+<p>Add a server block to your client's <code>mcp_config.json</code> (Claude Code, Cursor, Windsurf,
+Antigravity, …):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>{
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>  &quot;mcpServers&quot;: {
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    &quot;container-manager-mcp&quot;: {
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>      &quot;command&quot;: &quot;uvx&quot;,
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>      &quot;args&quot;: [&quot;--from&quot;, &quot;container-manager-mcp&quot;, &quot;container-manager-mcp&quot;],
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>      &quot;env&quot;: {
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        &quot;CONTAINER_MANAGER_TYPE&quot;: &quot;docker&quot;
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>      }
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    }
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>  }
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>}
+</span></code></pre></div>
+<h2 id="4-quickstart-local-socket">4. Quickstart (local socket)<a class="headerlink" href="#4-quickstart-local-socket" title="Permanent link">&para;</a></h2>
+<p>With no <code>host</code> argument, tools operate on the local Docker/Podman socket. Invoke a tool
+such as <code>list_containers</code> (no <code>host</code>) from your MCP client and you should see the
+containers on the controller. Once that works, add remote hosts (next section).</p>
+<h2 id="5-remote-hosts">5. Remote hosts<a class="headerlink" href="#5-remote-hosts" title="Permanent link">&para;</a></h2>
+<p>Remote operation uses <strong>Docker-over-SSH</strong> and the <strong>same shared inventory</strong> as
+tunnel-manager — <code>~/.config/agent-utilities/inventory.yaml</code>. Define each host once
+there (see the <a href="https://knuckles-team.github.io/tunnel-manager/inventory/">tunnel-manager inventory tutorial</a>),
+then pass the alias as the <code>host</code> argument to any tool (or set <code>CONTAINER_MANAGER_HOST</code>).
+The full lifecycle, virtual-host namespacing via the multiplexer, and SSH key
+requirements are documented in <a href="../multi_host/">Multi-Host</a>.</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># One-time: ensure passwordless SSH to the hosts in your inventory.</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>tunnel-manager<span class="w"> </span>setup-all<span class="w"> </span>--parallel
+</span></code></pre></div>
 
 
 
@@ -1065,7 +1056,7 @@ is shared, the same inventory drives <code>tunnel-manager</code>, <code>systems-
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../usage/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Usage (API / CLI / MCP)">
+          <a href="../installation/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Installation">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1075,20 +1066,20 @@ is shared, the same inventory drives <code>tunnel-manager</code>, <code>systems-
                 Previous
               </span>
               <div class="md-ellipsis">
-                Usage (API / CLI / MCP)
+                Installation
               </div>
             </div>
           </a>
         
         
           
-          <a href="../concepts/" class="md-footer__link md-footer__link--next" aria-label="Next: Concepts">
+          <a href="../deployment/" class="md-footer__link md-footer__link--next" aria-label="Next: Deployment">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Concepts
+                Deployment
               </div>
             </div>
             <div class="md-footer__button md-icon">
