@@ -26,7 +26,7 @@ for conversational orchestration. It provides:
   overhead.
 - **Zero-script multi-host control** — route any operation to a remote host over a
   standard SSH channel, with no Docker TCP socket exposed, driven from a unified
-  `inventory.yaml`.
+  `inventory.yml` (`.yaml` legacy fallback).
 
 ## Explore the documentation
 

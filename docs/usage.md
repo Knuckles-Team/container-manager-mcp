@@ -56,7 +56,7 @@ nodes = cm.list_nodes()
 services = cm.list_services()
 ```
 
-Target a remote host defined in `~/.config/agent-utilities/inventory.yaml`:
+Target a remote host defined in `~/.config/agent-utilities/inventory.yml` (`.yaml` legacy fallback):
 
 ```python
 cm = DockerManager(host="node-alpha")   # connects over ssh://user@host:port

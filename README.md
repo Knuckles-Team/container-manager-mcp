@@ -47,8 +47,14 @@
 
 `container-manager-mcp` allows a single master instance of the MCP server on your controller to route container and volume operations securely to remote hosts over SSH standard tunneling.
 
-- **Unified Inventory**: Connection endpoints are loaded dynamically from XDG `~/.config/agent-utilities/inventory.yaml`.
+- **Unified Inventory**: Connection endpoints are loaded dynamically from the XDG shared inventory at `~/.config/agent-utilities/inventory.yml` (`.yml` preferred; a legacy `inventory.yaml` is still read when no `.yml` exists).
 - **Zero TCP Socket Exposure**: Operations route directly over the standard SSH channel securely, removing the need to expose Docker socket TCP ports.
+
+> **Shared inventory:** the `cm_*` host aliases you pass as `host` come from the **same**
+> `inventory.yml` used by **tunnel-manager** — define your fleet once. Create and validate
+> it with `tunnel-manager inventory init` / `tunnel-manager inventory doctor`. See
+> tunnel-manager's [Inventory guide](https://knuckles-team.github.io/tunnel-manager/inventory/)
+> for the full schema, template, and override options.
 
 To configure and utilize the multi-host remote routing, see the detailed [Multi-Host Architecture Guide](docs/multi_host.md).
 
@@ -310,7 +316,7 @@ Every variable the server reads, grouped by purpose.
 ### Multi-host control plane
 | Variable | Description | Default |
 |----------|-------------|---------|
-| Inventory file | Remote host endpoints are loaded from XDG `~/.config/agent-utilities/inventory.yaml` (see [Multi-Host guide](docs/multi_host.md)) | — |
+| Inventory file | Remote host endpoints are loaded from the XDG shared inventory `~/.config/agent-utilities/inventory.yml` (`.yml` preferred, `.yaml` legacy fallback); managed via `tunnel-manager inventory init\|doctor` (see [Multi-Host guide](docs/multi_host.md)) | — |
 
 ### Bundled companion skill toggles
 These enable optional companion tool-suites bundled with the agent (set `True` to enable).

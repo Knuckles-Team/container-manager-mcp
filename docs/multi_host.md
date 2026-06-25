@@ -13,7 +13,7 @@ Managing Docker, Docker Swarm, and Podman containers across multiple servers typ
 ```mermaid
 graph TD
     A[MCP Client / IDE] -->|mcp_tool_call host='node-alpha'| B[Container Manager Controller Host]
-    B -->|1. Resolve Connection info| C[(inventory.yaml)]
+    B -->|1. Resolve Connection info| C[(inventory.yml)]
     B -->|2. Construct SSH endpoint| D[docker.DockerClient base_url='ssh://...']
     D -->|3. Native Remote Docker API| E[Docker Daemon on node-alpha]
     E -->|4. Return Container Stats/State| B
@@ -22,17 +22,17 @@ graph TD
 
 ### Pre-bound Virtual Host Namespacing (Multiplexer Integration)
 
-To optimize the developer and AI agent experience in IDEs (like Antigravity), we avoid requiring the AI agent to remember to supply `host` explicitly on every call. Instead, the `mcp-multiplexer` reads `inventory.yaml` and exposes host-specific **pre-bound virtual sub-servers** using namespaced prefixes (e.g. `cnt_r510__list_containers`).
+To optimize the developer and AI agent experience in IDEs (like Antigravity), we avoid requiring the AI agent to remember to supply `host` explicitly on every call. Instead, the `mcp-multiplexer` reads `inventory.yml` and exposes host-specific **pre-bound virtual sub-servers** using namespaced prefixes (e.g. `cnt_r510__list_containers`).
 
 ```mermaid
 graph TD
     subgraph Client / IDE Layer
         A[MCP Client or IDE] -->|Interact with| B[Unified mcp-multiplexer]
-        B -->|Dynamically parses| C[(inventory.yaml)]
+        B -->|Dynamically parses| C[(inventory.yml)]
         B -->|Generates namespaced virtual servers| D["cnt_&lt;host&gt;__ (Virtual Subprocess)"]
     end
 
-    subgraph Centralized Controller Layer (Zero Remote Daemons)
+    subgraph "Centralized Controller Layer (Zero Remote Daemons)"
         D -->|Prefills Target Host Env| E[Centralized Container Manager Instance]
         E -->|Routes Docker-over-SSH| F["Docker Daemon on Target Host: &lt;host&gt;"]
     end
@@ -47,19 +47,21 @@ This virtual namespacing maintains a single centralized executable on the contro
 ### Key Design Pillars:
 - **Centralized Master Instance**: Run a single master instance of `container-manager-mcp` on the controller.
 - **Zero TLS/TCP Exposes**: There is no need to open Docker's TCP socket port (`2376`/`2375`) on remote hosts. Remote communication is fully encrypted and transported over standard SSH (port `22`).
-- **Shared Unified Inventory**: Shares the same standard `inventory.yaml` utilized by `systems-manager` and `tunnel-manager`.
+- **Shared Unified Inventory**: Shares the same standard inventory (`inventory.yml`, with a legacy `inventory.yaml` fallback) utilized by `systems-manager` and `tunnel-manager`. Manage it with `tunnel-manager inventory init|doctor`.
 
 ---
 
 ## 2. Configuration & Inventory Schema
 
-Host connection definitions are parsed from `inventory.yaml`. The XDG-standard directory is searched by default to achieve a single source of truth.
+Host connection definitions are parsed from the shared inventory (`inventory.yml`, with a legacy `inventory.yaml` fallback). The XDG-standard directory is searched by default to achieve a single source of truth.
 
-### Search Paths:
-1. `~/.config/agent-utilities/inventory.yaml`
+### Search Paths (first match wins):
+1. `~/.config/agent-utilities/inventory.yml` (preferred)
+2. `~/.config/agent-utilities/inventory.yaml` (legacy fallback)
 
-### `inventory.yaml` Format:
-Create or edit your inventory file at `~/.config/agent-utilities/inventory.yaml`. Host
+### Inventory Format:
+Create or edit your inventory file at `~/.config/agent-utilities/inventory.yml` (the
+fastest way is `tunnel-manager inventory init`). Host
 aliases are **top-level keys** (no `hosts:` wrapper) — this is the flat form the shared
 `HostManager` loader expects:
 
