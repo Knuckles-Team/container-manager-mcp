@@ -838,9 +838,7 @@ class DockerManager(ContainerManagerBase):
             result = _build_exec_result(container, command, detach, binary)
             # Don't log a full base64 PNG — summarise binary results.
             log_result = (
-                {"exit_code": result["exit_code"], "binary": True}
-                if binary
-                else result
+                {"exit_code": result["exit_code"], "binary": True} if binary else result
             )
             self.log_action("exec_in_container", params, log_result)
             return result
@@ -2107,9 +2105,7 @@ class PodmanManager(ContainerManagerBase):
             result = _build_exec_result(container, command, detach, binary)
             # Don't log a full base64 PNG — summarise binary results.
             log_result = (
-                {"exit_code": result["exit_code"], "binary": True}
-                if binary
-                else result
+                {"exit_code": result["exit_code"], "binary": True} if binary else result
             )
             self.log_action("exec_in_container", params, log_result)
             return result

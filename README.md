@@ -78,6 +78,8 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 
 <!-- MCP-TOOLS-TABLE:START -->
 
+#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
 | `cm_compose_operations` | `COMPOSETOOL` | Manage docker-compose or podman-compose operations. |
@@ -91,7 +93,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
 | `trace_port_namespace` | `MISCTOOL` | Locate the container actively using/mapping the specified port on the target host. |
 
-_10 action-routed tools (default `MCP_TOOL_MODE=condensed`). Each is enabled unless its toggle is set false; set `MCP_TOOL_MODE=verbose` (or `both`) for the 1:1 per-operation surface. Auto-generated — do not edit._
+_10 action-routed tool(s) (default) · 0 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
@@ -259,13 +261,13 @@ consumed from a **remote deployment**. The
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
 | `EUNOMIA_REMOTE_URL` | `http://eunomia-server:8000` |  |
-| `SYSTEM_TOOLS_ENABLE` | `False` |  |
-| `SYSTEMS_MANAGER_ENABLE` | `False` |  |
-| `WEBSITE_BUILDER_ENABLE` | `False` |  |
-| `WEB_ARTIFACTS_ENABLE` | `False` |  |
-| `SECURITY_TOOLS_ENABLE` | `False` |  |
-| `DEVELOPER_UTILITIES_ENABLE` | `False` |  |
-| `BROWSER_TOOLS_ENABLE` | `False` |  |
+| `CONTAINER_MANAGER_TYPE` | `docker` | options: docker, podman, swarm, kubernetes |
+| `CONTAINER_MANAGER_HOST` | — | remote docker daemon host (e.g. tcp://host:2375); empty = local |
+| `CONTAINER_MANAGER_PODMAN_BASE_URL` | — | podman service base URL (e.g. unix:///run/podman/podman.sock) |
+| `CONTAINER_MANAGER_K8S_NAMESPACE` | `default` | target namespace |
+| `CONTAINER_MANAGER_KUBECONTEXT` | — | kubeconfig context name; empty = current-context |
+| `KUBERNETES_SERVICE_HOST` | — | injected by the cluster when running in-pod; leave empty |
+| `INVENTORYTOOL` | `True` |  |
 | `INFOTOOL` | `True` |  |
 | `IMAGETOOL` | `True` |  |
 | `CONTAINERTOOL` | `True` |  |
@@ -275,6 +277,7 @@ consumed from a **remote deployment**. The
 | `SYSTEMTOOL` | `True` |  |
 | `COMPOSETOOL` | `True` |  |
 | `MISCTOOL` | `True` |  |
+| `SPECIALIST_DEPLOYMENTTOOL` | `True` |  |
 
 #### Inherited agent-utilities variables (apply to every connector)
 
@@ -295,7 +298,7 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_28 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
