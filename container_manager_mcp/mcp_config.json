@@ -7,8 +7,8 @@
         "container-manager-mcp"
       ],
       "env": {
-        "DOCKER_HOST": "${DOCKER_HOST:-unix:///var/run/docker.sock}",
-        "LOGTOOL": "${ LOGTOOL:-True }",
+        "MCP_TOOL_MODE": "condensed",
+        "CONTAINER_MANAGER_HOST": "${CONTAINER_MANAGER_HOST:-unix:///var/run/docker.sock}",
         "SYSTEMTOOL": "${ SYSTEMTOOL:-True }",
         "INFOTOOL": "${ INFOTOOL:-True }",
         "IMAGETOOL": "${ IMAGETOOL:-True }",
@@ -18,15 +18,13 @@
         "COMPOSETOOL": "${ COMPOSETOOL:-True }",
         "MISCTOOL": "${ MISCTOOL:-True }",
         "VOLUMETOOL": "${ VOLUMETOOL:-True }",
-        "CONTAINER_MANAGER_LOG_FILE": "${CONTAINER_MANAGER_LOG_FILE}",
-        "CONTAINER_MANAGER_SILENT": "${CONTAINER_MANAGER_SILENT}",
         "CONTAINER_MANAGER_TYPE": "${CONTAINER_MANAGER_TYPE}",
         "AGENT_DESCRIPTION": "<YOUR_AGENT_DESCRIPTION>",
         "AGENT_SYSTEM_PROMPT": "<YOUR_AGENT_SYSTEM_PROMPT>",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "<YOUR_CONTAINER_MANAGER_PODMAN_BASE_URL>",
         "DEFAULT_AGENT_NAME": "<YOUR_DEFAULT_AGENT_NAME>",
         "MCP_URL": "<YOUR_MCP_URL>",
-        "SPECIALIST_TOOL": "True"
+        "SPECIALIST_DEPLOYMENTTOOL": "True"
       }
     }
   }
