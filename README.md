@@ -121,16 +121,15 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
 
 ### MCP Configuration Examples
 
-> **Install the slim `[mcp]` extra.** All examples below install
-> `container-manager-mcp[mcp]` — the MCP-server extra that pulls only the FastMCP /
-> FastAPI tooling (`agent-utilities[mcp]`). It deliberately **excludes** the heavy
-> agent runtime (the epistemic-graph engine, `pydantic-ai`, `dspy`, `llama-index`,
-> `tree-sitter`), so `uvx`/container installs are dramatically smaller and faster.
-> Use the full `[agent]` extra only when you need the integrated Pydantic AI agent
-> (see [Installation](#installation)).
+<!-- MCP-CONFIG-EXAMPLES:START -->
 
-#### stdio Transport (Recommended for local IDEs e.g., Cursor, Claude Desktop)
-Configure your IDE's `mcp.json` to launch the MCP server via `uvx`:
+> **Install the slim `[mcp]` extra.** All examples install `container-manager-mcp[mcp]` — the
+> MCP-server extra that pulls only the FastMCP / FastAPI tooling (`agent-utilities[mcp]`).
+> It deliberately **excludes** the heavy agent runtime (`pydantic-ai`, the epistemic-graph
+> engine, `dspy`, `llama-index`), so `uvx` / container installs are far smaller. Use the
+> full `[agent]` extra only when you need the integrated Pydantic AI agent.
+
+#### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
 
 ```json
 {
@@ -143,21 +142,30 @@ Configure your IDE's `mcp.json` to launch the MCP server via `uvx`:
         "container-manager-mcp"
       ],
       "env": {
-        "SYSTEM_TOOLS_ENABLE": "your_system_tools_enable_here",
-        "SYSTEMS_MANAGER_ENABLE": "your_systems_manager_enable_here",
-        "WEBSITE_BUILDER_ENABLE": "your_website_builder_enable_here",
-        "WEB_ARTIFACTS_ENABLE": "your_web_artifacts_enable_here",
-        "SECURITY_TOOLS_ENABLE": "your_security_tools_enable_here",
-        "DEVELOPER_UTILITIES_ENABLE": "your_developer_utilities_enable_here",
-        "BROWSER_TOOLS_ENABLE": "your_browser_tools_enable_here"
+        "MCP_TOOL_MODE": "condensed",
+        "COMPOSETOOL": "True",
+        "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_HOST": "",
+        "CONTAINER_MANAGER_KUBECONTEXT": "",
+        "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "IMAGETOOL": "True",
+        "INFOTOOL": "True",
+        "INVENTORYTOOL": "True",
+        "KUBERNETES_SERVICE_HOST": "",
+        "MISCTOOL": "True",
+        "NETWORKTOOL": "True",
+        "SPECIALIST_DEPLOYMENTTOOL": "True",
+        "SWARMTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "VOLUMETOOL": "True"
       }
     }
   }
 }
 ```
 
-#### Streamable-HTTP Transport (Recommended for production deployments)
-Configure your client's `mcp.json` to launch the Streamable-HTTP server via `uvx` with explicit host and port definition:
+#### Streamable-HTTP Transport (networked / production)
 
 ```json
 {
@@ -167,26 +175,40 @@ Configure your client's `mcp.json` to launch the Streamable-HTTP server via `uvx
       "args": [
         "--from",
         "container-manager-mcp[mcp]",
-        "container-manager-mcp"
+        "container-manager-mcp",
+        "--transport",
+        "streamable-http",
+        "--port",
+        "8000"
       ],
       "env": {
         "TRANSPORT": "streamable-http",
         "HOST": "0.0.0.0",
         "PORT": "8000",
-        "SYSTEM_TOOLS_ENABLE": "your_system_tools_enable_here",
-        "SYSTEMS_MANAGER_ENABLE": "your_systems_manager_enable_here",
-        "WEBSITE_BUILDER_ENABLE": "your_website_builder_enable_here",
-        "WEB_ARTIFACTS_ENABLE": "your_web_artifacts_enable_here",
-        "SECURITY_TOOLS_ENABLE": "your_security_tools_enable_here",
-        "DEVELOPER_UTILITIES_ENABLE": "your_developer_utilities_enable_here",
-        "BROWSER_TOOLS_ENABLE": "your_browser_tools_enable_here"
+        "MCP_TOOL_MODE": "condensed",
+        "COMPOSETOOL": "True",
+        "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_HOST": "",
+        "CONTAINER_MANAGER_KUBECONTEXT": "",
+        "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
+        "CONTAINER_MANAGER_TYPE": "docker",
+        "IMAGETOOL": "True",
+        "INFOTOOL": "True",
+        "INVENTORYTOOL": "True",
+        "KUBERNETES_SERVICE_HOST": "",
+        "MISCTOOL": "True",
+        "NETWORKTOOL": "True",
+        "SPECIALIST_DEPLOYMENTTOOL": "True",
+        "SWARMTOOL": "True",
+        "SYSTEMTOOL": "True",
+        "VOLUMETOOL": "True"
       }
     }
   }
 }
 ```
 
-Alternatively, connect to a pre-deployed remote or local Streamable-HTTP instance:
+Alternatively, connect to a pre-deployed Streamable-HTTP instance by `url`:
 
 ```json
 {
@@ -205,25 +227,30 @@ docker run -d \
   --name container-manager-mcp-mcp \
   -p 8000:8000 \
   -e TRANSPORT=streamable-http \
+  -e HOST=0.0.0.0 \
   -e PORT=8000 \
-  -e SYSTEM_TOOLS_ENABLE="your_value" \
-  -e SYSTEMS_MANAGER_ENABLE="your_value" \
-  -e WEBSITE_BUILDER_ENABLE="your_value" \
-  -e WEB_ARTIFACTS_ENABLE="your_value" \
-  -e SECURITY_TOOLS_ENABLE="your_value" \
-  -e DEVELOPER_UTILITIES_ENABLE="your_value" \
-  -e BROWSER_TOOLS_ENABLE="your_value" \
+  -e MCP_TOOL_MODE=condensed \
+  -e COMPOSETOOL=True \
+  -e CONTAINERTOOL=True \
+  -e CONTAINER_MANAGER_HOST="" \
+  -e CONTAINER_MANAGER_KUBECONTEXT="" \
+  -e CONTAINER_MANAGER_PODMAN_BASE_URL="" \
+  -e CONTAINER_MANAGER_TYPE=docker \
+  -e IMAGETOOL=True \
+  -e INFOTOOL=True \
+  -e INVENTORYTOOL=True \
+  -e KUBERNETES_SERVICE_HOST="" \
+  -e MISCTOOL=True \
+  -e NETWORKTOOL=True \
+  -e SPECIALIST_DEPLOYMENTTOOL=True \
+  -e SWARMTOOL=True \
+  -e SYSTEMTOOL=True \
+  -e VOLUMETOOL=True \
   knucklessg1/container-manager-mcp:mcp
 ```
 
-> The `:mcp` tag is the **slim MCP-server image** (built from
-> `docker/Dockerfile --target mcp`, installing `container-manager-mcp[mcp]`). The default
-> `:latest` tag is the **full agent image** (`--target agent`, `container-manager-mcp[agent]`)
-> which also bundles the Pydantic AI agent and the epistemic-graph engine — use it
-> when you run `container-manager-agent` (the agent), not just the MCP server. See
-> [Container images](#container-images-mcp-vs-agent).
-
----
+_Auto-generated from the code-read env surface (`MCP_TOOL_MODE` + package vars) — do not edit._
+<!-- MCP-CONFIG-EXAMPLES:END -->
 
 <!-- BEGIN GENERATED: additional-deployment-options -->
 ### Additional Deployment Options
@@ -264,7 +291,6 @@ consumed from a **remote deployment**. The
 | `CONTAINER_MANAGER_TYPE` | `docker` | options: docker, podman, swarm, kubernetes |
 | `CONTAINER_MANAGER_HOST` | — | remote docker daemon host (e.g. tcp://host:2375); empty = local |
 | `CONTAINER_MANAGER_PODMAN_BASE_URL` | — | podman service base URL (e.g. unix:///run/podman/podman.sock) |
-| `CONTAINER_MANAGER_K8S_NAMESPACE` | `default` | target namespace |
 | `CONTAINER_MANAGER_KUBECONTEXT` | — | kubeconfig context name; empty = current-context |
 | `KUBERNETES_SERVICE_HOST` | — | injected by the cluster when running in-pod; leave empty |
 | `INVENTORYTOOL` | `True` |  |
@@ -298,75 +324,19 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_28 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
-Every variable the server reads, grouped by purpose.
+Every variable is listed in the auto-generated table above (package vars from
+`.env.example` + the inherited agent-utilities surface). A few pointers:
 
-### MCP server / transport
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TRANSPORT` | `stdio`, `streamable-http`, or `sse` | `stdio` |
-| `HOST` | Bind host (HTTP transports) | `0.0.0.0` |
-| `PORT` | Bind port (HTTP transports) | `8000` |
-| `MCP_TOOL_MODE` | Tool surface: `condensed`, `verbose`, or `both` | `condensed` |
-| `MCP_ENABLED_TOOLS` / `MCP_DISABLED_TOOLS` | Comma-separated tool allow/deny list | — |
-| `MCP_ENABLED_TAGS` / `MCP_DISABLED_TAGS` | Comma-separated tag allow/deny list | — |
-| `DEBUG` | Verbose logging | `False` |
-| `PYTHONUNBUFFERED` | Unbuffered stdout (recommended in containers) | `1` |
-
-### Multi-host control plane
-| Variable | Description | Default |
-|----------|-------------|---------|
-| Inventory file | Remote host endpoints are loaded from the XDG shared inventory `~/.config/agent-utilities/inventory.yml` (`.yml` preferred, `.yaml` legacy fallback); managed via `tunnel-manager inventory init\|doctor` (see [Multi-Host guide](docs/multi_host.md)) | — |
-
-### Bundled companion skill toggles
-These enable optional companion tool-suites bundled with the agent (set `True` to enable).
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SYSTEM_TOOLS_ENABLE` | Enable the `system-tools` suite | `False` |
-| `SYSTEMS_MANAGER_ENABLE` | Enable the `systems-manager` suite | `False` |
-| `WEBSITE_BUILDER_ENABLE` | Enable the `website-builder` suite | `False` |
-| `WEB_ARTIFACTS_ENABLE` | Enable the `web-artifacts` suite | `False` |
-| `SECURITY_TOOLS_ENABLE` | Enable the `security-tools` suite | `False` |
-| `DEVELOPER_UTILITIES_ENABLE` | Enable the `developer-utilities` suite | `False` |
-| `BROWSER_TOOLS_ENABLE` | Enable the `browser-tools` suite | `False` |
-
-### Tool toggles
-Each action-routed tool can be disabled individually via its toggle env var (set to `false`).
-The full list is in the [Available MCP Tools](#available-mcp-tools) table above.
-| Variable | Tool |
-|----------|------|
-| `INFOTOOL` | `cm_info_operations` |
-| `IMAGETOOL` | `cm_image_operations` |
-| `CONTAINERTOOL` | `cm_container_operations` |
-| `VOLUMETOOL` | `cm_volume_operations` |
-| `NETWORKTOOL` | `cm_network_operations` |
-| `SWARMTOOL` | `cm_swarm_operations` |
-| `SYSTEMTOOL` | `cm_system_operations` |
-| `COMPOSETOOL` | `cm_compose_operations` |
-| `INVENTORYTOOL` | `cm_list_hosts` |
-| `MISCTOOL` | `trace_port_namespace` |
-
-### Telemetry & governance
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ENABLE_OTEL` | Enable OpenTelemetry export | `True` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint | — |
-| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` / `OTEL_EXPORTER_OTLP_SECRET_KEY` | OTLP auth keys | — |
-| `OTEL_EXPORTER_OTLP_PROTOCOL` | OTLP protocol (e.g. `http/protobuf`) | — |
-| `EUNOMIA_TYPE` | Authorization mode: `none`, `embedded`, `remote` | `none` |
-| `EUNOMIA_POLICY_FILE` | Embedded policy file | `mcp_policies.json` |
-| `EUNOMIA_REMOTE_URL` | Remote Eunomia server URL | — |
-
-### Agent CLI (full `[agent]` runtime only)
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `MCP_URL` | URL of the MCP server the agent connects to | `http://localhost:8000/mcp` |
-| `PROVIDER` | LLM provider (e.g. `openai`) | `openai` |
-| `MODEL_ID` | Model id (e.g. `gpt-4o`) | `gpt-4o` |
-| `ENABLE_WEB_UI` | Serve the AG-UI web interface | `True` |
+- **Tool toggles** — each action-routed tool can be disabled via its `<DOMAIN>TOOL`
+  toggle; the tool ↔ toggle mapping is in the [Available MCP Tools](#available-mcp-tools)
+  table above.
+- **Multi-host control plane** — remote host endpoints load from the XDG shared inventory
+  `~/.config/agent-utilities/inventory.yml` (`.yml` preferred, `.yaml` legacy fallback),
+  managed via `tunnel-manager inventory init|doctor` (see [Multi-Host guide](docs/multi_host.md)).
 
 See [`.env.example`](.env.example) for a copy-paste starting point.
 
@@ -378,15 +348,6 @@ This repository features a fully integrated Pydantic AI Graph Agent. It communic
 To start the interactive command-line agent:
 
 ```bash
-# Set credentials
-export SYSTEM_TOOLS_ENABLE="your_value"
-export SYSTEMS_MANAGER_ENABLE="your_value"
-export WEBSITE_BUILDER_ENABLE="your_value"
-export WEB_ARTIFACTS_ENABLE="your_value"
-export SECURITY_TOOLS_ENABLE="your_value"
-export DEVELOPER_UTILITIES_ENABLE="your_value"
-export BROWSER_TOOLS_ENABLE="your_value"
-
 # Run the agent server
 container-manager-agent --provider openai --model-id gpt-4o
 ```
