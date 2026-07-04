@@ -46,7 +46,7 @@ def _build_exec_result(
     """Run ``command`` in ``container`` and shape the result dict.
 
     Shared by the Docker and Podman managers so the exec logic lives once.
-    Binary mode (CONCEPT:ECO-4.94) demuxes stdout/stderr and base64-encodes the
+    Binary mode (CONCEPT:CN-ECO.mcp.eco-2) demuxes stdout/stderr and base64-encodes the
     stdout bytes so non-text output (e.g. a screenshot PNG from ``maim`` /
     ``scrot -o /dev/stdout``) survives the JSON boundary uncorrupted — used by
     the computer-use actuator driving a gui-sandbox over the ssh:// docker socket.
