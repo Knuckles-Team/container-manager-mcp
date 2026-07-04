@@ -1064,6 +1064,110 @@ def register_misc_tools(mcp: FastMCP):
                 ctx_log(ctx, logging.ERROR, f"Error tracing port {port}: {e}")
             return f"Error tracing port {port}: {e}"
 
+    @mcp.tool(
+        annotations={
+            "title": "Ingest Container Inventory into Knowledge Graph",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        tags={"misc", "kg"},
+    )
+    async def cm_ingest_inventory(
+        modality: Literal[
+            "all",
+            "containers",
+            "images",
+            "volumes",
+            "networks",
+            "services",
+            "nodes",
+        ] = Field(
+            default="all",
+            description="Which resource inventory to ingest. 'all' sweeps containers/images/volumes/networks and (on a swarm manager) services/nodes.",
+        ),
+        host: str | None = Field(
+            default=None,
+            description=(
+                "Remote host alias to target that machine's Docker over SSH "
+                "(resolved from the tunnel-manager inventory). Omit for the LOCAL "
+                "Docker socket. Swarm modalities (services/nodes) must target a "
+                "swarm MANAGER node."
+            ),
+        ),
+        all_containers: bool = Field(
+            default=True,
+            description="Include stopped containers when ingesting containers.",
+        ),
+        manager_type: str | None = Field(
+            default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
+            description="Container manager: docker, podman (default: auto-detect)",
+        ),
+        ctx: Context | None = None,
+    ) -> dict:
+        """Natively ingest the container inventory into epistemic-graph as typed nodes.
+
+        Lists resources via the real container-manager client and pushes them into the
+        knowledge graph as ``:Container`` / ``:ContainerImage`` / ``:ContainerVolume`` /
+        ``:ContainerNetwork`` / ``:SwarmService`` / ``:SwarmNode`` nodes (+ ``:usesImage`` /
+        ``:runsOn`` links) via the fast engine client. Best-effort: ``ingested`` is ``None``
+        per modality when no engine is reachable.
+        CONCEPT:AU-KG.ingest.enterprise-source-extractor.
+        """
+        from container_manager_mcp import kg_ingest
+
+        if ctx:
+            ctx_log(
+                ctx,
+                logging.INFO,
+                f"Ingesting container inventory (modality={modality})",
+            )
+
+        manager = create_manager(manager_type, host=host)
+        want = (
+            {"containers", "images", "volumes", "networks", "services", "nodes"}
+            if modality == "all"
+            else {modality}
+        )
+        result: dict[str, Any] = {"host": host, "modalities": {}}
+
+        async def _sweep(name: str, lister, mapper, **kw) -> None:
+            try:
+                records = await run_blocking(lister)
+                data = [
+                    r.model_dump() if hasattr(r, "model_dump") else r
+                    for r in records
+                    if r is not None
+                ]
+                ingested = mapper(data, **kw)
+                result["modalities"][name] = {
+                    "listed": len(data),
+                    "ingested": ingested,
+                }
+            except Exception as e:  # noqa: BLE001 — one modality failing must not abort the sweep
+                result["modalities"][name] = {"error": str(e)}
+
+        if "containers" in want:
+            await _sweep(
+                "containers",
+                lambda: manager.list_containers(all=all_containers),
+                kg_ingest.ingest_containers,
+                host=host,
+            )
+        if "images" in want:
+            await _sweep("images", manager.list_images, kg_ingest.ingest_images)
+        if "volumes" in want:
+            await _sweep("volumes", manager.list_volumes, kg_ingest.ingest_volumes)
+        if "networks" in want:
+            await _sweep("networks", manager.list_networks, kg_ingest.ingest_networks)
+        if "services" in want:
+            await _sweep("services", manager.list_services, kg_ingest.ingest_services)
+        if "nodes" in want:
+            await _sweep("nodes", manager.list_nodes, kg_ingest.ingest_nodes)
+
+        return result
+
 
 def get_mcp_instance() -> tuple[Any, ...]:
     """Initialize and return the MCP instance."""

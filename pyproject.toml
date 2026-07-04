@@ -34,6 +34,12 @@ container-manager-agent = "container_manager_mcp.agent_server:agent_server"
 [project.entry-points."agent_utilities.skill_providers"]
 container-manager-mcp = "container_manager_mcp.skills"
 
+[project.entry-points."agent_utilities.ontology_providers"]
+container-manager-mcp = "container_manager_mcp.ontology"
+
+[project.entry-points."agent_utilities.source_connector_providers"]
+container-manager-mcp = "container_manager_mcp.connectors"
+
 [project.entry-points."agent_utilities.prompt_providers"]
 container-manager-mcp = "container_manager_mcp.prompts"
 
@@ -50,7 +56,7 @@ ignore_missing_imports = true
 check_untyped_defs = true
 
 [tool.setuptools.package-data]
-container_manager_mcp = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**",]
+container_manager_mcp = [ "mcp_config.json", "agent_data/**", "prompts/**", "skills/**", "ontology/**", "connectors/**",]
 
 [tool.ruff.lint]
 select = [ "E", "F", "I", "UP", "B",]

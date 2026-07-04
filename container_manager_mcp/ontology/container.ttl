@@ -1,0 +1,155 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix : <http://knuckles.team/kg#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Container-manager ontology — Docker / Podman / Swarm resource model backing the
+# container-manager-mcp tool surface (cm_container_operations / cm_image_operations /
+# cm_volume_operations / cm_network_operations / cm_swarm_operations / cm_compose_operations).
+# All classes and properties live in the shared `:` (kg#) namespace; only the owl:Ontology
+# node gets the per-package IRI.
+#
+# REUSE (defined in the hub's ontology_infrastructure.ttl — NOT redefined here):
+#   :Container       — a running container instance (Docker/Podman/containerd/CRI-O)
+#   :ContainerImage  — an OCI image / repository:tag
+#   :ContainerStack  — a compose/stack grouping of containers
+#   :Host            — a reachable host in the tunnel-manager inventory
+# and the links :runsOn (Container->Host), :belongsToStack (Container->ContainerStack),
+# and the field :runtime. This leg only adds the volume / network / swarm resources and
+# the container-scoped links/fields the connector materializes.
+
+# --- net-new classes (owl:Class) ---
+
+:ContainerVolume a owl:Class ;
+    rdfs:label "Container Volume" ;
+    rdfs:comment "A named persistent storage volume mounted into containers (cm_volume_operations: list_volumes / create_volume)." .
+
+:ContainerNetwork a owl:Class ;
+    rdfs:label "Container Network" ;
+    rdfs:comment "A container network (bridge/overlay/macvlan/host) that containers attach to (cm_network_operations: list_networks / create_network)." .
+
+:SwarmService a owl:Class ;
+    rdfs:label "Swarm Service" ;
+    rdfs:comment "A Docker Swarm replicated/global service — a desired-state deployment of a container image across the cluster (cm_swarm_operations: list_services / create_service / scale_service)." .
+
+:SwarmNode a owl:Class ;
+    rdfs:label "Swarm Node" ;
+    rdfs:comment "A node participating in a Docker Swarm cluster, with a manager/worker role (cm_swarm_operations: list_nodes)." .
+
+# --- links (owl:ObjectProperty) ---
+
+:usesImage a owl:ObjectProperty ;
+    rdfs:label "uses image" ;
+    rdfs:comment "Links a Container or SwarmService to the ContainerImage it was created from." ;
+    rdfs:range :ContainerImage .
+
+:mountsVolume a owl:ObjectProperty ;
+    rdfs:label "mounts volume" ;
+    rdfs:comment "Links a Container to a ContainerVolume it mounts." ;
+    rdfs:domain :Container ;
+    rdfs:range :ContainerVolume .
+
+:attachedToNetwork a owl:ObjectProperty ;
+    rdfs:label "attached to network" ;
+    rdfs:comment "Links a Container or SwarmService to a ContainerNetwork it is attached to." ;
+    rdfs:range :ContainerNetwork .
+
+:scheduledOnNode a owl:ObjectProperty ;
+    rdfs:label "scheduled on node" ;
+    rdfs:comment "Links a Container task or SwarmService replica to the SwarmNode it runs on." ;
+    rdfs:range :SwarmNode .
+
+:hostsResource a owl:ObjectProperty ;
+    rdfs:label "hosts resource" ;
+    rdfs:comment "Links a Host to a Container, ContainerVolume, ContainerNetwork or SwarmNode it hosts." ;
+    rdfs:domain :Host .
+
+# --- fields (owl:DatatypeProperty) ---
+
+:containerStatus a owl:DatatypeProperty ;
+    rdfs:label "container status" ;
+    rdfs:comment "Lifecycle status of a Container (running, exited, paused, created)." ;
+    rdfs:domain :Container ;
+    rdfs:range xsd:string .
+
+:portMappings a owl:DatatypeProperty ;
+    rdfs:label "port mappings" ;
+    rdfs:comment "Published host->container port mappings of a Container or SwarmService (e.g. 0.0.0.0:8080->80/tcp)." ;
+    rdfs:range xsd:string .
+
+:imageRepository a owl:DatatypeProperty ;
+    rdfs:label "image repository" ;
+    rdfs:comment "Repository component of a ContainerImage reference (registry/namespace/name)." ;
+    rdfs:domain :ContainerImage ;
+    rdfs:range xsd:string .
+
+:imageTag a owl:DatatypeProperty ;
+    rdfs:label "image tag" ;
+    rdfs:comment "Tag component of a ContainerImage reference (e.g. latest, 1.29.1)." ;
+    rdfs:domain :ContainerImage ;
+    rdfs:range xsd:string .
+
+:imageSize a owl:DatatypeProperty ;
+    rdfs:label "image size" ;
+    rdfs:comment "Human-readable on-disk size of a ContainerImage (e.g. 142MB)." ;
+    rdfs:domain :ContainerImage ;
+    rdfs:range xsd:string .
+
+:volumeDriver a owl:DatatypeProperty ;
+    rdfs:label "volume driver" ;
+    rdfs:comment "Storage driver backing a ContainerVolume (local, nfs, …)." ;
+    rdfs:domain :ContainerVolume ;
+    rdfs:range xsd:string .
+
+:mountpoint a owl:DatatypeProperty ;
+    rdfs:label "mountpoint" ;
+    rdfs:comment "Host filesystem path where a ContainerVolume is materialized." ;
+    rdfs:domain :ContainerVolume ;
+    rdfs:range xsd:string .
+
+:networkDriver a owl:DatatypeProperty ;
+    rdfs:label "network driver" ;
+    rdfs:comment "Driver of a ContainerNetwork (bridge, overlay, macvlan, host, none)." ;
+    rdfs:domain :ContainerNetwork ;
+    rdfs:range xsd:string .
+
+:networkScope a owl:DatatypeProperty ;
+    rdfs:label "network scope" ;
+    rdfs:comment "Scope of a ContainerNetwork (local or swarm)." ;
+    rdfs:domain :ContainerNetwork ;
+    rdfs:range xsd:string .
+
+:serviceReplicas a owl:DatatypeProperty ;
+    rdfs:label "service replicas" ;
+    rdfs:comment "Desired replica count of a replicated SwarmService." ;
+    rdfs:domain :SwarmService ;
+    rdfs:range xsd:integer .
+
+:nodeRole a owl:DatatypeProperty ;
+    rdfs:label "node role" ;
+    rdfs:comment "Role of a SwarmNode in the cluster (manager or worker)." ;
+    rdfs:domain :SwarmNode ;
+    rdfs:range xsd:string .
+
+:nodeAvailability a owl:DatatypeProperty ;
+    rdfs:label "node availability" ;
+    rdfs:comment "Scheduling availability of a SwarmNode (active, pause, drain)." ;
+    rdfs:domain :SwarmNode ;
+    rdfs:range xsd:string .
+
+:externalToolId a owl:DatatypeProperty ;
+    rdfs:label "external tool id" ;
+    rdfs:comment "Native identifier of the resource in its container engine (container id, image id, volume name, service id, node id)." ;
+    rdfs:range xsd:string .
+
+<http://knuckles.team/kg/container> a owl:Ontology ;
+    rdfs:label "Container Manager Ontology" ;
+    rdfs:comment """Container-runtime resource model for the container-manager-mcp connector —
+    Docker / Podman / Swarm containers, images, volumes, networks, swarm services and nodes,
+    with their usesImage / mountsVolume / attachedToNetwork / scheduledOnNode relationships.
+    Reuses the hub :Container / :ContainerImage / :ContainerStack / :Host classes and adds the
+    volume/network/swarm resources, federated into the agent-utilities knowledge-graph hub.""" ;
+    owl:imports <http://knuckles.team/kg> .
