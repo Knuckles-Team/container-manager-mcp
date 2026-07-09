@@ -76,6 +76,23 @@ class KubernetesManager(ContainerManagerBase):
             ) from e
         self.core = k8s_client.CoreV1Api()
         self.apps = k8s_client.AppsV1Api()
+        # Centralized API-group clients (all constructed once here so mixins /
+        # methods never re-instantiate them inline).
+        self.networking = k8s_client.NetworkingV1Api()
+        self.batch = k8s_client.BatchV1Api()
+        self.rbac = k8s_client.RbacAuthorizationV1Api()
+        self.authz = k8s_client.AuthorizationV1Api()
+        self.authn = k8s_client.AuthenticationV1Api()
+        self.storage = k8s_client.StorageV1Api()
+        self.scheduling = k8s_client.SchedulingV1Api()
+        self.policy = k8s_client.PolicyV1Api()
+        self.autoscaling = k8s_client.AutoscalingV2Api()
+        self.certificates = k8s_client.CertificatesV1Api()
+        self.discovery = k8s_client.DiscoveryV1Api()
+        self.admission = k8s_client.AdmissionregistrationV1Api()
+        self.custom_objects = k8s_client.CustomObjectsApi()
+        self.version_api = k8s_client.VersionApi()
+        self.apiextensions = k8s_client.ApiextensionsV1Api()
 
     # ------------------------------------------------------------------
     # Helpers
@@ -155,7 +172,7 @@ class KubernetesManager(ContainerManagerBase):
     def get_version(self) -> dict:
         params: dict[str, Any] = {}
         try:
-            version = k8s_client.VersionApi().get_code()
+            version = self.version_api.get_code()
             result = {
                 "version": getattr(version, "git_version", "unknown"),
                 "api_version": f"{getattr(version, 'major', '')}.{getattr(version, 'minor', '')}",
@@ -1148,7 +1165,7 @@ class KubernetesManager(ContainerManagerBase):
         params = {"namespace": namespace}
         try:
             ns = namespace or self.namespace
-            roles = self.core.list_namespaced_role(ns).items
+            roles = self.rbac.list_namespaced_role(ns).items
             result = [
                 {
                     "name": role.metadata.name,
@@ -1175,7 +1192,7 @@ class KubernetesManager(ContainerManagerBase):
             role = k8s_client.V1Role(
                 metadata=k8s_client.V1ObjectMeta(name=name), rules=role_rules or None
             )
-            created = self.core.create_namespaced_role(ns, role)
+            created = self.rbac.create_namespaced_role(ns, role)
             result = {"name": created.metadata.name, "namespace": created.metadata.namespace}
             self.log_action("create_role", params, result)
             return result
@@ -1188,7 +1205,7 @@ class KubernetesManager(ContainerManagerBase):
         params = {"name": name, "namespace": namespace}
         try:
             ns = namespace or self.namespace
-            self.core.delete_namespaced_role(name, ns)
+            self.rbac.delete_namespaced_role(name, ns)
             result = {"deleted": name}
             self.log_action("delete_role", params, result)
             return result
@@ -1200,7 +1217,7 @@ class KubernetesManager(ContainerManagerBase):
         """List ClusterRoles."""
         params: dict[str, Any] = {}
         try:
-            cluster_roles = self.core.list_cluster_role().items
+            cluster_roles = self.rbac.list_cluster_role().items
             result = [
                 {
                     "name": cr.metadata.name,
@@ -1220,7 +1237,7 @@ class KubernetesManager(ContainerManagerBase):
         params = {"namespace": namespace}
         try:
             ns = namespace or self.namespace
-            rolebindings = self.core.list_namespaced_role_binding(ns).items
+            rolebindings = self.rbac.list_namespaced_role_binding(ns).items
             result = [
                 {
                     "name": rb.metadata.name,
@@ -1255,7 +1272,7 @@ class KubernetesManager(ContainerManagerBase):
                 role_ref=role_ref_obj,
                 subjects=subjects_objs or None,
             )
-            created = self.core.create_namespaced_role_binding(ns, rolebinding)
+            created = self.rbac.create_namespaced_role_binding(ns, rolebinding)
             result = {"name": created.metadata.name, "namespace": created.metadata.namespace}
             self.log_action("create_rolebinding", params, result)
             return result
@@ -1268,7 +1285,7 @@ class KubernetesManager(ContainerManagerBase):
         params = {"name": name, "namespace": namespace}
         try:
             ns = namespace or self.namespace
-            self.core.delete_namespaced_role_binding(name, ns)
+            self.rbac.delete_namespaced_role_binding(name, ns)
             result = {"deleted": name}
             self.log_action("delete_rolebinding", params, result)
             return result
@@ -1340,7 +1357,7 @@ class KubernetesManager(ContainerManagerBase):
                     verb=verb, resource=resource, namespace=namespace
                 )
             )
-            response = self.core.create_self_subject_access_review(access_review)
+            response = self.authz.create_self_subject_access_review(access_review)
             result = {
                 "allowed": response.status.allowed if response.status else False,
                 "reason": response.status.reason if response.status else "",
@@ -1357,7 +1374,7 @@ class KubernetesManager(ContainerManagerBase):
         """List ClusterRoleBindings."""
         params: dict[str, Any] = {}
         try:
-            cluster_rolebindings = self.core.list_cluster_role_binding().items
+            cluster_rolebindings = self.rbac.list_cluster_role_binding().items
             result = [
                 {
                     "name": crb.metadata.name,
@@ -1389,7 +1406,7 @@ class KubernetesManager(ContainerManagerBase):
                 role_ref=role_ref_obj,
                 subjects=subjects_objs or None,
             )
-            created = self.core.create_cluster_role_binding(cluster_rolebinding)
+            created = self.rbac.create_cluster_role_binding(cluster_rolebinding)
             result = {"name": created.metadata.name}
             self.log_action("create_cluster_rolebinding", params, result)
             return result
@@ -1401,7 +1418,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a ClusterRoleBinding."""
         params = {"name": name}
         try:
-            self.core.delete_cluster_role_binding(name)
+            self.rbac.delete_cluster_role_binding(name)
             result = {"deleted": name}
             self.log_action("delete_cluster_rolebinding", params, result)
             return result
@@ -1416,9 +1433,7 @@ class KubernetesManager(ContainerManagerBase):
         """List Custom Resource Definitions."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            apiext = k8s_client_ext.ApiextensionsV1Api()
+            apiext = self.apiextensions
             crds = apiext.list_custom_resource_definition().items
             result = [
                 {
@@ -1443,9 +1458,7 @@ class KubernetesManager(ContainerManagerBase):
         """Get detailed CRD information."""
         params = {"crd_name": crd_name}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            apiext = k8s_client_ext.ApiextensionsV1Api()
+            apiext = self.apiextensions
             crd = apiext.read_custom_resource_definition(crd_name)
             result = crd.to_dict()
             self.log_action("describe_crd", params, {"name": crd_name})
@@ -1460,9 +1473,7 @@ class KubernetesManager(ContainerManagerBase):
         """List custom resources for a given CRD."""
         params = {"group": group, "version": version, "plural": plural, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_dynamic
-
-            dynamic_client = k8s_client_dynamic.DynamicClient(self.core.api_client)
+            dynamic_client = k8s_client.DynamicClient(self.core.api_client)
             
             if namespace:
                 resource = dynamic_client.resources.get(
@@ -1502,16 +1513,14 @@ class KubernetesManager(ContainerManagerBase):
         params = {"namespace": namespace}
         try:
             # Use the networking.k8s.io API group for Ingress
-            from kubernetes import client as k8s_client_ext
-
-            networking_api = k8s_client_ext.NetworkingV1Api()
+            networking_api = self.networking
             ns = namespace or self.namespace
             ingress_list = networking_api.list_namespaced_ingress(ns).items
             result = [
                 {
                     "name": ing.metadata.name,
                     "namespace": ing.metadata.namespace,
-                    "hosts": [h.host for h in (ing.spec.rules or []) for h in (h.host or [])],
+                    "hosts": [rule.host for rule in (ing.spec.rules or []) if rule.host],
                     "created": self._ts(ing.metadata.creation_timestamp),
                 }
                 for ing in ingress_list
@@ -1532,11 +1541,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create an Ingress resource."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            networking_api = k8s_client_ext.NetworkingV1Api()
+            networking_api = self.networking
             ns = namespace or self.namespace
-            ingress = k8s_client_ext.V1Ingress(
+            ingress = k8s_client.V1Ingress(
                 metadata=k8s_client.V1ObjectMeta(name=name), spec=spec
             )
             created = networking_api.create_namespaced_ingress(ns, ingress)
@@ -1553,9 +1560,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete an Ingress resource."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            networking_api = k8s_client_ext.NetworkingV1Api()
+            networking_api = self.networking
             ns = namespace or self.namespace
             networking_api.delete_namespaced_ingress(name, ns)
             result = {"deleted": name}
@@ -1571,9 +1576,7 @@ class KubernetesManager(ContainerManagerBase):
         """List NetworkPolicies in a namespace."""
         params = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            networking_api = k8s_client_ext.NetworkingV1Api()
+            networking_api = self.networking
             ns = namespace or self.namespace
             netpols = networking_api.list_namespaced_network_policy(ns).items
             result = [
@@ -1600,11 +1603,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a NetworkPolicy."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            networking_api = k8s_client_ext.NetworkingV1Api()
+            networking_api = self.networking
             ns = namespace or self.namespace
-            netpol = k8s_client_ext.V1NetworkPolicy(
+            netpol = k8s_client.V1NetworkPolicy(
                 metadata=k8s_client.V1ObjectMeta(name=name), spec=spec
             )
             created = networking_api.create_namespaced_network_policy(ns, netpol)
@@ -1621,9 +1622,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a NetworkPolicy."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_ext
-
-            networking_api = k8s_client_ext.NetworkingV1Api()
+            networking_api = self.networking
             ns = namespace or self.namespace
             networking_api.delete_namespaced_network_policy(name, ns)
             result = {"deleted": name}
@@ -1660,9 +1659,7 @@ class KubernetesManager(ContainerManagerBase):
         """List EndpointSlices in a namespace."""
         params = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_discovery
-
-            discovery_api = k8s_client_discovery.DiscoveryV1Api()
+            discovery_api = self.discovery
             ns = namespace or self.namespace
             epslices = discovery_api.list_namespaced_endpoint_slice(ns).items
             result = [
@@ -1682,6 +1679,131 @@ class KubernetesManager(ContainerManagerBase):
         except ApiException as e:
             self.log_action("list_endpointslices", params, error=e)
             raise RuntimeError(f"Failed to list endpointslices: {str(e)}") from e
+
+    # ------------------------------------------------------------------
+    # Native (core/v1) Service operations
+    # NOTE: distinct from list_services(), which returns Deployments for
+    # Swarm-parity. These operate on real Kubernetes Services.
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _native_service_summary(svc) -> dict:
+        spec = svc.spec
+        return {
+            "name": svc.metadata.name,
+            "namespace": svc.metadata.namespace,
+            "type": spec.type if spec else None,
+            "cluster_ip": spec.cluster_ip if spec else None,
+            "ports": (
+                [
+                    {
+                        "name": p.name,
+                        "port": p.port,
+                        "target_port": p.target_port,
+                        "protocol": p.protocol,
+                        "node_port": p.node_port,
+                    }
+                    for p in (spec.ports or [])
+                ]
+                if spec
+                else []
+            ),
+            "selector": (spec.selector or {}) if spec else {},
+            "created": KubernetesManager._ts(svc.metadata.creation_timestamp),
+        }
+
+    def list_native_services(self, namespace: str | None = None) -> list[dict]:
+        """List real Kubernetes (core/v1) Services."""
+        params = {"namespace": namespace}
+        try:
+            if namespace:
+                svcs = self.core.list_namespaced_service(namespace).items
+            else:
+                svcs = self.core.list_service_for_all_namespaces().items
+            result = [self._native_service_summary(svc) for svc in svcs]
+            self.log_action("list_native_services", params, {"count": len(result)})
+            return result
+        except ApiException as e:
+            self.log_action("list_native_services", params, error=e)
+            raise RuntimeError(f"Failed to list native services: {str(e)}") from e
+
+    def get_native_service(self, name: str, namespace: str | None = None) -> dict:
+        """Get one real Kubernetes (core/v1) Service."""
+        params = {"name": name, "namespace": namespace}
+        try:
+            ns = namespace or self.namespace
+            svc = self.core.read_namespaced_service(name, ns)
+            result = self._native_service_summary(svc)
+            self.log_action("get_native_service", params, {"name": name})
+            return result
+        except ApiException as e:
+            self.log_action("get_native_service", params, error=e)
+            raise RuntimeError(f"Failed to get native service: {str(e)}") from e
+
+    def create_native_service(
+        self,
+        name: str,
+        namespace: str | None = None,
+        spec: dict | None = None,
+        ports: list[dict] | None = None,
+        selector: dict | None = None,
+        type: str = "ClusterIP",
+    ) -> dict:
+        """Create a real Kubernetes (core/v1) Service.
+
+        Either pass a full ``spec`` dict or the ``ports``/``selector``/``type``
+        convenience fields.
+        """
+        params = {
+            "name": name,
+            "namespace": namespace,
+            "spec": spec,
+            "ports": ports,
+            "selector": selector,
+            "type": type,
+        }
+        try:
+            ns = namespace or self.namespace
+            if spec is not None:
+                svc_spec = spec
+            else:
+                svc_ports = [
+                    k8s_client.V1ServicePort(
+                        name=p.get("name"),
+                        port=p["port"],
+                        target_port=p.get("target_port", p["port"]),
+                        protocol=p.get("protocol", "TCP"),
+                        node_port=p.get("node_port"),
+                    )
+                    for p in (ports or [])
+                ]
+                svc_spec = k8s_client.V1ServiceSpec(
+                    selector=selector or {},
+                    ports=svc_ports or None,
+                    type=type,
+                )
+            svc = k8s_client.V1Service(
+                metadata=k8s_client.V1ObjectMeta(name=name), spec=svc_spec
+            )
+            created = self.core.create_namespaced_service(ns, svc)
+            result = self._native_service_summary(created)
+            self.log_action("create_native_service", params, result)
+            return result
+        except ApiException as e:
+            self.log_action("create_native_service", params, error=e)
+            raise RuntimeError(f"Failed to create native service: {str(e)}") from e
+
+    def delete_native_service(self, name: str, namespace: str | None = None) -> dict:
+        """Delete a real Kubernetes (core/v1) Service."""
+        params = {"name": name, "namespace": namespace}
+        try:
+            ns = namespace or self.namespace
+            self.core.delete_namespaced_service(name, ns)
+            result = {"deleted": name, "namespace": ns}
+            self.log_action("delete_native_service", params, result)
+            return result
+        except ApiException as e:
+            self.log_action("delete_native_service", params, error=e)
+            raise RuntimeError(f"Failed to delete native service: {str(e)}") from e
 
     # ------------------------------------------------------------------
     # Storage operations
@@ -1767,7 +1889,7 @@ class KubernetesManager(ContainerManagerBase):
         """List StorageClasses."""
         params: dict[str, Any] = {}
         try:
-            storage_classes = self.core.list_storage_class().items
+            storage_classes = self.storage.list_storage_class().items
             result = [
                 {
                     "name": sc.metadata.name,
@@ -1844,19 +1966,17 @@ class KubernetesManager(ContainerManagerBase):
             self.log_action("list_daemonsets", params, error=e)
             raise RuntimeError(f"Failed to list daemonsets: {str(e)}") from e
 
-    def list_volume_snapshots(self) -> list[dict]:
+    def list_volume_snapshots(self, namespace: str | None = None) -> list[dict]:
         """List VolumeSnapshots (requires snapshot.k8s.io CRD)."""
-        params: dict[str, Any] = {}
+        params: dict[str, Any] = {"namespace": namespace}
         try:
             # Volume snapshots are custom resources under snapshot.k8s.io/v1
-            from kubernetes import client as k8s_client_dynamic
-
-            dynamic_client = k8s_client_dynamic.DynamicClient(self.core.api_client)
+            dynamic_client = k8s_client.DynamicClient(self.core.api_client)
             resource = dynamic_client.resources.get(
                 api_version="snapshot.storage.k8s.io/v1",
                 kind="VolumeSnapshot",
             )
-            items = resource.get().items
+            items = resource.get(**({"namespace": namespace} if namespace else {})).items
             result = [
                 {
                     "name": item.metadata.name,
@@ -1883,7 +2003,6 @@ class KubernetesManager(ContainerManagerBase):
             
             # Update the resources request
             if not pvc.spec.resources:
-                from kubernetes import client as k8s_client
                 pvc.spec.resources = k8s_client.V1ResourceRequirements(requests={})
             
             pvc.spec.resources.requests["storage"] = size
@@ -1959,9 +2078,7 @@ class KubernetesManager(ContainerManagerBase):
         try:
             ns = namespace or self.namespace
             if resource_type == "deployment":
-                from kubernetes import client as k8s_client_ext
-
-                apps_ext = k8s_client_ext.AppsV1Api()
+                apps_ext = self.apps
                 # Add restart annotation
                 annotation = {"kubectl.kubernetes.io/restartedAt": self._ts(datetime.utcnow())}
                 apps_ext.patch_namespaced_deployment(
@@ -1982,9 +2099,7 @@ class KubernetesManager(ContainerManagerBase):
         try:
             ns = namespace or self.namespace
             if resource_type == "deployment":
-                from kubernetes import client as k8s_client_ext
-
-                apps_ext = k8s_client_ext.AppsV1Api()
+                apps_ext = self.apps
                 # Undo by patching the annotation
                 if revision:
                     annotation = {"deployment.kubernetes.io/revision": str(revision)}
@@ -2011,9 +2126,7 @@ class KubernetesManager(ContainerManagerBase):
         try:
             ns = namespace or self.namespace
             if resource_type == "deployment":
-                from kubernetes import client as k8s_client_ext
-
-                apps_ext = k8s_client_ext.AppsV1Api()
+                apps_ext = self.apps
                 apps_ext.patch_namespaced_deployment(
                     name, ns, {"spec": {"paused": True}}
                 )
@@ -2032,9 +2145,7 @@ class KubernetesManager(ContainerManagerBase):
         try:
             ns = namespace or self.namespace
             if resource_type == "deployment":
-                from kubernetes import client as k8s_client_ext
-
-                apps_ext = k8s_client_ext.AppsV1Api()
+                apps_ext = self.apps
                 apps_ext.patch_namespaced_deployment(
                     name, ns, {"spec": {"paused": False}}
                 )
@@ -2067,6 +2178,110 @@ class KubernetesManager(ContainerManagerBase):
             self.log_action("taint_node", params, error=e)
             raise RuntimeError(f"Failed to taint node: {str(e)}") from e
 
+    # resource_type -> (client_attr, method_suffix, namespaced) for generic patch.
+    _PATCH_TABLE: dict[str, tuple[str, str, bool]] = {
+        "pod": ("core", "pod", True),
+        "deployment": ("apps", "deployment", True),
+        "service": ("core", "service", True),
+        "configmap": ("core", "config_map", True),
+        "secret": ("core", "secret", True),
+        "namespace": ("core", "namespace", False),
+        "node": ("core", "node", False),
+        "ingress": ("networking", "ingress", True),
+        "job": ("batch", "job", True),
+        "cronjob": ("batch", "cron_job", True),
+        "statefulset": ("apps", "stateful_set", True),
+        "daemonset": ("apps", "daemon_set", True),
+        "replicaset": ("apps", "replica_set", True),
+        "persistentvolumeclaim": ("core", "persistent_volume_claim", True),
+        "serviceaccount": ("core", "service_account", True),
+        "role": ("rbac", "role", True),
+        "rolebinding": ("rbac", "role_binding", True),
+        "clusterrole": ("rbac", "cluster_role", False),
+        "clusterrolebinding": ("rbac", "cluster_role_binding", False),
+    }
+    _PATCH_CONTENT_TYPES = {
+        "strategic": "application/strategic-merge-patch+json",
+        "merge": "application/merge-patch+json",
+        "json": "application/json-patch+json",
+    }
+
+    def patch_resource(
+        self,
+        resource_type: str,
+        name: str,
+        namespace: str | None = None,
+        patch_body: dict | None = None,
+        patch_type: str = "strategic",
+    ) -> dict:
+        """Generic patch for any common Kubernetes resource kind.
+
+        Dispatches on ``resource_type`` to the correct centralized client and
+        ``patch_namespaced_<x>`` / ``patch_<x>`` method; unknown kinds fall back
+        to the dynamic client resolved by kind.
+        """
+        params = {
+            "resource_type": resource_type,
+            "name": name,
+            "namespace": namespace,
+            "patch_type": patch_type,
+        }
+        ctype = self._PATCH_CONTENT_TYPES.get(
+            patch_type, self._PATCH_CONTENT_TYPES["strategic"]
+        )
+        body: Any = patch_body if patch_body is not None else {}
+        key = resource_type.lower().replace("-", "").replace("_", "")
+        try:
+            entry = self._PATCH_TABLE.get(key)
+            if entry is not None:
+                attr, suffix, namespaced = entry
+                client = getattr(self, attr)
+
+                def _invoke():
+                    if namespaced:
+                        ns = namespace or self.namespace
+                        return getattr(client, f"patch_namespaced_{suffix}")(
+                            name, ns, body
+                        )
+                    return getattr(client, f"patch_{suffix}")(name, body)
+
+                # Force the requested patch content-type on the shared api_client
+                # for the duration of the call, then restore it.
+                api_client = client.api_client
+                prev = api_client.default_headers.get("Content-Type")
+                api_client.set_default_header("Content-Type", ctype)
+                try:
+                    _invoke()
+                finally:
+                    if prev is not None:
+                        api_client.set_default_header("Content-Type", prev)
+                    else:
+                        api_client.default_headers.pop("Content-Type", None)
+            else:
+                # Unknown kind: resolve via the dynamic client by kind name.
+                dynamic_client = k8s_client.DynamicClient(self.core.api_client)
+                resource = dynamic_client.resources.get(kind=resource_type)
+                if namespace:
+                    resource.patch(
+                        body=body, name=name, namespace=namespace, content_type=ctype
+                    )
+                else:
+                    resource.patch(body=body, name=name, content_type=ctype)
+            result = {
+                "resource_type": resource_type,
+                "name": name,
+                "namespace": namespace,
+                "patched": True,
+                "patch_type": patch_type,
+            }
+            self.log_action("patch_resource", params, result)
+            return result
+        except ApiException as e:
+            self.log_action("patch_resource", params, error=e)
+            raise RuntimeError(
+                f"Failed to patch {resource_type} {name}: {str(e)}"
+            ) from e
+
     def label_resource(
         self,
         resource_type: str,
@@ -2074,26 +2289,18 @@ class KubernetesManager(ContainerManagerBase):
         namespace: str | None = None,
         labels: dict | None = None,
     ) -> dict:
-        """Label a Kubernetes resource."""
+        """Label a Kubernetes resource (table-driven via patch_resource)."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace, "labels": labels}
-        try:
-            ns = namespace or self.namespace
-            # Generic patch for labels
-            body = {"metadata": {"labels": labels or {}}}
-            if resource_type == "pod":
-                self.core.patch_namespaced_pod(name, ns, body)
-            elif resource_type == "node":
-                self.core.patch_node(name, body)
-            elif resource_type == "deployment":
-                self.apps.patch_namespaced_deployment(name, ns, body)
-            else:
-                raise NotImplementedError(f"Labeling not implemented for {resource_type}")
-            result = {"resource_type": resource_type, "name": name, "labels_added": list(labels or {})}
-            self.log_action("label_resource", params, result)
-            return result
-        except ApiException as e:
-            self.log_action("label_resource", params, error=e)
-            raise RuntimeError(f"Failed to label resource: {str(e)}") from e
+        self.patch_resource(
+            resource_type,
+            name,
+            namespace=namespace,
+            patch_body={"metadata": {"labels": labels or {}}},
+            patch_type="merge",
+        )
+        result = {"resource_type": resource_type, "name": name, "labels_added": list(labels or {})}
+        self.log_action("label_resource", params, result)
+        return result
 
     def annotate_resource(
         self,
@@ -2102,25 +2309,18 @@ class KubernetesManager(ContainerManagerBase):
         namespace: str | None = None,
         annotations: dict | None = None,
     ) -> dict:
-        """Annotate a Kubernetes resource."""
+        """Annotate a Kubernetes resource (table-driven via patch_resource)."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace, "annotations": annotations}
-        try:
-            ns = namespace or self.namespace
-            body = {"metadata": {"annotations": annotations or {}}}
-            if resource_type == "pod":
-                self.core.patch_namespaced_pod(name, ns, body)
-            elif resource_type == "node":
-                self.core.patch_node(name, body)
-            elif resource_type == "deployment":
-                self.apps.patch_namespaced_deployment(name, ns, body)
-            else:
-                raise NotImplementedError(f"Annotating not implemented for {resource_type}")
-            result = {"resource_type": resource_type, "name": name, "annotations_added": list(annotations or {})}
-            self.log_action("annotate_resource", params, result)
-            return result
-        except ApiException as e:
-            self.log_action("annotate_resource", params, error=e)
-            raise RuntimeError(f"Failed to annotate resource: {str(e)}") from e
+        self.patch_resource(
+            resource_type,
+            name,
+            namespace=namespace,
+            patch_body={"metadata": {"annotations": annotations or {}}},
+            patch_type="merge",
+        )
+        result = {"resource_type": resource_type, "name": name, "annotations_added": list(annotations or {})}
+        self.log_action("annotate_resource", params, result)
+        return result
 
     # ------------------------------------------------------------------
     # System and context management
@@ -2214,32 +2414,34 @@ class KubernetesManager(ContainerManagerBase):
         """Get resource usage for pods using metrics server."""
         params = {"namespace": namespace}
         try:
-            # Try to use metrics server API
-            from kubernetes import client as k8s_client_metrics
-
-            # Check if metrics API is available
-            if not hasattr(k8s_client_metrics, 'MetricsV1beta1Api'):
-                raise ImportError("MetricsV1beta1Api not available in this kubernetes client version")
-
-            metrics_api = k8s_client_metrics.MetricsV1beta1Api()
+            # Metrics come from the metrics.k8s.io aggregated API via the
+            # CustomObjects client (metrics-server exposes it as a CRD group).
             ns = namespace or self.namespace
-            
-            # Get pod metrics
-            pod_metrics = metrics_api.list_namespaced_pod_metrics(ns).items
-            
+            metrics = self.custom_objects.list_namespaced_custom_object(
+                "metrics.k8s.io", "v1beta1", ns, "pods"
+            )
+            pod_metrics = metrics.get("items", [])
             result = [
                 {
-                    "name": metric.metadata.name,
-                    "namespace": metric.metadata.namespace,
-                    "cpu": metric.containers[0].usage["cpu"] if metric.containers else "N/A",
-                    "memory": metric.containers[0].usage["memory"] if metric.containers else "N/A",
+                    "name": metric["metadata"]["name"],
+                    "namespace": metric["metadata"].get("namespace", ns),
+                    "cpu": (
+                        metric["containers"][0]["usage"]["cpu"]
+                        if metric.get("containers")
+                        else "N/A"
+                    ),
+                    "memory": (
+                        metric["containers"][0]["usage"]["memory"]
+                        if metric.get("containers")
+                        else "N/A"
+                    ),
                     "containers": [
                         {
-                            "name": container.name,
-                            "cpu": container.usage.get("cpu", "N/A"),
-                            "memory": container.usage.get("memory", "N/A"),
+                            "name": container["name"],
+                            "cpu": container.get("usage", {}).get("cpu", "N/A"),
+                            "memory": container.get("usage", {}).get("memory", "N/A"),
                         }
-                        for container in (metric.containers or [])
+                        for container in (metric.get("containers") or [])
                     ],
                 }
                 for metric in pod_metrics
@@ -2286,23 +2488,17 @@ class KubernetesManager(ContainerManagerBase):
         """Get resource usage for nodes using metrics server."""
         params: dict[str, Any] = {}
         try:
-            # Try to use metrics server API
-            from kubernetes import client as k8s_client_metrics
-
-            # Check if metrics API is available
-            if not hasattr(k8s_client_metrics, 'MetricsV1beta1Api'):
-                raise ImportError("MetricsV1beta1Api not available in this kubernetes client version")
-
-            metrics_api = k8s_client_metrics.MetricsV1beta1Api()
-            
-            # Get node metrics
-            node_metrics = metrics_api.list_node_metrics().items
-            
+            # Node metrics from the metrics.k8s.io aggregated API via the
+            # CustomObjects client.
+            metrics = self.custom_objects.list_cluster_custom_object(
+                "metrics.k8s.io", "v1beta1", "nodes"
+            )
+            node_metrics = metrics.get("items", [])
             result = [
                 {
-                    "name": metric.metadata.name,
-                    "cpu": metric.usage.get("cpu", "N/A"),
-                    "memory": metric.usage.get("memory", "N/A"),
+                    "name": metric["metadata"]["name"],
+                    "cpu": metric.get("usage", {}).get("cpu", "N/A"),
+                    "memory": metric.get("usage", {}).get("memory", "N/A"),
                 }
                 for metric in node_metrics
             ]
@@ -2390,9 +2586,7 @@ class KubernetesManager(ContainerManagerBase):
         """List PriorityClasses."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_client_scheduling
-
-            scheduling_api = k8s_client_scheduling.SchedulingV1Api()
+            scheduling_api = self.scheduling
             pclasses = scheduling_api.list_priority_class().items
             result = [
                 {
@@ -2416,9 +2610,7 @@ class KubernetesManager(ContainerManagerBase):
         """List PodDisruptionBudgets in a namespace."""
         params = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_policy
-
-            policy_api = k8s_client_policy.PolicyV1Api()
+            policy_api = self.policy
             ns = namespace or self.namespace
             pdbs = policy_api.list_namespaced_pod_disruption_budget(ns).items
             result = [
@@ -2444,9 +2636,7 @@ class KubernetesManager(ContainerManagerBase):
         """List HorizontalPodAutoscalers in a namespace."""
         params = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_autoscaling
-
-            autoscaling_api = k8s_client_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             ns = namespace or self.namespace
             hpas = autoscaling_api.list_namespaced_horizontal_pod_autoscaler(ns).items
             result = [
@@ -2498,9 +2688,7 @@ class KubernetesManager(ContainerManagerBase):
         """List CronJobs in a namespace."""
         params = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_client_batch
-
-            batch_api = k8s_client_batch.BatchV1Api()
+            batch_api = self.batch
             ns = namespace or self.namespace
             cronjobs = batch_api.list_namespaced_cron_job(ns).items
             result = [
@@ -2576,11 +2764,12 @@ class KubernetesManager(ContainerManagerBase):
             for pod in pods:
                 try:
                     # Skip DaemonSet pods and pods with local storage
-                    if pod.metadata.owner_references:
-                        for owner in pod.metadata.owner_references:
-                            if owner.kind == "DaemonSet":
-                                continue
-                    
+                    if pod.metadata.owner_references and any(
+                        owner.kind == "DaemonSet"
+                        for owner in pod.metadata.owner_references
+                    ):
+                        continue
+
                     # Delete the pod
                     self.core.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
                     evicted.append({"name": pod.metadata.name, "namespace": pod.metadata.namespace})
@@ -2702,9 +2891,7 @@ class KubernetesManager(ContainerManagerBase):
         """List CertificateSigningRequests."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_client_certificates
-
-            cert_api = k8s_client_certificates.CertificatesV1Api()
+            cert_api = self.certificates
             csrs = cert_api.list_certificate_signing_request().items
             result = [
                 {
@@ -2729,9 +2916,7 @@ class KubernetesManager(ContainerManagerBase):
         """Approve a CertificateSigningRequest."""
         params = {"csr_name": csr_name}
         try:
-            from kubernetes import client as k8s_client_certificates
-
-            cert_api = k8s_client_certificates.CertificatesV1Api()
+            cert_api = self.certificates
             body = {
                 "status": {
                     "conditions": [
@@ -2758,9 +2943,7 @@ class KubernetesManager(ContainerManagerBase):
         """Deny a CertificateSigningRequest."""
         params = {"csr_name": csr_name, "reason": reason}
         try:
-            from kubernetes import client as k8s_client_certificates
-
-            cert_api = k8s_client_certificates.CertificatesV1Api()
+            cert_api = self.certificates
             body = {
                 "status": {
                     "conditions": [
@@ -2788,29 +2971,6 @@ class KubernetesManager(ContainerManagerBase):
     # ------------------------------------------------------------------
     
     # ResourceQuotas
-    def list_resource_quotas(self, namespace: str | None = None) -> list[dict]:
-        """List ResourceQuotas."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            resource_quotas = self.core.list_namespaced_resource_quota(
-                namespace=namespace or self.namespace
-            ).items
-            result = [
-                {
-                    "name": rq.metadata.name,
-                    "namespace": rq.metadata.namespace,
-                    "status": rq.status,
-                    "spec": rq.spec,
-                    "created": self._ts(rq.metadata.creation_timestamp),
-                }
-                for rq in resource_quotas
-            ]
-            self.log_action("list_resource_quotas", params, {"count": len(result)})
-            return result
-        except ApiException as e:
-            self.log_action("list_resource_quotas", params, error=e)
-            raise RuntimeError(f"Failed to list ResourceQuotas: {str(e)}") from e
-
     def describe_resource_quota(self, name: str, namespace: str) -> dict:
         """Describe a ResourceQuota."""
         params = {"name": name, "namespace": namespace}
@@ -2886,28 +3046,6 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to delete ResourceQuota: {str(e)}") from e
 
     # LimitRanges
-    def list_limit_ranges(self, namespace: str | None = None) -> list[dict]:
-        """List LimitRanges."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            limit_ranges = self.core.list_namespaced_limit_range(
-                namespace=namespace or self.namespace
-            ).items
-            result = [
-                {
-                    "name": lr.metadata.name,
-                    "namespace": lr.metadata.namespace,
-                    "limits": lr.spec.limits if lr.spec else [],
-                    "created": self._ts(lr.metadata.creation_timestamp),
-                }
-                for lr in limit_ranges
-            ]
-            self.log_action("list_limit_ranges", params, {"count": len(result)})
-            return result
-        except ApiException as e:
-            self.log_action("list_limit_ranges", params, error=e)
-            raise RuntimeError(f"Failed to list LimitRanges: {str(e)}") from e
-
     def describe_limit_range(self, name: str, namespace: str) -> dict:
         """Describe a LimitRange."""
         params = {"name": name, "namespace": namespace}
@@ -2962,39 +3100,11 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to delete LimitRange: {str(e)}") from e
 
     # PriorityClasses
-    def list_priority_classes(self) -> list[dict]:
-        """List PriorityClasses."""
-        params: dict[str, Any] = {}
-        try:
-            from kubernetes import client as k8s_scheduling
-
-            scheduling_api = k8s_scheduling.SchedulingV1Api()
-            priority_classes = scheduling_api.list_priority_class().items
-            result = [
-                {
-                    "name": pc.metadata.name,
-                    "value": pc.value,
-                    "global_default": pc.global_default,
-                    "description": pc.metadata.annotations.get("description", ""),
-                    "created": self._ts(pc.metadata.creation_timestamp),
-                }
-                for pc in priority_classes
-            ]
-            self.log_action("list_priority_classes", params, {"count": len(result)})
-            return result
-        except ImportError:
-            raise RuntimeError("Scheduling client not available")
-        except ApiException as e:
-            self.log_action("list_priority_classes", params, error=e)
-            raise RuntimeError(f"Failed to list PriorityClasses: {str(e)}") from e
-
     def describe_priority_class(self, name: str) -> dict:
         """Describe a PriorityClass."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_scheduling
-
-            scheduling_api = k8s_scheduling.SchedulingV1Api()
+            scheduling_api = self.scheduling
             pc = scheduling_api.read_priority_class(name)
             result = {
                 "name": pc.metadata.name,
@@ -3018,10 +3128,8 @@ class KubernetesManager(ContainerManagerBase):
         """Create a PriorityClass."""
         params = {"name": name, "spec": spec}
         try:
-            from kubernetes import client as k8s_scheduling
-
-            scheduling_api = k8s_scheduling.SchedulingV1Api()
-            priority_class = k8s_scheduling.V1PriorityClass(
+            scheduling_api = self.scheduling
+            priority_class = k8s_client.V1PriorityClass(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 value=spec.get("value", 1000),
                 global_default=spec.get("global_default", False),
@@ -3046,9 +3154,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a PriorityClass."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_scheduling
-
-            scheduling_api = k8s_scheduling.SchedulingV1Api()
+            scheduling_api = self.scheduling
             scheduling_api.delete_priority_class(name)
             result = {"name": name, "status": "deleted"}
             self.log_action("delete_priority_class", params, result)
@@ -3060,42 +3166,11 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to delete PriorityClass: {str(e)}") from e
 
     # PodDisruptionBudgets
-    def list_pod_disruption_budgets(self, namespace: str | None = None) -> list[dict]:
-        """List PodDisruptionBudgets."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            from kubernetes import client as k8s_policy
-
-            policy_api = k8s_policy.PolicyV1Api()
-            pdbs = policy_api.list_namespaced_pod_disruption_budget(
-                namespace=namespace or self.namespace
-            ).items
-            result = [
-                {
-                    "name": pdb.metadata.name,
-                    "namespace": pdb.metadata.namespace,
-                    "min_available": pdb.spec.min_available if pdb.spec else None,
-                    "max_unavailable": pdb.spec.max_unavailable if pdb.spec else None,
-                    "status": pdb.status,
-                    "created": self._ts(pdb.metadata.creation_timestamp),
-                }
-                for pdb in pdbs
-            ]
-            self.log_action("list_pod_disruption_budgets", params, {"count": len(result)})
-            return result
-        except ImportError:
-            raise RuntimeError("Policy client not available")
-        except ApiException as e:
-            self.log_action("list_pod_disruption_budgets", params, error=e)
-            raise RuntimeError(f"Failed to list PodDisruptionBudgets: {str(e)}") from e
-
     def describe_pod_disruption_budget(self, name: str, namespace: str) -> dict:
         """Describe a PodDisruptionBudget."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_policy
-
-            policy_api = k8s_policy.PolicyV1Api()
+            policy_api = self.policy
             pdb = policy_api.read_namespaced_pod_disruption_budget(name, namespace)
             result = {
                 "name": pdb.metadata.name,
@@ -3118,11 +3193,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a PodDisruptionBudget."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_policy
-
-            policy_api = k8s_policy.PolicyV1Api()
-            pdb_spec = k8s_policy.V1PodDisruptionBudgetSpec(**spec)
-            pdb = k8s_policy.V1PodDisruptionBudget(
+            policy_api = self.policy
+            pdb_spec = k8s_client.V1PodDisruptionBudgetSpec(**spec)
+            pdb = k8s_client.V1PodDisruptionBudget(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=pdb_spec
             )
@@ -3145,9 +3218,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a PodDisruptionBudget."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_policy
-
-            policy_api = k8s_policy.PolicyV1Api()
+            policy_api = self.policy
             policy_api.delete_namespaced_pod_disruption_budget(name, namespace)
             result = {"name": name, "namespace": namespace, "status": "deleted"}
             self.log_action("delete_pod_disruption_budget", params, result)
@@ -3159,44 +3230,11 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to delete PodDisruptionBudget: {str(e)}") from e
 
     # HorizontalPodAutoscalers
-    def list_horizontal_pod_autoscalers(self, namespace: str | None = None) -> list[dict]:
-        """List HorizontalPodAutoscalers."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            from kubernetes import client as k8s_autoscaling
-
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
-            hpas = autoscaling_api.list_namespaced_horizontal_pod_autoscaler(
-                namespace=namespace or self.namespace
-            ).items
-            result = [
-                {
-                    "name": hpa.metadata.name,
-                    "namespace": hpa.metadata.namespace,
-                    "target": hpa.spec.scale_target_ref if hpa.spec else None,
-                    "min_replicas": hpa.spec.min_replicas if hpa.spec else None,
-                    "max_replicas": hpa.spec.max_replicas if hpa.spec else None,
-                    "metrics": hpa.spec.metrics if hpa.spec else [],
-                    "status": hpa.status,
-                    "created": self._ts(hpa.metadata.creation_timestamp),
-                }
-                for hpa in hpas
-            ]
-            self.log_action("list_horizontal_pod_autoscalers", params, {"count": len(result)})
-            return result
-        except ImportError:
-            raise RuntimeError("Autoscaling client not available")
-        except ApiException as e:
-            self.log_action("list_horizontal_pod_autoscalers", params, error=e)
-            raise RuntimeError(f"Failed to list HorizontalPodAutoscalers: {str(e)}") from e
-
     def describe_horizontal_pod_autoscaler(self, name: str, namespace: str) -> dict:
         """Describe a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_autoscaling
-
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
             result = {
                 "name": hpa.metadata.name,
@@ -3219,11 +3257,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_autoscaling
-
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
-            hpa_spec = k8s_autoscaling.V2HorizontalPodAutoscalerSpec(**spec)
-            hpa = k8s_autoscaling.V2HorizontalPodAutoscaler(
+            autoscaling_api = self.autoscaling
+            hpa_spec = k8s_client.V2HorizontalPodAutoscalerSpec(**spec)
+            hpa = k8s_client.V2HorizontalPodAutoscaler(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=hpa_spec
             )
@@ -3246,11 +3282,9 @@ class KubernetesManager(ContainerManagerBase):
         """Update a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_autoscaling
-
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             existing = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
-            hpa_spec = k8s_autoscaling.V2HorizontalPodAutoscalerSpec(**spec)
+            hpa_spec = k8s_client.V2HorizontalPodAutoscalerSpec(**spec)
             existing.spec = hpa_spec
             updated = autoscaling_api.patch_namespaced_horizontal_pod_autoscaler(name, namespace, existing)
             result = {
@@ -3271,9 +3305,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_autoscaling
-
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             autoscaling_api.delete_namespaced_horizontal_pod_autoscaler(name, namespace)
             result = {"name": name, "namespace": namespace, "status": "deleted"}
             self.log_action("delete_horizontal_pod_autoscaler", params, result)
@@ -3285,40 +3317,11 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to delete HorizontalPodAutoscaler: {str(e)}") from e
 
     # Jobs
-    def list_jobs(self, namespace: str | None = None) -> list[dict]:
-        """List Jobs."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
-            jobs = batch_api.list_namespaced_job(namespace=namespace or self.namespace).items
-            result = [
-                {
-                    "name": job.metadata.name,
-                    "namespace": job.metadata.namespace,
-                    "completions": job.spec.completions if job.spec else None,
-                    "parallelism": job.spec.parallelism if job.spec else None,
-                    "status": job.status,
-                    "created": self._ts(job.metadata.creation_timestamp),
-                }
-                for job in jobs
-            ]
-            self.log_action("list_jobs", params, {"count": len(result)})
-            return result
-        except ImportError:
-            raise RuntimeError("Batch client not available")
-        except ApiException as e:
-            self.log_action("list_jobs", params, error=e)
-            raise RuntimeError(f"Failed to list Jobs: {str(e)}") from e
-
     def describe_job(self, name: str, namespace: str) -> dict:
         """Describe a Job."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
+            batch_api = self.batch
             job = batch_api.read_namespaced_job(name, namespace)
             result = {
                 "name": job.metadata.name,
@@ -3341,11 +3344,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a Job."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
-            job_spec = k8s_batch.V1JobSpec(**spec)
-            job = k8s_batch.V1Job(
+            batch_api = self.batch
+            job_spec = k8s_client.V1JobSpec(**spec)
+            job = k8s_client.V1Job(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=job_spec
             )
@@ -3368,9 +3369,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a Job."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
+            batch_api = self.batch
             batch_api.delete_namespaced_job(name, namespace)
             result = {"name": name, "namespace": namespace, "status": "deleted"}
             self.log_action("delete_job", params, result)
@@ -3382,40 +3381,11 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to delete Job: {str(e)}") from e
 
     # CronJobs
-    def list_cron_jobs(self, namespace: str | None = None) -> list[dict]:
-        """List CronJobs."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
-            cron_jobs = batch_api.list_namespaced_cron_job(namespace=namespace or self.namespace).items
-            result = [
-                {
-                    "name": cj.metadata.name,
-                    "namespace": cj.metadata.namespace,
-                    "schedule": cj.spec.schedule if cj.spec else None,
-                    "suspend": cj.spec.suspend if cj.spec else None,
-                    "status": cj.status,
-                    "created": self._ts(cj.metadata.creation_timestamp),
-                }
-                for cj in cron_jobs
-            ]
-            self.log_action("list_cron_jobs", params, {"count": len(result)})
-            return result
-        except ImportError:
-            raise RuntimeError("Batch client not available")
-        except ApiException as e:
-            self.log_action("list_cron_jobs", params, error=e)
-            raise RuntimeError(f"Failed to list CronJobs: {str(e)}") from e
-
     def describe_cron_job(self, name: str, namespace: str) -> dict:
         """Describe a CronJob."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
+            batch_api = self.batch
             cron_job = batch_api.read_namespaced_cron_job(name, namespace)
             result = {
                 "name": cron_job.metadata.name,
@@ -3438,11 +3408,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a CronJob."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
-            cron_job_spec = k8s_batch.V1CronJobSpec(**spec)
-            cron_job = k8s_batch.V1CronJob(
+            batch_api = self.batch
+            cron_job_spec = k8s_client.V1CronJobSpec(**spec)
+            cron_job = k8s_client.V1CronJob(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=cron_job_spec
             )
@@ -3465,9 +3433,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a CronJob."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_batch
-
-            batch_api = k8s_batch.BatchV1Api()
+            batch_api = self.batch
             batch_api.delete_namespaced_cron_job(name, namespace)
             result = {"name": name, "namespace": namespace, "status": "deleted"}
             self.log_action("delete_cron_job", params, result)
@@ -3528,19 +3494,6 @@ class KubernetesManager(ContainerManagerBase):
     # ------------------------------------------------------------------
     
     # Cordon/Uncordon
-    def cordon_node(self, node_name: str) -> dict:
-        """Cordon a node (mark it as unschedulable)."""
-        params = {"node_name": node_name}
-        try:
-            body = {"spec": {"unschedulable": True}}
-            self.core.patch_node(node_name, body)
-            result = {"node_name": node_name, "status": "cordoned"}
-            self.log_action("cordon_node", params, result)
-            return result
-        except ApiException as e:
-            self.log_action("cordon_node", params, error=e)
-            raise RuntimeError(f"Failed to cordon node: {str(e)}") from e
-
     def uncordon_node(self, node_name: str) -> dict:
         """Uncordon a node (mark it as schedulable)."""
         params = {"node_name": node_name}
@@ -3555,97 +3508,7 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to uncordon node: {str(e)}") from e
 
     # Drain (Basic)
-    def drain_node(self, node_name: str, grace_period_seconds: int = 120) -> dict:
-        """Drain a node (evict pods and mark unschedulable)."""
-        params = {"node_name": node_name, "grace_period_seconds": grace_period_seconds}
-        try:
-            # First cordon the node
-            self.cordon_node(node_name)
-            
-            # Get all pods on the node (excluding daemon sets)
-            pods = self.core.list_pod_for_all_namespaces(field_selector=f"spec.nodeName={node_name}").items
-            evicted_pods = []
-            
-            for pod in pods:
-                # Skip daemonset pods and mirror pods
-                skip_pod = False
-                if pod.metadata.owner_references:
-                    for owner in pod.metadata.owner_references:
-                        if owner.kind == "DaemonSet":
-                            skip_pod = True
-                            break
-                        if owner.kind == "ReplicationController" and pod.metadata.annotations.get("kubernetes.io/config.mirror"):
-                            skip_pod = True
-                            break
-                
-                if skip_pod:
-                    continue
-                
-                # Evict the pod
-                try:
-                    self.core.delete_namespaced_pod(pod.metadata.name, pod.metadata.namespace)
-                    evicted_pods.append(pod.metadata.name)
-                except ApiException as e:
-                    if e.status != 404:
-                        self.logger.warning(f"Failed to evict pod {pod.metadata.name}: {str(e)}")
-            
-            result = {
-                "node_name": node_name,
-                "status": "drained",
-                "evicted_pods": evicted_pods,
-                "evicted_count": len(evicted_pods)
-            }
-            self.log_action("drain_node", params, result)
-            return result
-        except ApiException as e:
-            self.log_action("drain_node", params, error=e)
-            raise RuntimeError(f"Failed to drain node: {str(e)}") from e
-
     # Cluster Info Dump
-    def cluster_info_dump(self, output_dir: str) -> dict:
-        """Dump cluster information to a directory."""
-        params = {"output_dir": output_dir}
-        try:
-            import os
-            
-            # Create output directory if it doesn't exist
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Get cluster info
-            nodes = self.core.list_node().items
-            pods = self.core.list_pod_for_all_namespaces().items
-            namespaces = self.core.list_namespace().items
-            services = self.core.list_service_for_all_namespaces().items
-            
-            dump_info = {
-                "nodes": [{"name": node.metadata.name, "status": node.status.phase} for node in nodes],
-                "pods": [{"name": pod.metadata.name, "namespace": pod.metadata.namespace, "status": pod.status.phase} for pod in pods],
-                "namespaces": [{"name": ns.metadata.name} for ns in namespaces],
-                "services": [{"name": svc.metadata.name, "namespace": svc.metadata.namespace} for svc in services],
-                "timestamp": self._ts(None)
-            }
-            
-            # Write to file
-            import json
-            output_file = os.path.join(output_dir, "cluster_info_dump.json")
-            with open(output_file, 'w') as f:
-                json.dump(dump_info, f, indent=2, default=str)
-            
-            result = {
-                "output_dir": output_dir,
-                "output_file": output_file,
-                "status": "dumped",
-                "nodes_count": len(nodes),
-                "pods_count": len(pods),
-                "namespaces_count": len(namespaces),
-                "services_count": len(services)
-            }
-            self.log_action("cluster_info_dump", params, result)
-            return result
-        except Exception as e:
-            self.log_action("cluster_info_dump", params, error=e)
-            raise RuntimeError(f"Failed to dump cluster info: {str(e)}") from e
-
     # Node Conditions
     def get_node_conditions(self, node_name: str) -> dict:
         """Get detailed conditions for a node."""
@@ -3679,9 +3542,7 @@ class KubernetesManager(ContainerManagerBase):
         """List all available API resources."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_discovery
-            
-            discovery_api = k8s_discovery.DiscoveryV1API()
+            discovery_api = k8s_client.DiscoveryV1API()
             resources = discovery_api.server_resources_for_all_api_groups()
             
             result = []
@@ -3708,9 +3569,7 @@ class KubernetesManager(ContainerManagerBase):
         """Describe a specific API resource."""
         params = {"resource_name": resource_name}
         try:
-            from kubernetes import client as k8s_discovery
-            
-            discovery_api = k8s_discovery.DiscoveryV1API()
+            discovery_api = k8s_client.DiscoveryV1API()
             resources = discovery_api.server_resources_for_all_api_groups()
             
             for group in resources.resources:
@@ -3879,16 +3738,14 @@ class KubernetesManager(ContainerManagerBase):
         """Create a ServiceAccount token."""
         params = {"name": name, "namespace": namespace, "token_spec": token_spec}
         try:
-            from kubernetes import client as k8s_authentication
-            
-            auth_api = k8s_authentication.AuthenticationV1Api()
-            token_request = k8s_authentication.V1TokenRequest(
+            auth_api = self.authn
+            token_request = k8s_client.V1TokenRequest(
                 metadata=k8s_client.V1ObjectMeta(
                     name=f"{name}-token",
                     namespace=namespace,
                     annotations={"kubernetes.io/service-account.name": name}
                 ),
-                spec=k8s_authentication.V1TokenRequestSpec(**token_spec)
+                spec=k8s_client.V1TokenRequestSpec(**token_spec)
             )
             created = auth_api.create_namespaced_token_request(namespace, token_request)
             result = {
@@ -3910,9 +3767,7 @@ class KubernetesManager(ContainerManagerBase):
         """List ServiceAccount tokens."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_authentication
-            
-            auth_api = k8s_authentication.AuthenticationV1Api()
+            auth_api = self.authn
             token_requests = auth_api.list_namespaced_token_request(namespace).items
             
             # Filter for tokens belonging to this service account
@@ -3945,9 +3800,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a ServiceAccount token."""
         params = {"name": name, "namespace": namespace, "token_name": token_name}
         try:
-            from kubernetes import client as k8s_authentication
-            
-            auth_api = k8s_authentication.AuthenticationV1Api()
+            auth_api = self.authn
             auth_api.delete_namespaced_token_request(token_name, namespace)
             result = {
                 "service_account": name,
@@ -3968,10 +3821,8 @@ class KubernetesManager(ContainerManagerBase):
         """Perform a SubjectAccessReview."""
         params = {"spec": spec}
         try:
-            from kubernetes import client as k8s_authorization
-            
-            auth_api = k8s_authorization.AuthorizationV1Api()
-            sar = k8s_authorization.V1SubjectAccessReview(spec=k8s_authorization.V1SubjectAccessReviewSpec(**spec))
+            auth_api = self.authz
+            sar = k8s_client.V1SubjectAccessReview(spec=k8s_client.V1SubjectAccessReviewSpec(**spec))
             response = auth_api.create_subject_access_review(sar)
             result = {
                 "allowed": response.status.allowed,
@@ -3990,11 +3841,9 @@ class KubernetesManager(ContainerManagerBase):
         """Perform a LocalSubjectAccessReview."""
         params = {"namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_authorization
-            
-            auth_api = k8s_authorization.AuthorizationV1Api()
-            lsar = k8s_authorization.V1LocalSubjectAccessReview(
-                spec=k8s_authorization.V1SubjectAccessReviewSpec(**spec)
+            auth_api = self.authz
+            lsar = k8s_client.V1LocalSubjectAccessReview(
+                spec=k8s_client.V1SubjectAccessReviewSpec(**spec)
             )
             response = auth_api.create_namespaced_local_subject_access_review(namespace, lsar)
             result = {
@@ -4016,12 +3865,10 @@ class KubernetesManager(ContainerManagerBase):
         """Create an aggregated ClusterRole."""
         params = {"name": name, "aggregation_rule": aggregation_rule}
         try:
-            from kubernetes import client as k8s_rbac
-            
-            rbac_api = k8s_rbac.RbacV1Api()
-            cluster_role = k8s_rbac.V1ClusterRole(
+            rbac_api = self.rbac
+            cluster_role = k8s_client.V1ClusterRole(
                 metadata=k8s_client.V1ObjectMeta(name=name),
-                aggregation_rule=k8s_rbac.V1AggregationRule(**aggregation_rule)
+                aggregation_rule=k8s_client.V1AggregationRule(**aggregation_rule)
             )
             created = rbac_api.create_cluster_role(cluster_role)
             result = {
@@ -4041,11 +3888,9 @@ class KubernetesManager(ContainerManagerBase):
         """Update an aggregated ClusterRole."""
         params = {"name": name, "aggregation_rule": aggregation_rule}
         try:
-            from kubernetes import client as k8s_rbac
-            
-            rbac_api = k8s_rbac.RbacV1Api()
+            rbac_api = self.rbac
             existing = rbac_api.read_cluster_role(name)
-            existing.aggregation_rule = k8s_rbac.V1AggregationRule(**aggregation_rule)
+            existing.aggregation_rule = k8s_client.V1AggregationRule(**aggregation_rule)
             updated = rbac_api.patch_cluster_role(name, existing)
             result = {
                 "name": name,
@@ -4065,9 +3910,7 @@ class KubernetesManager(ContainerManagerBase):
         """List PodSecurityPolicies (deprecated)."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_policy
-            
-            policy_api = k8s_policy.PolicyV1beta1Api()
+            policy_api = k8s_client.PolicyV1beta1Api()
             psps = policy_api.list_pod_security_policy().items
             result = [
                 {
@@ -4089,9 +3932,7 @@ class KubernetesManager(ContainerManagerBase):
         """Describe a PodSecurityPolicy."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_policy
-            
-            policy_api = k8s_policy.PolicyV1beta1Api()
+            policy_api = k8s_client.PolicyV1beta1Api()
             psp = policy_api.read_pod_security_policy(name)
             result = {
                 "name": psp.metadata.name,
@@ -4112,11 +3953,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a PodSecurityPolicy."""
         params = {"name": name, "spec": spec}
         try:
-            from kubernetes import client as k8s_policy
-            
-            policy_api = k8s_policy.PolicyV1beta1Api()
-            psp_spec = k8s_policy.V1PodSecurityPolicySpec(**spec)
-            psp = k8s_policy.V1PodSecurityPolicy(
+            policy_api = k8s_client.PolicyV1beta1Api()
+            psp_spec = k8s_client.V1PodSecurityPolicySpec(**spec)
+            psp = k8s_client.V1PodSecurityPolicy(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=psp_spec
             )
@@ -4138,9 +3977,7 @@ class KubernetesManager(ContainerManagerBase):
         """Delete a PodSecurityPolicy."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_policy
-            
-            policy_api = k8s_policy.PolicyV1beta1Api()
+            policy_api = k8s_client.PolicyV1beta1Api()
             policy_api.delete_pod_security_policy(name)
             result = {"name": name, "status": "deleted"}
             self.log_action("delete_pod_security_policy", params, result)
@@ -4155,9 +3992,7 @@ class KubernetesManager(ContainerManagerBase):
         """Evaluate pod security against policies."""
         params = {"namespace": namespace, "pod_spec": pod_spec}
         try:
-            from kubernetes import client as k8s_authentication
-            
-            auth_api = k8s_authentication.AuthenticationV1Api()
+            auth_api = self.authn
             
             # Create a temporary subject access review for pod creation
             spec = {
@@ -4168,7 +4003,7 @@ class KubernetesManager(ContainerManagerBase):
                 }
             }
             
-            sar = k8s_authentication.V1SubjectAccessReview(spec=k8s_authentication.V1SubjectAccessReviewSpec(**spec))
+            sar = k8s_client.V1SubjectAccessReview(spec=k8s_client.V1SubjectAccessReviewSpec(**spec))
             response = auth_api.create_subject_access_review(sar)
             
             result = {
@@ -4194,9 +4029,7 @@ class KubernetesManager(ContainerManagerBase):
         """List IngressClasses."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
+            networking_api = self.networking
             ingress_classes = networking_api.list_ingress_class().items
             result = [
                 {
@@ -4219,9 +4052,7 @@ class KubernetesManager(ContainerManagerBase):
         """Describe an IngressClass."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
+            networking_api = self.networking
             ic = networking_api.read_ingress_class(name)
             result = {
                 "name": ic.metadata.name,
@@ -4242,11 +4073,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create an IngressClass."""
         params = {"name": name, "spec": spec}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
-            ic_spec = k8s_networking.V1IngressClassSpec(**spec)
-            ingress_class = k8s_networking.V1IngressClass(
+            networking_api = self.networking
+            ic_spec = k8s_client.V1IngressClassSpec(**spec)
+            ingress_class = k8s_client.V1IngressClass(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=ic_spec
             )
@@ -4268,9 +4097,7 @@ class KubernetesManager(ContainerManagerBase):
         """Set the default IngressClass."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
+            networking_api = self.networking
             ingress_classes = networking_api.list_ingress_class().items
             
             # Remove default from all existing classes
@@ -4300,11 +4127,9 @@ class KubernetesManager(ContainerManagerBase):
         """Create a NetworkPolicy with CIDR rules."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
-            np_spec = k8s_networking.V1NetworkPolicySpec(**spec)
-            network_policy = k8s_networking.V1NetworkPolicy(
+            networking_api = self.networking
+            np_spec = k8s_client.V1NetworkPolicySpec(**spec)
+            network_policy = k8s_client.V1NetworkPolicy(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 spec=np_spec
             )
@@ -4327,15 +4152,13 @@ class KubernetesManager(ContainerManagerBase):
         """Update NetworkPolicy rules."""
         params = {"name": name, "namespace": namespace, "rules": rules}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
+            networking_api = self.networking
             existing = networking_api.read_namespaced_network_policy(name, namespace)
             
             # Convert rules to V1NetworkPolicyIngressRule objects
             policy_rules = []
             for rule in rules:
-                policy_rules.append(k8s_networking.V1NetworkPolicyIngressRule(**rule))
+                policy_rules.append(k8s_client.V1NetworkPolicyIngressRule(**rule))
             
             existing.spec.podSelector = existing.spec.podSelector or k8s_client.V1PodSelector()
             existing.spec.policyTypes = existing.spec.policyTypes or ["Ingress"]
@@ -4361,9 +4184,7 @@ class KubernetesManager(ContainerManagerBase):
         params = {"namespace": namespace, "policy_name": policy_name}
         try:
             # Get the NetworkPolicy to understand its rules
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
+            networking_api = self.networking
             policy = networking_api.read_namespaced_network_policy(policy_name, namespace)
             
             # Analyze policy rules
@@ -4585,9 +4406,7 @@ class KubernetesManager(ContainerManagerBase):
         """List CSI drivers."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
+            storage_api = self.storage
             csidrivers = storage_api.list_csi_driver().items
             result = [
                 {
@@ -4611,9 +4430,7 @@ class KubernetesManager(ContainerManagerBase):
         """Describe a CSI driver."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
+            storage_api = self.storage
             driver = storage_api.read_csi_driver(name)
             result = {
                 "name": driver.metadata.name,
@@ -4634,9 +4451,7 @@ class KubernetesManager(ContainerManagerBase):
         """Get CSI driver capacity information."""
         params = {"driver_name": driver_name}
         try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
+            storage_api = self.storage
             driver = storage_api.read_csi_driver(driver_name)
             
             result = {
@@ -4658,9 +4473,7 @@ class KubernetesManager(ContainerManagerBase):
         """Set the default StorageClass."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
+            storage_api = self.storage
             storage_classes = storage_api.list_storage_class().items
             
             # Remove default from all existing classes
@@ -4689,9 +4502,7 @@ class KubernetesManager(ContainerManagerBase):
         """Get StorageClass provisioner information."""
         params = {"name": name}
         try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
+            storage_api = self.storage
             sc = storage_api.read_storage_class(name)
             
             result = {
@@ -4738,55 +4549,30 @@ class KubernetesManager(ContainerManagerBase):
             raise RuntimeError(f"Failed to expand PersistentVolume: {str(e)}") from e
 
     # Volume Snapshot Operations
-    def list_volume_snapshots(self, namespace: str | None = None) -> list[dict]:
-        """List VolumeSnapshots."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            from kubernetes import client as k8s_snapshot
-            
-            snapshot_api = k8s_snapshot.SnapshotV1Api()
-            snapshots = snapshot_api.list_volume_snapshot(namespace=namespace or self.namespace).items
-            result = [
-                {
-                    "name": snap.metadata.name,
-                    "namespace": snap.metadata.namespace,
-                    "source": snap.spec.source if snap.spec else None,
-                    "status": snap.status,
-                    "created": self._ts(snap.metadata.creation_timestamp)
-                }
-                for snap in snapshots
-            ]
-            self.log_action("list_volume_snapshots", params, {"count": len(result)})
-            return result
-        except ImportError:
-            raise RuntimeError("Snapshot client not available")
-        except ApiException as e:
-            self.log_action("list_volume_snapshots", params, error=e)
-            raise RuntimeError(f"Failed to list VolumeSnapshots: {str(e)}") from e
-
     def create_volume_snapshot(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a VolumeSnapshot."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_snapshot
-            
-            snapshot_api = k8s_snapshot.SnapshotV1Api()
-            snapshot_spec = k8s_snapshot.VolumeSnapshotSpec(**spec)
-            snapshot = k8s_snapshot.VolumeSnapshot(
-                metadata=k8s_client.V1ObjectMeta(name=name),
-                spec=snapshot_spec
+            # VolumeSnapshots are CRDs under snapshot.storage.k8s.io/v1.
+            body = {
+                "apiVersion": "snapshot.storage.k8s.io/v1",
+                "kind": "VolumeSnapshot",
+                "metadata": {"name": name, "namespace": namespace},
+                "spec": spec,
+            }
+            created = self.custom_objects.create_namespaced_custom_object(
+                "snapshot.storage.k8s.io", "v1", namespace, "volumesnapshots", body
             )
-            created = snapshot_api.create_namespaced_volume_snapshot(namespace, snapshot)
             result = {
                 "name": name,
                 "namespace": namespace,
                 "status": "created",
-                "created": self._ts(created.metadata.creation_timestamp)
+                "created": self._ts(
+                    (created.get("metadata") or {}).get("creationTimestamp")
+                ),
             }
             self.log_action("create_volume_snapshot", params, result)
             return result
-        except ImportError:
-            raise RuntimeError("Snapshot client not available")
         except ApiException as e:
             self.log_action("create_volume_snapshot", params, error=e)
             raise RuntimeError(f"Failed to create VolumeSnapshot: {str(e)}") from e
@@ -4796,39 +4582,6 @@ class KubernetesManager(ContainerManagerBase):
     # ------------------------------------------------------------------
     
     # Taints and Tolerations
-    def taint_node(self, node_name: str, taints: list[dict]) -> dict:
-        """Taint a node with specified taints."""
-        params = {"node_name": node_name, "taints": taints}
-        try:
-            node = self.core.read_node(node_name)
-            
-            # Initialize taints if not present
-            if not node.spec:
-                node.spec = k8s_client.V1NodeSpec()
-            if not node.spec.taints:
-                node.spec.taints = []
-            
-            # Add new taints
-            for taint_dict in taints:
-                taint = k8s_client.V1Taint(
-                    key=taint_dict["key"],
-                    value=taint_dict.get("value", ""),
-                    effect=taint_dict.get("effect", "NoSchedule")
-                )
-                node.spec.taints.append(taint)
-            
-            updated = self.core.patch_node(node_name, node)
-            result = {
-                "node_name": node_name,
-                "taints_added": len(taints),
-                "status": "tainted"
-            }
-            self.log_action("taint_node", params, result)
-            return result
-        except ApiException as e:
-            self.log_action("taint_node", params, error=e)
-            raise RuntimeError(f"Failed to taint node: {str(e)}") from e
-
     def untaint_node(self, node_name: str, taint_key: str) -> dict:
         """Remove a taint from a node."""
         params = {"node_name": node_name, "taint_key": taint_key}
@@ -5067,8 +4820,7 @@ class KubernetesManager(ContainerManagerBase):
             elif resource_type == "pod":
                 resource = self.core.read_namespaced_pod(name, namespace or self.namespace)
             elif resource_type == "deployment":
-                from kubernetes import client as k8s_apps
-                apps_api = k8s_apps.AppsV1Api()
+                apps_api = self.apps
                 resource = apps_api.read_namespaced_deployment(name, namespace or self.namespace)
             else:
                 raise ValueError(f"Unsupported resource type: {resource_type}")
@@ -5263,30 +5015,29 @@ class KubernetesManager(ContainerManagerBase):
         """Get pod metrics."""
         params: dict[str, Any] = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_metrics
-            
-            metrics_api = k8s_metrics.MetricsV1beta1Api()
-            pod_metrics = metrics_api.list_namespaced_pod_metrics(namespace=namespace or self.namespace).items
+            ns = namespace or self.namespace
+            metrics = self.custom_objects.list_namespaced_custom_object(
+                "metrics.k8s.io", "v1beta1", ns, "pods"
+            )
+            pod_metrics = metrics.get("items", [])
             result = [
                 {
-                    "name": metric.metadata.name,
-                    "namespace": metric.metadata.namespace,
+                    "name": metric["metadata"]["name"],
+                    "namespace": metric["metadata"].get("namespace", ns),
                     "containers": [
                         {
-                            "name": container.name,
-                            "cpu": container.usage.get("cpu", ""),
-                            "memory": container.usage.get("memory", "")
+                            "name": container["name"],
+                            "cpu": container.get("usage", {}).get("cpu", ""),
+                            "memory": container.get("usage", {}).get("memory", ""),
                         }
-                        for container in metric.containers
+                        for container in (metric.get("containers") or [])
                     ],
-                    "timestamp": self._ts(metric.timestamp)
+                    "timestamp": self._ts(metric.get("timestamp")),
                 }
                 for metric in pod_metrics
             ]
             self.log_action("get_pod_metrics", params, {"count": len(result)})
             return result
-        except ImportError:
-            raise RuntimeError("Metrics client not available")
         except ApiException as e:
             self.log_action("get_pod_metrics", params, error=e)
             raise RuntimeError(f"Failed to get pod metrics: {str(e)}") from e
@@ -5295,23 +5046,21 @@ class KubernetesManager(ContainerManagerBase):
         """Get node metrics."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_metrics
-            
-            metrics_api = k8s_metrics.MetricsV1beta1Api()
-            node_metrics = metrics_api.list_node_metrics().items
+            metrics = self.custom_objects.list_cluster_custom_object(
+                "metrics.k8s.io", "v1beta1", "nodes"
+            )
+            node_metrics = metrics.get("items", [])
             result = [
                 {
-                    "name": metric.metadata.name,
-                    "cpu": metric.usage.get("cpu", ""),
-                    "memory": metric.usage.get("memory", ""),
-                    "timestamp": self._ts(metric.timestamp)
+                    "name": metric["metadata"]["name"],
+                    "cpu": metric.get("usage", {}).get("cpu", ""),
+                    "memory": metric.get("usage", {}).get("memory", ""),
+                    "timestamp": self._ts(metric.get("timestamp")),
                 }
                 for metric in node_metrics
             ]
             self.log_action("get_node_metrics", params, {"count": len(result)})
             return result
-        except ImportError:
-            raise RuntimeError("Metrics client not available")
         except ApiException as e:
             self.log_action("get_node_metrics", params, error=e)
             raise RuntimeError(f"Failed to get node metrics: {str(e)}") from e
@@ -5415,9 +5164,7 @@ class KubernetesManager(ContainerManagerBase):
         """Get metrics for a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_autoscaling
-            
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
             
             result = {
@@ -5442,20 +5189,18 @@ class KubernetesManager(ContainerManagerBase):
         """Set metrics for a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace, "metrics": metrics}
         try:
-            from kubernetes import client as k8s_autoscaling
-            
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
             
             # Convert metrics to proper format
             metric_specs = []
             for metric in metrics:
                 if metric["type"] == "Resource":
-                    metric_spec = k8s_autoscaling.V2MetricSpec(
+                    metric_spec = k8s_client.V2MetricSpec(
                         type="Resource",
-                        resource=k8s_autoscaling.V2ResourceMetricSource(
+                        resource=k8s_client.V2ResourceMetricSource(
                             name=metric["resource"],
-                            target=k8s_autoscaling.V2MetricTarget(
+                            target=k8s_client.V2MetricTarget(
                                 type=metric["target_type"],
                                 average_utilization=metric.get("average_utilization")
                             )
@@ -5485,9 +5230,7 @@ class KubernetesManager(ContainerManagerBase):
         """Scale deployment autoscaler bounds."""
         params = {"name": name, "namespace": namespace, "min_replicas": min_replicas, "max_replicas": max_replicas}
         try:
-            from kubernetes import client as k8s_autoscaling
-            
-            autoscaling_api = k8s_autoscaling.AutoscalingV2Api()
+            autoscaling_api = self.autoscaling
             hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
             
             if hpa.spec:
@@ -5618,9 +5361,7 @@ class KubernetesManager(ContainerManagerBase):
         """List cluster plugins (dynamic admission controllers)."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_admission
-            
-            admission_api = k8s_admission.AdmissionregistrationV1Api()
+            admission_api = self.admission
             validating_webhooks = admission_api.list_validating_webhook_configuration().items
             mutating_webhooks = admission_api.list_mutating_webhook_configuration().items
             
@@ -5653,9 +5394,7 @@ class KubernetesManager(ContainerManagerBase):
         """Describe a cluster plugin."""
         params = {"name": name, "plugin_type": plugin_type}
         try:
-            from kubernetes import client as k8s_admission
-            
-            admission_api = k8s_admission.AdmissionregistrationV1Api()
+            admission_api = self.admission
             
             if plugin_type == "validating":
                 plugin = admission_api.read_validating_webhook_configuration(name)
@@ -5777,9 +5516,7 @@ class KubernetesManager(ContainerManagerBase):
         """Debug a deployment by gathering diagnostic information."""
         params = {"deployment_name": deployment_name, "namespace": namespace}
         try:
-            from kubernetes import client as k8s_apps
-            
-            apps_api = k8s_apps.AppsV1Api()
+            apps_api = self.apps
             deployment = apps_api.read_namespaced_deployment(deployment_name, namespace)
             replicasets = apps_api.list_namespaced_replica_set(namespace, label_selector=f"app={deployment_name}").items
             pods = self.core.list_namespaced_pod(namespace, label_selector=f"app={deployment_name}").items
@@ -5808,7 +5545,7 @@ class KubernetesManager(ContainerManagerBase):
         """Get cluster information."""
         params: dict[str, Any] = {}
         try:
-            version = k8s_client.VersionApi().get_code()
+            version = self.version_api.get_code()
             nodes = self.core.list_node().items
             
             result = {
@@ -5827,9 +5564,7 @@ class KubernetesManager(ContainerManagerBase):
         """Get API server information."""
         params: dict[str, Any] = {}
         try:
-            from kubernetes import client as k8s_discovery
-            
-            discovery_api = k8s_discovery.DiscoveryV1API()
+            discovery_api = k8s_client.DiscoveryV1API()
             server_groups = discovery_api.server_groups()
             
             result = {
@@ -6515,63 +6250,6 @@ class KubernetesManager(ContainerManagerBase):
     # Remaining Kubernetes Gaps for 100% Coverage
     # ------------------------------------------------------------------
     
-    def port_forward_pod(self, pod_name: str, namespace: str, local_port: int, remote_port: int) -> dict:
-        """Port forward to a pod."""
-        params = {"pod_name": pod_name, "namespace": namespace, "local_port": local_port, "remote_port": remote_port}
-        try:
-            from kubernetes import stream
-            
-            # This would use kubernetes port-forward in production
-            result = {
-                "pod_name": pod_name,
-                "namespace": namespace,
-                "local_port": local_port,
-                "remote_port": remote_port,
-                "status": "forwarding"
-            }
-            self.log_action("port_forward_pod", params, result)
-            return result
-        except Exception as e:
-            self.log_action("port_forward_pod", params, error=e)
-            raise RuntimeError(f"Failed to port forward: {str(e)}") from e
-
-    def exec_pod(self, pod_name: str, namespace: str, command: list[str]) -> dict:
-        """Execute command in a pod."""
-        params = {"pod_name": pod_name, "namespace": namespace, "command": command}
-        try:
-            from kubernetes import stream
-            
-            # This would use kubernetes exec in production
-            result = {
-                "pod_name": pod_name,
-                "namespace": namespace,
-                "command": command,
-                "status": "executed",
-                "output": "Simulated command output"
-            }
-            self.log_action("exec_pod", params, result)
-            return result
-        except Exception as e:
-            self.log_action("exec_pod", params, error=e)
-            raise RuntimeError(f"Failed to exec command: {str(e)}") from e
-
-    def attach_pod(self, pod_name: str, namespace: str) -> dict:
-        """Attach to a running pod."""
-        params = {"pod_name": pod_name, "namespace": namespace}
-        try:
-            from kubernetes import stream
-            
-            result = {
-                "pod_name": pod_name,
-                "namespace": namespace,
-                "status": "attached"
-            }
-            self.log_action("attach_pod", params, result)
-            return result
-        except Exception as e:
-            self.log_action("attach_pod", params, error=e)
-            raise RuntimeError(f"Failed to attach to pod: {str(e)}") from e
-
     def copy_to_pod(self, pod_name: str, namespace: str, source: str, destination: str) -> dict:
         """Copy file to pod."""
         params = {"pod_name": pod_name, "namespace": namespace, "source": source, "destination": destination}
@@ -6611,37 +6289,11 @@ class KubernetesManager(ContainerManagerBase):
             self.log_action("copy_from_pod", params, error=e)
             raise RuntimeError(f"Failed to copy from pod: {str(e)}") from e
 
-    def create_ingress(self, name: str, namespace: str, spec: dict) -> dict:
-        """Create an Ingress resource."""
-        params = {"name": name, "namespace": namespace, "spec": spec}
-        try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
-            ingress_spec = k8s_client.V1IngressSpec(**spec)
-            ingress = k8s_client.V1Ingress(
-                metadata=k8s_client.V1ObjectMeta(name=name),
-                spec=ingress_spec
-            )
-            created = networking_api.create_namespaced_ingress(namespace, ingress)
-            result = {
-                "name": name,
-                "namespace": namespace,
-                "status": "created"
-            }
-            self.log_action("create_ingress", params, result)
-            return result
-        except Exception as e:
-            self.log_action("create_ingress", params, error=e)
-            raise RuntimeError(f"Failed to create ingress: {str(e)}") from e
-
     def list_ingresses(self, namespace: str | None = None) -> list[dict]:
         """List Ingress resources."""
         params: dict[str, Any] = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_networking
-            
-            networking_api = k8s_networking.NetworkingV1Api()
+            networking_api = self.networking
             ingresses = networking_api.list_namespaced_ingress(namespace=namespace or self.namespace).items
             result = [
                 {
@@ -6662,9 +6314,7 @@ class KubernetesManager(ContainerManagerBase):
         """Create a StorageClass."""
         params = {"name": name, "provisioner": provisioner, "parameters": parameters}
         try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
+            storage_api = self.storage
             storage_class = k8s_client.V1StorageClass(
                 metadata=k8s_client.V1ObjectMeta(name=name),
                 provisioner=provisioner,
@@ -6681,29 +6331,6 @@ class KubernetesManager(ContainerManagerBase):
         except Exception as e:
             self.log_action("create_storage_class", params, error=e)
             raise RuntimeError(f"Failed to create storage class: {str(e)}") from e
-
-    def list_storage_classes(self) -> list[dict]:
-        """List StorageClasses."""
-        params: dict[str, Any] = {}
-        try:
-            from kubernetes import client as k8s_storage
-            
-            storage_api = k8s_storage.StorageV1Api()
-            storage_classes = storage_api.list_storage_class().items
-            result = [
-                {
-                    "name": sc.metadata.name,
-                    "provisioner": sc.provisioner,
-                    "is_default": sc.metadata.annotations.get("storageclass.kubernetes.io/is-default-class") == "true" if sc.metadata.annotations else False,
-                    "created": self._ts(sc.metadata.creation_timestamp)
-                }
-                for sc in storage_classes
-            ]
-            self.log_action("list_storage_classes", params, {"count": len(result)})
-            return result
-        except Exception as e:
-            self.log_action("list_storage_classes", params, error=e)
-            raise RuntimeError(f"Failed to list storage classes: {str(e)}") from e
 
     def create_persistent_volume(self, name: str, spec: dict) -> dict:
         """Create a PersistentVolume."""
@@ -6725,77 +6352,11 @@ class KubernetesManager(ContainerManagerBase):
             self.log_action("create_persistent_volume", params, error=e)
             raise RuntimeError(f"Failed to create persistent volume: {str(e)}") from e
 
-    def list_persistent_volumes(self) -> list[dict]:
-        """List PersistentVolumes."""
-        params: dict[str, Any] = {}
-        try:
-            pvs = self.core.list_persistent_volume().items
-            result = [
-                {
-                    "name": pv.metadata.name,
-                    "capacity": pv.spec.capacity if pv.spec else {},
-                    "access_modes": pv.spec.access_modes if pv.spec else [],
-                    "status": pv.status.phase if pv.status else None,
-                    "created": self._ts(pv.metadata.creation_timestamp)
-                }
-                for pv in pvs
-            ]
-            self.log_action("list_persistent_volumes", params, {"count": len(result)})
-            return result
-        except Exception as e:
-            self.log_action("list_persistent_volumes", params, error=e)
-            raise RuntimeError(f"Failed to list persistent volumes: {str(e)}") from e
-
-    def create_persistent_volume_claim(self, name: str, namespace: str, spec: dict) -> dict:
-        """Create a PersistentVolumeClaim."""
-        params = {"name": name, "namespace": namespace, "spec": spec}
-        try:
-            pvc_spec = k8s_client.V1PersistentVolumeClaimSpec(**spec)
-            pvc = k8s_client.V1PersistentVolumeClaim(
-                metadata=k8s_client.V1ObjectMeta(name=name),
-                spec=pvc_spec
-            )
-            created = self.core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            result = {
-                "name": name,
-                "namespace": namespace,
-                "status": "created"
-            }
-            self.log_action("create_persistent_volume_claim", params, result)
-            return result
-        except Exception as e:
-            self.log_action("create_persistent_volume_claim", params, error=e)
-            raise RuntimeError(f"Failed to create persistent volume claim: {str(e)}") from e
-
-    def list_persistent_volume_claims(self, namespace: str | None = None) -> list[dict]:
-        """List PersistentVolumeClaims."""
-        params: dict[str, Any] = {"namespace": namespace}
-        try:
-            pvcs = self.core.list_namespaced_persistent_volume_claim(namespace=namespace or self.namespace).items
-            result = [
-                {
-                    "name": pvc.metadata.name,
-                    "namespace": pvc.metadata.namespace,
-                    "capacity": pvc.spec.resources.requests if pvc.spec and pvc.spec.resources else {},
-                    "access_modes": pvc.spec.access_modes if pvc.spec else [],
-                    "status": pvc.status.phase if pvc.status else None,
-                    "created": self._ts(pvc.metadata.creation_timestamp)
-                }
-                for pvc in pvcs
-            ]
-            self.log_action("list_persistent_volume_claims", params, {"count": len(result)})
-            return result
-        except Exception as e:
-            self.log_action("list_persistent_volume_claims", params, error=e)
-            raise RuntimeError(f"Failed to list persistent volume claims: {str(e)}") from e
-
     def create_stateful_set(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a StatefulSet."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_apps
-            
-            apps_api = k8s_apps.AppsV1Api()
+            apps_api = self.apps
             statefulset_spec = k8s_client.V1StatefulSetSpec(**spec)
             statefulset = k8s_client.V1StatefulSet(
                 metadata=k8s_client.V1ObjectMeta(name=name),
@@ -6817,9 +6378,7 @@ class KubernetesManager(ContainerManagerBase):
         """List StatefulSets."""
         params: dict[str, Any] = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_apps
-            
-            apps_api = k8s_apps.AppsV1Api()
+            apps_api = self.apps
             statefulsets = apps_api.list_namespaced_stateful_set(namespace=namespace or self.namespace).items
             result = [
                 {
@@ -6841,9 +6400,7 @@ class KubernetesManager(ContainerManagerBase):
         """Create a DaemonSet."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
-            from kubernetes import client as k8s_apps
-            
-            apps_api = k8s_apps.AppsV1Api()
+            apps_api = self.apps
             daemonset_spec = k8s_client.V1DaemonSetSpec(**spec)
             daemonset = k8s_client.V1DaemonSet(
                 metadata=k8s_client.V1ObjectMeta(name=name),
@@ -6865,9 +6422,7 @@ class KubernetesManager(ContainerManagerBase):
         """List DaemonSets."""
         params: dict[str, Any] = {"namespace": namespace}
         try:
-            from kubernetes import client as k8s_apps
-            
-            apps_api = k8s_apps.AppsV1Api()
+            apps_api = self.apps
             daemonsets = apps_api.list_namespaced_daemon_set(namespace=namespace or self.namespace).items
             result = [
                 {
