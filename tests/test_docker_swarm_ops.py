@@ -7,8 +7,10 @@ without needing a live daemon. The SDK client and ``subprocess.run`` are mocked.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from unittest import mock
+from unittest.mock import MagicMock
 
 from container_manager_mcp.container_manager import DockerManager
 
@@ -125,3 +127,46 @@ def test_stack_rm_raises_on_cli_failure():
             assert "no such stack" in str(e)
         else:  # pragma: no cover
             raise AssertionError("expected RuntimeError")
+
+
+# ---------------------------------------------------------------------------
+# MCP tool (regression: ctx_log wrong-arg-shape + run_blocking misused as a
+# decorator both raised TypeError on every real cm_docker_swarm invocation)
+# ---------------------------------------------------------------------------
+def _capture_tool(register_fn):
+    captured = {}
+
+    def tool_decorator(*args, **kwargs):
+        def wrapper(fn):
+            captured["fn"] = fn
+            return fn
+
+        return wrapper
+
+    fake_mcp = MagicMock()
+    fake_mcp.tool = tool_decorator
+    register_fn(fake_mcp)
+    return captured["fn"]
+
+
+def test_cm_docker_swarm_tool_with_ctx_does_not_raise(monkeypatch):
+    """Regression: ``cm_docker_swarm`` called ``ctx_log("Docker Swarm operations",
+    action=..., service_name=...)`` — a leading string plus kwargs the shim
+    doesn't accept — raising ``TypeError`` on every real invocation with a ctx.
+    This test drives a truthy ``ctx`` (MagicMock) through the tool and asserts
+    no TypeError.
+    """
+    from container_manager_mcp.mcp import mcp_docker_swarm
+
+    fake_manager = MagicMock()
+    fake_manager.docker_service_list.return_value = []
+    monkeypatch.setattr(
+        mcp_docker_swarm, "create_manager", lambda backend: fake_manager
+    )
+    tool = _capture_tool(mcp_docker_swarm.register_dockerswarm_tools)
+
+    fake_ctx = MagicMock()
+    result = asyncio.run(tool(action="docker_service_list", ctx=fake_ctx))
+
+    assert result == []
+    assert fake_ctx.info.called

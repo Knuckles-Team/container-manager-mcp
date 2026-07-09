@@ -4,13 +4,15 @@ This module provides unified tools that can manage Kubernetes, Docker, Podman, a
 simultaneously with context selection.
 """
 
+import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import ctx_log, run_blocking
-from fastmcp import FastMCP
+from agent_utilities.mcp_utilities import run_blocking
+from fastmcp import Context, FastMCP
 from pydantic import Field
 
 from container_manager_mcp.container_manager import create_manager
+from container_manager_mcp.mcp_server import ctx_log
 
 
 def register_multicontext_tools(mcp: FastMCP):
@@ -79,14 +81,13 @@ def register_multicontext_tools(mcp: FastMCP):
         environment: dict | None = Field(
             default=None, description="Environment variables"
         ),
+        ctx: Context | None = None,
     ) -> dict | list:
         """Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection."""
 
-        ctx_log(
-            "Multi-context operations", action=action, backend=backend, context=context
-        )
+        if ctx:
+            ctx_log(ctx, logging.INFO, f"Executing cm_multi_context: {action}")
 
-        @run_blocking
         def execute_operation():
             manager = create_manager(manager_type="multi")
 
@@ -220,4 +221,4 @@ def register_multicontext_tools(mcp: FastMCP):
             else:
                 raise ValueError(f"Unknown action: {action}")
 
-        return execute_operation()
+        return await run_blocking(execute_operation)

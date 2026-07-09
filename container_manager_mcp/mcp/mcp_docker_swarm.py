@@ -5,13 +5,15 @@ stacks, configs, secrets, and node management — dispatched directly onto the r
 ``DockerManager`` (docker SDK + ``docker stack`` CLI).
 """
 
+import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import ctx_log, run_blocking
-from fastmcp import FastMCP
+from agent_utilities.mcp_utilities import run_blocking
+from fastmcp import Context, FastMCP
 from pydantic import Field
 
 from container_manager_mcp.container_manager import create_manager
+from container_manager_mcp.mcp_server import ctx_log
 
 
 def register_dockerswarm_tools(mcp: FastMCP):
@@ -80,12 +82,13 @@ def register_dockerswarm_tools(mcp: FastMCP):
         data: str | None = Field(default=None, description="Config/secret data"),
         node_id: str | None = Field(default=None, description="Node ID"),
         availability: str | None = Field(default=None, description="Node availability"),
+        ctx: Context | None = None,
     ) -> dict | list:
         """Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes)."""
 
-        ctx_log("Docker Swarm operations", action=action, service_name=service_name)
+        if ctx:
+            ctx_log(ctx, logging.INFO, f"Executing cm_docker_swarm: {action}")
 
-        @run_blocking
         def execute_operation():
             manager = create_manager("docker")
 
@@ -184,4 +187,4 @@ def register_dockerswarm_tools(mcp: FastMCP):
             else:
                 raise ValueError(f"Unknown action: {action}")
 
-        return execute_operation()
+        return await run_blocking(execute_operation)
