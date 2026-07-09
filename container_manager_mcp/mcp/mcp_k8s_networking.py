@@ -76,7 +76,8 @@ def register_k8snetworking_tools(mcp: FastMCP):
             description="Resource name (ingress class, network policy, service)",
         ),
         spec: dict | None = Field(
-            default=None, description="Specification for advanced networking operations"
+            default=None,
+            description="Specification for NetworkPolicy CIDR/rule and service ops",
         ),
         rules: list | None = Field(
             default=None,

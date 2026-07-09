@@ -1131,13 +1131,13 @@ def register_k8sobservability_tools(mcp: FastMCP):
         pass
 
 
-def register_podmanadvanced_tools(mcp: FastMCP):
-    """Register advanced Podman tools."""
-    if os.environ.get("PODMANADVANCEDTOOL", "True").lower() not in ("true", "1", "yes"):
+def register_podman_tools(mcp: FastMCP):
+    """Register Podman pod/network/volume tools."""
+    if os.environ.get("PODMANTOOL", "True").lower() not in ("true", "1", "yes"):
         return
     try:
-        from container_manager_mcp.mcp.mcp_podman_advanced import (
-            register_podmanadvanced_tools as _register,
+        from container_manager_mcp.mcp.mcp_podman import (
+            register_podman_tools as _register,
         )
 
         _register(mcp)
@@ -1146,13 +1146,13 @@ def register_podmanadvanced_tools(mcp: FastMCP):
         pass
 
 
-def register_dockeradvanced_tools(mcp: FastMCP):
-    """Register advanced Docker tools."""
-    if os.environ.get("DOCKERADVANCEDTOOL", "True").lower() not in ("true", "1", "yes"):
+def register_dockerswarm_tools(mcp: FastMCP):
+    """Register Docker Swarm tools."""
+    if os.environ.get("DOCKERSWARMTOOL", "True").lower() not in ("true", "1", "yes"):
         return
     try:
-        from container_manager_mcp.mcp.mcp_docker_advanced import (
-            register_dockeradvanced_tools as _register,
+        from container_manager_mcp.mcp.mcp_docker_swarm import (
+            register_dockerswarm_tools as _register,
         )
 
         _register(mcp)

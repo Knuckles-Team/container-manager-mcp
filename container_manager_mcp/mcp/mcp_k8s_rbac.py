@@ -91,10 +91,10 @@ def register_k8srbac_tools(mcp: FastMCP):
             default=None, description="Resource for auth check"
         ),
         name: str | None = Field(
-            default=None, description="Resource name for advanced RBAC operations"
+            default=None, description="Resource name for role/binding/SA operations"
         ),
         spec: dict | None = Field(
-            default=None, description="Specification for advanced RBAC operations"
+            default=None, description="Specification for role/binding/SA operations"
         ),
         token_name: str | None = Field(
             default=None, description="Token name for ServiceAccount token operations"

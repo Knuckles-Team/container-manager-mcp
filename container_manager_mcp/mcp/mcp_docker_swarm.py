@@ -1,7 +1,8 @@
-"""MCP tools for advanced Docker operations.
+"""MCP tools for Docker Swarm operations.
 
-This module provides advanced Docker operations including Swarm, services, stacks,
-configs, secrets, and node management.
+This module provides Docker Swarm operations including Swarm lifecycle, services,
+stacks, configs, secrets, and node management — dispatched directly onto the real
+``DockerManager`` (docker SDK + ``docker stack`` CLI).
 """
 
 from typing import Literal
@@ -13,18 +14,18 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_dockeradvanced_tools(mcp: FastMCP):
+def register_dockerswarm_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
-            "title": "Advanced Docker Operations",
+            "title": "Docker Swarm Operations",
             "readOnlyHint": False,
             "destructiveHint": False,
             "idempotentHint": False,
             "openWorldHint": True,
         },
-        tags={"docker", "advanced"},
+        tags={"docker", "swarm"},
     )
-    async def cm_docker_advanced(
+    async def cm_docker_swarm(
         action: Literal[
             # Swarm Operations
             "docker_swarm_init",
@@ -51,7 +52,9 @@ def register_dockeradvanced_tools(mcp: FastMCP):
             "docker_node_ls",
             "docker_node_update",
             "docker_node_inspect",
-        ] = Field(description="Action to perform. Advanced Docker operations."),
+        ] = Field(
+            description="Action to perform. Docker Swarm/service/stack operations."
+        ),
         # Common parameters
         advertise_addr: str | None = Field(
             default=None, description="Swarm advertise address"
@@ -78,28 +81,27 @@ def register_dockeradvanced_tools(mcp: FastMCP):
         node_id: str | None = Field(default=None, description="Node ID"),
         availability: str | None = Field(default=None, description="Node availability"),
     ) -> dict | list:
-        """Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes)."""
+        """Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes)."""
 
-        ctx_log("Advanced Docker operations", action=action, service_name=service_name)
+        ctx_log("Docker Swarm operations", action=action, service_name=service_name)
 
         @run_blocking
         def execute_operation():
             manager = create_manager("docker")
-            k8s_manager = getattr(manager, "k8s_manager", manager)
 
             # Swarm Operations
             if action == "docker_swarm_init":
                 if not advertise_addr:
                     raise ValueError("advertise_addr is required for docker_swarm_init")
-                return k8s_manager.docker_swarm_init(advertise_addr, listen_addr)
+                return manager.docker_swarm_init(advertise_addr, listen_addr)
             elif action == "docker_swarm_join":
                 if not remote_addr or not token:
                     raise ValueError(
                         "remote_addr and token are required for docker_swarm_join"
                     )
-                return k8s_manager.docker_swarm_join(remote_addr, token, worker or True)
+                return manager.docker_swarm_join(remote_addr, token, worker or True)
             elif action == "docker_swarm_leave":
-                return k8s_manager.docker_swarm_leave(force or False)
+                return manager.docker_swarm_leave(force or False)
 
             # Service Operations
             elif action == "docker_service_create":
@@ -107,27 +109,27 @@ def register_dockeradvanced_tools(mcp: FastMCP):
                     raise ValueError(
                         "service_name and image are required for docker_service_create"
                     )
-                return k8s_manager.docker_service_create(
+                return manager.docker_service_create(
                     service_name, image, replicas or 1, ports
                 )
             elif action == "docker_service_list":
-                return k8s_manager.docker_service_list()
+                return manager.docker_service_list()
             elif action == "docker_service_update":
                 if not service_name:
                     raise ValueError(
                         "service_name is required for docker_service_update"
                     )
-                return k8s_manager.docker_service_update(service_name, image, replicas)
+                return manager.docker_service_update(service_name, image, replicas)
             elif action == "docker_service_rm":
                 if not service_name:
                     raise ValueError("service_name is required for docker_service_rm")
-                return k8s_manager.docker_service_rm(service_name)
+                return manager.docker_service_rm(service_name)
             elif action == "docker_service_logs":
                 if not service_name:
                     raise ValueError("service_name is required for docker_service_logs")
-                return k8s_manager.docker_service_logs(service_name, tail_lines or 100)
+                return manager.docker_service_logs(service_name, tail_lines or 100)
             elif action == "docker_service_ps":
-                return k8s_manager.docker_service_ps()
+                return manager.docker_service_ps()
 
             # Stack Operations
             elif action == "docker_stack_deploy":
@@ -135,15 +137,15 @@ def register_dockeradvanced_tools(mcp: FastMCP):
                     raise ValueError(
                         "stack_name and compose_file are required for docker_stack_deploy"
                     )
-                return k8s_manager.docker_stack_deploy(stack_name, compose_file)
+                return manager.docker_stack_deploy(stack_name, compose_file)
             elif action == "docker_stack_services":
                 if not stack_name:
                     raise ValueError("stack_name is required for docker_stack_services")
-                return k8s_manager.docker_stack_services(stack_name)
+                return manager.docker_stack_services(stack_name)
             elif action == "docker_stack_rm":
                 if not stack_name:
                     raise ValueError("stack_name is required for docker_stack_rm")
-                return k8s_manager.docker_stack_rm(stack_name)
+                return manager.docker_stack_rm(stack_name)
 
             # Config Operations
             elif action == "docker_config_create":
@@ -151,9 +153,9 @@ def register_dockeradvanced_tools(mcp: FastMCP):
                     raise ValueError(
                         "config_name and data are required for docker_config_create"
                     )
-                return k8s_manager.docker_config_create(config_name, data)
+                return manager.docker_config_create(config_name, data)
             elif action == "docker_config_list":
-                return k8s_manager.docker_config_list()
+                return manager.docker_config_list()
 
             # Secret Operations
             elif action == "docker_secret_create":
@@ -161,23 +163,23 @@ def register_dockeradvanced_tools(mcp: FastMCP):
                     raise ValueError(
                         "secret_name and data are required for docker_secret_create"
                     )
-                return k8s_manager.docker_secret_create(secret_name, data)
+                return manager.docker_secret_create(secret_name, data)
             elif action == "docker_secret_list":
-                return k8s_manager.docker_secret_list()
+                return manager.docker_secret_list()
 
             # Node Operations
             elif action == "docker_node_ls":
-                return k8s_manager.docker_node_ls()
+                return manager.docker_node_ls()
             elif action == "docker_node_update":
                 if not node_id or not availability:
                     raise ValueError(
                         "node_id and availability are required for docker_node_update"
                     )
-                return k8s_manager.docker_node_update(node_id, availability)
+                return manager.docker_node_update(node_id, availability)
             elif action == "docker_node_inspect":
                 if not node_id:
                     raise ValueError("node_id is required for docker_node_inspect")
-                return k8s_manager.docker_node_inspect(node_id)
+                return manager.docker_node_inspect(node_id)
 
             else:
                 raise ValueError(f"Unknown action: {action}")

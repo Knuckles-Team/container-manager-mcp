@@ -3,7 +3,7 @@
 This test introspects the ACTUAL registered MCP tools (built via
 ``get_mcp_instance``) and asserts that every action in an explicit
 expected-capability matrix is present on the live tool's ``action`` enum. It is
-what makes "100% docker / podman / kubernetes coverage incl. advanced use cases"
+what makes "100% docker / podman / kubernetes coverage incl. swarm/pod use cases"
 an objective, enforced property rather than a claim: if a themed tool loses an
 action (a refactor drops a dispatch branch), this test FAILS.
 
@@ -62,7 +62,7 @@ CHECKLIST: dict[str, list[str]] = {
 
 # --- Full expected-capability matrix (the coverage gate) ----------------------
 # KUBERNETES — the 8 themed cm_k8s_* tools' key actions (workloads/config/
-# networking/storage/rbac/cluster/governance/observability), covering advanced ops.
+# networking/storage/rbac/cluster/governance/observability), covering full ops.
 KUBE_MATRIX: dict[str, list[str]] = {
     "cm_k8s_workloads": [
         "list_pods",
@@ -182,10 +182,10 @@ KUBE_MATRIX: dict[str, list[str]] = {
     ],
 }
 
-# DOCKER — the full cm_docker_advanced surface (swarm / service / stack / config /
-# secret / node). Enumerated from mcp/mcp_docker_advanced.py.
+# DOCKER — the full cm_docker_swarm surface (swarm / service / stack / config /
+# secret / node). Enumerated from mcp/mcp_docker_swarm.py.
 DOCKER_MATRIX: dict[str, list[str]] = {
-    "cm_docker_advanced": [
+    "cm_docker_swarm": [
         "docker_swarm_init",
         "docker_swarm_join",
         "docker_swarm_leave",
@@ -208,10 +208,10 @@ DOCKER_MATRIX: dict[str, list[str]] = {
     ],
 }
 
-# PODMAN — the full cm_podman_advanced surface (kube gen/play, checkpoint/restore,
-# pods, networks, volumes, system). Enumerated from mcp/mcp_podman_advanced.py.
+# PODMAN — the full cm_podman surface (kube gen/play, checkpoint/restore,
+# pods, networks, volumes, system). Enumerated from mcp/mcp_podman.py.
 PODMAN_MATRIX: dict[str, list[str]] = {
-    "cm_podman_advanced": [
+    "cm_podman": [
         "podman_generate_kube_yaml",
         "podman_play_kube_yaml",
         "podman_checkpoint",
@@ -282,7 +282,7 @@ def test_user_checklist_action_present(tool: str, action: str):
 
 def test_matrix_guards_every_runtime():
     """Sanity: the matrix covers all three runtimes with a meaningful surface."""
-    assert len(DOCKER_MATRIX["cm_docker_advanced"]) >= 15
-    assert len(PODMAN_MATRIX["cm_podman_advanced"]) >= 15
+    assert len(DOCKER_MATRIX["cm_docker_swarm"]) >= 15
+    assert len(PODMAN_MATRIX["cm_podman"]) >= 15
     # all 8 themed kubernetes tools represented
     assert len([t for t in KUBE_MATRIX if t.startswith("cm_k8s_")]) == 8

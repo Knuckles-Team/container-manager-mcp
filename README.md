@@ -95,7 +95,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 |----------|----------------|-------------|
 | `cm_compose_operations` | `COMPOSETOOL` | Manage docker-compose or podman-compose operations. |
 | `cm_container_operations` | `CONTAINERTOOL` | Manage container operations. |
-| `cm_docker_advanced` | `DOCKERADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced` | `DOCKERSWARMTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
 | `cm_image_operations` | `IMAGETOOL` | Manage container images. |
 | `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
 | `cm_ingest_inventory` | `MISCTOOL` | Natively ingest the container inventory into epistemic-graph as typed nodes. |
@@ -110,7 +110,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_list_hosts` | `INVENTORYTOOL` | List the host aliases you can pass as ``host`` to any cm_* operation |
 | `cm_multi_context` | `MULTICONTEXTTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
 | `cm_network_operations` | `NETWORKTOOL` | Manage network operations. |
-| `cm_podman_advanced` | `PODMANADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced` | `PODMANTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
 | `cm_swarm_operations` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_system_operations` | `SYSTEMTOOL` | Manage container manager system operations. |
 | `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
@@ -512,7 +512,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "DEFAULT_DOCKER_CONTEXT": "",
         "DEFAULT_K8S_CONTEXT": "",
         "DEFAULT_SWARM_CONTEXT": "",
-        "DOCKERADVANCEDTOOL": "True",
+        "DOCKERSWARMTOOL": "True",
         "DOCKER_CONTEXTS": "",
         "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
@@ -533,7 +533,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "MULTI_CONTEXT_MAX_WORKERS": "",
         "MULTI_CONTEXT_MODE": "True",
         "NETWORKTOOL": "True",
-        "PODMANADVANCEDTOOL": "True",
+        "PODMANTOOL": "True",
         "PODMAN_ENABLED": "true",
         "SPECIALIST_DEPLOYMENTTOOL": "True",
         "SWARMTOOL": "True",
@@ -576,7 +576,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "DEFAULT_DOCKER_CONTEXT": "",
         "DEFAULT_K8S_CONTEXT": "",
         "DEFAULT_SWARM_CONTEXT": "",
-        "DOCKERADVANCEDTOOL": "True",
+        "DOCKERSWARMTOOL": "True",
         "DOCKER_CONTEXTS": "",
         "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
@@ -597,7 +597,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "MULTI_CONTEXT_MAX_WORKERS": "",
         "MULTI_CONTEXT_MODE": "True",
         "NETWORKTOOL": "True",
-        "PODMANADVANCEDTOOL": "True",
+        "PODMANTOOL": "True",
         "PODMAN_ENABLED": "true",
         "SPECIALIST_DEPLOYMENTTOOL": "True",
         "SWARMTOOL": "True",
@@ -641,7 +641,7 @@ docker run -d \
   -e DEFAULT_DOCKER_CONTEXT="" \
   -e DEFAULT_K8S_CONTEXT="" \
   -e DEFAULT_SWARM_CONTEXT="" \
-  -e DOCKERADVANCEDTOOL=True \
+  -e DOCKERSWARMTOOL=True \
   -e DOCKER_CONTEXTS="" \
   -e HEALTH_CHECK_TTL_SECONDS=30 \
   -e IMAGETOOL=True \
@@ -662,7 +662,7 @@ docker run -d \
   -e MULTI_CONTEXT_MAX_WORKERS="" \
   -e MULTI_CONTEXT_MODE=True \
   -e NETWORKTOOL=True \
-  -e PODMANADVANCEDTOOL=True \
+  -e PODMANTOOL=True \
   -e PODMAN_ENABLED=true \
   -e SPECIALIST_DEPLOYMENTTOOL=True \
   -e SWARMTOOL=True \
@@ -735,8 +735,8 @@ consumed from a **remote deployment**. The
 | `K8SCLUSTERTOOL` | `True` |  |
 | `K8SGOVERNANCETOOL` | `True` |  |
 | `K8SOBSERVABILITYTOOL` | `True` |  |
-| `PODMANADVANCEDTOOL` | `True` |  |
-| `DOCKERADVANCEDTOOL` | `True` |  |
+| `PODMANTOOL` | `True` |  |
+| `DOCKERSWARMTOOL` | `True` |  |
 | `MULTICONTEXTTOOL` | `True` |  |
 | `MULTI_CONTEXT_MODE` | `True` | Multi-Context Configuration |
 | `HEALTH_CHECK_TTL_SECONDS` | `30` | Multi-context health-check cache TTL (seconds) and parallel worker cap |
