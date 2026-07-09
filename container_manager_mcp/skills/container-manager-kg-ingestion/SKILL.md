@@ -1,5 +1,6 @@
 ---
 name: container-manager-kg-ingestion
+skill_type: skill
 description: >-
   Snapshot a host's Docker/Podman/Swarm inventory into the epistemic-graph
   knowledge graph as typed OWL nodes via the container-manager-mcp MCP server —

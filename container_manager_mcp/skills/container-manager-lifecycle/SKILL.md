@@ -1,5 +1,6 @@
 ---
 name: container-manager-lifecycle
+skill_type: skill
 description: >-
   Docker/Podman container and image lifecycle on local or remote hosts via the
   container-manager-mcp MCP server — list/inspect/stop/remove/exec containers,

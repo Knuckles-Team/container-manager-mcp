@@ -1,5 +1,6 @@
 ---
 name: container-manager-swarm
+skill_type: skill
 description: >-
   Docker Swarm cluster orchestration via the container-manager-mcp MCP server —
   initialize/leave a swarm, list nodes and services, and create or remove
