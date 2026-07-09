@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Tests for the MultiContextManager (K8S/Docker/Podman/Swarm context pooling)."""
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -336,3 +337,46 @@ class TestBackwardsCompatibleSurface:
         mgr = MultiContextManager(silent=True)
         mgr.shutdown()
         assert mgr._executor._shutdown is True
+
+
+# ---------------------------------------------------------------------------
+# MCP tool (regression: ctx_log wrong-arg-shape + run_blocking misused as a
+# decorator both raised TypeError on every real cm_multi_context invocation)
+# ---------------------------------------------------------------------------
+def _capture_tool(register_fn):
+    captured = {}
+
+    def tool_decorator(*args, **kwargs):
+        def wrapper(fn):
+            captured["fn"] = fn
+            return fn
+
+        return wrapper
+
+    fake_mcp = MagicMock()
+    fake_mcp.tool = tool_decorator
+    register_fn(fake_mcp)
+    return captured["fn"]
+
+
+def test_cm_multi_context_tool_with_ctx_does_not_raise(monkeypatch):
+    """Regression: ``cm_multi_context`` called ``ctx_log("Multi-context operations",
+    action=..., backend=..., context=...)`` — a leading string plus kwargs the
+    shim doesn't accept — raising ``TypeError`` on every real invocation with a
+    ctx. This test drives a truthy ``ctx`` (MagicMock) through the tool and
+    asserts no TypeError.
+    """
+    from container_manager_mcp.mcp import mcp_multi_context
+
+    fake_manager = MagicMock()
+    fake_manager.list_available_contexts.return_value = ["default"]
+    monkeypatch.setattr(
+        mcp_multi_context, "create_manager", lambda manager_type: fake_manager
+    )
+    tool = _capture_tool(mcp_multi_context.register_multicontext_tools)
+
+    fake_ctx = MagicMock()
+    result = asyncio.run(tool(action="list_contexts", ctx=fake_ctx))
+
+    assert result == ["default"]
+    assert fake_ctx.info.called

@@ -9,11 +9,12 @@ configuration through the same real probes the CLI uses.
 import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import ctx_log, run_blocking
+from agent_utilities.mcp_utilities import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
 from container_manager_mcp.doctor import run_doctor
+from container_manager_mcp.mcp_server import ctx_log
 
 _ACTION_BACKEND = {
     "run": None,  # honours the ``backend`` argument (default all)

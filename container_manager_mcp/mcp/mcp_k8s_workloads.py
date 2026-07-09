@@ -7,11 +7,12 @@ StatefulSets, DaemonSets, ReplicaSets, Jobs, and CronJobs.
 import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import ctx_log, run_blocking
+from agent_utilities.mcp_utilities import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
 from container_manager_mcp.container_manager import create_manager
+from container_manager_mcp.mcp_server import ctx_log
 
 
 def register_k8sworkloads_tools(mcp: FastMCP):
