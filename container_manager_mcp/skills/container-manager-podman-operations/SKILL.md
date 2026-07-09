@@ -1,5 +1,6 @@
 ---
 name: container-manager-podman-operations
+skill_type: skill
 description: >-
   Rootless Podman pod/kube operations via the container-manager-mcp MCP server —
   pods (create/list/stats/top/inspect/logs/stop/rm), Kubernetes YAML interop

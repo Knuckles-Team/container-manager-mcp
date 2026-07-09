@@ -1,5 +1,6 @@
 ---
 name: podman-mesh-provisioner
+skill_type: skill
 description: >
   Podman Mesh Provisioner atomic skill. Provisions a Podman container control
   plane — rootful OR rootless — enabling the Podman API socket, wiring

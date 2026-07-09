@@ -1,5 +1,6 @@
 ---
 name: container-manager-kubernetes-operations
+skill_type: skill
 description: >-
   Full operational Kubernetes surface via the container-manager-mcp MCP server —
   workloads (pods/rollouts/StatefulSets/DaemonSets/ReplicaSets/Jobs/CronJobs),

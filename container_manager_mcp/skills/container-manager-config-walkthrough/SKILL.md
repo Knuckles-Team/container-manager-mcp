@@ -1,5 +1,6 @@
 ---
 name: container-manager-config-walkthrough
+skill_type: skill
 description: >-
   End-user setup guide for the container-manager-mcp MCP server — choosing
   CONTAINER_MANAGER_TYPE (docker/podman/kubernetes/multi), wiring .env /
