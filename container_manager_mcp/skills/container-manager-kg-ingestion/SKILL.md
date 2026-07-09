@@ -50,20 +50,18 @@ the hub under `http://knuckles.team/kg/container` (reusing the shared `:Containe
 ## Tools & actions
 | Tool | Modalities |
 |------|------------|
-| `cm_ingest_inventory` | `all`, `containers`, `images`, `volumes`, `networks`, `services`, `nodes` |
+| `cm_ingest_inventory` | `all`, `containers`, `images`, `volumes`, `networks`, `services`, `nodes`, `pods`, `deployments`, `namespaces`, `k8s_services` |
 
 > **Kubernetes modalities (`pods`, `deployments`, `namespaces`, `k8s_services`):**
-> planned extensions of `cm_ingest_inventory` to snapshot a Kubernetes cluster
-> (`:Pod` / `:Deployment` / `:Namespace` / `:K8sService` nodes, mirroring the
-> containers/images pattern) alongside the existing Docker/Podman/Swarm modalities.
-> As of this skill's current version the `cm_ingest_inventory` tool's `modality`
-> literal does **not yet** accept these values — calling them raises a validation
-> error. Until that lands, snapshot Kubernetes state by reading it live through
-> `container-manager-kubernetes-operations` (`cm_k8s_workloads action=list_pods`,
-> `cm_k8s_config action=list_namespaces`, `cm_k8s_networking action=list_k8s_services`)
-> and hand-mapping into the KG via `graph_write` if a durable snapshot is needed now.
+> live. `cm_ingest_inventory` snapshots a Kubernetes cluster into `:Pod` /
+> `:Deployment` / `:Namespace` / `:K8sService` typed nodes (mirroring the
+> containers/images pattern) alongside the Docker/Podman/Swarm modalities. `all`
+> sweeps them automatically **when the active manager is a Kubernetes manager**
+> (`manager_type=kubernetes`); on a Docker/Swarm manager `all` stays Docker/Swarm-scoped.
+> Call a single k8s modality directly, e.g.
+> `cm_ingest_inventory action=... modality=pods manager_type=kubernetes`.
 
-### Kubernetes modalities (once wired)
+### Kubernetes modalities
 | Modality | Node type | Source list | Links |
 |----------|-----------|-------------|-------|
 | `pods` | `:Pod` | `cm_k8s_workloads action=list_pods` | `:runsOn` → `:Host`/Node, `:usesImage` → `:ContainerImage` |
