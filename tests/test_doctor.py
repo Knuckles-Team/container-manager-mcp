@@ -39,7 +39,7 @@ class _FakeHostManager:
 def _all_ok(monkeypatch, tmp_path):
     """Wire every probe to succeed."""
     monkeypatch.setattr(doc, "_module_available", lambda name: True)
-    monkeypatch.setattr(doc, "is_app_installed", lambda app="docker": True)
+    monkeypatch.setattr(doc, "is_app_installed", lambda *a, **k: True)
     monkeypatch.setattr(doc, "create_manager", lambda *a, **k: _FakeManager())
     monkeypatch.setattr(
         doc, "_probe_tcp", lambda host, port, timeout=5.0: (True, "reachable")
@@ -75,7 +75,7 @@ def test_all_ok_path(monkeypatch, tmp_path):
 
 def test_backends_missing_warns_with_remediation(monkeypatch):
     monkeypatch.setattr(doc, "_module_available", lambda name: False)
-    monkeypatch.setattr(doc, "is_app_installed", lambda app="docker": False)
+    monkeypatch.setattr(doc, "is_app_installed", lambda *a, **k: False)
     checks = doc._check_backends()
     missing = [c for c in checks if c["status"] == "warn"]
     assert missing, "expected warnings for missing libs/CLIs"
