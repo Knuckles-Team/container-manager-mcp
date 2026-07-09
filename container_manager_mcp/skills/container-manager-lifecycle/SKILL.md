@@ -31,7 +31,10 @@ conventions and return typed records.
 ## When NOT to use
 - Swarm cluster services, replicas, or nodes → `container-manager-swarm`.
 - Snapshotting inventory into the knowledge graph → `container-manager-kg-ingestion`.
-- Kubernetes workloads → this package's k8s surface, not these tools.
+- Kubernetes workloads → `container-manager-kubernetes-operations` (the full `cm_k8s_*`
+  surface), not these tools.
+- Podman pods, checkpoint/restore, or Kubernetes-YAML interop →
+  `container-manager-podman-operations`.
 
 ## Prerequisites & environment
 Connect via the `mcp-client` skill against the **`container-manager-mcp`** MCP server.
@@ -94,5 +97,11 @@ cm_compose_operations action=ps compose_file=/srv/stack/docker-compose.yml
 
 ## Related
 - **`container-manager-swarm`** — cluster services / nodes / scaling.
+- **`container-manager-kubernetes-operations`** — the full Kubernetes tool surface
+  (workloads/config/networking/storage/RBAC/cluster/governance/observability).
+- **`container-manager-podman-operations`** — Podman-specific pods, checkpoint/
+  restore, and kube-yaml interop.
+- **`container-manager-config-walkthrough`** — first-time setup / choosing
+  `CONTAINER_MANAGER_TYPE` before using this skill.
 - **`container-manager-kg-ingestion`** — push this inventory into the knowledge graph
   as typed `:Container` / `:ContainerImage` nodes.

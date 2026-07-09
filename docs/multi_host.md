@@ -112,3 +112,35 @@ Pass the target `host` argument as part of standard tool payloads:
 ```
 
 This ensures full isolation, extreme simplicity, and zero configuration drift across your application environment.
+
+---
+
+## 5. Kubernetes Kubeconfig Contexts
+
+The inventory model above (`host="node-alpha"` resolved from `inventory.yml`) is specific to **Docker and
+Podman** — it routes a standard engine API call over an SSH tunnel to a remote daemon. **Kubernetes does not
+use it.** A Kubernetes API server is already a network-reachable, authenticated endpoint described by your
+**kubeconfig**, so `container-manager-mcp` targets clusters the Kubernetes-native way instead:
+
+| | Docker / Podman (remote host) | Kubernetes (remote / multi cluster) |
+|---|---|---|
+| Targeting mechanism | `host` argument → `inventory.yml` alias → SSH tunnel | kubeconfig **context** name |
+| Config source | `~/.config/agent-utilities/inventory.yml` (shared with `tunnel-manager` / `systems-manager`) | `~/.kube/config` (or `CONTAINER_MANAGER_KUBECONTEXT` / `K8S_CONTEXTS`) |
+| Transport | Docker/Podman engine API over `ssh://` | Kubernetes API server over TLS (standard kubeconfig auth) |
+| Single-target env var | `CONTAINER_MANAGER_HOST` (Docker) / `CONTAINER_MANAGER_PODMAN_BASE_URL` (Podman) | `CONTAINER_MANAGER_KUBECONTEXT` |
+| Multi-target | N/A per-call (one host per call via `host=`) | `K8S_CONTEXTS` (`name=kubeconfig_context;…`) + `cm_multi_context` for parallel fan-out |
+
+For a **single** Kubernetes cluster, set `CONTAINER_MANAGER_TYPE=kubernetes` and optionally
+`CONTAINER_MANAGER_KUBECONTEXT` to the kubeconfig context name (empty = current-context). Every `cm_k8s_*`
+tool call operates against that context.
+
+For **multiple** clusters — e.g. comparing or migrating workloads between `staging` and `prod` — configure
+`K8S_CONTEXTS` as a `name=kubeconfig_context;…` map (with `DEFAULT_K8S_CONTEXT` for the implicit default) and
+use `cm_multi_context`, which fans a call out across the configured contexts in parallel (alongside
+`DOCKER_CONTEXTS` / `SWARM_CONTEXTS` for the Docker/Swarm side of the same tool). See [Kubernetes](kubernetes.md)
+and [Usage → Multi-context](usage.md#multi-context) for the full tool surface and worked examples.
+
+**In short:** remote Docker/Podman hosts are reached through the shared **host inventory**; remote/multiple
+Kubernetes clusters are reached through **kubeconfig contexts**. The two mechanisms are independent and can be
+used side by side (e.g. `CONTAINER_MANAGER_TYPE=docker` with `host=` for a Docker fleet, while a separate
+`cm_k8s_*` call targets a Kubernetes cluster via `CONTAINER_MANAGER_KUBECONTEXT`).

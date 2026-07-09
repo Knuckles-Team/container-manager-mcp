@@ -162,7 +162,7 @@ from container_manager_mcp.container_manager import (
     list_inventory_hosts,
 )
 
-__version__ = "2.0.1"
+__version__ = "2.1.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
@@ -1007,6 +1007,190 @@ def register_compose_tools(mcp: FastMCP):
             return f"Error executing {action}: {e}"
 
 
+def register_k8sworkloads_tools(mcp: FastMCP):
+    """Register Kubernetes workload operations."""
+    if os.environ.get("K8SWORKLOADSTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_workloads import (
+            register_k8sworkloads_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8sconfig_tools(mcp: FastMCP):
+    """Register Kubernetes configuration operations."""
+    if os.environ.get("K8SCONFIGTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_config import (
+            register_k8sconfig_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8snetworking_tools(mcp: FastMCP):
+    """Register Kubernetes networking operations."""
+    if os.environ.get("K8SNETWORKINGTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_networking import (
+            register_k8snetworking_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8sstorage_tools(mcp: FastMCP):
+    """Register Kubernetes storage operations."""
+    if os.environ.get("K8SSTORAGETOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_storage import (
+            register_k8sstorage_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8srbac_tools(mcp: FastMCP):
+    """Register Kubernetes RBAC and security operations."""
+    if os.environ.get("K8SRBACTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_rbac import (
+            register_k8srbac_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8scluster_tools(mcp: FastMCP):
+    """Register Kubernetes cluster operations."""
+    if os.environ.get("K8SCLUSTERTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_cluster import (
+            register_k8scluster_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8sgovernance_tools(mcp: FastMCP):
+    """Register Kubernetes governance operations."""
+    if os.environ.get("K8SGOVERNANCETOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_governance import (
+            register_k8sgovernance_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_k8sobservability_tools(mcp: FastMCP):
+    """Register Kubernetes observability operations."""
+    if os.environ.get("K8SOBSERVABILITYTOOL", "True").lower() not in (
+        "true",
+        "1",
+        "yes",
+    ):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_k8s_observability import (
+            register_k8sobservability_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Kubernetes client not installed, skip registration
+        pass
+
+
+def register_podman_tools(mcp: FastMCP):
+    """Register Podman pod/network/volume tools."""
+    if os.environ.get("PODMANTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_podman import (
+            register_podman_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Podman client not installed, skip registration
+        pass
+
+
+def register_dockerswarm_tools(mcp: FastMCP):
+    """Register Docker Swarm tools."""
+    if os.environ.get("DOCKERSWARMTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_docker_swarm import (
+            register_dockerswarm_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Docker client not installed, skip registration
+        pass
+
+
+def register_multicontext_tools(mcp: FastMCP):
+    """Register multi-context container management tools."""
+    if os.environ.get("MULTICONTEXTTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_multi_context import (
+            register_multicontext_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # Multi-context manager not available, skip registration
+        pass
+
+
+def register_doctor_tools(mcp: FastMCP):
+    """Register the guided environment doctor tool (cm_doctor)."""
+    if os.environ.get("DOCTORTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_doctor import (
+            register_doctor_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # doctor engine unavailable, skip registration
+        pass
+
+
 def register_misc_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -1083,9 +1267,13 @@ def register_misc_tools(mcp: FastMCP):
             "networks",
             "services",
             "nodes",
+            "pods",
+            "deployments",
+            "namespaces",
+            "k8s_services",
         ] = Field(
             default="all",
-            description="Which resource inventory to ingest. 'all' sweeps containers/images/volumes/networks and (on a swarm manager) services/nodes.",
+            description="Which resource inventory to ingest. 'all' sweeps containers/images/volumes/networks and (on a swarm manager) services/nodes, and (on a kubernetes manager) pods/deployments/namespaces/k8s_services.",
         ),
         host: str | None = Field(
             default=None,
@@ -1125,11 +1313,15 @@ def register_misc_tools(mcp: FastMCP):
             )
 
         manager = create_manager(manager_type, host=host)
-        want = (
-            {"containers", "images", "volumes", "networks", "services", "nodes"}
-            if modality == "all"
-            else {modality}
-        )
+        is_k8s = type(manager).__name__ == "KubernetesManager"
+        if modality == "all":
+            # Docker/swarm modalities always sweep (services/nodes no-op off-swarm);
+            # the k8s modalities are only added when the active manager is Kubernetes.
+            want = {"containers", "images", "volumes", "networks", "services", "nodes"}
+            if is_k8s:
+                want |= {"pods", "deployments", "namespaces", "k8s_services"}
+        else:
+            want = {modality}
         result: dict[str, Any] = {"host": host, "modalities": {}}
 
         async def _sweep(name: str, lister, mapper, **kw) -> None:
@@ -1145,7 +1337,9 @@ def register_misc_tools(mcp: FastMCP):
                     "listed": len(data),
                     "ingested": ingested,
                 }
-            except Exception as e:  # noqa: BLE001 — one modality failing must not abort the sweep
+            except (
+                Exception
+            ) as e:  # noqa: BLE001 — one modality failing must not abort the sweep
                 result["modalities"][name] = {"error": str(e)}
 
         if "containers" in want:
@@ -1165,6 +1359,23 @@ def register_misc_tools(mcp: FastMCP):
             await _sweep("services", manager.list_services, kg_ingest.ingest_services)
         if "nodes" in want:
             await _sweep("nodes", manager.list_nodes, kg_ingest.ingest_nodes)
+        if "pods" in want:
+            await _sweep("pods", manager.list_pods, kg_ingest.ingest_pods)
+        if "deployments" in want:
+            # Deployment-shaped list_services on the Kubernetes manager.
+            await _sweep(
+                "deployments", manager.list_services, kg_ingest.ingest_deployments
+            )
+        if "namespaces" in want:
+            await _sweep(
+                "namespaces", manager.list_namespaces, kg_ingest.ingest_namespaces
+            )
+        if "k8s_services" in want:
+            await _sweep(
+                "k8s_services",
+                manager.list_native_services,
+                kg_ingest.ingest_k8s_services,
+            )
 
         return result
 
@@ -1182,6 +1393,10 @@ def get_mcp_instance() -> tuple[Any, ...]:
     # Depends(get_client) client; condensed gates each register_*_tools via
     # setting("<TAG>TOOL", True). ContainerManagerBase is passed as the closest
     # importable client class for the verbose tier.
+
+    # Single registration path: register_tool_surface() auto-discovers every
+    # register_<tag>_tools in this module (base + the 8 themed k8s wrappers +
+    # podman/docker/multi-context) and gates each on its <TAG>TOOL setting.
     register_tool_surface(
         mcp,
         client_cls=ContainerManagerBase,

@@ -28,7 +28,10 @@ swarm **manager** node.
 ## When NOT to use
 - Single-host container/image lifecycle or `exec`/logs → `container-manager-lifecycle`.
 - Plain `docker-compose` stacks (non-swarm) → `cm_compose_operations` in the lifecycle skill.
-- Kubernetes → this package's k8s surface, not these tools.
+- Kubernetes → `container-manager-kubernetes-operations`, not these tools. If the
+  target is a Kubernetes cluster, `cm_swarm_operations action=list_nodes` /
+  `list_services` are the **wrong tools entirely** — they only understand Docker
+  Swarm's control plane, not the Kubernetes API.
 
 ## Prerequisites & environment
 Connect via the `mcp-client` skill against the **`container-manager-mcp`** MCP server.
@@ -79,9 +82,19 @@ cm_swarm_operations action=remove_service service_id=<id|name> host=<manager-ali
   placement/constraints are not exposed by the condensed tool.
 - `init_swarm` / `leave_swarm` change cluster membership — confirm intent; `leave_swarm`
   on a manager needs `force=true`.
+- `cm_swarm_operations action=list_nodes` / `list_services` return **Swarm-shaped**
+  records (replicated service + Swarm node) — a different shape from the Kubernetes
+  surface's `cm_k8s_workloads` (Deployments/Pods) and `cm_k8s_cluster action=list_nodes`
+  (Kubernetes Node objects). If the cluster in front of you speaks the Kubernetes API,
+  use `container-manager-kubernetes-operations` instead — pointing these tools at a
+  Kubernetes cluster fails outright (there is no Swarm control plane to answer them).
 
 ## Related
 - **`container-manager-lifecycle`** — the individual containers behind service tasks
   (logs/exec/inspect) on each host.
+- **`container-manager-kubernetes-operations`** — the equivalent surface for a real
+  Kubernetes cluster; pick this skill instead when the target isn't Docker Swarm.
+- **`container-manager-config-walkthrough`** — first-time setup / choosing
+  `CONTAINER_MANAGER_TYPE` before using this skill.
 - **`container-manager-kg-ingestion`** — snapshot `:SwarmService` / `:SwarmNode`
   inventory into the knowledge graph.

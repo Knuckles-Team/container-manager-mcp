@@ -39,11 +39,47 @@
     rdfs:label "Swarm Node" ;
     rdfs:comment "A node participating in a Docker Swarm cluster, with a manager/worker role (cm_swarm_operations: list_nodes)." .
 
+# --- net-new Kubernetes classes (owl:Class) ---
+# Materialized by the cm_k8s_* themed tools (cm_k8s_workloads / cm_k8s_config /
+# cm_k8s_networking / cm_k8s_cluster) via cm_ingest_inventory and the connector presets.
+
+:Pod a owl:Class ;
+    rdfs:label "Kubernetes Pod" ;
+    rdfs:comment "A Kubernetes Pod — the smallest schedulable unit, one or more co-located containers (cm_k8s_workloads: list_pods / describe_pod)." .
+
+:Deployment a owl:Class ;
+    rdfs:label "Kubernetes Deployment" ;
+    rdfs:comment "A Kubernetes Deployment — declarative desired-state ReplicaSet controller for Pods (cm_k8s_workloads: list_services / create_service)." .
+
+:StatefulSet a owl:Class ;
+    rdfs:label "Kubernetes StatefulSet" ;
+    rdfs:comment "A Kubernetes StatefulSet — ordered, stable-identity Pod controller for stateful workloads (cm_k8s_workloads)." .
+
+:DaemonSet a owl:Class ;
+    rdfs:label "Kubernetes DaemonSet" ;
+    rdfs:comment "A Kubernetes DaemonSet — runs a Pod copy on every (or selected) K8sNode (cm_k8s_workloads)." .
+
+:K8sService a owl:Class ;
+    rdfs:label "Kubernetes Service" ;
+    rdfs:comment "A native Kubernetes (core/v1) Service exposing a set of Pods (ClusterIP/NodePort/LoadBalancer) (cm_k8s_networking: list_k8s_services)." .
+
+:Namespace a owl:Class ;
+    rdfs:label "Kubernetes Namespace" ;
+    rdfs:comment "A Kubernetes Namespace — a virtual cluster partition scoping most namespaced resources (cm_k8s_config: list_namespaces)." .
+
+:K8sNode a owl:Class ;
+    rdfs:label "Kubernetes Node" ;
+    rdfs:comment "A Kubernetes worker/control-plane Node onto which Pods are scheduled (cm_k8s_cluster: list_nodes)." .
+
+:Ingress a owl:Class ;
+    rdfs:label "Kubernetes Ingress" ;
+    rdfs:comment "A Kubernetes Ingress — HTTP(S) routing rules exposing K8sServices externally (cm_k8s_networking: list_ingress)." .
+
 # --- links (owl:ObjectProperty) ---
 
 :usesImage a owl:ObjectProperty ;
     rdfs:label "uses image" ;
-    rdfs:comment "Links a Container or SwarmService to the ContainerImage it was created from." ;
+    rdfs:comment "Links a Container, SwarmService, Pod or Deployment to the ContainerImage it was created from." ;
     rdfs:range :ContainerImage .
 
 :mountsVolume a owl:ObjectProperty ;
@@ -66,6 +102,31 @@
     rdfs:label "hosts resource" ;
     rdfs:comment "Links a Host to a Container, ContainerVolume, ContainerNetwork or SwarmNode it hosts." ;
     rdfs:domain :Host .
+
+# --- Kubernetes links (owl:ObjectProperty) ---
+
+:runsInNamespace a owl:ObjectProperty ;
+    rdfs:label "runs in namespace" ;
+    rdfs:comment "Links a namespaced Kubernetes resource (Pod, Deployment, K8sService) to the Namespace that scopes it." ;
+    rdfs:range :Namespace .
+
+:managedByDeployment a owl:ObjectProperty ;
+    rdfs:label "managed by deployment" ;
+    rdfs:comment "Links a Pod to the Deployment (via its ReplicaSet) that owns and manages it." ;
+    rdfs:domain :Pod ;
+    rdfs:range :Deployment .
+
+:scheduledOnK8sNode a owl:ObjectProperty ;
+    rdfs:label "scheduled on k8s node" ;
+    rdfs:comment "Links a Pod to the K8sNode the scheduler placed it on." ;
+    rdfs:domain :Pod ;
+    rdfs:range :K8sNode .
+
+:exposedByIngress a owl:ObjectProperty ;
+    rdfs:label "exposed by ingress" ;
+    rdfs:comment "Links a K8sService to an Ingress that routes external HTTP(S) traffic to it." ;
+    rdfs:domain :K8sService ;
+    rdfs:range :Ingress .
 
 # --- fields (owl:DatatypeProperty) ---
 
@@ -145,11 +206,60 @@
     rdfs:comment "Native identifier of the resource in its container engine (container id, image id, volume name, service id, node id)." ;
     rdfs:range xsd:string .
 
+# --- Kubernetes fields (owl:DatatypeProperty) ---
+
+:podPhase a owl:DatatypeProperty ;
+    rdfs:label "pod phase" ;
+    rdfs:comment "Lifecycle phase of a Pod (Pending, Running, Succeeded, Failed, Unknown)." ;
+    rdfs:domain :Pod ;
+    rdfs:range xsd:string .
+
+:deploymentReplicas a owl:DatatypeProperty ;
+    rdfs:label "deployment replicas" ;
+    rdfs:comment "Desired replica count of a Deployment." ;
+    rdfs:domain :Deployment ;
+    rdfs:range xsd:integer .
+
+:deploymentReadyReplicas a owl:DatatypeProperty ;
+    rdfs:label "deployment ready replicas" ;
+    rdfs:comment "Number of ready replicas currently reported by a Deployment's status." ;
+    rdfs:domain :Deployment ;
+    rdfs:range xsd:integer .
+
+:serviceType a owl:DatatypeProperty ;
+    rdfs:label "service type" ;
+    rdfs:comment "Type of a K8sService (ClusterIP, NodePort, LoadBalancer)." ;
+    rdfs:domain :K8sService ;
+    rdfs:range xsd:string .
+
+:namespaceStatus a owl:DatatypeProperty ;
+    rdfs:label "namespace status" ;
+    rdfs:comment "Lifecycle phase of a Namespace (Active, Terminating)." ;
+    rdfs:domain :Namespace ;
+    rdfs:range xsd:string .
+
+:nodeCapacity a owl:DatatypeProperty ;
+    rdfs:label "node capacity" ;
+    rdfs:comment "Total advertised compute resources of a K8sNode (cpu/memory/pods)." ;
+    rdfs:domain :K8sNode ;
+    rdfs:range xsd:string .
+
+:nodeAllocatable a owl:DatatypeProperty ;
+    rdfs:label "node allocatable" ;
+    rdfs:comment "Schedulable (allocatable) compute resources of a K8sNode after system reservations." ;
+    rdfs:domain :K8sNode ;
+    rdfs:range xsd:string .
+
 <http://knuckles.team/kg/container> a owl:Ontology ;
     rdfs:label "Container Manager Ontology" ;
     rdfs:comment """Container-runtime resource model for the container-manager-mcp connector —
     Docker / Podman / Swarm containers, images, volumes, networks, swarm services and nodes,
     with their usesImage / mountsVolume / attachedToNetwork / scheduledOnNode relationships.
+    Also covers the Kubernetes surface — :Pod / :Deployment / :StatefulSet / :DaemonSet /
+    :K8sService / :Namespace / :K8sNode / :Ingress with runsInNamespace / managedByDeployment /
+    scheduledOnK8sNode / exposedByIngress — materialized by the cm_k8s_* themed tools
+    (cm_k8s_workloads / cm_k8s_config / cm_k8s_networking / cm_k8s_storage / cm_k8s_rbac /
+    cm_k8s_cluster / cm_k8s_governance / cm_k8s_observability) via cm_ingest_inventory.
     Reuses the hub :Container / :ContainerImage / :ContainerStack / :Host classes and adds the
-    volume/network/swarm resources, federated into the agent-utilities knowledge-graph hub.""" ;
+    volume/network/swarm/k8s resources, federated into the agent-utilities knowledge-graph hub.""" ;
     owl:imports <http://knuckles.team/kg> .

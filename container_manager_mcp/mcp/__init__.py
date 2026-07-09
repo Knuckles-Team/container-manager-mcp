@@ -1,27 +1,38 @@
 """MCP tool registration modules for container-manager-mcp.
 
-Auto-generated during ecosystem standardization.
-Each domain has its own module with a register_*_tools function.
+The base container/image/volume/network/swarm/system/compose/info/misc tools are
+defined inline in ``container_manager_mcp.mcp_server`` and auto-discovered by
+``register_tool_surface``. This subpackage holds the themed Kubernetes dispatchers
+(8 ``cm_k8s_*`` tools) plus the Docker Swarm/Podman and multi-context tools; the
+thin wrappers in ``mcp_server`` lazy-import each ``register_*_tools`` below.
 """
 
-from container_manager_mcp.mcp.mcp_compose import register_compose_tools
-from container_manager_mcp.mcp.mcp_container import register_container_tools
-from container_manager_mcp.mcp.mcp_image import register_image_tools
-from container_manager_mcp.mcp.mcp_info import register_info_tools
-from container_manager_mcp.mcp.mcp_misc import register_misc_tools
-from container_manager_mcp.mcp.mcp_network import register_network_tools
-from container_manager_mcp.mcp.mcp_swarm import register_swarm_tools
-from container_manager_mcp.mcp.mcp_system import register_system_tools
-from container_manager_mcp.mcp.mcp_volume import register_volume_tools
+from container_manager_mcp.mcp.mcp_docker_swarm import register_dockerswarm_tools
+from container_manager_mcp.mcp.mcp_doctor import register_doctor_tools
+from container_manager_mcp.mcp.mcp_k8s_cluster import register_k8scluster_tools
+from container_manager_mcp.mcp.mcp_k8s_config import register_k8sconfig_tools
+from container_manager_mcp.mcp.mcp_k8s_governance import register_k8sgovernance_tools
+from container_manager_mcp.mcp.mcp_k8s_networking import register_k8snetworking_tools
+from container_manager_mcp.mcp.mcp_k8s_observability import (
+    register_k8sobservability_tools,
+)
+from container_manager_mcp.mcp.mcp_k8s_rbac import register_k8srbac_tools
+from container_manager_mcp.mcp.mcp_k8s_storage import register_k8sstorage_tools
+from container_manager_mcp.mcp.mcp_k8s_workloads import register_k8sworkloads_tools
+from container_manager_mcp.mcp.mcp_multi_context import register_multicontext_tools
+from container_manager_mcp.mcp.mcp_podman import register_podman_tools
 
 __all__ = [
-    "register_compose_tools",
-    "register_container_tools",
-    "register_image_tools",
-    "register_info_tools",
-    "register_misc_tools",
-    "register_network_tools",
-    "register_swarm_tools",
-    "register_system_tools",
-    "register_volume_tools",
+    "register_k8sworkloads_tools",
+    "register_k8sconfig_tools",
+    "register_k8snetworking_tools",
+    "register_k8sstorage_tools",
+    "register_k8srbac_tools",
+    "register_k8scluster_tools",
+    "register_k8sgovernance_tools",
+    "register_k8sobservability_tools",
+    "register_dockerswarm_tools",
+    "register_podman_tools",
+    "register_multicontext_tools",
+    "register_doctor_tools",
 ]

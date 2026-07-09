@@ -92,4 +92,5 @@ nav:
   - Deployment: deployment.md
   - Usage (API / CLI / MCP): usage.md
   - Multi-Host: multi_host.md
+  - Kubernetes: kubernetes.md
   - Concepts: concepts.md

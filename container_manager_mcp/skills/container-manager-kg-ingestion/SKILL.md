@@ -25,6 +25,8 @@ engine-guarded: with no reachable KG engine the tool still lists the inventory a
 ## When to use
 - Record the current containers/images/volumes/networks (and swarm services/nodes) of a
   host into the KG for later querying, drift detection, or cross-source joins.
+- Record a Kubernetes cluster's live pods/deployments/namespaces/native services into
+  the KG (when `CONTAINER_MANAGER_TYPE=kubernetes`).
 - Refresh the KG snapshot after a deploy or before an audit.
 
 ## When NOT to use
@@ -49,7 +51,24 @@ the hub under `http://knuckles.team/kg/container` (reusing the shared `:Containe
 ## Tools & actions
 | Tool | Modalities |
 |------|------------|
-| `cm_ingest_inventory` | `all`, `containers`, `images`, `volumes`, `networks`, `services`, `nodes` |
+| `cm_ingest_inventory` | `all`, `containers`, `images`, `volumes`, `networks`, `services`, `nodes`, `pods`, `deployments`, `namespaces`, `k8s_services` |
+
+> **Kubernetes modalities (`pods`, `deployments`, `namespaces`, `k8s_services`):**
+> live. `cm_ingest_inventory` snapshots a Kubernetes cluster into `:Pod` /
+> `:Deployment` / `:Namespace` / `:K8sService` typed nodes (mirroring the
+> containers/images pattern) alongside the Docker/Podman/Swarm modalities. `all`
+> sweeps them automatically **when the active manager is a Kubernetes manager**
+> (`manager_type=kubernetes`); on a Docker/Swarm manager `all` stays Docker/Swarm-scoped.
+> Call a single k8s modality directly, e.g.
+> `cm_ingest_inventory action=... modality=pods manager_type=kubernetes`.
+
+### Kubernetes modalities
+| Modality | Node type | Source list | Links |
+|----------|-----------|-------------|-------|
+| `pods` | `:Pod` | `cm_k8s_workloads action=list_pods` | `:runsOn` → `:Host`/Node, `:usesImage` → `:ContainerImage` |
+| `deployments` | `:Deployment` | `cm_k8s_workloads` (StatefulSet/DaemonSet/ReplicaSet listers) | `:scheduledOnNode` fan-out via owned Pods |
+| `namespaces` | `:Namespace` | `cm_k8s_config action=list_namespaces` | scoping context for the above |
+| `k8s_services` | `:K8sService` | `cm_k8s_networking action=list_k8s_services` | `:selects` → `:Pod` via selector |
 
 ### Key parameters
 - `modality` — which inventory to sweep (`all` covers everything; swarm modalities are
@@ -81,6 +100,13 @@ Swarm services + nodes from a manager:
 cm_ingest_inventory modality=services host=<manager-alias>
 cm_ingest_inventory modality=nodes host=<manager-alias>
 ```
+Kubernetes snapshot (once `pods`/`deployments`/`namespaces`/`k8s_services` modalities
+land — see the note above; today, read live via `container-manager-kubernetes-operations`):
+```
+cm_ingest_inventory modality=pods
+cm_ingest_inventory modality=namespaces
+cm_ingest_inventory modality=k8s_services
+```
 
 ## Gotchas
 - Returns `{"modalities": {<name>: {"listed": n, "ingested": {...}|null}}}`; `ingested:null`
@@ -92,7 +118,9 @@ cm_ingest_inventory modality=nodes host=<manager-alias>
 - This is a read+ingest tool (idempotent); it never mutates the containers themselves.
 
 ## Related
-- **`container-manager-lifecycle`** / **`container-manager-swarm`** — produce the inventory
-  this skill snapshots.
+- **`container-manager-lifecycle`** / **`container-manager-swarm`** /
+  **`container-manager-kubernetes-operations`** — produce the inventory this skill
+  snapshots (or, for Kubernetes today, the live reads to hand-map until the
+  `pods`/`deployments`/`namespaces`/`k8s_services` modalities are wired).
 - The underlying mapper lives in `container_manager_mcp.kg_ingest`
   (CONCEPT:AU-KG.ingest.enterprise-source-extractor).
