@@ -36,21 +36,47 @@ NEW_METHODS = {
 }
 BASELINE_METHODS = {
     # Swarm-parity ABC surface
-    "list_nodes", "inspect_node", "update_node", "remove_node",
-    "list_services", "create_service", "scale_service", "update_service",
-    "service_ps", "service_logs", "init_swarm", "leave_swarm",
+    "list_nodes",
+    "inspect_node",
+    "update_node",
+    "remove_node",
+    "list_services",
+    "create_service",
+    "scale_service",
+    "update_service",
+    "service_ps",
+    "service_logs",
+    "init_swarm",
+    "leave_swarm",
     # deduped methods (one copy must remain)
-    "exec_pod", "attach_pod", "port_forward_pod", "create_ingress",
-    "list_persistent_volumes", "list_persistent_volume_claims",
-    "create_persistent_volume_claim", "list_storage_classes",
-    "list_volume_snapshots", "cordon_node", "drain_node", "taint_node",
-    "cluster_info_dump", "list_jobs", "list_cron_jobs",
-    "list_resource_quotas", "list_limit_ranges", "list_priority_classes",
-    "list_pod_disruption_budgets", "list_horizontal_pod_autoscalers",
+    "exec_pod",
+    "attach_pod",
+    "port_forward_pod",
+    "create_ingress",
+    "list_persistent_volumes",
+    "list_persistent_volume_claims",
+    "create_persistent_volume_claim",
+    "list_storage_classes",
+    "list_volume_snapshots",
+    "cordon_node",
+    "drain_node",
+    "taint_node",
+    "cluster_info_dump",
+    "list_jobs",
+    "list_cron_jobs",
+    "list_resource_quotas",
+    "list_limit_ranges",
+    "list_priority_classes",
+    "list_pod_disruption_budgets",
+    "list_horizontal_pod_autoscalers",
     # RBAC (repaired)
-    "list_roles", "create_role", "auth_can_i", "create_aggregated_cluster_role",
+    "list_roles",
+    "create_role",
+    "auth_can_i",
+    "create_aggregated_cluster_role",
     # label/annotate now delegate to patch_resource
-    "label_resource", "annotate_resource",
+    "label_resource",
+    "annotate_resource",
 }
 
 
@@ -93,7 +119,10 @@ def test_composed_class_exposes_expected_surface():
 
 
 def test_no_duplicate_public_methods_on_composed_class():
-    names = [n for n, _ in inspect.getmembers(KubernetesManager, predicate=inspect.isfunction)]
+    names = [
+        n
+        for n, _ in inspect.getmembers(KubernetesManager, predicate=inspect.isfunction)
+    ]
     dupes = [n for n, c in collections.Counter(names).items() if c > 1]
     assert not dupes, f"duplicate public methods: {dupes}"
 

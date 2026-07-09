@@ -2,6 +2,7 @@
 
 import os
 from typing import Any
+
 import container_manager_mcp.k8s_manager as _km
 
 
@@ -53,6 +54,7 @@ class _K8sBase:
         self.custom_objects = _km.k8s_client.CustomObjectsApi()
         self.version_api = _km.k8s_client.VersionApi()
         self.apiextensions = _km.k8s_client.ApiextensionsV1Api()
+
     @staticmethod
     def _unsupported(op: str) -> RuntimeError:
         return RuntimeError(
@@ -60,6 +62,7 @@ class _K8sBase:
             "Kubernetes backend; use create_service / list_services / "
             "scale_service / service_ps / service_logs instead."
         )
+
     @staticmethod
     def _ts(value: Any) -> str:
         """Render a Kubernetes datetime (or string) as ISO 8601."""
@@ -68,6 +71,7 @@ class _K8sBase:
         if hasattr(value, "isoformat"):
             return value.isoformat()
         return str(value)
+
     @staticmethod
     def _node_role(labels: dict[str, str]) -> str:
         """Map Kubernetes role labels onto Swarm vocabulary."""
@@ -78,6 +82,7 @@ class _K8sBase:
             ):
                 return "manager"
         return "worker"
+
     @staticmethod
     def _parse_mounts(mounts: list[str] | None) -> tuple[list, list]:
         """Translate ``source:target`` bind strings into volumes + mounts.
@@ -95,11 +100,15 @@ class _K8sBase:
             name = f"vol{idx}"
             volumes.append(
                 _km.k8s_client.V1Volume(
-                    name=name, host_path=_km.k8s_client.V1HostPathVolumeSource(path=source)
+                    name=name,
+                    host_path=_km.k8s_client.V1HostPathVolumeSource(path=source),
                 )
             )
-            volume_mounts.append(_km.k8s_client.V1VolumeMount(name=name, mount_path=target))
+            volume_mounts.append(
+                _km.k8s_client.V1VolumeMount(name=name, mount_path=target)
+            )
         return volumes, volume_mounts
+
     @staticmethod
     def _constraints_to_node_selector(constraints: list[str] | None) -> dict[str, str]:
         """Translate Swarm placement constraints into a nodeSelector.
@@ -117,6 +126,7 @@ class _K8sBase:
             elif lhs == "node.hostname":
                 selector["kubernetes.io/hostname"] = rhs
         return selector
+
     def get_version(self) -> dict:
         params: dict[str, Any] = {}
         try:
@@ -133,6 +143,7 @@ class _K8sBase:
         except _km.ApiException as e:
             self.log_action("get_version", params, error=e)
             raise RuntimeError(f"Failed to get version: {str(e)}") from e
+
     def get_info(self) -> dict:
         params: dict[str, Any] = {}
         try:
@@ -156,6 +167,7 @@ class _K8sBase:
         except _km.ApiException as e:
             self.log_action("get_info", params, error=e)
             raise RuntimeError(f"Failed to get info: {str(e)}") from e
+
     def init_swarm(self, advertise_addr: str | None = None) -> dict:
         result = {
             "status": "kubernetes",
@@ -163,6 +175,7 @@ class _K8sBase:
         }
         self.log_action("init_swarm", {"advertise_addr": advertise_addr}, result)
         return result
+
     def leave_swarm(self, force: bool = False) -> dict:
         result = {
             "status": "kubernetes",
@@ -170,6 +183,7 @@ class _K8sBase:
         }
         self.log_action("leave_swarm", {"force": force}, result)
         return result
+
     def _node_summary(self, node) -> dict:
         meta = node.metadata
         info = node.status.node_info if node.status else None
@@ -193,6 +207,7 @@ class _K8sBase:
             },
             "manager": self._node_role(meta.labels or {}) == "manager",
         }
+
     def _drain_node(self, node_id: str) -> None:
         """Evict non-mirror, non-daemonset pods from a cordoned node."""
         field = f"spec.nodeName={node_id}"
@@ -214,6 +229,7 @@ class _K8sBase:
                 )
             except _km.ApiException:
                 continue
+
     def _deployment_summary(self, dep) -> dict:
         spec = dep.spec
         containers = spec.template.spec.containers if spec and spec.template else []

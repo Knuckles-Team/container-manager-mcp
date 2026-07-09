@@ -1,6 +1,7 @@
 """GovernanceMixin for KubernetesManager (split from k8s_manager.py)."""
 
 from typing import Any
+
 import container_manager_mcp.k8s_manager as _km
 
 
@@ -16,7 +17,9 @@ class GovernanceMixin:
                     "name": rq.metadata.name,
                     "namespace": rq.metadata.namespace,
                     "hard": rq.spec.hard.dict() if rq.spec and rq.spec.hard else {},
-                    "used": rq.status.used.dict() if rq.status and rq.status.used else {},
+                    "used": (
+                        rq.status.used.dict() if rq.status and rq.status.used else {}
+                    ),
                     "created": self._ts(rq.metadata.creation_timestamp),
                 }
                 for rq in quotas
@@ -26,6 +29,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("list_resource_quotas", params, error=e)
             raise RuntimeError(f"Failed to list resource quotas: {str(e)}") from e
+
     def list_limit_ranges(self, namespace: str | None = None) -> list[dict]:
         """List LimitRanges in a namespace."""
         params = {"namespace": namespace}
@@ -46,6 +50,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("list_limit_ranges", params, error=e)
             raise RuntimeError(f"Failed to list limit ranges: {str(e)}") from e
+
     def list_priority_classes(self) -> list[dict]:
         """List PriorityClasses."""
         params: dict[str, Any] = {}
@@ -57,7 +62,11 @@ class GovernanceMixin:
                     "name": pc.metadata.name,
                     "value": pc.value if pc.value else 0,
                     "global_default": pc.global_default if pc.global_default else False,
-                    "description": pc.metadata.annotations.get("description") if pc.metadata and pc.metadata.annotations else "",
+                    "description": (
+                        pc.metadata.annotations.get("description")
+                        if pc.metadata and pc.metadata.annotations
+                        else ""
+                    ),
                     "created": self._ts(pc.metadata.creation_timestamp),
                 }
                 for pc in pclasses
@@ -65,10 +74,11 @@ class GovernanceMixin:
             self.log_action("list_priority_classes", params, {"count": len(result)})
             return result
         except ImportError:
-            raise RuntimeError("Scheduling client not available")
+            raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("list_priority_classes", params, error=e)
             raise RuntimeError(f"Failed to list priority classes: {str(e)}") from e
+
     def list_pod_disruption_budgets(self, namespace: str | None = None) -> list[dict]:
         """List PodDisruptionBudgets in a namespace."""
         params = {"namespace": namespace}
@@ -82,19 +92,28 @@ class GovernanceMixin:
                     "namespace": pdb.metadata.namespace,
                     "min_available": pdb.spec.min_available if pdb.spec else None,
                     "max_unavailable": pdb.spec.max_unavailable if pdb.spec else None,
-                    "disruptions_allowed": pdb.status.disruptions_allowed if pdb.status else 0,
+                    "disruptions_allowed": (
+                        pdb.status.disruptions_allowed if pdb.status else 0
+                    ),
                     "created": self._ts(pdb.metadata.creation_timestamp),
                 }
                 for pdb in pdbs
             ]
-            self.log_action("list_pod_disruption_budgets", params, {"count": len(result)})
+            self.log_action(
+                "list_pod_disruption_budgets", params, {"count": len(result)}
+            )
             return result
         except ImportError:
-            raise RuntimeError("Policy client not available")
+            raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("list_pod_disruption_budgets", params, error=e)
-            raise RuntimeError(f"Failed to list pod disruption budgets: {str(e)}") from e
-    def list_horizontal_pod_autoscalers(self, namespace: str | None = None) -> list[dict]:
+            raise RuntimeError(
+                f"Failed to list pod disruption budgets: {str(e)}"
+            ) from e
+
+    def list_horizontal_pod_autoscalers(
+        self, namespace: str | None = None
+    ) -> list[dict]:
         """List HorizontalPodAutoscalers in a namespace."""
         params = {"namespace": namespace}
         try:
@@ -107,19 +126,28 @@ class GovernanceMixin:
                     "namespace": hpa.metadata.namespace,
                     "min_replicas": hpa.spec.min_replicas if hpa.spec else 1,
                     "max_replicas": hpa.spec.max_replicas if hpa.spec else 0,
-                    "current_replicas": hpa.status.current_replicas if hpa.status else 0,
-                    "target_ref": hpa.spec.scale_target_ref.dict() if hpa.spec and hpa.spec.scale_target_ref else {},
+                    "current_replicas": (
+                        hpa.status.current_replicas if hpa.status else 0
+                    ),
+                    "target_ref": (
+                        hpa.spec.scale_target_ref.dict()
+                        if hpa.spec and hpa.spec.scale_target_ref
+                        else {}
+                    ),
                     "created": self._ts(hpa.metadata.creation_timestamp),
                 }
                 for hpa in hpas
             ]
-            self.log_action("list_horizontal_pod_autoscalers", params, {"count": len(result)})
+            self.log_action(
+                "list_horizontal_pod_autoscalers", params, {"count": len(result)}
+            )
             return result
         except ImportError:
-            raise RuntimeError("Autoscaling client not available")
+            raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("list_horizontal_pod_autoscalers", params, error=e)
             raise RuntimeError(f"Failed to list HPAs: {str(e)}") from e
+
     def describe_resource_quota(self, name: str, namespace: str) -> dict:
         """Describe a ResourceQuota."""
         params = {"name": name, "namespace": namespace}
@@ -139,14 +167,14 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("describe_resource_quota", params, error=e)
             raise RuntimeError(f"Failed to describe ResourceQuota: {str(e)}") from e
+
     def create_resource_quota(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a ResourceQuota."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
             quota_spec = _km.k8s_client.V1ResourceQuotaSpec(**spec)
             quota = _km.k8s_client.V1ResourceQuota(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=quota_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=quota_spec
             )
             created = self.core.create_namespaced_resource_quota(namespace, quota)
             result = {
@@ -160,6 +188,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("create_resource_quota", params, error=e)
             raise RuntimeError(f"Failed to create ResourceQuota: {str(e)}") from e
+
     def update_resource_quota(self, name: str, namespace: str, spec: dict) -> dict:
         """Update a ResourceQuota."""
         params = {"name": name, "namespace": namespace, "spec": spec}
@@ -167,7 +196,9 @@ class GovernanceMixin:
             existing = self.core.read_namespaced_resource_quota(name, namespace)
             quota_spec = _km.k8s_client.V1ResourceQuotaSpec(**spec)
             existing.spec = quota_spec
-            updated = self.core.patch_namespaced_resource_quota(name, namespace, existing)
+            updated = self.core.patch_namespaced_resource_quota(
+                name, namespace, existing
+            )
             result = {
                 "name": updated.metadata.name,
                 "namespace": updated.metadata.namespace,
@@ -179,6 +210,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("update_resource_quota", params, error=e)
             raise RuntimeError(f"Failed to update ResourceQuota: {str(e)}") from e
+
     def delete_resource_quota(self, name: str, namespace: str) -> dict:
         """Delete a ResourceQuota."""
         params = {"name": name, "namespace": namespace}
@@ -190,6 +222,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("delete_resource_quota", params, error=e)
             raise RuntimeError(f"Failed to delete ResourceQuota: {str(e)}") from e
+
     def describe_limit_range(self, name: str, namespace: str) -> dict:
         """Describe a LimitRange."""
         params = {"name": name, "namespace": namespace}
@@ -208,14 +241,14 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("describe_limit_range", params, error=e)
             raise RuntimeError(f"Failed to describe LimitRange: {str(e)}") from e
+
     def create_limit_range(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a LimitRange."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
             limit_spec = _km.k8s_client.V1LimitRangeSpec(**spec)
             limit_range = _km.k8s_client.V1LimitRange(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=limit_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=limit_spec
             )
             created = self.core.create_namespaced_limit_range(namespace, limit_range)
             result = {
@@ -229,6 +262,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("create_limit_range", params, error=e)
             raise RuntimeError(f"Failed to create LimitRange: {str(e)}") from e
+
     def delete_limit_range(self, name: str, namespace: str) -> dict:
         """Delete a LimitRange."""
         params = {"name": name, "namespace": namespace}
@@ -240,6 +274,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("delete_limit_range", params, error=e)
             raise RuntimeError(f"Failed to delete LimitRange: {str(e)}") from e
+
     def describe_priority_class(self, name: str) -> dict:
         """Describe a PriorityClass."""
         params = {"name": name}
@@ -259,10 +294,11 @@ class GovernanceMixin:
             self.log_action("describe_priority_class", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Scheduling client not available")
+            raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_priority_class", params, error=e)
             raise RuntimeError(f"Failed to describe PriorityClass: {str(e)}") from e
+
     def create_priority_class(self, name: str, spec: dict) -> dict:
         """Create a PriorityClass."""
         params = {"name": name, "spec": spec}
@@ -284,10 +320,11 @@ class GovernanceMixin:
             self.log_action("create_priority_class", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Scheduling client not available")
+            raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("create_priority_class", params, error=e)
             raise RuntimeError(f"Failed to create PriorityClass: {str(e)}") from e
+
     def delete_priority_class(self, name: str) -> dict:
         """Delete a PriorityClass."""
         params = {"name": name}
@@ -298,10 +335,11 @@ class GovernanceMixin:
             self.log_action("delete_priority_class", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Scheduling client not available")
+            raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_priority_class", params, error=e)
             raise RuntimeError(f"Failed to delete PriorityClass: {str(e)}") from e
+
     def describe_pod_disruption_budget(self, name: str, namespace: str) -> dict:
         """Describe a PodDisruptionBudget."""
         params = {"name": name, "namespace": namespace}
@@ -320,19 +358,23 @@ class GovernanceMixin:
             self.log_action("describe_pod_disruption_budget", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Policy client not available")
+            raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_pod_disruption_budget", params, error=e)
-            raise RuntimeError(f"Failed to describe PodDisruptionBudget: {str(e)}") from e
-    def create_pod_disruption_budget(self, name: str, namespace: str, spec: dict) -> dict:
+            raise RuntimeError(
+                f"Failed to describe PodDisruptionBudget: {str(e)}"
+            ) from e
+
+    def create_pod_disruption_budget(
+        self, name: str, namespace: str, spec: dict
+    ) -> dict:
         """Create a PodDisruptionBudget."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
             policy_api = self.policy
             pdb_spec = _km.k8s_client.V1PodDisruptionBudgetSpec(**spec)
             pdb = _km.k8s_client.V1PodDisruptionBudget(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=pdb_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=pdb_spec
             )
             created = policy_api.create_namespaced_pod_disruption_budget(namespace, pdb)
             result = {
@@ -344,10 +386,11 @@ class GovernanceMixin:
             self.log_action("create_pod_disruption_budget", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Policy client not available")
+            raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("create_pod_disruption_budget", params, error=e)
             raise RuntimeError(f"Failed to create PodDisruptionBudget: {str(e)}") from e
+
     def delete_pod_disruption_budget(self, name: str, namespace: str) -> dict:
         """Delete a PodDisruptionBudget."""
         params = {"name": name, "namespace": namespace}
@@ -358,16 +401,19 @@ class GovernanceMixin:
             self.log_action("delete_pod_disruption_budget", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Policy client not available")
+            raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_pod_disruption_budget", params, error=e)
             raise RuntimeError(f"Failed to delete PodDisruptionBudget: {str(e)}") from e
+
     def describe_horizontal_pod_autoscaler(self, name: str, namespace: str) -> dict:
         """Describe a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace}
         try:
             autoscaling_api = self.autoscaling
-            hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
+            hpa = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(
+                name, namespace
+            )
             result = {
                 "name": hpa.metadata.name,
                 "namespace": hpa.metadata.namespace,
@@ -380,21 +426,27 @@ class GovernanceMixin:
             self.log_action("describe_horizontal_pod_autoscaler", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Autoscaling client not available")
+            raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_horizontal_pod_autoscaler", params, error=e)
-            raise RuntimeError(f"Failed to describe HorizontalPodAutoscaler: {str(e)}") from e
-    def create_horizontal_pod_autoscaler(self, name: str, namespace: str, spec: dict) -> dict:
+            raise RuntimeError(
+                f"Failed to describe HorizontalPodAutoscaler: {str(e)}"
+            ) from e
+
+    def create_horizontal_pod_autoscaler(
+        self, name: str, namespace: str, spec: dict
+    ) -> dict:
         """Create a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
             autoscaling_api = self.autoscaling
             hpa_spec = _km.k8s_client.V2HorizontalPodAutoscalerSpec(**spec)
             hpa = _km.k8s_client.V2HorizontalPodAutoscaler(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=hpa_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=hpa_spec
             )
-            created = autoscaling_api.create_namespaced_horizontal_pod_autoscaler(namespace, hpa)
+            created = autoscaling_api.create_namespaced_horizontal_pod_autoscaler(
+                namespace, hpa
+            )
             result = {
                 "name": created.metadata.name,
                 "namespace": created.metadata.namespace,
@@ -404,19 +456,28 @@ class GovernanceMixin:
             self.log_action("create_horizontal_pod_autoscaler", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Autoscaling client not available")
+            raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("create_horizontal_pod_autoscaler", params, error=e)
-            raise RuntimeError(f"Failed to create HorizontalPodAutoscaler: {str(e)}") from e
-    def update_horizontal_pod_autoscaler(self, name: str, namespace: str, spec: dict) -> dict:
+            raise RuntimeError(
+                f"Failed to create HorizontalPodAutoscaler: {str(e)}"
+            ) from e
+
+    def update_horizontal_pod_autoscaler(
+        self, name: str, namespace: str, spec: dict
+    ) -> dict:
         """Update a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace, "spec": spec}
         try:
             autoscaling_api = self.autoscaling
-            existing = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(name, namespace)
+            existing = autoscaling_api.read_namespaced_horizontal_pod_autoscaler(
+                name, namespace
+            )
             hpa_spec = _km.k8s_client.V2HorizontalPodAutoscalerSpec(**spec)
             existing.spec = hpa_spec
-            updated = autoscaling_api.patch_namespaced_horizontal_pod_autoscaler(name, namespace, existing)
+            updated = autoscaling_api.patch_namespaced_horizontal_pod_autoscaler(
+                name, namespace, existing
+            )
             result = {
                 "name": updated.metadata.name,
                 "namespace": updated.metadata.namespace,
@@ -426,10 +487,13 @@ class GovernanceMixin:
             self.log_action("update_horizontal_pod_autoscaler", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Autoscaling client not available")
+            raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("update_horizontal_pod_autoscaler", params, error=e)
-            raise RuntimeError(f"Failed to update HorizontalPodAutoscaler: {str(e)}") from e
+            raise RuntimeError(
+                f"Failed to update HorizontalPodAutoscaler: {str(e)}"
+            ) from e
+
     def delete_horizontal_pod_autoscaler(self, name: str, namespace: str) -> dict:
         """Delete a HorizontalPodAutoscaler."""
         params = {"name": name, "namespace": namespace}
@@ -440,7 +504,9 @@ class GovernanceMixin:
             self.log_action("delete_horizontal_pod_autoscaler", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Autoscaling client not available")
+            raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_horizontal_pod_autoscaler", params, error=e)
-            raise RuntimeError(f"Failed to delete HorizontalPodAutoscaler: {str(e)}") from e
+            raise RuntimeError(
+                f"Failed to delete HorizontalPodAutoscaler: {str(e)}"
+            ) from e

@@ -9,6 +9,13 @@ client symbols: tests and mixins read ``k8s_client`` / ``k8s_config`` /
 ``container_manager_mcp.k8s_manager.k8s_client`` governs the whole backend.
 """
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Bound only for type-checkers / ``__all__`` resolution; the runtime import
+    # happens lazily in ``__getattr__`` below to avoid an import cycle.
+    from container_manager_mcp.k8s.manager import KubernetesManager
+
 try:
     from kubernetes import client as k8s_client
     from kubernetes import config as k8s_config

@@ -53,16 +53,35 @@ def register_k8sstorage_tools(mcp: FastMCP):
         ] = Field(
             description="Storage action to perform (PV, PVC, storage classes, volume snapshots, CSI drivers)."
         ),
-        namespace: str | None = Field(default=None, description="Target namespace (default: from config)"),
+        namespace: str | None = Field(
+            default=None, description="Target namespace (default: from config)"
+        ),
         pvc_name: str | None = Field(default=None, description="PVC name"),
-        pvc_spec: str | None = Field(default=None, description="PVC spec as JSON string"),
-        pvc_size: str | None = Field(default=None, description="New PVC size for expansion"),
-        name: str | None = Field(default=None, description="Resource name (PV, storage class, snapshot, CSI driver)"),
-        spec: dict | None = Field(default=None, description="Specification for create operations"),
-        size: str | None = Field(default=None, description="Size for persistent volume expansion"),
-        provisioner: str | None = Field(default=None, description="Storage provisioner for create_storage_class"),
-        parameters: dict | None = Field(default=None, description="Storage parameters for create_storage_class"),
-        driver_name: str | None = Field(default=None, description="CSI driver name for capacity lookup"),
+        pvc_spec: str | None = Field(
+            default=None, description="PVC spec as JSON string"
+        ),
+        pvc_size: str | None = Field(
+            default=None, description="New PVC size for expansion"
+        ),
+        name: str | None = Field(
+            default=None,
+            description="Resource name (PV, storage class, snapshot, CSI driver)",
+        ),
+        spec: dict | None = Field(
+            default=None, description="Specification for create operations"
+        ),
+        size: str | None = Field(
+            default=None, description="Size for persistent volume expansion"
+        ),
+        provisioner: str | None = Field(
+            default=None, description="Storage provisioner for create_storage_class"
+        ),
+        parameters: dict | None = Field(
+            default=None, description="Storage parameters for create_storage_class"
+        ),
+        driver_name: str | None = Field(
+            default=None, description="CSI driver name for capacity lookup"
+        ),
         manager_type: str | None = Field(
             default=None,
             description="Container manager: kubernetes (default: auto-detect)",
@@ -85,30 +104,44 @@ def register_k8sstorage_tools(mcp: FastMCP):
 
             # Persistent Volume Claims
             elif action == "list_persistent_volume_claims":
-                return await run_blocking(manager.list_persistent_volume_claims, namespace=namespace)
+                return await run_blocking(
+                    manager.list_persistent_volume_claims, namespace=namespace
+                )
             elif action == "create_persistent_volume_claim":
                 if not pvc_name:
                     return "Error: 'pvc_name' is required for create_persistent_volume_claim"
                 claim_spec = json.loads(pvc_spec) if pvc_spec else None
                 return await run_blocking(
-                    manager.create_persistent_volume_claim, name=pvc_name, namespace=namespace, spec=claim_spec
+                    manager.create_persistent_volume_claim,
+                    name=pvc_name,
+                    namespace=namespace,
+                    spec=claim_spec,
                 )
             elif action == "delete_persistent_volume_claim":
                 if not pvc_name:
                     return "Error: 'pvc_name' is required for delete_persistent_volume_claim"
                 return await run_blocking(
-                    manager.delete_persistent_volume_claim, name=pvc_name, namespace=namespace
+                    manager.delete_persistent_volume_claim,
+                    name=pvc_name,
+                    namespace=namespace,
                 )
             elif action == "expand_pvc":
                 if not pvc_name or not pvc_size:
-                    return "Error: 'pvc_name' and 'pvc_size' are required for expand_pvc"
+                    return (
+                        "Error: 'pvc_name' and 'pvc_size' are required for expand_pvc"
+                    )
                 return await run_blocking(
-                    manager.expand_pvc, name=pvc_name, namespace=namespace, size=pvc_size
+                    manager.expand_pvc,
+                    name=pvc_name,
+                    namespace=namespace,
+                    size=pvc_size,
                 )
             elif action == "expand_persistent_volume":
                 if not name or not namespace or not size:
                     return "Error: 'name', 'namespace', and 'size' are required for expand_persistent_volume"
-                return await run_blocking(manager.expand_persistent_volume, name, namespace, size)
+                return await run_blocking(
+                    manager.expand_persistent_volume, name, namespace, size
+                )
 
             # Storage Classes
             elif action == "list_storage_classes":
@@ -116,7 +149,9 @@ def register_k8sstorage_tools(mcp: FastMCP):
             elif action == "create_storage_class":
                 if not name or not provisioner:
                     return "Error: 'name' and 'provisioner' are required for create_storage_class"
-                return await run_blocking(manager.create_storage_class, name, provisioner, parameters)
+                return await run_blocking(
+                    manager.create_storage_class, name, provisioner, parameters
+                )
             elif action == "set_default_storage_class":
                 if not name:
                     return "Error: 'name' is required for set_default_storage_class"
@@ -128,11 +163,15 @@ def register_k8sstorage_tools(mcp: FastMCP):
 
             # Volume Snapshots
             elif action == "list_volume_snapshots":
-                return await run_blocking(manager.list_volume_snapshots, namespace=namespace)
+                return await run_blocking(
+                    manager.list_volume_snapshots, namespace=namespace
+                )
             elif action == "create_volume_snapshot":
                 if not name or not namespace or not spec:
                     return "Error: 'name', 'namespace', and 'spec' are required for create_volume_snapshot"
-                return await run_blocking(manager.create_volume_snapshot, name, namespace, spec)
+                return await run_blocking(
+                    manager.create_volume_snapshot, name, namespace, spec
+                )
 
             # CSI Drivers
             elif action == "list_csi_drivers":
@@ -143,7 +182,9 @@ def register_k8sstorage_tools(mcp: FastMCP):
                 return await run_blocking(manager.describe_csi_driver, name)
             elif action == "get_csi_driver_capacity":
                 if not driver_name:
-                    return "Error: 'driver_name' is required for get_csi_driver_capacity"
+                    return (
+                        "Error: 'driver_name' is required for get_csi_driver_capacity"
+                    )
                 return await run_blocking(manager.get_csi_driver_capacity, driver_name)
 
             else:

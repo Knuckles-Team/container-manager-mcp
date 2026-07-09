@@ -65,22 +65,49 @@ def register_k8scluster_tools(mcp: FastMCP):
         ] = Field(
             description="Cluster action to perform (nodes, contexts, CSRs, API resources, cluster info, admission plugins)."
         ),
-        node_name: str | None = Field(default=None, description="Node name for node operations"),
-        namespace: str | None = Field(default=None, description="Target namespace for affinity operations"),
-        pod_name: str | None = Field(default=None, description="Pod name for affinity operations"),
+        node_name: str | None = Field(
+            default=None, description="Node name for node operations"
+        ),
+        namespace: str | None = Field(
+            default=None, description="Target namespace for affinity operations"
+        ),
+        pod_name: str | None = Field(
+            default=None, description="Pod name for affinity operations"
+        ),
         taints: list | None = Field(default=None, description="Taints for taint_node"),
-        taint_key: str | None = Field(default=None, description="Taint key for untaint_node"),
-        affinity: dict | None = Field(default=None, description="Affinity configuration for set_node_affinity"),
-        anti_affinity: dict | None = Field(default=None, description="Anti-affinity configuration for set_pod_anti_affinity"),
-        grace_period_seconds: int | None = Field(default=None, description="Grace period for drain (default: 120)"),
+        taint_key: str | None = Field(
+            default=None, description="Taint key for untaint_node"
+        ),
+        affinity: dict | None = Field(
+            default=None, description="Affinity configuration for set_node_affinity"
+        ),
+        anti_affinity: dict | None = Field(
+            default=None,
+            description="Anti-affinity configuration for set_pod_anti_affinity",
+        ),
+        grace_period_seconds: int | None = Field(
+            default=None, description="Grace period for drain (default: 120)"
+        ),
         context_name: str | None = Field(default=None, description="Context name"),
-        new_context_name: str | None = Field(default=None, description="New context name for rename_context"),
-        csr_name: str | None = Field(default=None, description="CertificateSigningRequest name"),
+        new_context_name: str | None = Field(
+            default=None, description="New context name for rename_context"
+        ),
+        csr_name: str | None = Field(
+            default=None, description="CertificateSigningRequest name"
+        ),
         reason: str | None = Field(default=None, description="Reason for deny_csr"),
-        name: str | None = Field(default=None, description="Resource name (API resource, plugin)"),
-        output_dir: str | None = Field(default=None, description="Output directory for cluster_info_dump"),
-        plugin_type: str | None = Field(default=None, description="Plugin type (validating/mutating)"),
-        test_resource: dict | None = Field(default=None, description="Test resource for test_cluster_plugin"),
+        name: str | None = Field(
+            default=None, description="Resource name (API resource, plugin)"
+        ),
+        output_dir: str | None = Field(
+            default=None, description="Output directory for cluster_info_dump"
+        ),
+        plugin_type: str | None = Field(
+            default=None, description="Plugin type (validating/mutating)"
+        ),
+        test_resource: dict | None = Field(
+            default=None, description="Test resource for test_cluster_plugin"
+        ),
         manager_type: str | None = Field(
             default=None,
             description="Container manager: kubernetes (default: auto-detect)",
@@ -111,7 +138,9 @@ def register_k8scluster_tools(mcp: FastMCP):
             elif action == "drain_node":
                 if not node_name:
                     return "Error: 'node_name' is required for drain_node"
-                return await run_blocking(manager.drain_node, node_name, grace_period_seconds or 120)
+                return await run_blocking(
+                    manager.drain_node, node_name, grace_period_seconds or 120
+                )
             elif action == "get_node_conditions":
                 if not node_name:
                     return "Error: 'node_name' is required for get_node_conditions"
@@ -129,15 +158,21 @@ def register_k8scluster_tools(mcp: FastMCP):
             elif action == "set_node_affinity":
                 if not pod_name or not namespace or not affinity:
                     return "Error: 'pod_name', 'namespace', and 'affinity' are required for set_node_affinity"
-                return await run_blocking(manager.set_node_affinity, pod_name, namespace, affinity)
+                return await run_blocking(
+                    manager.set_node_affinity, pod_name, namespace, affinity
+                )
             elif action == "get_node_affinity":
                 if not pod_name or not namespace:
                     return "Error: 'pod_name' and 'namespace' are required for get_node_affinity"
-                return await run_blocking(manager.get_node_affinity, pod_name, namespace)
+                return await run_blocking(
+                    manager.get_node_affinity, pod_name, namespace
+                )
             elif action == "set_pod_anti_affinity":
                 if not pod_name or not namespace or not anti_affinity:
                     return "Error: 'pod_name', 'namespace', and 'anti_affinity' are required for set_pod_anti_affinity"
-                return await run_blocking(manager.set_pod_anti_affinity, pod_name, namespace, anti_affinity)
+                return await run_blocking(
+                    manager.set_pod_anti_affinity, pod_name, namespace, anti_affinity
+                )
 
             # Contexts
             elif action == "list_contexts":
@@ -145,14 +180,18 @@ def register_k8scluster_tools(mcp: FastMCP):
             elif action == "use_context":
                 if not context_name:
                     return "Error: 'context_name' is required for use_context"
-                return await run_blocking(manager.use_context, context_name=context_name)
+                return await run_blocking(
+                    manager.use_context, context_name=context_name
+                )
             elif action == "get_config":
                 return await run_blocking(manager.get_config)
             elif action == "rename_context":
                 if not context_name or not new_context_name:
                     return "Error: 'context_name' and 'new_context_name' are required for rename_context"
                 return await run_blocking(
-                    manager.rename_context, current_name=context_name, new_name=new_context_name
+                    manager.rename_context,
+                    current_name=context_name,
+                    new_name=new_context_name,
                 )
             elif action == "validate_kubeconfig":
                 return await run_blocking(manager.validate_kubeconfig)
@@ -195,11 +234,15 @@ def register_k8scluster_tools(mcp: FastMCP):
             elif action == "describe_cluster_plugin":
                 if not name or not plugin_type:
                     return "Error: 'name' and 'plugin_type' are required for describe_cluster_plugin"
-                return await run_blocking(manager.describe_cluster_plugin, name, plugin_type)
+                return await run_blocking(
+                    manager.describe_cluster_plugin, name, plugin_type
+                )
             elif action == "test_cluster_plugin":
                 if not name or not plugin_type or not test_resource:
                     return "Error: 'name', 'plugin_type', and 'test_resource' are required for test_cluster_plugin"
-                return await run_blocking(manager.test_cluster_plugin, name, plugin_type, test_resource)
+                return await run_blocking(
+                    manager.test_cluster_plugin, name, plugin_type, test_resource
+                )
 
             else:
                 return f"Error: Unknown action '{action}'"

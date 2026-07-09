@@ -57,30 +57,75 @@ def register_k8sconfig_tools(mcp: FastMCP):
         ] = Field(
             description="Configuration action to perform (configmaps, secrets, namespaces, events, CRDs, label/annotate/patch, state tracking)."
         ),
-        namespace: str | None = Field(default=None, description="Target namespace (default: from config)"),
+        namespace: str | None = Field(
+            default=None, description="Target namespace (default: from config)"
+        ),
         configmap_name: str | None = Field(default=None, description="ConfigMap name"),
-        configmap_data: str | None = Field(default=None, description="ConfigMap data as JSON string"),
-        configmap_from_file: str | None = Field(default=None, description="Path to file for ConfigMap data"),
+        configmap_data: str | None = Field(
+            default=None, description="ConfigMap data as JSON string"
+        ),
+        configmap_from_file: str | None = Field(
+            default=None, description="Path to file for ConfigMap data"
+        ),
         secret_name: str | None = Field(default=None, description="Secret name"),
-        secret_type: str = Field(default="Opaque", description="Secret type (Opaque, kubernetes.io/dockerconfigjson, etc.)"),
-        secret_data: str | None = Field(default=None, description="Secret data as JSON string (base64-encoded values)"),
-        namespace_name: str | None = Field(default=None, description="Namespace name for create/delete namespace"),
-        field_selector: str | None = Field(default=None, description="Field selector for events"),
-        crd_name: str | None = Field(default=None, description="CRD name for describe_crd"),
-        crd_group: str | None = Field(default=None, description="CRD group for custom resources"),
-        crd_version: str | None = Field(default=None, description="CRD version for custom resources"),
-        crd_plural: str | None = Field(default=None, description="CRD plural name for custom resources"),
-        resource_type: str | None = Field(default=None, description="Resource type for label/annotate/patch/version operations"),
-        resource_name: str | None = Field(default=None, description="Resource name for label/annotate operations"),
+        secret_type: str = Field(
+            default="Opaque",
+            description="Secret type (Opaque, kubernetes.io/dockerconfigjson, etc.)",
+        ),
+        secret_data: str | None = Field(
+            default=None,
+            description="Secret data as JSON string (base64-encoded values)",
+        ),
+        namespace_name: str | None = Field(
+            default=None, description="Namespace name for create/delete namespace"
+        ),
+        field_selector: str | None = Field(
+            default=None, description="Field selector for events"
+        ),
+        crd_name: str | None = Field(
+            default=None, description="CRD name for describe_crd"
+        ),
+        crd_group: str | None = Field(
+            default=None, description="CRD group for custom resources"
+        ),
+        crd_version: str | None = Field(
+            default=None, description="CRD version for custom resources"
+        ),
+        crd_plural: str | None = Field(
+            default=None, description="CRD plural name for custom resources"
+        ),
+        resource_type: str | None = Field(
+            default=None,
+            description="Resource type for label/annotate/patch/version operations",
+        ),
+        resource_name: str | None = Field(
+            default=None, description="Resource name for label/annotate operations"
+        ),
         labels: str | None = Field(default=None, description="Labels as JSON string"),
-        annotations: str | None = Field(default=None, description="Annotations as JSON string"),
-        name: str | None = Field(default=None, description="Resource name for patch/state operations"),
-        patch_body: str | None = Field(default=None, description="Patch body as JSON string for patch_resource"),
-        patch_type: str = Field(default="strategic", description="Patch type: strategic, merge, or json"),
-        expected_data: dict | None = Field(default=None, description="Expected data for configmap state comparison"),
-        file_path: str | None = Field(default=None, description="File path for configmap sync"),
-        target_version: str | None = Field(default=None, description="Target resource version to wait for"),
-        timeout: int | None = Field(default=None, description="Timeout (seconds) for wait operations"),
+        annotations: str | None = Field(
+            default=None, description="Annotations as JSON string"
+        ),
+        name: str | None = Field(
+            default=None, description="Resource name for patch/state operations"
+        ),
+        patch_body: str | None = Field(
+            default=None, description="Patch body as JSON string for patch_resource"
+        ),
+        patch_type: str = Field(
+            default="strategic", description="Patch type: strategic, merge, or json"
+        ),
+        expected_data: dict | None = Field(
+            default=None, description="Expected data for configmap state comparison"
+        ),
+        file_path: str | None = Field(
+            default=None, description="File path for configmap sync"
+        ),
+        target_version: str | None = Field(
+            default=None, description="Target resource version to wait for"
+        ),
+        timeout: int | None = Field(
+            default=None, description="Timeout (seconds) for wait operations"
+        ),
         manager_type: str | None = Field(
             default=None,
             description="Container manager: kubernetes (default: auto-detect)",
@@ -138,7 +183,9 @@ def register_k8sconfig_tools(mcp: FastMCP):
             # Events
             elif action == "list_events":
                 return await run_blocking(
-                    manager.list_events, namespace=namespace, field_selector=field_selector
+                    manager.list_events,
+                    namespace=namespace,
+                    field_selector=field_selector,
                 )
 
             # CRDs / custom resources
@@ -199,24 +246,37 @@ def register_k8sconfig_tools(mcp: FastMCP):
             elif action == "compare_configmap_state":
                 if not name or not namespace or not expected_data:
                     return "Error: 'name', 'namespace', and 'expected_data' are required for compare_configmap_state"
-                return await run_blocking(manager.compare_configmap_state, name, namespace, expected_data)
+                return await run_blocking(
+                    manager.compare_configmap_state, name, namespace, expected_data
+                )
             elif action == "sync_configmap_from_file":
                 if not name or not namespace or not file_path:
                     return "Error: 'name', 'namespace', and 'file_path' are required for sync_configmap_from_file"
-                return await run_blocking(manager.sync_configmap_from_file, name, namespace, file_path)
+                return await run_blocking(
+                    manager.sync_configmap_from_file, name, namespace, file_path
+                )
             elif action == "get_secret_state_hash":
                 if not name or not namespace:
                     return "Error: 'name' and 'namespace' are required for get_secret_state_hash"
-                return await run_blocking(manager.get_secret_state_hash, name, namespace)
+                return await run_blocking(
+                    manager.get_secret_state_hash, name, namespace
+                )
             elif action == "track_resource_version":
                 if not resource_type or not name:
                     return "Error: 'resource_type' and 'name' are required for track_resource_version"
-                return await run_blocking(manager.track_resource_version, resource_type, name, namespace)
+                return await run_blocking(
+                    manager.track_resource_version, resource_type, name, namespace
+                )
             elif action == "wait_for_resource_version":
                 if not resource_type or not name or not namespace or not target_version:
                     return "Error: 'resource_type', 'name', 'namespace', and 'target_version' are required for wait_for_resource_version"
                 return await run_blocking(
-                    manager.wait_for_resource_version, resource_type, name, namespace, target_version, timeout or 60
+                    manager.wait_for_resource_version,
+                    resource_type,
+                    name,
+                    namespace,
+                    target_version,
+                    timeout or 60,
                 )
 
             else:

@@ -73,23 +73,59 @@ def register_k8sworkloads_tools(mcp: FastMCP):
         ] = Field(
             description="Workload action to perform (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs)."
         ),
-        pod_name: str | None = Field(default=None, description="Pod name for pod operations"),
-        namespace: str | None = Field(default=None, description="Target namespace (default: from config)"),
-        label_selector: str | None = Field(default=None, description="Label selector for filtering pods"),
-        exec_command: str | None = Field(default=None, description="Command to execute in pod (space-separated string)"),
-        command: list | None = Field(default=None, description="Command to execute in pod (list form)"),
-        exec_container: str | None = Field(default=None, description="Container name for exec"),
-        local_port: int | None = Field(default=None, description="Local port for port-forward"),
-        remote_port: int | None = Field(default=None, description="Remote port for port-forward"),
-        attach_container: str | None = Field(default=None, description="Container name for attach"),
-        source: str | None = Field(default=None, description="Source path for copy operations"),
-        destination: str | None = Field(default=None, description="Destination path for copy operations"),
-        resource_type: str | None = Field(default=None, description="Resource type for rollout operations"),
-        resource_name: str | None = Field(default=None, description="Resource name for rollout operations"),
-        rollout_revision: int | None = Field(default=None, description="Revision number for rollout undo"),
-        name: str | None = Field(default=None, description="Resource name for workload objects (jobs, cronjobs, statefulsets, etc.)"),
-        spec: dict | None = Field(default=None, description="Resource specification for create/set operations"),
-        replicas: int | None = Field(default=None, description="Number of replicas for scaling operations"),
+        pod_name: str | None = Field(
+            default=None, description="Pod name for pod operations"
+        ),
+        namespace: str | None = Field(
+            default=None, description="Target namespace (default: from config)"
+        ),
+        label_selector: str | None = Field(
+            default=None, description="Label selector for filtering pods"
+        ),
+        exec_command: str | None = Field(
+            default=None,
+            description="Command to execute in pod (space-separated string)",
+        ),
+        command: list | None = Field(
+            default=None, description="Command to execute in pod (list form)"
+        ),
+        exec_container: str | None = Field(
+            default=None, description="Container name for exec"
+        ),
+        local_port: int | None = Field(
+            default=None, description="Local port for port-forward"
+        ),
+        remote_port: int | None = Field(
+            default=None, description="Remote port for port-forward"
+        ),
+        attach_container: str | None = Field(
+            default=None, description="Container name for attach"
+        ),
+        source: str | None = Field(
+            default=None, description="Source path for copy operations"
+        ),
+        destination: str | None = Field(
+            default=None, description="Destination path for copy operations"
+        ),
+        resource_type: str | None = Field(
+            default=None, description="Resource type for rollout operations"
+        ),
+        resource_name: str | None = Field(
+            default=None, description="Resource name for rollout operations"
+        ),
+        rollout_revision: int | None = Field(
+            default=None, description="Revision number for rollout undo"
+        ),
+        name: str | None = Field(
+            default=None,
+            description="Resource name for workload objects (jobs, cronjobs, statefulsets, etc.)",
+        ),
+        spec: dict | None = Field(
+            default=None, description="Resource specification for create/set operations"
+        ),
+        replicas: int | None = Field(
+            default=None, description="Number of replicas for scaling operations"
+        ),
         manager_type: str | None = Field(
             default=None,
             description="Container manager: kubernetes (default: auto-detect)",
@@ -107,7 +143,9 @@ def register_k8sworkloads_tools(mcp: FastMCP):
             # Pods
             if action == "list_pods":
                 return await run_blocking(
-                    manager.list_pods, namespace=namespace, label_selector=label_selector
+                    manager.list_pods,
+                    namespace=namespace,
+                    label_selector=label_selector,
                 )
             elif action == "describe_pod":
                 if not pod_name:
@@ -118,7 +156,11 @@ def register_k8sworkloads_tools(mcp: FastMCP):
             elif action == "exec_pod":
                 if not pod_name:
                     return "Error: 'pod_name' is required for exec_pod"
-                cmd = command if command else (exec_command.split() if exec_command else None)
+                cmd = (
+                    command
+                    if command
+                    else (exec_command.split() if exec_command else None)
+                )
                 return await run_blocking(
                     manager.exec_pod,
                     pod_name=pod_name,
@@ -140,7 +182,10 @@ def register_k8sworkloads_tools(mcp: FastMCP):
                 if not pod_name:
                     return "Error: 'pod_name' is required for attach_pod"
                 return await run_blocking(
-                    manager.attach_pod, pod_name=pod_name, namespace=namespace, container=attach_container
+                    manager.attach_pod,
+                    pod_name=pod_name,
+                    namespace=namespace,
+                    container=attach_container,
                 )
             elif action == "copy_to_pod":
                 if not pod_name or not source or not destination:
@@ -160,44 +205,65 @@ def register_k8sworkloads_tools(mcp: FastMCP):
                 if not resource_type or not resource_name:
                     return "Error: 'resource_type' and 'resource_name' are required for rollout_status"
                 return await run_blocking(
-                    manager.rollout_status, resource_type=resource_type, name=resource_name, namespace=namespace
+                    manager.rollout_status,
+                    resource_type=resource_type,
+                    name=resource_name,
+                    namespace=namespace,
                 )
             elif action == "rollout_history":
                 if not resource_type or not resource_name:
                     return "Error: 'resource_type' and 'resource_name' are required for rollout_history"
                 return await run_blocking(
-                    manager.rollout_history, resource_type=resource_type, name=resource_name, namespace=namespace
+                    manager.rollout_history,
+                    resource_type=resource_type,
+                    name=resource_name,
+                    namespace=namespace,
                 )
             elif action == "rollout_restart":
                 if not resource_type or not resource_name:
                     return "Error: 'resource_type' and 'resource_name' are required for rollout_restart"
                 return await run_blocking(
-                    manager.rollout_restart, resource_type=resource_type, name=resource_name, namespace=namespace
+                    manager.rollout_restart,
+                    resource_type=resource_type,
+                    name=resource_name,
+                    namespace=namespace,
                 )
             elif action == "rollout_undo":
                 if not resource_type or not resource_name:
                     return "Error: 'resource_type' and 'resource_name' are required for rollout_undo"
                 return await run_blocking(
-                    manager.rollout_undo, resource_type=resource_type, name=resource_name, namespace=namespace, revision=rollout_revision
+                    manager.rollout_undo,
+                    resource_type=resource_type,
+                    name=resource_name,
+                    namespace=namespace,
+                    revision=rollout_revision,
                 )
             elif action == "rollout_pause":
                 if not resource_type or not resource_name:
                     return "Error: 'resource_type' and 'resource_name' are required for rollout_pause"
                 return await run_blocking(
-                    manager.rollout_pause, resource_type=resource_type, name=resource_name, namespace=namespace
+                    manager.rollout_pause,
+                    resource_type=resource_type,
+                    name=resource_name,
+                    namespace=namespace,
                 )
             elif action == "rollout_resume":
                 if not resource_type or not resource_name:
                     return "Error: 'resource_type' and 'resource_name' are required for rollout_resume"
                 return await run_blocking(
-                    manager.rollout_resume, resource_type=resource_type, name=resource_name, namespace=namespace
+                    manager.rollout_resume,
+                    resource_type=resource_type,
+                    name=resource_name,
+                    namespace=namespace,
                 )
 
             # Deployment / update strategies
             elif action == "set_deployment_strategy":
                 if not name or not spec:
                     return "Error: 'name' and 'spec' are required for set_deployment_strategy"
-                return await run_blocking(manager.set_deployment_strategy, name, ns, spec)
+                return await run_blocking(
+                    manager.set_deployment_strategy, name, ns, spec
+                )
             elif action == "get_deployment_strategy":
                 if not name:
                     return "Error: 'name' is required for get_deployment_strategy"
@@ -205,26 +271,40 @@ def register_k8sworkloads_tools(mcp: FastMCP):
             elif action == "set_daemonset_update_strategy":
                 if not name or not spec:
                     return "Error: 'name' and 'spec' are required for set_daemonset_update_strategy"
-                return await run_blocking(manager.set_daemonset_update_strategy, name, ns, spec)
+                return await run_blocking(
+                    manager.set_daemonset_update_strategy, name, ns, spec
+                )
             elif action == "get_daemonset_update_strategy":
                 if not name:
                     return "Error: 'name' is required for get_daemonset_update_strategy"
-                return await run_blocking(manager.get_daemonset_update_strategy, name, ns)
+                return await run_blocking(
+                    manager.get_daemonset_update_strategy, name, ns
+                )
             elif action == "set_statefulset_update_strategy":
                 if not name or not spec:
                     return "Error: 'name' and 'spec' are required for set_statefulset_update_strategy"
-                return await run_blocking(manager.set_statefulset_update_strategy, name, ns, spec)
+                return await run_blocking(
+                    manager.set_statefulset_update_strategy, name, ns, spec
+                )
             elif action == "get_statefulset_update_strategy":
                 if not name:
-                    return "Error: 'name' is required for get_statefulset_update_strategy"
-                return await run_blocking(manager.get_statefulset_update_strategy, name, ns)
+                    return (
+                        "Error: 'name' is required for get_statefulset_update_strategy"
+                    )
+                return await run_blocking(
+                    manager.get_statefulset_update_strategy, name, ns
+                )
 
             # StatefulSets
             elif action == "list_statefulsets":
-                return await run_blocking(manager.list_statefulsets, namespace=namespace)
+                return await run_blocking(
+                    manager.list_statefulsets, namespace=namespace
+                )
             elif action == "create_stateful_set":
                 if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_stateful_set"
+                    return (
+                        "Error: 'name' and 'spec' are required for create_stateful_set"
+                    )
                 return await run_blocking(manager.create_stateful_set, name, ns, spec)
             elif action == "scale_statefulset":
                 if not name:
@@ -246,14 +326,18 @@ def register_k8sworkloads_tools(mcp: FastMCP):
 
             # ReplicaSets
             elif action == "list_replicasets":
-                return await run_blocking(manager.list_replica_sets, namespace=namespace)
+                return await run_blocking(
+                    manager.list_replica_sets, namespace=namespace
+                )
             elif action == "describe_replicaset":
                 if not name:
                     return "Error: 'name' is required for describe_replicaset"
                 return await run_blocking(manager.describe_replica_set, name, ns)
             elif action == "scale_replicaset":
                 if not name or replicas is None:
-                    return "Error: 'name' and 'replicas' are required for scale_replicaset"
+                    return (
+                        "Error: 'name' and 'replicas' are required for scale_replicaset"
+                    )
                 return await run_blocking(manager.scale_replica_set, name, ns, replicas)
 
             # Jobs

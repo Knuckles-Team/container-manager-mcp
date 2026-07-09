@@ -28,13 +28,23 @@ def patched_backends():
     module scope in multi_context_manager, so they're patched there.
     """
     with (
-        patch("container_manager_mcp.multi_context_manager.DockerManager") as mock_docker_cls,
-        patch("container_manager_mcp.multi_context_manager.PodmanManager") as mock_podman_cls,
+        patch(
+            "container_manager_mcp.multi_context_manager.DockerManager"
+        ) as mock_docker_cls,
+        patch(
+            "container_manager_mcp.multi_context_manager.PodmanManager"
+        ) as mock_podman_cls,
         patch("container_manager_mcp.k8s_manager.KubernetesManager") as mock_k8s_cls,
     ):
-        mock_docker_cls.side_effect = lambda **kwargs: MagicMock(get_version=MagicMock(return_value={"version": "docker"}))
-        mock_podman_cls.side_effect = lambda **kwargs: MagicMock(get_version=MagicMock(return_value={"version": "podman"}))
-        mock_k8s_cls.side_effect = lambda **kwargs: MagicMock(get_version=MagicMock(return_value={"version": "k8s"}))
+        mock_docker_cls.side_effect = lambda **kwargs: MagicMock(
+            get_version=MagicMock(return_value={"version": "docker"})
+        )
+        mock_podman_cls.side_effect = lambda **kwargs: MagicMock(
+            get_version=MagicMock(return_value={"version": "podman"})
+        )
+        mock_k8s_cls.side_effect = lambda **kwargs: MagicMock(
+            get_version=MagicMock(return_value={"version": "k8s"})
+        )
         yield {
             "docker": mock_docker_cls,
             "podman": mock_podman_cls,
@@ -45,7 +55,9 @@ def patched_backends():
 class TestConstruction:
     """(a) Construction succeeds with K8S_CONTEXTS + DOCKER_CONTEXTS configured."""
 
-    def test_constructs_with_k8s_and_docker_contexts(self, monkeypatch, patched_backends):
+    def test_constructs_with_k8s_and_docker_contexts(
+        self, monkeypatch, patched_backends
+    ):
         monkeypatch.setenv("K8S_CONTEXTS", "a=ctxA;b=ctxB")
         monkeypatch.setenv("DOCKER_CONTEXTS", "local=;remote=remote-host")
         monkeypatch.setenv("PODMAN_ENABLED", "false")
@@ -60,7 +72,9 @@ class TestConstruction:
         finally:
             mgr.shutdown()
 
-    def test_construction_sets_silent_and_log_file_before_init(self, monkeypatch, patched_backends):
+    def test_construction_sets_silent_and_log_file_before_init(
+        self, monkeypatch, patched_backends
+    ):
         """Regression test for the historical super().__init__ bug: silent/log_file
         must be set (and readable by _add_*_context) before managers are built."""
         monkeypatch.setenv("K8S_CONTEXTS", "only=ctxOnly")
@@ -79,7 +93,9 @@ class TestConstruction:
 class TestDefaultContextSelection:
     """(b) Default-context auto-selection."""
 
-    def test_default_context_auto_selected_when_not_configured(self, monkeypatch, patched_backends):
+    def test_default_context_auto_selected_when_not_configured(
+        self, monkeypatch, patched_backends
+    ):
         monkeypatch.setenv("K8S_CONTEXTS", "first=ctx1;second=ctx2")
         monkeypatch.delenv("DEFAULT_K8S_CONTEXT", raising=False)
         monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
@@ -91,7 +107,9 @@ class TestDefaultContextSelection:
         finally:
             mgr.shutdown()
 
-    def test_default_context_honored_when_configured(self, monkeypatch, patched_backends):
+    def test_default_context_honored_when_configured(
+        self, monkeypatch, patched_backends
+    ):
         monkeypatch.setenv("K8S_CONTEXTS", "first=ctx1;second=ctx2")
         monkeypatch.setenv("DEFAULT_K8S_CONTEXT", "second")
         monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
@@ -168,7 +186,9 @@ class TestFanOut:
         mgr = MultiContextManager(silent=True)
         try:
             mgr.k8s_managers["a"].get_version.return_value = {"version": "k8s"}
-            mgr.docker_managers["local"].get_version.return_value = {"version": "docker"}
+            mgr.docker_managers["local"].get_version.return_value = {
+                "version": "docker"
+            }
             mgr.podman_manager.get_version.return_value = {"version": "podman"}
 
             results = mgr.fan_out_all("get_version")
@@ -184,7 +204,9 @@ class TestFanOut:
 class TestHealthAndReconnect:
     """(e) Health-check + lazy reconnect."""
 
-    def test_unhealthy_manager_triggers_lazy_reconnect(self, monkeypatch, patched_backends):
+    def test_unhealthy_manager_triggers_lazy_reconnect(
+        self, monkeypatch, patched_backends
+    ):
         monkeypatch.setenv("K8S_CONTEXTS", "a=ctxA")
         monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
         monkeypatch.setenv("PODMAN_ENABLED", "false")
@@ -198,7 +220,9 @@ class TestHealthAndReconnect:
             # A second call to KubernetesManager(...) (the reconnect) should
             # produce a healthy manager.
             reconnected_manager = MagicMock()
-            reconnected_manager.get_version.return_value = {"version": "k8s-reconnected"}
+            reconnected_manager.get_version.return_value = {
+                "version": "k8s-reconnected"
+            }
             patched_backends["k8s"].side_effect = lambda **kwargs: reconnected_manager
 
             resolved = mgr.get_k8s_manager("a")
@@ -263,7 +287,9 @@ class TestBackwardsCompatibleSurface:
         finally:
             mgr.shutdown()
 
-    def test_list_containers_delegates_to_backend_manager(self, monkeypatch, patched_backends):
+    def test_list_containers_delegates_to_backend_manager(
+        self, monkeypatch, patched_backends
+    ):
         monkeypatch.setenv("K8S_CONTEXTS", "a=ctxA")
         monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
         monkeypatch.setenv("PODMAN_ENABLED", "false")
@@ -276,7 +302,9 @@ class TestBackwardsCompatibleSurface:
         finally:
             mgr.shutdown()
 
-    def test_get_manager_unsupported_backend_raises(self, monkeypatch, patched_backends):
+    def test_get_manager_unsupported_backend_raises(
+        self, monkeypatch, patched_backends
+    ):
         monkeypatch.delenv("K8S_CONTEXTS", raising=False)
         monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
         monkeypatch.setenv("PODMAN_ENABLED", "false")

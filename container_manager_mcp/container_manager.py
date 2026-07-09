@@ -2364,25 +2364,30 @@ def create_manager(
     multi_context: bool = False,
 ) -> ContainerManagerBase:
     """Create a container manager instance.
-    
+
     Args:
         manager_type: Type of manager ('docker', 'podman', 'kubernetes', 'swarm', or 'multi')
         silent: Suppress logging output
         log_file: Path to log file
         host: Remote host for Docker
         multi_context: Enable multi-context mode (returns MultiContextManager)
-    
+
     Returns:
         ContainerManagerBase instance
     """
     if host is None:
         host = os.environ.get("CONTAINER_MANAGER_HOST", None)
-    
+
     # Multi-context mode
-    if multi_context or manager_type == "multi" or os.environ.get("MULTI_CONTEXT_MODE", "false").lower() in ("true", "1", "yes"):
+    if (
+        multi_context
+        or manager_type == "multi"
+        or os.environ.get("MULTI_CONTEXT_MODE", "false").lower() in ("true", "1", "yes")
+    ):
         from container_manager_mcp.multi_context_manager import MultiContextManager
+
         return MultiContextManager(silent=silent, log_file=log_file)
-    
+
     if manager_type is None:
         manager_type = os.environ.get("CONTAINER_MANAGER_TYPE", None)
     if manager_type is None:

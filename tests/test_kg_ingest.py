@@ -271,9 +271,7 @@ def test_ingest_deployments_maps_replicas_image_and_namespace():
 
 def test_ingest_namespaces_maps_status():
     c = _FakeClient()
-    res = ingest_namespaces(
-        [{"name": "kube-system", "status": "Active"}], client=c
-    )
+    res = ingest_namespaces([{"name": "kube-system", "status": "Active"}], client=c)
     assert res == {"nodes": 1, "edges": 0}
     ns = c.txn.nodes["container:namespace:kube-system"]
     assert ns["type"] == "Namespace"

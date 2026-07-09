@@ -11,7 +11,6 @@ from container_manager_mcp.container_manager import (
     ContainerManagerBase,
     DockerManager,
     PodmanManager,
-    create_manager,
 )
 
 # Default number of worker threads used to fan operations out across contexts.
@@ -41,7 +40,9 @@ class MultiContextManager:
         self.k8s_managers: dict[str, Any] = {}  # context_name -> KubernetesManager
         self.docker_managers: dict[str, Any] = {}  # context_name -> DockerManager
         self.podman_manager: Any = None  # Single Podman manager (local only)
-        self.swarm_managers: dict[str, Any] = {}  # context_name -> DockerManager (Swarm mode)
+        self.swarm_managers: dict[str, Any] = (
+            {}
+        )  # context_name -> DockerManager (Swarm mode)
 
         # Default contexts
         self.default_k8s_context: str | None = None
@@ -63,7 +64,9 @@ class MultiContextManager:
         self._context_locks: dict[tuple[str, str], threading.Lock] = {}
         self._context_locks_guard = threading.Lock()
 
-        max_workers = int(os.environ.get("MULTI_CONTEXT_MAX_WORKERS", str(DEFAULT_MAX_WORKERS)))
+        max_workers = int(
+            os.environ.get("MULTI_CONTEXT_MAX_WORKERS", str(DEFAULT_MAX_WORKERS))
+        )
         self._executor = ThreadPoolExecutor(
             max_workers=max_workers, thread_name_prefix="multi-context-manager"
         )
@@ -93,7 +96,9 @@ class MultiContextManager:
                 try:
                     self._add_k8s_context(context_name, context_value)
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize K8S context '{context_name}': {e}")
+                    self.logger.error(
+                        f"Failed to initialize K8S context '{context_name}': {e}"
+                    )
 
         # Set default K8S context
         self.default_k8s_context = os.environ.get("DEFAULT_K8S_CONTEXT")
@@ -101,7 +106,9 @@ class MultiContextManager:
             self.logger.info(f"Default K8S context set to: {self.default_k8s_context}")
         elif self.k8s_managers:
             self.default_k8s_context = list(self.k8s_managers.keys())[0]
-            self.logger.info(f"Default K8S context auto-selected: {self.default_k8s_context}")
+            self.logger.info(
+                f"Default K8S context auto-selected: {self.default_k8s_context}"
+            )
 
         # Initialize Docker contexts
         docker_contexts = self._parse_context_config(
@@ -112,15 +119,24 @@ class MultiContextManager:
                 try:
                     self._add_docker_context(context_name, host)
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize Docker context '{context_name}': {e}")
+                    self.logger.error(
+                        f"Failed to initialize Docker context '{context_name}': {e}"
+                    )
 
         # Set default Docker context
         self.default_docker_context = os.environ.get("DEFAULT_DOCKER_CONTEXT")
-        if self.default_docker_context and self.default_docker_context in self.docker_managers:
-            self.logger.info(f"Default Docker context set to: {self.default_docker_context}")
+        if (
+            self.default_docker_context
+            and self.default_docker_context in self.docker_managers
+        ):
+            self.logger.info(
+                f"Default Docker context set to: {self.default_docker_context}"
+            )
         elif self.docker_managers:
             self.default_docker_context = list(self.docker_managers.keys())[0]
-            self.logger.info(f"Default Docker context auto-selected: {self.default_docker_context}")
+            self.logger.info(
+                f"Default Docker context auto-selected: {self.default_docker_context}"
+            )
 
         # Initialize Swarm contexts
         swarm_contexts = self._parse_context_config(
@@ -131,18 +147,31 @@ class MultiContextManager:
                 try:
                     self._add_swarm_context(context_name, host)
                 except Exception as e:
-                    self.logger.error(f"Failed to initialize Swarm context '{context_name}': {e}")
+                    self.logger.error(
+                        f"Failed to initialize Swarm context '{context_name}': {e}"
+                    )
 
         # Set default Swarm context
         self.default_swarm_context = os.environ.get("DEFAULT_SWARM_CONTEXT")
-        if self.default_swarm_context and self.default_swarm_context in self.swarm_managers:
-            self.logger.info(f"Default Swarm context set to: {self.default_swarm_context}")
+        if (
+            self.default_swarm_context
+            and self.default_swarm_context in self.swarm_managers
+        ):
+            self.logger.info(
+                f"Default Swarm context set to: {self.default_swarm_context}"
+            )
         elif self.swarm_managers:
             self.default_swarm_context = list(self.swarm_managers.keys())[0]
-            self.logger.info(f"Default Swarm context auto-selected: {self.default_swarm_context}")
+            self.logger.info(
+                f"Default Swarm context auto-selected: {self.default_swarm_context}"
+            )
 
         # Initialize Podman (local only)
-        podman_enabled = os.environ.get("PODMAN_ENABLED", "true").lower() in ("true", "1", "yes")
+        podman_enabled = os.environ.get("PODMAN_ENABLED", "true").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
         if podman_enabled:
             try:
                 self._add_podman_manager()
@@ -179,9 +208,7 @@ class MultiContextManager:
 
         self.logger.info(f"Adding K8S context: {context_name} -> {context_value}")
         manager = KubernetesManager(
-            context=context_value,
-            silent=self.silent,
-            log_file=self.log_file
+            context=context_value, silent=self.silent, log_file=self.log_file
         )
         self.k8s_managers[context_name] = manager
         self._context_config["kubernetes"][context_name] = context_value
@@ -191,9 +218,7 @@ class MultiContextManager:
         """Add a Docker context to the manager pool."""
         self.logger.info(f"Adding Docker context: {context_name} -> {host}")
         manager = DockerManager(
-            host=host if host else None,
-            silent=self.silent,
-            log_file=self.log_file
+            host=host if host else None, silent=self.silent, log_file=self.log_file
         )
         self.docker_managers[context_name] = manager
         self._context_config["docker"][context_name] = host
@@ -203,9 +228,7 @@ class MultiContextManager:
         """Add a Swarm context to the manager pool."""
         self.logger.info(f"Adding Swarm context: {context_name} -> {host}")
         manager = DockerManager(
-            host=host if host else None,
-            silent=self.silent,
-            log_file=self.log_file
+            host=host if host else None, silent=self.silent, log_file=self.log_file
         )
         self.swarm_managers[context_name] = manager
         self._context_config["swarm"][context_name] = host
@@ -214,10 +237,7 @@ class MultiContextManager:
     def _add_podman_manager(self):
         """Add Podman manager (local only)."""
         self.logger.info("Adding Podman manager (local)")
-        self.podman_manager = PodmanManager(
-            silent=self.silent,
-            log_file=self.log_file
-        )
+        self.podman_manager = PodmanManager(silent=self.silent, log_file=self.log_file)
         self._health_cache.pop(("podman", "local"), None)
 
     # ------------------------------------------------------------------
@@ -233,7 +253,9 @@ class MultiContextManager:
                 self._context_locks[key] = lock
             return lock
 
-    def _is_healthy(self, manager: Any, backend: str | None = None, context_name: str | None = None) -> bool:
+    def _is_healthy(
+        self, manager: Any, backend: str | None = None, context_name: str | None = None
+    ) -> bool:
         """Cheaply probe whether a pooled manager is still usable.
 
         Results are cached for HEALTH_CHECK_TTL_SECONDS keyed by (backend,
@@ -254,7 +276,9 @@ class MultiContextManager:
                 manager.get_version()
                 healthy = True
         except Exception as e:
-            self.logger.warning(f"Health check failed for {backend}/{context_name}: {e}")
+            self.logger.warning(
+                f"Health check failed for {backend}/{context_name}: {e}"
+            )
             healthy = False
 
         if cache_key is not None:
@@ -365,9 +389,7 @@ class MultiContextManager:
         return self.podman_manager
 
     def get_manager(
-        self,
-        backend: str = "kubernetes",
-        context: str | None = None
+        self, backend: str = "kubernetes", context: str | None = None
     ) -> ContainerManagerBase:
         """Get a manager by backend type and context name.
 
@@ -396,19 +418,17 @@ class MultiContextManager:
         return {
             "kubernetes": {
                 "contexts": list(self.k8s_managers.keys()),
-                "default": self.default_k8s_context
+                "default": self.default_k8s_context,
             },
             "docker": {
                 "contexts": list(self.docker_managers.keys()),
-                "default": self.default_docker_context
+                "default": self.default_docker_context,
             },
             "swarm": {
                 "contexts": list(self.swarm_managers.keys()),
-                "default": self.default_swarm_context
+                "default": self.default_swarm_context,
             },
-            "podman": {
-                "enabled": self.podman_manager is not None
-            }
+            "podman": {"enabled": self.podman_manager is not None},
         }
 
     # ------------------------------------------------------------------
@@ -425,7 +445,11 @@ class MultiContextManager:
         elif backend == "swarm":
             return dict(self.swarm_managers)
         elif backend == "podman":
-            return {"local": self.podman_manager} if self.podman_manager is not None else {}
+            return (
+                {"local": self.podman_manager}
+                if self.podman_manager is not None
+                else {}
+            )
         else:
             raise ValueError(f"Unsupported backend: {backend}")
 
@@ -477,9 +501,7 @@ class MultiContextManager:
             try:
                 results[context_name] = future.result()
             except Exception as e:
-                self.logger.error(
-                    f"fan_out: {backend}/{context_name}.{op} failed: {e}"
-                )
+                self.logger.error(f"fan_out: {backend}/{context_name}.{op} failed: {e}")
                 results[context_name] = {"error": str(e)}
 
         return results
@@ -508,22 +530,30 @@ class MultiContextManager:
     # Delegated operations - route to appropriate backend
     # ------------------------------------------------------------------
 
-    def list_containers(self, backend: str = "kubernetes", context: str | None = None, **kwargs):
+    def list_containers(
+        self, backend: str = "kubernetes", context: str | None = None, **kwargs
+    ):
         """List containers from specified backend and context."""
         manager = self.get_manager(backend, context)
         return manager.list_containers(**kwargs)
 
-    def list_images(self, backend: str = "kubernetes", context: str | None = None, **kwargs):
+    def list_images(
+        self, backend: str = "kubernetes", context: str | None = None, **kwargs
+    ):
         """List images from specified backend and context."""
         manager = self.get_manager(backend, context)
         return manager.list_images(**kwargs)
 
-    def list_volumes(self, backend: str = "kubernetes", context: str | None = None, **kwargs):
+    def list_volumes(
+        self, backend: str = "kubernetes", context: str | None = None, **kwargs
+    ):
         """List volumes from specified backend and context."""
         manager = self.get_manager(backend, context)
         return manager.list_volumes(**kwargs)
 
-    def list_networks(self, backend: str = "kubernetes", context: str | None = None, **kwargs):
+    def list_networks(
+        self, backend: str = "kubernetes", context: str | None = None, **kwargs
+    ):
         """List networks from specified backend and context."""
         manager = self.get_manager(backend, context)
         return manager.list_networks(**kwargs)

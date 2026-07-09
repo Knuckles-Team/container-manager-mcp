@@ -56,15 +56,14 @@ def register_multicontext_tools(mcp: FastMCP):
             # Deployment Operations (Kubernetes)
             "list_deployments",
             "scale_deployment",
-        ] = Field(
-            description="Action to perform. Multi-context container management."
-        ),
+        ] = Field(description="Action to perform. Multi-context container management."),
         # Backend and Context Selection
         backend: Literal["kubernetes", "docker", "podman", "swarm"] = Field(
-            default="kubernetes",
-            description="Container backend to use"
+            default="kubernetes", description="Container backend to use"
         ),
-        context: str | None = Field(default=None, description="Context name (uses default if None)"),
+        context: str | None = Field(
+            default=None, description="Context name (uses default if None)"
+        ),
         # Common parameters
         name: str | None = Field(default=None, description="Resource name"),
         namespace: str | None = Field(default=None, description="Kubernetes namespace"),
@@ -77,23 +76,27 @@ def register_multicontext_tools(mcp: FastMCP):
         driver: str | None = Field(default=None, description="Network/volume driver"),
         ports: list | None = Field(default=None, description="Port mappings"),
         volumes: dict | None = Field(default=None, description="Volume mappings"),
-        environment: dict | None = Field(default=None, description="Environment variables"),
+        environment: dict | None = Field(
+            default=None, description="Environment variables"
+        ),
     ) -> dict | list:
         """Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection."""
-        
-        ctx_log("Multi-context operations", action=action, backend=backend, context=context)
-        
+
+        ctx_log(
+            "Multi-context operations", action=action, backend=backend, context=context
+        )
+
         @run_blocking
         def execute_operation():
             manager = create_manager(manager_type="multi")
-            
+
             # Context Management
             if action == "list_contexts":
                 return manager.list_available_contexts()
-            
+
             # Get the appropriate manager for the backend
             target_manager = manager.get_manager(backend, context)
-            
+
             # Container Operations
             if action == "list_containers":
                 return target_manager.list_containers(all=all)
@@ -106,7 +109,7 @@ def register_multicontext_tools(mcp: FastMCP):
                     command=command,
                     ports=ports,
                     volumes=volumes,
-                    environment=environment
+                    environment=environment,
                 )
             elif action == "stop_container":
                 if not name:
@@ -120,7 +123,7 @@ def register_multicontext_tools(mcp: FastMCP):
                 if not name:
                     raise ValueError("name is required for inspect_container")
                 return target_manager.inspect_container(name)
-            
+
             # Image Operations
             elif action == "list_images":
                 return target_manager.list_images()
@@ -132,7 +135,7 @@ def register_multicontext_tools(mcp: FastMCP):
                 if not name:
                     raise ValueError("name is required for remove_image")
                 return target_manager.remove_image(name, force=force)
-            
+
             # Volume Operations
             elif action == "list_volumes":
                 return target_manager.list_volumes()
@@ -144,7 +147,7 @@ def register_multicontext_tools(mcp: FastMCP):
                 if not name:
                     raise ValueError("name is required for remove_volume")
                 return target_manager.remove_volume(name, force=force)
-            
+
             # Network Operations
             elif action == "list_networks":
                 return target_manager.list_networks()
@@ -156,7 +159,7 @@ def register_multicontext_tools(mcp: FastMCP):
                 if not name:
                     raise ValueError("name is required for remove_network")
                 return target_manager.remove_network(name, force=force)
-            
+
             # Service Operations
             elif action == "list_services":
                 return target_manager.list_services()
@@ -168,37 +171,53 @@ def register_multicontext_tools(mcp: FastMCP):
                 if not name:
                     raise ValueError("name is required for remove_service")
                 return target_manager.remove_service(name)
-            
+
             # Kubernetes-Specific Operations
             elif action == "list_pods":
                 if backend == "kubernetes":
                     return target_manager.list_pods(namespace=namespace or "default")
                 else:
-                    raise ValueError(f"list_pods is only available for Kubernetes, not {backend}")
-            
+                    raise ValueError(
+                        f"list_pods is only available for Kubernetes, not {backend}"
+                    )
+
             elif action == "describe_pod":
                 if backend == "kubernetes":
                     if not name or not namespace:
-                        raise ValueError("name and namespace are required for describe_pod")
+                        raise ValueError(
+                            "name and namespace are required for describe_pod"
+                        )
                     return target_manager.describe_pod(name, namespace or "default")
                 else:
-                    raise ValueError(f"describe_pod is only available for Kubernetes, not {backend}")
-            
+                    raise ValueError(
+                        f"describe_pod is only available for Kubernetes, not {backend}"
+                    )
+
             elif action == "list_deployments":
                 if backend == "kubernetes":
-                    return target_manager.list_deployments(namespace=namespace or "default")
+                    return target_manager.list_deployments(
+                        namespace=namespace or "default"
+                    )
                 else:
-                    raise ValueError(f"list_deployments is only available for Kubernetes, not {backend}")
-            
+                    raise ValueError(
+                        f"list_deployments is only available for Kubernetes, not {backend}"
+                    )
+
             elif action == "scale_deployment":
                 if backend == "kubernetes":
                     if not name or not namespace or replicas is None:
-                        raise ValueError("name, namespace, and replicas are required for scale_deployment")
-                    return target_manager.scale_service(name, replicas, namespace=namespace or "default")
+                        raise ValueError(
+                            "name, namespace, and replicas are required for scale_deployment"
+                        )
+                    return target_manager.scale_service(
+                        name, replicas, namespace=namespace or "default"
+                    )
                 else:
-                    raise ValueError(f"scale_deployment is only available for Kubernetes, not {backend}")
-            
+                    raise ValueError(
+                        f"scale_deployment is only available for Kubernetes, not {backend}"
+                    )
+
             else:
                 raise ValueError(f"Unknown action: {action}")
-        
+
         return execute_operation()

@@ -52,15 +52,19 @@ def register_podmanadvanced_tools(mcp: FastMCP):
             # System Operations
             "podman_system_prune",
             "podman_health_check",
-        ] = Field(
-            description="Action to perform. Advanced Podman operations."
-        ),
+        ] = Field(description="Action to perform. Advanced Podman operations."),
         # Common parameters
-        pod_name: str | None = Field(default=None, description="Pod name for operations"),
-        namespace: str | None = Field(default="default", description="Kubernetes namespace"),
+        pod_name: str | None = Field(
+            default=None, description="Pod name for operations"
+        ),
+        namespace: str | None = Field(
+            default="default", description="Kubernetes namespace"
+        ),
         yaml_path: str | None = Field(default=None, description="YAML file path"),
         container_id: str | None = Field(default=None, description="Container ID"),
-        checkpoint_dir: str | None = Field(default=None, description="Checkpoint directory"),
+        checkpoint_dir: str | None = Field(
+            default=None, description="Checkpoint directory"
+        ),
         image: str | None = Field(default=None, description="Container image"),
         command: str | None = Field(default=None, description="Container command"),
         tail_lines: int | None = Field(default=100, description="Tail lines for logs"),
@@ -71,38 +75,48 @@ def register_podmanadvanced_tools(mcp: FastMCP):
         config: dict | None = Field(default=None, description="Health check config"),
     ) -> dict | list:
         """Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system)."""
-        
+
         ctx_log("Advanced Podman operations", action=action, pod_name=pod_name)
-        
+
         @run_blocking
         def execute_operation():
             manager = create_manager("podman")
             k8s_manager = getattr(manager, "k8s_manager", manager)
-            
+
             # Kubernetes Integration
             if action == "podman_generate_kube_yaml":
                 if not pod_name:
-                    raise ValueError("pod_name is required for podman_generate_kube_yaml")
-                return k8s_manager.podman_generate_kube_yaml(pod_name, namespace or "default")
+                    raise ValueError(
+                        "pod_name is required for podman_generate_kube_yaml"
+                    )
+                return k8s_manager.podman_generate_kube_yaml(
+                    pod_name, namespace or "default"
+                )
             elif action == "podman_play_kube_yaml":
                 if not yaml_path:
                     raise ValueError("yaml_path is required for podman_play_kube_yaml")
                 return k8s_manager.podman_play_kube_yaml(yaml_path)
-            
+
             # Checkpoint/Restore
             elif action == "podman_checkpoint":
                 if not container_id or not checkpoint_dir:
-                    raise ValueError("container_id and checkpoint_dir are required for podman_checkpoint")
+                    raise ValueError(
+                        "container_id and checkpoint_dir are required for podman_checkpoint"
+                    )
                 return k8s_manager.podman_checkpoint(container_id, checkpoint_dir)
             elif action == "podman_restore":
                 if not container_id or not checkpoint_dir:
-                    raise ValueError("container_id and checkpoint_dir are required for podman_restore")
+                    raise ValueError(
+                        "container_id and checkpoint_dir are required for podman_restore"
+                    )
                 return k8s_manager.podman_restore(container_id, checkpoint_dir)
-            
+
             # Pod Management
             elif action == "podman_pod_create":
                 if not pod_name or not image:
-                    raise ValueError("pod_name and image are required for podman_pod_create")
+                    raise ValueError(
+                        "pod_name and image are required for podman_pod_create"
+                    )
                 return k8s_manager.podman_pod_create(pod_name, image, command)
             elif action == "podman_pod_list":
                 return k8s_manager.podman_pod_list()
@@ -130,19 +144,25 @@ def register_podmanadvanced_tools(mcp: FastMCP):
                 if not pod_name:
                     raise ValueError("pod_name is required for podman_pod_rm")
                 return k8s_manager.podman_pod_rm(pod_name)
-            
+
             # Network Management
             elif action == "podman_network_create":
                 if not network_name:
-                    raise ValueError("network_name is required for podman_network_create")
-                return k8s_manager.podman_network_create(network_name, driver or "bridge", subnet)
+                    raise ValueError(
+                        "network_name is required for podman_network_create"
+                    )
+                return k8s_manager.podman_network_create(
+                    network_name, driver or "bridge", subnet
+                )
             elif action == "podman_network_list":
                 return k8s_manager.podman_network_list()
             elif action == "podman_network_inspect":
                 if not network_name:
-                    raise ValueError("network_name is required for podman_network_inspect")
+                    raise ValueError(
+                        "network_name is required for podman_network_inspect"
+                    )
                 return k8s_manager.podman_network_inspect(network_name)
-            
+
             # Volume Management
             elif action == "podman_volume_create":
                 if not volume_name:
@@ -152,18 +172,22 @@ def register_podmanadvanced_tools(mcp: FastMCP):
                 return k8s_manager.podman_volume_list()
             elif action == "podman_volume_inspect":
                 if not volume_name:
-                    raise ValueError("volume_name is required for podman_volume_inspect")
+                    raise ValueError(
+                        "volume_name is required for podman_volume_inspect"
+                    )
                 return k8s_manager.podman_volume_inspect(volume_name)
-            
+
             # System Operations
             elif action == "podman_system_prune":
                 return k8s_manager.podman_system_prune()
             elif action == "podman_health_check":
                 if not container_id or not config:
-                    raise ValueError("container_id and config are required for podman_health_check")
+                    raise ValueError(
+                        "container_id and config are required for podman_health_check"
+                    )
                 return k8s_manager.podman_health_check(container_id, config)
-            
+
             else:
                 raise ValueError(f"Unknown action: {action}")
-        
+
         return execute_operation()
