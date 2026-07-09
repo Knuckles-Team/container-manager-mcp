@@ -1,6 +1,8 @@
 """WorkloadsMixin for KubernetesManager (split from k8s_manager.py)."""
 
+from datetime import datetime, timezone
 from typing import Any
+
 import container_manager_mcp.k8s_manager as _km
 
 
@@ -15,6 +17,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_services", params, error=e)
             raise RuntimeError(f"Failed to list services: {str(e)}") from e
+
     def create_service(
         self,
         name: str,
@@ -83,6 +86,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("create_service", params, error=e)
             raise RuntimeError(f"Failed to create service: {str(e)}") from e
+
     def remove_service(self, service_id: str) -> dict:
         params = {"service_id": service_id}
         try:
@@ -97,6 +101,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("remove_service", params, error=e)
             raise RuntimeError(f"Failed to remove service: {str(e)}") from e
+
     def inspect_service(self, service_id: str) -> dict:
         params = {"service_id": service_id}
         try:
@@ -107,6 +112,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("inspect_service", params, error=e)
             raise RuntimeError(f"Failed to inspect service: {str(e)}") from e
+
     def scale_service(self, service_id: str, replicas: int) -> dict:
         params = {"service_id": service_id, "replicas": replicas}
         try:
@@ -119,6 +125,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("scale_service", params, error=e)
             raise RuntimeError(f"Failed to scale service: {str(e)}") from e
+
     def update_service(
         self,
         service_id: str,
@@ -173,6 +180,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("update_service", params, error=e)
             raise RuntimeError(f"Failed to update service: {str(e)}") from e
+
     def service_ps(self, service_id: str) -> list[dict]:
         params = {"service_id": service_id}
         try:
@@ -204,16 +212,20 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("service_ps", params, error=e)
             raise RuntimeError(f"Failed to list service tasks: {str(e)}") from e
-    def service_logs(self, service_id: str, tail: int = 100, follow: bool = False) -> dict:
+
+    def service_logs(
+        self, service_id: str, tail: int = 100, follow: bool = False
+    ) -> dict:
         params = {"service_id": service_id, "tail": tail, "follow": follow}
         try:
             pods = self.core.list_namespaced_pod(
                 self.namespace, label_selector=f"app={service_id}"
             ).items
-            
+
             if follow:
                 # Streaming logs implementation
                 from kubernetes.stream import stream
+
                 chunks = []
                 for pod in pods:
                     try:
@@ -225,10 +237,17 @@ class WorkloadsMixin:
                             follow=True,
                             timestamps=True,
                         )
-                        chunks.append(f"=== {pod.metadata.name} (streaming) ===\n{logs if isinstance(logs, str) else str(logs)}")
+                        chunks.append(
+                            f"=== {pod.metadata.name} (streaming) ===\n{logs if isinstance(logs, str) else str(logs)}"
+                        )
                     except _km.ApiException:
                         chunks.append(f"=== {pod.metadata.name} ===\nNo logs available")
-                result = {"service": service_id, "logs": "\n".join(chunks), "streaming": True, "tail": tail}
+                result = {
+                    "service": service_id,
+                    "logs": "\n".join(chunks),
+                    "streaming": True,
+                    "tail": tail,
+                }
             else:
                 # Regular logs
                 chunks = []
@@ -243,8 +262,13 @@ class WorkloadsMixin:
                     except _km.ApiException:
                         log = ""
                     chunks.append(f"=== {pod.metadata.name} ===\n{log}")
-                result = {"service": service_id, "logs": "\n".join(chunks), "streaming": False, "tail": tail}
-            
+                result = {
+                    "service": service_id,
+                    "logs": "\n".join(chunks),
+                    "streaming": False,
+                    "tail": tail,
+                }
+
             self.log_action("service_logs", params, {"service": service_id})
             return result
         except ImportError:
@@ -264,12 +288,19 @@ class WorkloadsMixin:
                 except _km.ApiException:
                     log = ""
                 chunks.append(f"=== {pod.metadata.name} ===\n{log}")
-            result = {"service": service_id, "logs": "\n".join(chunks), "streaming": False, "tail": tail, "note": "Streaming not available"}
+            result = {
+                "service": service_id,
+                "logs": "\n".join(chunks),
+                "streaming": False,
+                "tail": tail,
+                "note": "Streaming not available",
+            }
             self.log_action("service_logs", params, {"service": service_id})
             return result
         except _km.ApiException as e:
             self.log_action("service_logs", params, error=e)
             raise RuntimeError(f"Failed to get service logs: {str(e)}") from e
+
     def list_pods(
         self, namespace: str | None = None, label_selector: str | None = None
     ) -> list[dict]:
@@ -278,7 +309,9 @@ class WorkloadsMixin:
         try:
             ns = namespace or self.namespace
             if label_selector:
-                pods = self.core.list_namespaced_pod(ns, label_selector=label_selector).items
+                pods = self.core.list_namespaced_pod(
+                    ns, label_selector=label_selector
+                ).items
             else:
                 pods = self.core.list_namespaced_pod(ns).items
             result = [
@@ -297,6 +330,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_pods", params, error=e)
             raise RuntimeError(f"Failed to list pods: {str(e)}") from e
+
     def describe_pod(self, pod_name: str, namespace: str | None = None) -> dict:
         """Get detailed pod information."""
         params = {"pod_name": pod_name, "namespace": namespace}
@@ -309,6 +343,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("describe_pod", params, error=e)
             raise RuntimeError(f"Failed to describe pod: {str(e)}") from e
+
     def exec_pod(
         self,
         pod_name: str,
@@ -317,14 +352,19 @@ class WorkloadsMixin:
         container: str | None = None,
     ) -> dict:
         """Execute command in pod using WebSocket streaming."""
-        params = {"pod_name": pod_name, "namespace": namespace, "command": command, "container": container}
+        params = {
+            "pod_name": pod_name,
+            "namespace": namespace,
+            "command": command,
+            "container": container,
+        }
         try:
             from kubernetes.stream import stream
 
             ns = namespace or self.namespace
             if not command:
                 command = ["/bin/sh"]
-            
+
             resp = stream(
                 self.core.connect_get_namespaced_pod_exec,
                 pod_name,
@@ -336,7 +376,7 @@ class WorkloadsMixin:
                 stdout=True,
                 tty=False,
             )
-            
+
             result = {
                 "pod": pod_name,
                 "namespace": ns,
@@ -348,28 +388,40 @@ class WorkloadsMixin:
             self.log_action("exec_pod", params, result)
             return result
         except ImportError:
-            raise RuntimeError("kubernetes.stream module not available - install kubernetes package with websocket support")
+            raise RuntimeError(
+                "kubernetes.stream module not available - install kubernetes package with websocket support"
+            ) from None
         except _km.ApiException as e:
             self.log_action("exec_pod", params, error=e)
             raise RuntimeError(f"Failed to exec in pod: {str(e)}") from e
+
     def port_forward_pod(
-        self, pod_name: str, namespace: str | None = None, local_port: int = 8080, remote_port: int = 80
+        self,
+        pod_name: str,
+        namespace: str | None = None,
+        local_port: int = 8080,
+        remote_port: int = 80,
     ) -> dict:
         """Port forward to a pod using WebSocket streaming."""
-        params = {"pod_name": pod_name, "namespace": namespace, "local_port": local_port, "remote_port": remote_port}
+        params = {
+            "pod_name": pod_name,
+            "namespace": namespace,
+            "local_port": local_port,
+            "remote_port": remote_port,
+        }
         try:
             from kubernetes.stream import stream
 
             ns = namespace or self.namespace
-            
+
             # Start port forwarding
-            resp = stream(
+            stream(
                 self.core.connect_get_namespaced_pod_portforward,
                 pod_name,
                 ns,
                 ports=f"{local_port}:{remote_port}",
             )
-            
+
             result = {
                 "pod": pod_name,
                 "namespace": ns,
@@ -381,10 +433,13 @@ class WorkloadsMixin:
             self.log_action("port_forward_pod", params, result)
             return result
         except ImportError:
-            raise RuntimeError("kubernetes.stream module not available - install kubernetes package with websocket support")
+            raise RuntimeError(
+                "kubernetes.stream module not available - install kubernetes package with websocket support"
+            ) from None
         except _km.ApiException as e:
             self.log_action("port_forward_pod", params, error=e)
             raise RuntimeError(f"Failed to port forward to pod: {str(e)}") from e
+
     def attach_pod(
         self, pod_name: str, namespace: str | None = None, container: str | None = None
     ) -> dict:
@@ -394,7 +449,7 @@ class WorkloadsMixin:
             from kubernetes.stream import stream
 
             ns = namespace or self.namespace
-            
+
             resp = stream(
                 self.core.connect_get_namespaced_pod_attach,
                 pod_name,
@@ -405,7 +460,7 @@ class WorkloadsMixin:
                 stdout=True,
                 tty=True,
             )
-            
+
             result = {
                 "pod": pod_name,
                 "namespace": ns,
@@ -416,10 +471,13 @@ class WorkloadsMixin:
             self.log_action("attach_pod", params, result)
             return result
         except ImportError:
-            raise RuntimeError("kubernetes.stream module not available - install kubernetes package with websocket support")
+            raise RuntimeError(
+                "kubernetes.stream module not available - install kubernetes package with websocket support"
+            ) from None
         except _km.ApiException as e:
             self.log_action("attach_pod", params, error=e)
             raise RuntimeError(f"Failed to attach to pod: {str(e)}") from e
+
     def cp_pod(
         self,
         pod_name: str,
@@ -428,22 +486,27 @@ class WorkloadsMixin:
         destination: str | None = None,
     ) -> dict:
         """Copy files to/from a pod (requires tar in pod)."""
-        params = {"pod_name": pod_name, "namespace": namespace, "source": source, "destination": destination}
+        params = {
+            "pod_name": pod_name,
+            "namespace": namespace,
+            "source": source,
+            "destination": destination,
+        }
         try:
-            from kubernetes.stream import stream
-            import tarfile
             import io
-            import tempfile
             import os as os_module
+            import tarfile
+
+            from kubernetes.stream import stream
 
             ns = namespace or self.namespace
-            
+
             if not source or not destination:
                 raise ValueError("Both source and destination must be provided")
-            
+
             # Determine direction (pod:local or local:pod)
             is_pod_to_local = source.startswith("/") or not destination.startswith("/")
-            
+
             if is_pod_to_local:
                 # Copy from pod to local
                 # Create tar stream from pod
@@ -457,13 +520,13 @@ class WorkloadsMixin:
                     stdout=True,
                     tty=False,
                 )
-                
+
                 # Extract tar to local destination
                 tar_data = resp if isinstance(resp, bytes) else resp.encode()
-                tar_obj = tarfile.open(fileobj=io.BytesIO(tar_data), mode='r')
+                tar_obj = tarfile.open(fileobj=io.BytesIO(tar_data), mode="r")
                 tar_obj.extractall(path=destination)
                 tar_obj.close()
-                
+
                 result = {
                     "pod": pod_name,
                     "namespace": ns,
@@ -476,10 +539,10 @@ class WorkloadsMixin:
                 # Copy from local to pod
                 # Create tar of local source
                 tar_buffer = io.BytesIO()
-                with tarfile.open(fileobj=tar_buffer, mode='w') as tar:
+                with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
                     tar.add(source, arcname=os_module.path.basename(source))
                 tar_buffer.seek(0)
-                
+
                 # Send tar to pod and extract
                 resp = stream(
                     self.core.connect_get_namespaced_pod_exec,
@@ -491,10 +554,10 @@ class WorkloadsMixin:
                     stdout=True,
                     tty=False,
                 )
-                
+
                 # Write tar data to stdin
                 resp.write(tar_buffer.read())
-                
+
                 result = {
                     "pod": pod_name,
                     "namespace": ns,
@@ -503,14 +566,15 @@ class WorkloadsMixin:
                     "status": "copied",
                     "direction": "local_to_pod",
                 }
-            
+
             self.log_action("cp_pod", params, result)
             return result
         except ImportError as e:
-            raise RuntimeError(f"Required modules not available: {str(e)}")
+            raise RuntimeError(f"Required modules not available: {str(e)}") from e
         except _km.ApiException as e:
             self.log_action("cp_pod", params, error=e)
             raise RuntimeError(f"Failed to copy files: {str(e)}") from e
+
     def list_statefulsets(self, namespace: str | None = None) -> list[dict]:
         """List StatefulSets in a namespace."""
         params = {"namespace": namespace}
@@ -532,7 +596,10 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_statefulsets", params, error=e)
             raise RuntimeError(f"Failed to list statefulsets: {str(e)}") from e
-    def scale_statefulset(self, name: str, namespace: str | None = None, replicas: int = 1) -> dict:
+
+    def scale_statefulset(
+        self, name: str, namespace: str | None = None, replicas: int = 1
+    ) -> dict:
         """Scale a StatefulSet."""
         params = {"name": name, "namespace": namespace, "replicas": replicas}
         try:
@@ -546,6 +613,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("scale_statefulset", params, error=e)
             raise RuntimeError(f"Failed to scale statefulset: {str(e)}") from e
+
     def list_daemonsets(self, namespace: str | None = None) -> list[dict]:
         """List DaemonSets in a namespace."""
         params = {"namespace": namespace}
@@ -556,8 +624,12 @@ class WorkloadsMixin:
                 {
                     "name": ds.metadata.name,
                     "namespace": ds.metadata.namespace,
-                    "desired_number_scheduled": ds.status.desired_number_scheduled if ds.status else 0,
-                    "current_number_scheduled": ds.status.current_number_scheduled if ds.status else 0,
+                    "desired_number_scheduled": (
+                        ds.status.desired_number_scheduled if ds.status else 0
+                    ),
+                    "current_number_scheduled": (
+                        ds.status.current_number_scheduled if ds.status else 0
+                    ),
                     "number_ready": ds.status.number_ready if ds.status else 0,
                     "created": self._ts(ds.metadata.creation_timestamp),
                 }
@@ -568,7 +640,10 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_daemonsets", params, error=e)
             raise RuntimeError(f"Failed to list daemonsets: {str(e)}") from e
-    def rollout_status(self, resource_type: str, name: str, namespace: str | None = None) -> dict:
+
+    def rollout_status(
+        self, resource_type: str, name: str, namespace: str | None = None
+    ) -> dict:
         """Check rollout status of a resource."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
@@ -577,24 +652,37 @@ class WorkloadsMixin:
             if resource_type == "deployment":
                 resource = self.apps.read_namespaced_deployment(name, ns)
                 conditions = resource.status.conditions or []
-                available = any(c.type == "Available" and c.status == "True" for c in conditions)
-                updated = any(c.type == "Progressing" and c.status == "True" for c in conditions)
+                available = any(
+                    c.type == "Available" and c.status == "True" for c in conditions
+                )
+                updated = any(
+                    c.type == "Progressing" and c.status == "True" for c in conditions
+                )
                 result = {
                     "name": name,
                     "resource_type": resource_type,
                     "available": available,
                     "updated": updated,
                     "replicas": resource.spec.replicas if resource.spec else 0,
-                    "ready_replicas": resource.status.ready_replicas if resource.status else 0,
+                    "ready_replicas": (
+                        resource.status.ready_replicas if resource.status else 0
+                    ),
                 }
             else:
-                result = {"name": name, "resource_type": resource_type, "available": False}
+                result = {
+                    "name": name,
+                    "resource_type": resource_type,
+                    "available": False,
+                }
             self.log_action("rollout_status", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("rollout_status", params, error=e)
             raise RuntimeError(f"Failed to check rollout status: {str(e)}") from e
-    def rollout_history(self, resource_type: str, name: str, namespace: str | None = None) -> list[dict]:
+
+    def rollout_history(
+        self, resource_type: str, name: str, namespace: str | None = None
+    ) -> list[dict]:
         """Get rollout history of a resource (revision history)."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
@@ -607,7 +695,11 @@ class WorkloadsMixin:
                     {
                         "name": name,
                         "resource_type": resource_type,
-                        "current_revision": resource.metadata.resourceVersion if resource.metadata else "unknown",
+                        "current_revision": (
+                            resource.metadata.resourceVersion
+                            if resource.metadata
+                            else "unknown"
+                        ),
                         "note": "Full rollout history requires rollout.k8s.io API - returning basic info",
                     }
                 ]
@@ -618,7 +710,10 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("rollout_history", params, error=e)
             raise RuntimeError(f"Failed to get rollout history: {str(e)}") from e
-    def rollout_restart(self, resource_type: str, name: str, namespace: str | None = None) -> dict:
+
+    def rollout_restart(
+        self, resource_type: str, name: str, namespace: str | None = None
+    ) -> dict:
         """Restart a rollout by updating the annotation."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
@@ -626,7 +721,11 @@ class WorkloadsMixin:
             if resource_type == "deployment":
                 apps_ext = self.apps
                 # Add restart annotation
-                annotation = {"kubectl.kubernetes.io/restartedAt": self._ts(datetime.utcnow())}
+                annotation = {
+                    "kubectl.kubernetes.io/restartedAt": self._ts(
+                        datetime.now(timezone.utc)
+                    )
+                }
                 apps_ext.patch_namespaced_deployment(
                     name, ns, {"metadata": {"annotations": annotation}}
                 )
@@ -634,13 +733,25 @@ class WorkloadsMixin:
             self.log_action("rollout_restart", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Apps extension API not available")
+            raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_restart", params, error=e)
             raise RuntimeError(f"Failed to restart rollout: {str(e)}") from e
-    def rollout_undo(self, resource_type: str, name: str, namespace: str | None = None, revision: int | None = None) -> dict:
+
+    def rollout_undo(
+        self,
+        resource_type: str,
+        name: str,
+        namespace: str | None = None,
+        revision: int | None = None,
+    ) -> dict:
         """Undo a rollout to a specific revision."""
-        params = {"resource_type": resource_type, "name": name, "namespace": namespace, "revision": revision}
+        params = {
+            "resource_type": resource_type,
+            "name": name,
+            "namespace": namespace,
+            "revision": revision,
+        }
         try:
             ns = namespace or self.namespace
             if resource_type == "deployment":
@@ -651,20 +762,32 @@ class WorkloadsMixin:
                 else:
                     # Undo to previous revision
                     deployment = apps_ext.read_namespaced_deployment(name, ns)
-                    current_rev = deployment.metadata.annotations.get("deployment.kubernetes.io/revision", "0")
+                    current_rev = deployment.metadata.annotations.get(
+                        "deployment.kubernetes.io/revision", "0"
+                    )
                     target_rev = str(int(current_rev) - 1) if current_rev else "0"
                     annotation = {"deployment.kubernetes.io/revision": target_rev}
-                
-                apps_ext.patch_namespaced_deployment(name, ns, {"metadata": {"annotations": annotation}})
-            result = {"name": name, "resource_type": resource_type, "undone": True, "revision": revision}
+
+                apps_ext.patch_namespaced_deployment(
+                    name, ns, {"metadata": {"annotations": annotation}}
+                )
+            result = {
+                "name": name,
+                "resource_type": resource_type,
+                "undone": True,
+                "revision": revision,
+            }
             self.log_action("rollout_undo", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Apps extension API not available")
+            raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_undo", params, error=e)
             raise RuntimeError(f"Failed to undo rollout: {str(e)}") from e
-    def rollout_pause(self, resource_type: str, name: str, namespace: str | None = None) -> dict:
+
+    def rollout_pause(
+        self, resource_type: str, name: str, namespace: str | None = None
+    ) -> dict:
         """Pause a rollout."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
@@ -678,11 +801,14 @@ class WorkloadsMixin:
             self.log_action("rollout_pause", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Apps extension API not available")
+            raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_pause", params, error=e)
             raise RuntimeError(f"Failed to pause rollout: {str(e)}") from e
-    def rollout_resume(self, resource_type: str, name: str, namespace: str | None = None) -> dict:
+
+    def rollout_resume(
+        self, resource_type: str, name: str, namespace: str | None = None
+    ) -> dict:
         """Resume a paused rollout."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
@@ -696,10 +822,11 @@ class WorkloadsMixin:
             self.log_action("rollout_resume", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Apps extension API not available")
+            raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_resume", params, error=e)
             raise RuntimeError(f"Failed to resume rollout: {str(e)}") from e
+
     def list_jobs(self, namespace: str | None = None) -> list[dict]:
         """List Jobs in a namespace."""
         params = {"namespace": namespace}
@@ -724,6 +851,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_jobs", params, error=e)
             raise RuntimeError(f"Failed to list jobs: {str(e)}") from e
+
     def list_cron_jobs(self, namespace: str | None = None) -> list[dict]:
         """List CronJobs in a namespace."""
         params = {"namespace": namespace}
@@ -738,7 +866,11 @@ class WorkloadsMixin:
                     "schedule": cj.spec.schedule if cj.spec else "",
                     "suspend": cj.spec.suspend if cj.spec else False,
                     "active": cj.status.active if cj.status else 0,
-                    "last_schedule": self._ts(cj.status.last_schedule_time) if cj.status and cj.status.last_schedule_time else None,
+                    "last_schedule": (
+                        self._ts(cj.status.last_schedule_time)
+                        if cj.status and cj.status.last_schedule_time
+                        else None
+                    ),
                     "created": self._ts(cj.metadata.creation_timestamp),
                 }
                 for cj in cronjobs
@@ -746,10 +878,11 @@ class WorkloadsMixin:
             self.log_action("list_cron_jobs", params, {"count": len(result)})
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("list_cron_jobs", params, error=e)
             raise RuntimeError(f"Failed to list cron jobs: {str(e)}") from e
+
     def list_replicasets(self, namespace: str | None = None) -> list[dict]:
         """List ReplicaSets in a namespace."""
         params = {"namespace": namespace}
@@ -761,7 +894,9 @@ class WorkloadsMixin:
                     "name": rs.metadata.name,
                     "namespace": rs.metadata.namespace,
                     "replicas": rs.spec.replicas if rs.spec else 0,
-                    "available_replicas": rs.status.available_replicas if rs.status else 0,
+                    "available_replicas": (
+                        rs.status.available_replicas if rs.status else 0
+                    ),
                     "ready_replicas": rs.status.ready_replicas if rs.status else 0,
                     "created": self._ts(rs.metadata.creation_timestamp),
                 }
@@ -772,6 +907,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_replicasets", params, error=e)
             raise RuntimeError(f"Failed to list replicasets: {str(e)}") from e
+
     def describe_job(self, name: str, namespace: str) -> dict:
         """Describe a Job."""
         params = {"name": name, "namespace": namespace}
@@ -790,10 +926,11 @@ class WorkloadsMixin:
             self.log_action("describe_job", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_job", params, error=e)
             raise RuntimeError(f"Failed to describe Job: {str(e)}") from e
+
     def create_job(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a Job."""
         params = {"name": name, "namespace": namespace, "spec": spec}
@@ -801,8 +938,7 @@ class WorkloadsMixin:
             batch_api = self.batch
             job_spec = _km.k8s_client.V1JobSpec(**spec)
             job = _km.k8s_client.V1Job(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=job_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=job_spec
             )
             created = batch_api.create_namespaced_job(namespace, job)
             result = {
@@ -814,10 +950,11 @@ class WorkloadsMixin:
             self.log_action("create_job", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("create_job", params, error=e)
             raise RuntimeError(f"Failed to create Job: {str(e)}") from e
+
     def delete_job(self, name: str, namespace: str) -> dict:
         """Delete a Job."""
         params = {"name": name, "namespace": namespace}
@@ -828,10 +965,11 @@ class WorkloadsMixin:
             self.log_action("delete_job", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_job", params, error=e)
             raise RuntimeError(f"Failed to delete Job: {str(e)}") from e
+
     def describe_cron_job(self, name: str, namespace: str) -> dict:
         """Describe a CronJob."""
         params = {"name": name, "namespace": namespace}
@@ -850,10 +988,11 @@ class WorkloadsMixin:
             self.log_action("describe_cron_job", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_cron_job", params, error=e)
             raise RuntimeError(f"Failed to describe CronJob: {str(e)}") from e
+
     def create_cron_job(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a CronJob."""
         params = {"name": name, "namespace": namespace, "spec": spec}
@@ -861,8 +1000,7 @@ class WorkloadsMixin:
             batch_api = self.batch
             cron_job_spec = _km.k8s_client.V1CronJobSpec(**spec)
             cron_job = _km.k8s_client.V1CronJob(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=cron_job_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=cron_job_spec
             )
             created = batch_api.create_namespaced_cron_job(namespace, cron_job)
             result = {
@@ -874,10 +1012,11 @@ class WorkloadsMixin:
             self.log_action("create_cron_job", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("create_cron_job", params, error=e)
             raise RuntimeError(f"Failed to create CronJob: {str(e)}") from e
+
     def delete_cron_job(self, name: str, namespace: str) -> dict:
         """Delete a CronJob."""
         params = {"name": name, "namespace": namespace}
@@ -888,10 +1027,11 @@ class WorkloadsMixin:
             self.log_action("delete_cron_job", params, result)
             return result
         except ImportError:
-            raise RuntimeError("Batch client not available")
+            raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_cron_job", params, error=e)
             raise RuntimeError(f"Failed to delete CronJob: {str(e)}") from e
+
     def list_replica_sets(self, namespace: str | None = None) -> list[dict]:
         """List ReplicaSets."""
         params: dict[str, Any] = {"namespace": namespace}
@@ -915,6 +1055,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("list_replica_sets", params, error=e)
             raise RuntimeError(f"Failed to list ReplicaSets: {str(e)}") from e
+
     def describe_replica_set(self, name: str, namespace: str) -> dict:
         """Describe a ReplicaSet."""
         params = {"name": name, "namespace": namespace}
@@ -934,25 +1075,29 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("describe_replica_set", params, error=e)
             raise RuntimeError(f"Failed to describe ReplicaSet: {str(e)}") from e
-    def set_deployment_strategy(self, name: str, namespace: str, strategy: dict) -> dict:
+
+    def set_deployment_strategy(
+        self, name: str, namespace: str, strategy: dict
+    ) -> dict:
         """Set deployment strategy (recreate, rolling, custom)."""
         params = {"name": name, "namespace": namespace, "strategy": strategy}
         try:
             deployment = self.apps.read_namespaced_deployment(name, namespace)
             strategy_spec = _km.k8s_client.V1DeploymentStrategy(**strategy)
             deployment.spec.strategy = strategy_spec
-            updated = self.apps.patch_namespaced_deployment(name, namespace, deployment)
+            self.apps.patch_namespaced_deployment(name, namespace, deployment)
             result = {
                 "name": name,
                 "namespace": namespace,
                 "status": "updated",
-                "strategy": strategy
+                "strategy": strategy,
             }
             self.log_action("set_deployment_strategy", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("set_deployment_strategy", params, error=e)
             raise RuntimeError(f"Failed to set deployment strategy: {str(e)}") from e
+
     def get_deployment_strategy(self, name: str, namespace: str) -> dict:
         """Get current deployment strategy."""
         params = {"name": name, "namespace": namespace}
@@ -961,32 +1106,42 @@ class WorkloadsMixin:
             result = {
                 "name": name,
                 "namespace": namespace,
-                "strategy": deployment.spec.strategy._asdict() if deployment.spec.strategy else None
+                "strategy": (
+                    deployment.spec.strategy._asdict()
+                    if deployment.spec.strategy
+                    else None
+                ),
             }
             self.log_action("get_deployment_strategy", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("get_deployment_strategy", params, error=e)
             raise RuntimeError(f"Failed to get deployment strategy: {str(e)}") from e
-    def set_daemonset_update_strategy(self, name: str, namespace: str, strategy: dict) -> dict:
+
+    def set_daemonset_update_strategy(
+        self, name: str, namespace: str, strategy: dict
+    ) -> dict:
         """Set DaemonSet update strategy."""
         params = {"name": name, "namespace": namespace, "strategy": strategy}
         try:
             daemonset = self.apps.read_namespaced_daemon_set(name, namespace)
             strategy_spec = _km.k8s_client.V1DaemonSetUpdateStrategy(**strategy)
             daemonset.spec.updateStrategy = strategy_spec
-            updated = self.apps.patch_namespaced_daemon_set(name, namespace, daemonset)
+            self.apps.patch_namespaced_daemon_set(name, namespace, daemonset)
             result = {
                 "name": name,
                 "namespace": namespace,
                 "status": "updated",
-                "strategy": strategy
+                "strategy": strategy,
             }
             self.log_action("set_daemonset_update_strategy", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("set_daemonset_update_strategy", params, error=e)
-            raise RuntimeError(f"Failed to set DaemonSet update strategy: {str(e)}") from e
+            raise RuntimeError(
+                f"Failed to set DaemonSet update strategy: {str(e)}"
+            ) from e
+
     def get_daemonset_update_strategy(self, name: str, namespace: str) -> dict:
         """Get current DaemonSet update strategy."""
         params = {"name": name, "namespace": namespace}
@@ -995,32 +1150,44 @@ class WorkloadsMixin:
             result = {
                 "name": name,
                 "namespace": namespace,
-                "strategy": daemonset.spec.updateStrategy._asdict() if daemonset.spec.updateStrategy else None
+                "strategy": (
+                    daemonset.spec.updateStrategy._asdict()
+                    if daemonset.spec.updateStrategy
+                    else None
+                ),
             }
             self.log_action("get_daemonset_update_strategy", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("get_daemonset_update_strategy", params, error=e)
-            raise RuntimeError(f"Failed to get DaemonSet update strategy: {str(e)}") from e
-    def set_statefulset_update_strategy(self, name: str, namespace: str, strategy: dict) -> dict:
+            raise RuntimeError(
+                f"Failed to get DaemonSet update strategy: {str(e)}"
+            ) from e
+
+    def set_statefulset_update_strategy(
+        self, name: str, namespace: str, strategy: dict
+    ) -> dict:
         """Set StatefulSet update strategy."""
         params = {"name": name, "namespace": namespace, "strategy": strategy}
         try:
             statefulset = self.apps.read_namespaced_stateful_set(name, namespace)
             strategy_spec = _km.k8s_client.V1StatefulSetUpdateStrategy(**strategy)
             statefulset.spec.updateStrategy = strategy_spec
-            updated = self.apps.patch_namespaced_stateful_set(name, namespace, statefulset)
+            self.apps.patch_namespaced_stateful_set(name, namespace, statefulset)
             result = {
                 "name": name,
                 "namespace": namespace,
                 "status": "updated",
-                "strategy": strategy
+                "strategy": strategy,
             }
             self.log_action("set_statefulset_update_strategy", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("set_statefulset_update_strategy", params, error=e)
-            raise RuntimeError(f"Failed to set StatefulSet update strategy: {str(e)}") from e
+            raise RuntimeError(
+                f"Failed to set StatefulSet update strategy: {str(e)}"
+            ) from e
+
     def get_statefulset_update_strategy(self, name: str, namespace: str) -> dict:
         """Get current StatefulSet update strategy."""
         params = {"name": name, "namespace": namespace}
@@ -1029,68 +1196,92 @@ class WorkloadsMixin:
             result = {
                 "name": name,
                 "namespace": namespace,
-                "strategy": statefulset.spec.updateStrategy._asdict() if statefulset.spec.updateStrategy else None
+                "strategy": (
+                    statefulset.spec.updateStrategy._asdict()
+                    if statefulset.spec.updateStrategy
+                    else None
+                ),
             }
             self.log_action("get_statefulset_update_strategy", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("get_statefulset_update_strategy", params, error=e)
-            raise RuntimeError(f"Failed to get StatefulSet update strategy: {str(e)}") from e
+            raise RuntimeError(
+                f"Failed to get StatefulSet update strategy: {str(e)}"
+            ) from e
+
     def scale_replica_set(self, name: str, namespace: str, replicas: int) -> dict:
         """Scale a ReplicaSet to the specified number of replicas."""
         params = {"name": name, "namespace": namespace, "replicas": replicas}
         try:
             replica_set = self.apps.read_namespaced_replica_set(name, namespace)
             replica_set.spec.replicas = replicas
-            updated = self.apps.patch_namespaced_replica_set(name, namespace, replica_set)
+            self.apps.patch_namespaced_replica_set(name, namespace, replica_set)
             result = {
                 "name": name,
                 "namespace": namespace,
                 "replicas": replicas,
-                "status": "scaled"
+                "status": "scaled",
             }
             self.log_action("scale_replica_set", params, result)
             return result
         except _km.ApiException as e:
             self.log_action("scale_replica_set", params, error=e)
             raise RuntimeError(f"Failed to scale ReplicaSet: {str(e)}") from e
-    def copy_to_pod(self, pod_name: str, namespace: str, source: str, destination: str) -> dict:
+
+    def copy_to_pod(
+        self, pod_name: str, namespace: str, source: str, destination: str
+    ) -> dict:
         """Copy file to pod."""
-        params = {"pod_name": pod_name, "namespace": namespace, "source": source, "destination": destination}
+        params = {
+            "pod_name": pod_name,
+            "namespace": namespace,
+            "source": source,
+            "destination": destination,
+        }
         try:
             import os
-            
+
             if not os.path.exists(source):
                 raise FileNotFoundError(f"Source file not found: {source}")
-            
+
             result = {
                 "pod_name": pod_name,
                 "namespace": namespace,
                 "source": source,
                 "destination": destination,
-                "status": "copied"
+                "status": "copied",
             }
             self.log_action("copy_to_pod", params, result)
             return result
         except Exception as e:
             self.log_action("copy_to_pod", params, error=e)
             raise RuntimeError(f"Failed to copy to pod: {str(e)}") from e
-    def copy_from_pod(self, pod_name: str, namespace: str, source: str, destination: str) -> dict:
+
+    def copy_from_pod(
+        self, pod_name: str, namespace: str, source: str, destination: str
+    ) -> dict:
         """Copy file from pod."""
-        params = {"pod_name": pod_name, "namespace": namespace, "source": source, "destination": destination}
+        params = {
+            "pod_name": pod_name,
+            "namespace": namespace,
+            "source": source,
+            "destination": destination,
+        }
         try:
             result = {
                 "pod_name": pod_name,
                 "namespace": namespace,
                 "source": source,
                 "destination": destination,
-                "status": "copied"
+                "status": "copied",
             }
             self.log_action("copy_from_pod", params, result)
             return result
         except Exception as e:
             self.log_action("copy_from_pod", params, error=e)
             raise RuntimeError(f"Failed to copy from pod: {str(e)}") from e
+
     def create_stateful_set(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a StatefulSet."""
         params = {"name": name, "namespace": namespace, "spec": spec}
@@ -1098,33 +1289,31 @@ class WorkloadsMixin:
             apps_api = self.apps
             statefulset_spec = _km.k8s_client.V1StatefulSetSpec(**spec)
             statefulset = _km.k8s_client.V1StatefulSet(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=statefulset_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=statefulset_spec
             )
-            created = apps_api.create_namespaced_stateful_set(namespace, statefulset)
-            result = {
-                "name": name,
-                "namespace": namespace,
-                "status": "created"
-            }
+            apps_api.create_namespaced_stateful_set(namespace, statefulset)
+            result = {"name": name, "namespace": namespace, "status": "created"}
             self.log_action("create_stateful_set", params, result)
             return result
         except Exception as e:
             self.log_action("create_stateful_set", params, error=e)
             raise RuntimeError(f"Failed to create stateful set: {str(e)}") from e
+
     def list_stateful_sets(self, namespace: str | None = None) -> list[dict]:
         """List StatefulSets."""
         params: dict[str, Any] = {"namespace": namespace}
         try:
             apps_api = self.apps
-            statefulsets = apps_api.list_namespaced_stateful_set(namespace=namespace or self.namespace).items
+            statefulsets = apps_api.list_namespaced_stateful_set(
+                namespace=namespace or self.namespace
+            ).items
             result = [
                 {
                     "name": sts.metadata.name,
                     "namespace": sts.metadata.namespace,
                     "replicas": sts.spec.replicas if sts.spec else 0,
                     "ready_replicas": sts.status.ready_replicas if sts.status else 0,
-                    "created": self._ts(sts.metadata.creation_timestamp)
+                    "created": self._ts(sts.metadata.creation_timestamp),
                 }
                 for sts in statefulsets
             ]
@@ -1133,6 +1322,7 @@ class WorkloadsMixin:
         except Exception as e:
             self.log_action("list_stateful_sets", params, error=e)
             raise RuntimeError(f"Failed to list stateful sets: {str(e)}") from e
+
     def create_daemon_set(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a DaemonSet."""
         params = {"name": name, "namespace": namespace, "spec": spec}
@@ -1140,33 +1330,35 @@ class WorkloadsMixin:
             apps_api = self.apps
             daemonset_spec = _km.k8s_client.V1DaemonSetSpec(**spec)
             daemonset = _km.k8s_client.V1DaemonSet(
-                metadata=_km.k8s_client.V1ObjectMeta(name=name),
-                spec=daemonset_spec
+                metadata=_km.k8s_client.V1ObjectMeta(name=name), spec=daemonset_spec
             )
-            created = apps_api.create_namespaced_daemon_set(namespace, daemonset)
-            result = {
-                "name": name,
-                "namespace": namespace,
-                "status": "created"
-            }
+            apps_api.create_namespaced_daemon_set(namespace, daemonset)
+            result = {"name": name, "namespace": namespace, "status": "created"}
             self.log_action("create_daemon_set", params, result)
             return result
         except Exception as e:
             self.log_action("create_daemon_set", params, error=e)
             raise RuntimeError(f"Failed to create daemon set: {str(e)}") from e
+
     def list_daemon_sets(self, namespace: str | None = None) -> list[dict]:
         """List DaemonSets."""
         params: dict[str, Any] = {"namespace": namespace}
         try:
             apps_api = self.apps
-            daemonsets = apps_api.list_namespaced_daemon_set(namespace=namespace or self.namespace).items
+            daemonsets = apps_api.list_namespaced_daemon_set(
+                namespace=namespace or self.namespace
+            ).items
             result = [
                 {
                     "name": ds.metadata.name,
                     "namespace": ds.metadata.namespace,
-                    "desired_number_scheduled": ds.status.desired_number_scheduled if ds.status else 0,
-                    "current_number_scheduled": ds.status.current_number_scheduled if ds.status else 0,
-                    "created": self._ts(ds.metadata.creation_timestamp)
+                    "desired_number_scheduled": (
+                        ds.status.desired_number_scheduled if ds.status else 0
+                    ),
+                    "current_number_scheduled": (
+                        ds.status.current_number_scheduled if ds.status else 0
+                    ),
+                    "created": self._ts(ds.metadata.creation_timestamp),
                 }
                 for ds in daemonsets
             ]
