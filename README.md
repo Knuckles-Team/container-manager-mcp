@@ -933,7 +933,7 @@ Pick the extra that matches what you want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `container-manager-mcp[mcp]` | Slim MCP server only (`agent-utilities[mcp]` — FastMCP/FastAPI) | You only run the **MCP server** (smallest install / image) |
+| `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`agent-utilities[mcp]` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | You run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
 | `container-manager-mcp[agent]` | Full agent runtime (`agent-utilities[agent,logfire]` — Pydantic AI + the epistemic-graph engine) | You run the **integrated agent** |
 | `container-manager-mcp[all]` | Everything (`mcp` + `agent` + the `docker` / `podman` / `kubernetes` backends) | Development / both surfaces |
 

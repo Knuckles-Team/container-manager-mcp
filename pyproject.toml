@@ -21,7 +21,7 @@ text = "MIT"
 podman = [ "podman>=5.6.0",]
 docker = [ "docker[ssh]>=7.1.0",]
 kubernetes = [ "kubernetes>=29.0.0",]
-mcp = [ "agent-utilities[mcp]>=1.0.0",]
+mcp = [ "agent-utilities[mcp]>=1.0.0", "docker[ssh]>=7.1.0", "podman>=5.6.0", "kubernetes>=29.0.0",]
 agent = [ "agent-utilities[agent,logfire]>=1.0.0", "container-manager-mcp[mcp]>=2.0.0",]
 all = [ "container-manager-mcp[docker,podman,kubernetes,mcp,agent]>=2.0.0",]
 test = [

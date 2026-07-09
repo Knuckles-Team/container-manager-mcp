@@ -5,6 +5,15 @@ All notable changes to `container-manager-mcp` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-07-09
+
+### Changed
+- The `[mcp]` extra now bundles the Docker, Podman, and Kubernetes client libraries by default
+  (`docker[ssh]` + `podman` + `kubernetes`), so a single `container-manager-mcp[mcp]` install (and the
+  `:mcp`/`:latest` images built from it) has full Docker/Podman/Kubernetes support with no separate extras.
+  Fixes deployments where the k8s/podman tools registered but their operations failed at runtime because the
+  client libraries were absent (surfaced by `container-manager-doctor`).
+
 ## [2.1.0] - 2026-07-09
 
 ### Added
