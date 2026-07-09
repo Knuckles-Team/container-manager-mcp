@@ -1007,263 +1007,126 @@ def register_compose_tools(mcp: FastMCP):
             return f"Error executing {action}: {e}"
 
 
-def register_k8s_resources_tools(mcp: FastMCP):
-    """Register enhanced Kubernetes resource operations."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SRESOURCETOOL", "True").lower() in ("true", "1", "yes"):
+def register_k8s_workloads_tools(mcp: FastMCP):
+    """Register Kubernetes workload operations."""
+    if not os.environ.get("K8SWORKLOADSTOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_resources import register_k8s_resources_tools as register_k8s
-        register_k8s(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_workloads import register_k8s_workloads_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
 
-
-def register_k8s_rbac_tools(mcp: FastMCP):
-    """Register Kubernetes RBAC and security operations."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SRBACTOOL", "True").lower() in ("true", "1", "yes"):
+def register_k8s_config_tools(mcp: FastMCP):
+    """Register Kubernetes configuration operations."""
+    if not os.environ.get("K8SCONFIGTOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_rbac import register_k8s_rbac_tools
-        register_k8s_rbac_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_config import register_k8s_config_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
-
 
 def register_k8s_networking_tools(mcp: FastMCP):
     """Register Kubernetes networking operations."""
-    # Check if the tool is enabled via environment variable
     if not os.environ.get("K8SNETWORKINGTOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_networking import register_k8s_networking_tools
-        register_k8s_networking_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_networking import register_k8s_networking_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
-
 
 def register_k8s_storage_tools(mcp: FastMCP):
     """Register Kubernetes storage operations."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8STORAGETOOL", "True").lower() in ("true", "1", "yes"):
+    if not os.environ.get("K8SSTORAGETOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_storage import register_k8s_storage_tools
-        register_k8s_storage_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_storage import register_k8s_storage_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
 
-
-def register_k8s_advanced_tools(mcp: FastMCP):
-    """Register Kubernetes advanced operations."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDTOOL", "True").lower() in ("true", "1", "yes"):
+def register_k8s_rbac_tools(mcp: FastMCP):
+    """Register Kubernetes RBAC and security operations."""
+    if not os.environ.get("K8SRBACTOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced import register_k8s_advanced_tools
-        register_k8s_advanced_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_rbac import register_k8s_rbac_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
 
-
-def register_k8s_system_tools(mcp: FastMCP):
-    """Register Kubernetes system and context operations."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SSYSTEMTOOL", "True").lower() in ("true", "1", "yes"):
+def register_k8s_cluster_tools(mcp: FastMCP):
+    """Register Kubernetes cluster operations."""
+    if not os.environ.get("K8SCLUSTERTOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_system import register_k8s_system_tools
-        register_k8s_system_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_cluster import register_k8s_cluster_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
 
-
-def register_k8s_monitoring_tools(mcp: FastMCP):
-    """Register Kubernetes monitoring and metrics operations."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SMONITORINGTOOL", "True").lower() in ("true", "1", "yes"):
+def register_k8s_governance_tools(mcp: FastMCP):
+    """Register Kubernetes governance operations."""
+    if not os.environ.get("K8SGOVERNANCETOOL", "True").lower() in ("true", "1", "yes"):
         return
-    
     try:
-        from container_manager_mcp.mcp.mcp_k8s_monitoring import register_k8s_monitoring_tools
-        register_k8s_monitoring_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_governance import register_k8s_governance_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
 
-def register_k8s_crd_tools_wrapper(mcp: FastMCP):
-    """Register Kubernetes CRD and custom resource tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SCRDTOOL", "True").lower() in ("true", "1", "yes"):
+def register_k8s_observability_tools(mcp: FastMCP):
+    """Register Kubernetes observability operations."""
+    if not os.environ.get("K8SOBSERVABILITYTOOL", "True").lower() in ("true", "1", "yes"):
         return
-
     try:
-        from container_manager_mcp.mcp.mcp_k8s_crd import register_k8s_crd_tools
-        register_k8s_crd_tools(mcp)
+        from container_manager_mcp.mcp.mcp_k8s_observability import register_k8s_observability_tools as _register
+        _register(mcp)
     except ImportError:
         # Kubernetes client not installed, skip registration
         pass
-
-def register_k8s_advanced_resources_tools(mcp: FastMCP):
-    """Register Kubernetes advanced resource management tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDRESOURCESTOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_resources import register_k8s_advanced_resources_tools
-        register_k8s_advanced_resources_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-def register_k8s_advanced_rbac_tools(mcp: FastMCP):
-    """Register Kubernetes advanced RBAC tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDRBACTOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_rbac import register_k8s_advanced_rbac_tools
-        register_k8s_advanced_rbac_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-def register_k8s_advanced_networking_tools(mcp: FastMCP):
-    """Register Kubernetes advanced networking tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDNETWORKINGTOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_networking import register_k8s_advanced_networking_tools
-        register_k8s_advanced_networking_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-def register_k8s_advanced_storage_tools(mcp: FastMCP):
-    """Register Kubernetes advanced storage tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDSTORAGETOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_storage import register_k8s_advanced_storage_tools
-        register_k8s_advanced_storage_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-def register_k8s_advanced_scheduling_tools(mcp: FastMCP):
-    """Register Kubernetes advanced scheduling tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDSCHEDULINGTOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_scheduling import register_k8s_advanced_scheduling_tools
-        register_k8s_advanced_scheduling_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-def register_k8s_advanced_state_tools(mcp: FastMCP):
-    """Register Kubernetes advanced state tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDSTATETOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_state import register_k8s_advanced_state_tools
-        register_k8s_advanced_state_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-def register_k8s_advanced_comprehensive_tools(mcp: FastMCP):
-    """Register Kubernetes advanced comprehensive tools (Phases 3.1-3.7)."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SADVANCEDCOMPREHENSIVETOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_advanced_comprehensive import register_k8s_advanced_comprehensive_tools
-        register_k8s_advanced_comprehensive_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
 
 def register_podman_advanced_tools(mcp: FastMCP):
     """Register advanced Podman tools."""
-    # Check if the tool is enabled via environment variable
     if not os.environ.get("PODMANADVANCEDTOOL", "True").lower() in ("true", "1", "yes"):
         return
-
     try:
-        from container_manager_mcp.mcp.mcp_podman_advanced import register_podman_advanced_tools
-        register_podman_advanced_tools(mcp)
+        from container_manager_mcp.mcp.mcp_podman_advanced import register_podman_advanced_tools as _register
+        _register(mcp)
     except ImportError:
         # Podman client not installed, skip registration
         pass
 
-
 def register_docker_advanced_tools(mcp: FastMCP):
     """Register advanced Docker tools."""
-    # Check if the tool is enabled via environment variable
     if not os.environ.get("DOCKERADVANCEDTOOL", "True").lower() in ("true", "1", "yes"):
         return
-
     try:
-        from container_manager_mcp.mcp.mcp_docker_advanced import register_docker_advanced_tools
-        register_docker_advanced_tools(mcp)
+        from container_manager_mcp.mcp.mcp_docker_advanced import register_docker_advanced_tools as _register
+        _register(mcp)
     except ImportError:
         # Docker client not installed, skip registration
         pass
 
-
-def register_k8s_remaining_gaps_tools(mcp: FastMCP):
-    """Register Kubernetes remaining gap tools."""
-    # Check if the tool is enabled via environment variable
-    if not os.environ.get("K8SREMAININGGAPSTOOL", "True").lower() in ("true", "1", "yes"):
-        return
-
-    try:
-        from container_manager_mcp.mcp.mcp_k8s_remaining_gaps import register_k8s_remaining_gaps_tools
-        register_k8s_remaining_gaps_tools(mcp)
-    except ImportError:
-        # Kubernetes client not installed, skip registration
-        pass
-
-
 def register_multi_context_tools(mcp: FastMCP):
     """Register multi-context container management tools."""
-    # Check if the tool is enabled via environment variable
     if not os.environ.get("MULTICONTEXTTOOL", "True").lower() in ("true", "1", "yes"):
         return
-
     try:
-        from container_manager_mcp.mcp.mcp_multi_context import register_multi_context_tools
-        register_multi_context_tools(mcp)
+        from container_manager_mcp.mcp.mcp_multi_context import register_multi_context_tools as _register
+        _register(mcp)
     except ImportError:
         # Multi-context manager not available, skip registration
         pass
-
 
 def register_misc_tools(mcp: FastMCP):
     @mcp.tool(
@@ -1441,27 +1304,9 @@ def get_mcp_instance() -> tuple[Any, ...]:
     # setting("<TAG>TOOL", True). ContainerManagerBase is passed as the closest
     # importable client class for the verbose tier.
     
-    # Register enhanced Kubernetes tools (if Kubernetes client is available)
-    register_k8s_resources_tools(mcp)
-    register_k8s_rbac_tools(mcp)
-    register_k8s_networking_tools(mcp)
-    register_k8s_storage_tools(mcp)
-    register_k8s_advanced_tools(mcp)
-    register_k8s_system_tools(mcp)
-    register_k8s_monitoring_tools(mcp)
-    register_k8s_crd_tools_wrapper(mcp)
-    register_k8s_advanced_resources_tools(mcp)
-    register_k8s_advanced_rbac_tools(mcp)
-    register_k8s_advanced_networking_tools(mcp)
-    register_k8s_advanced_storage_tools(mcp)
-    register_k8s_advanced_scheduling_tools(mcp)
-    register_k8s_advanced_state_tools(mcp)
-    register_k8s_advanced_comprehensive_tools(mcp)
-    register_podman_advanced_tools(mcp)
-    register_docker_advanced_tools(mcp)
-    register_k8s_remaining_gaps_tools(mcp)
-    register_multi_context_tools(mcp)
-    
+    # Single registration path: register_tool_surface() auto-discovers every
+    # register_<tag>_tools in this module (base + the 8 themed k8s wrappers +
+    # podman/docker/multi-context) and gates each on its <TAG>TOOL setting.
     register_tool_surface(
         mcp,
         client_cls=ContainerManagerBase,
