@@ -1,5 +1,6 @@
 ---
 name: container-manager-multi-context
+skill_type: skill
 description: >-
   Operate several container backends and contexts at once — Kubernetes, Docker,
   Podman, and Swarm — via the container-manager-mcp MCP server's cm_multi_context

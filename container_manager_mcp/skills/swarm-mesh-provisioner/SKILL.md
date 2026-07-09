@@ -1,5 +1,6 @@
 ---
 name: swarm-mesh-provisioner
+skill_type: skill
 description: >
   Swarm Mesh Provisioner atomic skill. Initializes Docker Swarm Mode,
   manages manager/worker nodes join processes, and provisions global Swarm Overlay networks using container-manager-mcp.

@@ -1,5 +1,6 @@
 ---
 name: kubernetes-mesh-provisioner
+skill_type: skill
 description: >
   Kubernetes Mesh Provisioner atomic skill. Stands up an RKE2 cluster
   (server + agents) with Cilium CNI and the NVIDIA GPU device plugin, the
