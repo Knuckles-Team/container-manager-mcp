@@ -476,7 +476,7 @@ class ConfigMixin:
             result = {
                 "name": name,
                 "namespace": namespace,
-                "matches": len(differences) == 0,
+                "matches": not differences,
                 "differences": differences,
                 "difference_count": len(differences),
             }
