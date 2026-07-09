@@ -1,5 +1,7 @@
 """WorkloadsMixin for KubernetesManager (split from k8s_manager.py)."""
 
+import os
+import subprocess
 from datetime import datetime, timezone
 from typing import Any
 
@@ -485,97 +487,21 @@ class WorkloadsMixin:
         source: str | None = None,
         destination: str | None = None,
     ) -> dict:
-        """Copy files to/from a pod (requires tar in pod)."""
-        params = {
-            "pod_name": pod_name,
-            "namespace": namespace,
-            "source": source,
-            "destination": destination,
-        }
-        try:
-            import io
-            import os as os_module
-            import tarfile
+        """Copy files to/from a pod, delegating to :meth:`copy_to_pod` /
+        :meth:`copy_from_pod`.
 
-            from kubernetes.stream import stream
-
-            ns = namespace or self.namespace
-
-            if not source or not destination:
-                raise ValueError("Both source and destination must be provided")
-
-            # Determine direction (pod:local or local:pod)
-            is_pod_to_local = source.startswith("/") or not destination.startswith("/")
-
-            if is_pod_to_local:
-                # Copy from pod to local
-                # Create tar stream from pod
-                resp = stream(
-                    self.core.connect_get_namespaced_pod_exec,
-                    pod_name,
-                    ns,
-                    command=["tar", "cf", "-", source],
-                    stderr=True,
-                    stdin=False,
-                    stdout=True,
-                    tty=False,
-                )
-
-                # Extract tar to local destination
-                tar_data = resp if isinstance(resp, bytes) else resp.encode()
-                tar_obj = tarfile.open(fileobj=io.BytesIO(tar_data), mode="r")
-                # Use the "data" extraction filter (PEP 706) to reject path
-                # traversal / absolute paths in the tar streamed from the pod.
-                tar_obj.extractall(path=destination, filter="data")
-                tar_obj.close()
-
-                result = {
-                    "pod": pod_name,
-                    "namespace": ns,
-                    "source": source,
-                    "destination": destination,
-                    "status": "copied",
-                    "direction": "pod_to_local",
-                }
-            else:
-                # Copy from local to pod
-                # Create tar of local source
-                tar_buffer = io.BytesIO()
-                with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
-                    tar.add(source, arcname=os_module.path.basename(source))
-                tar_buffer.seek(0)
-
-                # Send tar to pod and extract
-                resp = stream(
-                    self.core.connect_get_namespaced_pod_exec,
-                    pod_name,
-                    ns,
-                    command=["tar", "xf", "-", "-C", destination],
-                    stderr=True,
-                    stdin=True,
-                    stdout=True,
-                    tty=False,
-                )
-
-                # Write tar data to stdin
-                resp.write(tar_buffer.read())
-
-                result = {
-                    "pod": pod_name,
-                    "namespace": ns,
-                    "source": source,
-                    "destination": destination,
-                    "status": "copied",
-                    "direction": "local_to_pod",
-                }
-
-            self.log_action("cp_pod", params, result)
-            return result
-        except ImportError as e:
-            raise RuntimeError(f"Required modules not available: {str(e)}") from e
-        except _km.ApiException as e:
-            self.log_action("cp_pod", params, error=e)
-            raise RuntimeError(f"Failed to copy files: {str(e)}") from e
+        Direction is inferred from the paths (an absolute pod ``source`` or a
+        non-absolute local ``destination`` means pod-to-local). The real
+        ``kubectl cp`` transfer — and its path-traversal safety — lives in the
+        two delegate methods; this wrapper carries no tar logic of its own.
+        """
+        if not source or not destination:
+            raise ValueError("Both source and destination must be provided")
+        ns = namespace or self.namespace
+        is_pod_to_local = source.startswith("/") or not destination.startswith("/")
+        if is_pod_to_local:
+            return self.copy_from_pod(pod_name, ns, source, destination)
+        return self.copy_to_pod(pod_name, ns, source, destination)
 
     def list_statefulsets(self, namespace: str | None = None) -> list[dict]:
         """List StatefulSets in a namespace."""
@@ -1231,10 +1157,29 @@ class WorkloadsMixin:
             self.log_action("scale_replica_set", params, error=e)
             raise RuntimeError(f"Failed to scale ReplicaSet: {str(e)}") from e
 
+    def _kubectl_cp(self, src: str, dst: str, action: str) -> str:
+        """Run ``kubectl cp <src> <dst>`` (binary-safe) and return stdout.
+
+        Adds ``--context`` only when the manager carries one. Raises
+        ``RuntimeError`` with stderr on a non-zero exit. ``kubectl cp`` streams
+        a tar over the pod exec channel and extracts it itself, so path
+        traversal from a malicious pod is handled by kubectl, not us.
+        """
+        cmd = ["kubectl", "cp", src, dst]
+        context = getattr(self, "context", None)
+        if context:
+            cmd += ["--context", context]
+        proc = subprocess.run(cmd, capture_output=True)  # nosec B603 B607
+        if proc.returncode != 0:
+            stderr = proc.stderr.decode("utf-8", "replace").strip()
+            stdout = proc.stdout.decode("utf-8", "replace").strip()
+            raise RuntimeError(stderr or stdout or f"kubectl cp failed for {action}")
+        return proc.stdout.decode("utf-8", "replace")
+
     def copy_to_pod(
         self, pod_name: str, namespace: str, source: str, destination: str
     ) -> dict:
-        """Copy file to pod."""
+        """Copy a local file/dir into a pod via ``kubectl cp``."""
         params = {
             "pod_name": pod_name,
             "namespace": namespace,
@@ -1242,17 +1187,18 @@ class WorkloadsMixin:
             "destination": destination,
         }
         try:
-            import os
-
             if not os.path.exists(source):
                 raise FileNotFoundError(f"Source file not found: {source}")
-
+            self._kubectl_cp(
+                source, f"{namespace}/{pod_name}:{destination}", "copy_to_pod"
+            )
             result = {
                 "pod_name": pod_name,
                 "namespace": namespace,
                 "source": source,
                 "destination": destination,
                 "status": "copied",
+                "direction": "local_to_pod",
             }
             self.log_action("copy_to_pod", params, result)
             return result
@@ -1263,7 +1209,7 @@ class WorkloadsMixin:
     def copy_from_pod(
         self, pod_name: str, namespace: str, source: str, destination: str
     ) -> dict:
-        """Copy file from pod."""
+        """Copy a file/dir out of a pod to the local host via ``kubectl cp``."""
         params = {
             "pod_name": pod_name,
             "namespace": namespace,
@@ -1271,12 +1217,16 @@ class WorkloadsMixin:
             "destination": destination,
         }
         try:
+            self._kubectl_cp(
+                f"{namespace}/{pod_name}:{source}", destination, "copy_from_pod"
+            )
             result = {
                 "pod_name": pod_name,
                 "namespace": namespace,
                 "source": source,
                 "destination": destination,
                 "status": "copied",
+                "direction": "pod_to_local",
             }
             self.log_action("copy_from_pod", params, result)
             return result
