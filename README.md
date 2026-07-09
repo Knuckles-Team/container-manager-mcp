@@ -98,6 +98,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_docker_advanced` | `DOCKERADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
 | `cm_image_operations` | `IMAGETOOL` | Manage container images. |
 | `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
+| `cm_ingest_inventory` | `MISCTOOL` | Natively ingest the container inventory into epistemic-graph as typed nodes. |
 | `cm_k8s_cluster` | `K8SCLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_config` | `K8SCONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
 | `cm_k8s_governance` | `K8SGOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
@@ -115,7 +116,302 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
 | `trace_port_namespace` | `MISCTOOL` | Locate the container actively using/mapping the specified port on the target host. |
 
-_21 action-routed tool(s) (default) · 0 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+#### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
+
+<details>
+<summary>285 per-operation tools — one per public API method (click to expand)</summary>
+
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `cm_container_operations__exec_in_container` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_container_operations__get_container_logs` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_container_operations__list_containers` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_container_operations__prune_containers` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_container_operations__remove_container` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_container_operations__stop_container` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_docker_advanced__docker_config_create` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_config_list` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_node_inspect` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_node_ls` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_node_update` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_secret_create` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_secret_list` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_service_create` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_service_list` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_service_logs` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_service_ps` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_service_rm` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_service_update` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_stack_deploy` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_stack_rm` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_stack_services` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_swarm_init` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_swarm_join` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_advanced__docker_swarm_leave` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_image_operations__list_images` | `IMAGETOOL` | Manage container images. |
+| `cm_image_operations__prune_images` | `IMAGETOOL` | Manage container images. |
+| `cm_image_operations__pull_image` | `IMAGETOOL` | Manage container images. |
+| `cm_image_operations__remove_image` | `IMAGETOOL` | Manage container images. |
+| `cm_k8s_cluster__approve_csr` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__cluster_info_dump` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__cordon_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__deny_csr` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__describe_api_resource` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__describe_cluster_plugin` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__drain_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__get_api_server_info` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__get_cluster_info` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__get_config` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__get_node_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__get_node_conditions` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__inspect_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__list_api_resources` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__list_cluster_plugins` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__list_contexts` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__list_csr` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__list_node_taints` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__list_nodes` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__rename_context` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__set_node_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__set_pod_anti_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__taint_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__test_cluster_plugin` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__uncordon_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__untaint_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__use_context` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__validate_kubeconfig` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_config__annotate_resource` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__compare_configmap_state` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__create_configmap` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__create_namespace` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__create_secret` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__delete_namespace` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__describe_crd` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__get_secret_state_hash` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__label_resource` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__list_configmaps` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__list_crds` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__list_custom_resources` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__list_events` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__list_namespaces` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__list_secrets` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__patch_resource` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__sync_configmap_from_file` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__track_resource_version` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_config__wait_for_resource_version` | `CONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_governance__create_horizontal_pod_autoscaler` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__create_limit_range` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__create_pod_disruption_budget` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__create_priority_class` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__create_resource_quota` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__delete_horizontal_pod_autoscaler` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__delete_limit_range` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__delete_pod_disruption_budget` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__delete_priority_class` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__delete_resource_quota` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__describe_horizontal_pod_autoscaler` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__describe_limit_range` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__describe_pod_disruption_budget` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__describe_priority_class` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__describe_resource_quota` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__list_horizontal_pod_autoscalers` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__list_limit_ranges` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__list_pod_disruption_budgets` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__list_priority_classes` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__list_resource_quotas` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__update_horizontal_pod_autoscaler` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_governance__update_resource_quota` | `GOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_networking__check_dns_resolution` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__create_ingress` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__create_ingress_class` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__create_k8s_service` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__create_network_policy_with_cidr` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__create_networkpolicy` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__delete_ingress` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__delete_k8s_service` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__delete_networkpolicy` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__describe_ingress_class` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__get_k8s_service` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_dns_endpoints` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_endpoints` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_endpointslices` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_ingress` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_ingress_classes` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_k8s_services` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__list_networkpolicies` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__set_default_ingress_class` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__test_dns_connectivity` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__test_network_policy_connectivity` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_networking__update_network_policy_rules` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_observability__debug_deployment` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__debug_node` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__debug_pod` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__debug_service` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_autoscaler_history` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_autoscaler_metrics` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_cluster_resource_summary` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_node_metrics` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_pod_metrics` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_pod_resource_usage` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__get_resource_events` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__list_field_selector` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__scale_deployment_autoscaler` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__set_autoscaler_metrics` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__stream_pod_logs` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__top_nodes` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__top_pods` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_observability__watch_resource` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_rbac__auth_can_i` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_aggregated_cluster_role` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_cluster_rolebinding` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_pod_security_policy` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_role` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_rolebinding` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_service_account_token` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__create_serviceaccount` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__delete_cluster_rolebinding` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__delete_pod_security_policy` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__delete_role` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__delete_rolebinding` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__delete_service_account_token` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__delete_serviceaccount` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__describe_pod_security_policy` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__evaluate_pod_security` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_cluster_rolebindings` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_cluster_roles` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_pod_security_policies` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_rolebindings` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_roles` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_service_account_mapped_secrets` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_service_account_tokens` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__list_serviceaccounts` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__local_subject_access_review` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__map_secret_to_service_account` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__subject_access_review` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__unmap_secret_from_service_account` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_rbac__update_aggregated_cluster_role` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_storage__create_persistent_volume` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__create_persistent_volume_claim` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__create_storage_class` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__create_volume_snapshot` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__delete_persistent_volume_claim` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__describe_csi_driver` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__expand_persistent_volume` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__expand_pvc` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__get_csi_driver_capacity` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__get_storage_class_provisioner` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__list_csi_drivers` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__list_persistent_volume_claims` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__list_persistent_volumes` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__list_storage_classes` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__list_volume_snapshots` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_storage__set_default_storage_class` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_workloads__attach_pod` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__copy_from_pod` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__copy_to_pod` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__create_cron_job` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__create_daemon_set` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__create_job` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__create_stateful_set` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__delete_cron_job` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__delete_job` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__describe_cron_job` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__describe_job` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__describe_pod` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__describe_replicaset` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__exec_pod` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__get_daemonset_update_strategy` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__get_deployment_strategy` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__get_statefulset_update_strategy` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__list_cron_jobs` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__list_daemonsets` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__list_jobs` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__list_pods` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__list_replicasets` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__list_statefulsets` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__port_forward_pod` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__rollout_history` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__rollout_pause` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__rollout_restart` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__rollout_resume` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__rollout_status` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__rollout_undo` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__scale_replicaset` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__scale_statefulset` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__set_daemonset_update_strategy` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__set_deployment_strategy` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_k8s_workloads__set_statefulset_update_strategy` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
+| `cm_multi_context__create_network` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__create_service` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__create_volume` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__describe_pod` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__inspect_container` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_containers` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_contexts` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_deployments` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_images` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_networks` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_pods` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_services` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__list_volumes` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__pull_image` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__remove_container` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__remove_image` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__remove_network` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__remove_service` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__remove_volume` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__run_container` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__scale_deployment` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_multi_context__stop_container` | `DOCKERTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
+| `cm_network_operations__create_network` | `NETWORKTOOL` | Manage network operations. |
+| `cm_network_operations__list_networks` | `NETWORKTOOL` | Manage network operations. |
+| `cm_network_operations__prune_networks` | `NETWORKTOOL` | Manage network operations. |
+| `cm_network_operations__remove_network` | `NETWORKTOOL` | Manage network operations. |
+| `cm_podman_advanced__podman_checkpoint` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_generate_kube_yaml` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_health_check` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_network_create` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_network_inspect` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_network_list` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_play_kube_yaml` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_create` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_inspect` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_list` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_logs` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_rm` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_stats` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_stop` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_pod_top` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_restore` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_system_prune` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_volume_create` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_volume_inspect` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman_advanced__podman_volume_list` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_swarm_operations__create_service` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__init_swarm` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__inspect_node` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__inspect_service` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__leave_swarm` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__list_nodes` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__list_services` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__remove_node` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__remove_service` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__scale_service` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__service_logs` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__service_ps` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__update_node` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_swarm_operations__update_service` | `SWARMTOOL` | Manage swarm operations. |
+| `cm_system_operations__get_info` | `SYSTEMTOOL` | Manage container manager system operations. |
+| `cm_system_operations__get_version` | `SYSTEMTOOL` | Manage container manager system operations. |
+| `cm_system_operations__prune_system` | `SYSTEMTOOL` | Manage container manager system operations. |
+| `cm_volume_operations__create_volume` | `VOLUMETOOL` | Manage volume operations. |
+| `cm_volume_operations__list_volumes` | `VOLUMETOOL` | Manage volume operations. |
+| `cm_volume_operations__prune_volumes` | `VOLUMETOOL` | Manage volume operations. |
+| `cm_volume_operations__remove_volume` | `VOLUMETOOL` | Manage volume operations. |
+
+</details>
+
+_22 action-routed tool(s) (default) · 285 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
@@ -213,14 +509,35 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "CONTAINER_MANAGER_KUBECONTEXT": "",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
         "CONTAINER_MANAGER_TYPE": "docker",
+        "DEFAULT_DOCKER_CONTEXT": "",
+        "DEFAULT_K8S_CONTEXT": "",
+        "DEFAULT_SWARM_CONTEXT": "",
+        "DOCKERADVANCEDTOOL": "True",
+        "DOCKER_CONTEXTS": "",
+        "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
         "INFOTOOL": "True",
         "INVENTORYTOOL": "True",
+        "K8SCLUSTERTOOL": "True",
+        "K8SCONFIGTOOL": "True",
+        "K8SGOVERNANCETOOL": "True",
+        "K8SNETWORKINGTOOL": "True",
+        "K8SOBSERVABILITYTOOL": "True",
+        "K8SRBACTOOL": "True",
+        "K8SSTORAGETOOL": "True",
+        "K8SWORKLOADSTOOL": "True",
+        "K8S_CONTEXTS": "",
         "KUBERNETES_SERVICE_HOST": "",
         "MISCTOOL": "True",
+        "MULTICONTEXTTOOL": "True",
+        "MULTI_CONTEXT_MAX_WORKERS": "",
+        "MULTI_CONTEXT_MODE": "True",
         "NETWORKTOOL": "True",
+        "PODMANADVANCEDTOOL": "True",
+        "PODMAN_ENABLED": "true",
         "SPECIALIST_DEPLOYMENTTOOL": "True",
         "SWARMTOOL": "True",
+        "SWARM_CONTEXTS": "",
         "SYSTEMTOOL": "True",
         "VOLUMETOOL": "True"
       }
@@ -256,14 +573,35 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "CONTAINER_MANAGER_KUBECONTEXT": "",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
         "CONTAINER_MANAGER_TYPE": "docker",
+        "DEFAULT_DOCKER_CONTEXT": "",
+        "DEFAULT_K8S_CONTEXT": "",
+        "DEFAULT_SWARM_CONTEXT": "",
+        "DOCKERADVANCEDTOOL": "True",
+        "DOCKER_CONTEXTS": "",
+        "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
         "INFOTOOL": "True",
         "INVENTORYTOOL": "True",
+        "K8SCLUSTERTOOL": "True",
+        "K8SCONFIGTOOL": "True",
+        "K8SGOVERNANCETOOL": "True",
+        "K8SNETWORKINGTOOL": "True",
+        "K8SOBSERVABILITYTOOL": "True",
+        "K8SRBACTOOL": "True",
+        "K8SSTORAGETOOL": "True",
+        "K8SWORKLOADSTOOL": "True",
+        "K8S_CONTEXTS": "",
         "KUBERNETES_SERVICE_HOST": "",
         "MISCTOOL": "True",
+        "MULTICONTEXTTOOL": "True",
+        "MULTI_CONTEXT_MAX_WORKERS": "",
+        "MULTI_CONTEXT_MODE": "True",
         "NETWORKTOOL": "True",
+        "PODMANADVANCEDTOOL": "True",
+        "PODMAN_ENABLED": "true",
         "SPECIALIST_DEPLOYMENTTOOL": "True",
         "SWARMTOOL": "True",
+        "SWARM_CONTEXTS": "",
         "SYSTEMTOOL": "True",
         "VOLUMETOOL": "True"
       }
@@ -300,14 +638,35 @@ docker run -d \
   -e CONTAINER_MANAGER_KUBECONTEXT="" \
   -e CONTAINER_MANAGER_PODMAN_BASE_URL="" \
   -e CONTAINER_MANAGER_TYPE=docker \
+  -e DEFAULT_DOCKER_CONTEXT="" \
+  -e DEFAULT_K8S_CONTEXT="" \
+  -e DEFAULT_SWARM_CONTEXT="" \
+  -e DOCKERADVANCEDTOOL=True \
+  -e DOCKER_CONTEXTS="" \
+  -e HEALTH_CHECK_TTL_SECONDS=30 \
   -e IMAGETOOL=True \
   -e INFOTOOL=True \
   -e INVENTORYTOOL=True \
+  -e K8SCLUSTERTOOL=True \
+  -e K8SCONFIGTOOL=True \
+  -e K8SGOVERNANCETOOL=True \
+  -e K8SNETWORKINGTOOL=True \
+  -e K8SOBSERVABILITYTOOL=True \
+  -e K8SRBACTOOL=True \
+  -e K8SSTORAGETOOL=True \
+  -e K8SWORKLOADSTOOL=True \
+  -e K8S_CONTEXTS="" \
   -e KUBERNETES_SERVICE_HOST="" \
   -e MISCTOOL=True \
+  -e MULTICONTEXTTOOL=True \
+  -e MULTI_CONTEXT_MAX_WORKERS="" \
+  -e MULTI_CONTEXT_MODE=True \
   -e NETWORKTOOL=True \
+  -e PODMANADVANCEDTOOL=True \
+  -e PODMAN_ENABLED=true \
   -e SPECIALIST_DEPLOYMENTTOOL=True \
   -e SWARMTOOL=True \
+  -e SWARM_CONTEXTS="" \
   -e SYSTEMTOOL=True \
   -e VOLUMETOOL=True \
   knucklessg1/container-manager-mcp:mcp
@@ -368,27 +727,27 @@ consumed from a **remote deployment**. The
 | `COMPOSETOOL` | `True` |  |
 | `MISCTOOL` | `True` |  |
 | `SPECIALIST_DEPLOYMENTTOOL` | `True` |  |
-| `K8SWORKLOADSTOOL` | `True` | Toggle the `cm_k8s_workloads` tool |
-| `K8SCONFIGTOOL` | `True` | Toggle the `cm_k8s_config` tool |
-| `K8SNETWORKINGTOOL` | `True` | Toggle the `cm_k8s_networking` tool |
-| `K8SSTORAGETOOL` | `True` | Toggle the `cm_k8s_storage` tool |
-| `K8SRBACTOOL` | `True` | Toggle the `cm_k8s_rbac` tool |
-| `K8SCLUSTERTOOL` | `True` | Toggle the `cm_k8s_cluster` tool |
-| `K8SGOVERNANCETOOL` | `True` | Toggle the `cm_k8s_governance` tool |
-| `K8SOBSERVABILITYTOOL` | `True` | Toggle the `cm_k8s_observability` tool |
-| `PODMANADVANCEDTOOL` | `True` | Toggle the `cm_podman_advanced` tool |
-| `DOCKERADVANCEDTOOL` | `True` | Toggle the `cm_docker_advanced` tool |
-| `MULTICONTEXTTOOL` | `True` | Toggle the `cm_multi_context` tool |
-| `MULTI_CONTEXT_MODE` | `True` | Route every call through the multi-context manager |
-| `HEALTH_CHECK_TTL_SECONDS` | `30` | Multi-context backend health-check cache TTL (seconds) |
-| `MULTI_CONTEXT_MAX_WORKERS` | — | Cap on parallel multi-context health-check workers (auto-sized when empty) |
-| `K8S_CONTEXTS` | — | `name=kubeconfig_context;…` map of Kubernetes contexts |
-| `DEFAULT_K8S_CONTEXT` | — | Default Kubernetes context name (a key in `K8S_CONTEXTS`) |
-| `DOCKER_CONTEXTS` | — | `name=tcp://host:port;…` map of Docker contexts |
-| `DEFAULT_DOCKER_CONTEXT` | — | Default Docker context name (a key in `DOCKER_CONTEXTS`) |
-| `SWARM_CONTEXTS` | — | `name=tcp://host:port;…` map of Swarm contexts |
-| `DEFAULT_SWARM_CONTEXT` | — | Default Swarm context name (a key in `SWARM_CONTEXTS`) |
-| `PODMAN_ENABLED` | `true` | Enable the local Podman backend in multi-context mode |
+| `K8SWORKLOADSTOOL` | `True` |  |
+| `K8SCONFIGTOOL` | `True` |  |
+| `K8SNETWORKINGTOOL` | `True` |  |
+| `K8SSTORAGETOOL` | `True` |  |
+| `K8SRBACTOOL` | `True` |  |
+| `K8SCLUSTERTOOL` | `True` |  |
+| `K8SGOVERNANCETOOL` | `True` |  |
+| `K8SOBSERVABILITYTOOL` | `True` |  |
+| `PODMANADVANCEDTOOL` | `True` |  |
+| `DOCKERADVANCEDTOOL` | `True` |  |
+| `MULTICONTEXTTOOL` | `True` |  |
+| `MULTI_CONTEXT_MODE` | `True` | Multi-Context Configuration |
+| `HEALTH_CHECK_TTL_SECONDS` | `30` | Multi-context health-check cache TTL (seconds) and parallel worker cap |
+| `MULTI_CONTEXT_MAX_WORKERS` | — |  |
+| `K8S_CONTEXTS` | — | Example: "dev=dev-cluster;prod=prod-cluster;staging=staging-cluster" |
+| `DEFAULT_K8S_CONTEXT` | — | Default Kubernetes context name (must match a key in K8S_CONTEXTS) |
+| `DOCKER_CONTEXTS` | — | Example: "local=unix:///var/run/docker.sock;remote=tcp://192.168.1.100:2375" |
+| `DEFAULT_DOCKER_CONTEXT` | — | Default Docker context name (must match a key in DOCKER_CONTEXTS) |
+| `SWARM_CONTEXTS` | — | Example: "swarm1=tcp://swarm1:2375;swarm2=tcp://swarm2:2375" |
+| `DEFAULT_SWARM_CONTEXT` | — | Default Swarm context name (must match a key in SWARM_CONTEXTS) |
+| `PODMAN_ENABLED` | `true` | Enable Podman (local only) |
 
 #### Inherited agent-utilities variables (apply to every connector)
 
