@@ -14,7 +14,7 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_k8s_observability_tools(mcp: FastMCP):
+def register_k8sobservability_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Kubernetes Observability Operations",

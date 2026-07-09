@@ -87,7 +87,7 @@ class MultiContextManager:
         self.logger.info("Initializing multi-context managers...")
 
         # Initialize Kubernetes contexts
-        k8s_contexts = self._parse_context_config("K8S_CONTEXTS")
+        k8s_contexts = self._parse_context_config(os.environ.get("K8S_CONTEXTS", ""))
         if k8s_contexts:
             for context_name, context_value in k8s_contexts.items():
                 try:
@@ -104,7 +104,9 @@ class MultiContextManager:
             self.logger.info(f"Default K8S context auto-selected: {self.default_k8s_context}")
 
         # Initialize Docker contexts
-        docker_contexts = self._parse_context_config("DOCKER_CONTEXTS")
+        docker_contexts = self._parse_context_config(
+            os.environ.get("DOCKER_CONTEXTS", "")
+        )
         if docker_contexts:
             for context_name, host in docker_contexts.items():
                 try:
@@ -121,7 +123,9 @@ class MultiContextManager:
             self.logger.info(f"Default Docker context auto-selected: {self.default_docker_context}")
 
         # Initialize Swarm contexts
-        swarm_contexts = self._parse_context_config("SWARM_CONTEXTS")
+        swarm_contexts = self._parse_context_config(
+            os.environ.get("SWARM_CONTEXTS", "")
+        )
         if swarm_contexts:
             for context_name, host in swarm_contexts.items():
                 try:
@@ -153,12 +157,11 @@ class MultiContextManager:
             f"Podman={1 if self.podman_manager else 0}"
         )
 
-    def _parse_context_config(self, env_var: str) -> dict[str, str]:
-        """Parse context configuration from environment variable.
+    def _parse_context_config(self, config_str: str) -> dict[str, str]:
+        """Parse a context configuration string.
 
         Format: "context1=value1;context2=value2;context3=value3"
         """
-        config_str = os.environ.get(env_var, "")
         if not config_str:
             return {}
 

@@ -14,7 +14,7 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_k8s_governance_tools(mcp: FastMCP):
+def register_k8sgovernance_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Kubernetes Governance Operations",

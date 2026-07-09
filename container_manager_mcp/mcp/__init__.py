@@ -7,30 +7,30 @@ defined inline in ``container_manager_mcp.mcp_server`` and auto-discovered by
 thin wrappers in ``mcp_server`` lazy-import each ``register_*_tools`` below.
 """
 
-from container_manager_mcp.mcp.mcp_docker_advanced import register_docker_advanced_tools
-from container_manager_mcp.mcp.mcp_k8s_cluster import register_k8s_cluster_tools
-from container_manager_mcp.mcp.mcp_k8s_config import register_k8s_config_tools
-from container_manager_mcp.mcp.mcp_k8s_governance import register_k8s_governance_tools
-from container_manager_mcp.mcp.mcp_k8s_networking import register_k8s_networking_tools
+from container_manager_mcp.mcp.mcp_docker_advanced import register_dockeradvanced_tools
+from container_manager_mcp.mcp.mcp_k8s_cluster import register_k8scluster_tools
+from container_manager_mcp.mcp.mcp_k8s_config import register_k8sconfig_tools
+from container_manager_mcp.mcp.mcp_k8s_governance import register_k8sgovernance_tools
+from container_manager_mcp.mcp.mcp_k8s_networking import register_k8snetworking_tools
 from container_manager_mcp.mcp.mcp_k8s_observability import (
-    register_k8s_observability_tools,
+    register_k8sobservability_tools,
 )
-from container_manager_mcp.mcp.mcp_k8s_rbac import register_k8s_rbac_tools
-from container_manager_mcp.mcp.mcp_k8s_storage import register_k8s_storage_tools
-from container_manager_mcp.mcp.mcp_k8s_workloads import register_k8s_workloads_tools
-from container_manager_mcp.mcp.mcp_multi_context import register_multi_context_tools
-from container_manager_mcp.mcp.mcp_podman_advanced import register_podman_advanced_tools
+from container_manager_mcp.mcp.mcp_k8s_rbac import register_k8srbac_tools
+from container_manager_mcp.mcp.mcp_k8s_storage import register_k8sstorage_tools
+from container_manager_mcp.mcp.mcp_k8s_workloads import register_k8sworkloads_tools
+from container_manager_mcp.mcp.mcp_multi_context import register_multicontext_tools
+from container_manager_mcp.mcp.mcp_podman_advanced import register_podmanadvanced_tools
 
 __all__ = [
-    "register_k8s_workloads_tools",
-    "register_k8s_config_tools",
-    "register_k8s_networking_tools",
-    "register_k8s_storage_tools",
-    "register_k8s_rbac_tools",
-    "register_k8s_cluster_tools",
-    "register_k8s_governance_tools",
-    "register_k8s_observability_tools",
-    "register_docker_advanced_tools",
-    "register_podman_advanced_tools",
-    "register_multi_context_tools",
+    "register_k8sworkloads_tools",
+    "register_k8sconfig_tools",
+    "register_k8snetworking_tools",
+    "register_k8sstorage_tools",
+    "register_k8srbac_tools",
+    "register_k8scluster_tools",
+    "register_k8sgovernance_tools",
+    "register_k8sobservability_tools",
+    "register_dockeradvanced_tools",
+    "register_podmanadvanced_tools",
+    "register_multicontext_tools",
 ]

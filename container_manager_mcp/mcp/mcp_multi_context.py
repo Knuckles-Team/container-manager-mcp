@@ -13,7 +13,7 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_multi_context_tools(mcp: FastMCP):
+def register_multicontext_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Multi-Context Container Management",

@@ -13,7 +13,7 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_docker_advanced_tools(mcp: FastMCP):
+def register_dockeradvanced_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Advanced Docker Operations",

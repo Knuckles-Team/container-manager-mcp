@@ -16,7 +16,7 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_k8s_storage_tools(mcp: FastMCP):
+def register_k8sstorage_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Kubernetes Storage Operations",

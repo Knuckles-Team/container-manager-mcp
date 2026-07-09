@@ -304,6 +304,27 @@ consumed from a **remote deployment**. The
 | `COMPOSETOOL` | `True` |  |
 | `MISCTOOL` | `True` |  |
 | `SPECIALIST_DEPLOYMENTTOOL` | `True` |  |
+| `K8SWORKLOADSTOOL` | `True` | Toggle the `cm_k8s_workloads` tool |
+| `K8SCONFIGTOOL` | `True` | Toggle the `cm_k8s_config` tool |
+| `K8SNETWORKINGTOOL` | `True` | Toggle the `cm_k8s_networking` tool |
+| `K8SSTORAGETOOL` | `True` | Toggle the `cm_k8s_storage` tool |
+| `K8SRBACTOOL` | `True` | Toggle the `cm_k8s_rbac` tool |
+| `K8SCLUSTERTOOL` | `True` | Toggle the `cm_k8s_cluster` tool |
+| `K8SGOVERNANCETOOL` | `True` | Toggle the `cm_k8s_governance` tool |
+| `K8SOBSERVABILITYTOOL` | `True` | Toggle the `cm_k8s_observability` tool |
+| `PODMANADVANCEDTOOL` | `True` | Toggle the `cm_podman_advanced` tool |
+| `DOCKERADVANCEDTOOL` | `True` | Toggle the `cm_docker_advanced` tool |
+| `MULTICONTEXTTOOL` | `True` | Toggle the `cm_multi_context` tool |
+| `MULTI_CONTEXT_MODE` | `True` | Route every call through the multi-context manager |
+| `HEALTH_CHECK_TTL_SECONDS` | `30` | Multi-context backend health-check cache TTL (seconds) |
+| `MULTI_CONTEXT_MAX_WORKERS` | — | Cap on parallel multi-context health-check workers (auto-sized when empty) |
+| `K8S_CONTEXTS` | — | `name=kubeconfig_context;…` map of Kubernetes contexts |
+| `DEFAULT_K8S_CONTEXT` | — | Default Kubernetes context name (a key in `K8S_CONTEXTS`) |
+| `DOCKER_CONTEXTS` | — | `name=tcp://host:port;…` map of Docker contexts |
+| `DEFAULT_DOCKER_CONTEXT` | — | Default Docker context name (a key in `DOCKER_CONTEXTS`) |
+| `SWARM_CONTEXTS` | — | `name=tcp://host:port;…` map of Swarm contexts |
+| `DEFAULT_SWARM_CONTEXT` | — | Default Swarm context name (a key in `SWARM_CONTEXTS`) |
+| `PODMAN_ENABLED` | `true` | Enable the local Podman backend in multi-context mode |
 
 #### Inherited agent-utilities variables (apply to every connector)
 
@@ -324,7 +345,7 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_27 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_48 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 

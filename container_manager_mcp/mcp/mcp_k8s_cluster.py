@@ -15,7 +15,7 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 
 
-def register_k8s_cluster_tools(mcp: FastMCP):
+def register_k8scluster_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
             "title": "Kubernetes Cluster Operations",
