@@ -8,6 +8,7 @@ thin wrappers in ``mcp_server`` lazy-import each ``register_*_tools`` below.
 """
 
 from container_manager_mcp.mcp.mcp_docker_swarm import register_dockerswarm_tools
+from container_manager_mcp.mcp.mcp_doctor import register_doctor_tools
 from container_manager_mcp.mcp.mcp_k8s_cluster import register_k8scluster_tools
 from container_manager_mcp.mcp.mcp_k8s_config import register_k8sconfig_tools
 from container_manager_mcp.mcp.mcp_k8s_governance import register_k8sgovernance_tools
@@ -33,4 +34,5 @@ __all__ = [
     "register_dockerswarm_tools",
     "register_podman_tools",
     "register_multicontext_tools",
+    "register_doctor_tools",
 ]

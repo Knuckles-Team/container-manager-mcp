@@ -1176,6 +1176,21 @@ def register_multicontext_tools(mcp: FastMCP):
         pass
 
 
+def register_doctor_tools(mcp: FastMCP):
+    """Register the guided environment doctor tool (cm_doctor)."""
+    if os.environ.get("DOCTORTOOL", "True").lower() not in ("true", "1", "yes"):
+        return
+    try:
+        from container_manager_mcp.mcp.mcp_doctor import (
+            register_doctor_tools as _register,
+        )
+
+        _register(mcp)
+    except ImportError:
+        # doctor engine unavailable, skip registration
+        pass
+
+
 def register_misc_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
