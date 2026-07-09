@@ -20,7 +20,6 @@ MIXINS = [
     man.GovernanceMixin,
     man.ObservabilityMixin,
     man.ComposeMixin,
-    man.InteropMixin,
     man.UnsupportedMixin,
     man._K8sBase,
 ]

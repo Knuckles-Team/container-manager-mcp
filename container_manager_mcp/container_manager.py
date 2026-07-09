@@ -1485,6 +1485,305 @@ class DockerManager(ContainerManagerBase):
             self.log_action("service_logs", params, error=e)
             raise RuntimeError(f"Failed to get service logs: {str(e)}") from e
 
+    # ------------------------------------------------------------------
+    # Swarm / service / stack / config / secret / node operations
+    # (the function-based cm_docker_swarm surface — real SDK/CLI calls)
+    # ------------------------------------------------------------------
+    def _docker_cli(self, args: list[str], action: str) -> str:
+        """Run ``docker <args>`` and return stdout, raising on failure.
+
+        Used only for surfaces the docker SDK does not expose (``docker
+        stack`` has no SDK equivalent).
+        """
+        cmd = ["docker", *args]
+        result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603 B607
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+        return result.stdout
+
+    def docker_swarm_init(
+        self, advertise_addr: str, listen_addr: str | None = None
+    ) -> dict:
+        """Initialize a swarm (real ``swarm.init`` via :meth:`init_swarm`)."""
+        params = {"advertise_addr": advertise_addr, "listen_addr": listen_addr}
+        try:
+            result = self.init_swarm(advertise_addr)
+            self.log_action("docker_swarm_init", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_swarm_init", params, error=e)
+            raise RuntimeError(f"Failed to initialize swarm: {str(e)}") from e
+
+    def docker_swarm_join(
+        self, remote_addr: str, token: str, worker: bool = True
+    ) -> dict:
+        """Join an existing swarm as a worker/manager."""
+        params = {"remote_addr": remote_addr, "worker": worker}
+        try:
+            joined = self.client.swarm.join(
+                remote_addrs=[remote_addr], join_token=token
+            )
+            result = {"remote_addr": remote_addr, "worker": worker, "joined": joined}
+            self.log_action("docker_swarm_join", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_swarm_join", params, error=e)
+            raise RuntimeError(f"Failed to join swarm: {str(e)}") from e
+
+    def docker_swarm_leave(self, force: bool = False) -> dict:
+        """Leave the swarm (real ``swarm.leave`` via :meth:`leave_swarm`)."""
+        params = {"force": force}
+        try:
+            result = self.leave_swarm(force=force)
+            self.log_action("docker_swarm_leave", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_swarm_leave", params, error=e)
+            raise RuntimeError(f"Failed to leave swarm: {str(e)}") from e
+
+    @staticmethod
+    def _ports_list_to_map(ports: list | None) -> dict[str, str] | None:
+        """Translate ``["8080:80", ...]`` into ``{"80/tcp": "8080"}``."""
+        if not ports:
+            return None
+        mapping: dict[str, str] = {}
+        for spec in ports:
+            text = str(spec)
+            if ":" in text:
+                host_port, container_port = text.split(":", 1)
+            else:
+                host_port = container_port = text
+            key = container_port if "/" in container_port else f"{container_port}/tcp"
+            mapping[key] = host_port
+        return mapping
+
+    def docker_service_create(
+        self,
+        service_name: str,
+        image: str,
+        replicas: int = 1,
+        ports: list | None = None,
+    ) -> dict:
+        """Create a service (real ``services.create`` via :meth:`create_service`)."""
+        params = {
+            "service_name": service_name,
+            "image": image,
+            "replicas": replicas,
+            "ports": ports,
+        }
+        try:
+            result = self.create_service(
+                service_name,
+                image,
+                replicas=replicas,
+                ports=self._ports_list_to_map(ports),
+            )
+            self.log_action("docker_service_create", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_service_create", params, error=e)
+            raise RuntimeError(f"Failed to create service: {str(e)}") from e
+
+    def docker_service_list(self) -> list[dict]:
+        """List services (real ``services.list`` via :meth:`list_services`)."""
+        return self.list_services()
+
+    def docker_service_update(
+        self, service_name: str, image: str | None = None, replicas: int | None = None
+    ) -> dict:
+        """Update a service in place (real update via :meth:`update_service`)."""
+        return self.update_service(service_name, image=image, replicas=replicas)
+
+    def docker_service_rm(self, service_name: str) -> dict:
+        """Remove a service (real ``service.remove`` via :meth:`remove_service`)."""
+        return self.remove_service(service_name)
+
+    def docker_service_logs(self, service_name: str, tail_lines: int = 100) -> dict:
+        """Fetch service logs (real ``service.logs`` via :meth:`service_logs`)."""
+        return self.service_logs(service_name, tail=tail_lines)
+
+    def docker_service_ps(self) -> list[dict]:
+        """List every task across all services (real ``service.tasks()``)."""
+        params: dict[str, Any] = {}
+        try:
+            result = []
+            for service in self.client.services.list():
+                name = service.attrs.get("Spec", {}).get("Name", service.id)
+                for t in service.tasks():
+                    status = t.get("Status", {})
+                    result.append(
+                        {
+                            "service_name": name,
+                            "task_id": t.get("ID", "")[:12],
+                            "node": t.get("NodeID", "")[:12],
+                            "desired_state": t.get("DesiredState", "unknown"),
+                            "current_state": status.get("State", "unknown"),
+                            "error": status.get("Err", ""),
+                        }
+                    )
+            self.log_action("docker_service_ps", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("docker_service_ps", params, error=e)
+            raise RuntimeError(f"Failed to list service tasks: {str(e)}") from e
+
+    def docker_stack_deploy(self, stack_name: str, compose_file: str) -> dict:
+        """Deploy a stack via ``docker stack deploy`` (no SDK equivalent)."""
+        params = {"stack_name": stack_name, "compose_file": compose_file}
+        try:
+            output = self._docker_cli(
+                ["stack", "deploy", "-c", compose_file, stack_name],
+                "docker_stack_deploy",
+            )
+            result = {
+                "stack_name": stack_name,
+                "compose_file": compose_file,
+                "output": output.strip(),
+                "status": "deployed",
+            }
+            self.log_action("docker_stack_deploy", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_stack_deploy", params, error=e)
+            raise RuntimeError(f"Failed to deploy stack: {str(e)}") from e
+
+    def docker_stack_services(self, stack_name: str) -> list[dict]:
+        """List a stack's services via ``docker stack services`` (no SDK)."""
+        params = {"stack_name": stack_name}
+        try:
+            output = self._docker_cli(
+                [
+                    "stack",
+                    "services",
+                    "--format",
+                    "{{.Name}}\t{{.Replicas}}\t{{.Image}}",
+                    stack_name,
+                ],
+                "docker_stack_services",
+            )
+            result = []
+            for line in output.splitlines():
+                if not line.strip():
+                    continue
+                parts = line.split("\t")
+                result.append(
+                    {
+                        "name": parts[0] if len(parts) > 0 else "",
+                        "replicas": parts[1] if len(parts) > 1 else "",
+                        "image": parts[2] if len(parts) > 2 else "",
+                        "stack_name": stack_name,
+                    }
+                )
+            self.log_action("docker_stack_services", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("docker_stack_services", params, error=e)
+            raise RuntimeError(f"Failed to list stack services: {str(e)}") from e
+
+    def docker_stack_rm(self, stack_name: str) -> dict:
+        """Remove a stack via ``docker stack rm`` (no SDK equivalent)."""
+        params = {"stack_name": stack_name}
+        try:
+            output = self._docker_cli(["stack", "rm", stack_name], "docker_stack_rm")
+            result = {
+                "stack_name": stack_name,
+                "output": output.strip(),
+                "status": "removed",
+            }
+            self.log_action("docker_stack_rm", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_stack_rm", params, error=e)
+            raise RuntimeError(f"Failed to remove stack: {str(e)}") from e
+
+    def docker_config_create(self, config_name: str, data: str) -> dict:
+        """Create a swarm config (real ``configs.create``)."""
+        params = {"config_name": config_name}
+        try:
+            config = self.client.configs.create(
+                name=config_name, data=data.encode("utf-8")
+            )
+            result = {
+                "config_name": config_name,
+                "id": getattr(config, "id", None),
+                "status": "created",
+            }
+            self.log_action("docker_config_create", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_config_create", params, error=e)
+            raise RuntimeError(f"Failed to create config: {str(e)}") from e
+
+    def docker_config_list(self) -> list[dict]:
+        """List swarm configs (real ``configs.list``)."""
+        params: dict[str, Any] = {}
+        try:
+            result = []
+            for c in self.client.configs.list():
+                spec = c.attrs.get("Spec", {})
+                result.append(
+                    {
+                        "id": c.id,
+                        "name": spec.get("Name", "unknown"),
+                        "created": c.attrs.get("CreatedAt", "unknown"),
+                    }
+                )
+            self.log_action("docker_config_list", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("docker_config_list", params, error=e)
+            raise RuntimeError(f"Failed to list configs: {str(e)}") from e
+
+    def docker_secret_create(self, secret_name: str, data: str) -> dict:
+        """Create a swarm secret (real ``secrets.create``)."""
+        params = {"secret_name": secret_name}
+        try:
+            secret = self.client.secrets.create(
+                name=secret_name, data=data.encode("utf-8")
+            )
+            result = {
+                "secret_name": secret_name,
+                "id": getattr(secret, "id", None),
+                "status": "created",
+            }
+            self.log_action("docker_secret_create", params, result)
+            return result
+        except Exception as e:
+            self.log_action("docker_secret_create", params, error=e)
+            raise RuntimeError(f"Failed to create secret: {str(e)}") from e
+
+    def docker_secret_list(self) -> list[dict]:
+        """List swarm secrets (real ``secrets.list``)."""
+        params: dict[str, Any] = {}
+        try:
+            result = []
+            for s in self.client.secrets.list():
+                spec = s.attrs.get("Spec", {})
+                result.append(
+                    {
+                        "id": s.id,
+                        "name": spec.get("Name", "unknown"),
+                        "created": s.attrs.get("CreatedAt", "unknown"),
+                    }
+                )
+            self.log_action("docker_secret_list", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("docker_secret_list", params, error=e)
+            raise RuntimeError(f"Failed to list secrets: {str(e)}") from e
+
+    def docker_node_ls(self) -> list[dict]:
+        """List swarm nodes (real ``nodes.list`` via :meth:`list_nodes`)."""
+        return self.list_nodes()
+
+    def docker_node_update(self, node_id: str, availability: str) -> dict:
+        """Update a node's availability (real update via :meth:`update_node`)."""
+        return self.update_node(node_id, availability=availability)
+
+    def docker_node_inspect(self, node_id: str) -> dict:
+        """Inspect a swarm node (real ``nodes.get`` via :meth:`inspect_node`)."""
+        return self.inspect_node(node_id)
+
 
 class PodmanManager(ContainerManagerBase):
     def __init__(self, silent: bool = False, log_file: str | None = None):
@@ -2350,6 +2649,371 @@ class PodmanManager(ContainerManagerBase):
 
     def service_logs(self, service_id: str, tail: int = 100) -> dict:
         raise RuntimeError("Swarm not supported in Podman")
+
+    # ------------------------------------------------------------------
+    # Pod / network / volume / kube-interop / checkpoint operations
+    # (the function-based cm_podman surface — real SDK/CLI calls)
+    # ------------------------------------------------------------------
+    def _podman_cli(self, args: list[str], action: str) -> str:
+        """Run ``podman <args>`` and return stdout, raising on failure.
+
+        Used for surfaces podman-py does not expose (pod stats/top/logs,
+        healthcheck, generate/play kube, checkpoint/restore, system prune).
+        """
+        cmd = ["podman", *args]
+        result = subprocess.run(cmd, capture_output=True, text=True)  # nosec B603 B607
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or result.stdout.strip())
+        return result.stdout
+
+    def podman_pod_create(
+        self, pod_name: str, image: str, command: str | None = None
+    ) -> dict:
+        """Create a pod (real ``pods.create``)."""
+        params = {"pod_name": pod_name, "image": image, "command": command}
+        try:
+            pod = self.client.pods.create(name=pod_name)
+            attrs = getattr(pod, "attrs", {}) or {}
+            result = {
+                "pod_name": pod_name,
+                "id": attrs.get("Id") or attrs.get("ID") or getattr(pod, "id", None),
+                "image": image,
+                "command": command,
+                "status": "created",
+            }
+            self.log_action("podman_pod_create", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_create", params, error=e)
+            raise RuntimeError(f"Failed to create pod: {str(e)}") from e
+
+    def podman_pod_list(self) -> list[dict]:
+        """List pods (real ``pods.list``)."""
+        params: dict[str, Any] = {}
+        try:
+            result = []
+            for pod in self.client.pods.list():
+                attrs = getattr(pod, "attrs", {}) or {}
+                result.append(
+                    {
+                        "name": attrs.get("Name") or getattr(pod, "name", "unknown"),
+                        "id": attrs.get("Id")
+                        or attrs.get("ID")
+                        or getattr(pod, "id", "unknown"),
+                        "status": attrs.get("Status") or attrs.get("State", "unknown"),
+                        "infrastructure": "podman",
+                    }
+                )
+            self.log_action("podman_pod_list", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_list", params, error=e)
+            raise RuntimeError(f"Failed to list pods: {str(e)}") from e
+
+    def podman_pod_inspect(self, pod_name: str) -> dict:
+        """Inspect a pod (real ``pods.get(...).attrs``)."""
+        params = {"pod_name": pod_name}
+        try:
+            pod = self.client.pods.get(pod_name)
+            result = getattr(pod, "attrs", {}) or {}
+            self.log_action("podman_pod_inspect", params, {"pod_name": pod_name})
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_inspect", params, error=e)
+            raise RuntimeError(f"Failed to inspect pod: {str(e)}") from e
+
+    def podman_pod_stats(self, pod_name: str) -> dict:
+        """Get pod stats via ``podman pod stats`` (not in podman-py)."""
+        params = {"pod_name": pod_name}
+        try:
+            output = self._podman_cli(
+                ["pod", "stats", "--no-stream", "--format", "json", pod_name],
+                "podman_pod_stats",
+            )
+            try:
+                stats = json.loads(output) if output.strip() else []
+            except json.JSONDecodeError:
+                stats = output.strip()
+            result = {"pod_name": pod_name, "stats": stats}
+            self.log_action("podman_pod_stats", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_stats", params, error=e)
+            raise RuntimeError(f"Failed to get pod stats: {str(e)}") from e
+
+    def podman_pod_top(self, pod_name: str) -> dict:
+        """Get pod processes via ``podman pod top`` (not in podman-py)."""
+        params = {"pod_name": pod_name}
+        try:
+            output = self._podman_cli(["pod", "top", pod_name], "podman_pod_top")
+            result = {"pod_name": pod_name, "processes": output.strip()}
+            self.log_action("podman_pod_top", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_top", params, error=e)
+            raise RuntimeError(f"Failed to get pod top: {str(e)}") from e
+
+    def podman_pod_logs(self, pod_name: str, tail_lines: int = 100) -> dict:
+        """Get pod logs via ``podman pod logs`` (not in podman-py)."""
+        params = {"pod_name": pod_name, "tail_lines": tail_lines}
+        try:
+            output = self._podman_cli(
+                ["pod", "logs", "--tail", str(tail_lines), pod_name],
+                "podman_pod_logs",
+            )
+            result = {"pod_name": pod_name, "tail_lines": tail_lines, "logs": output}
+            self.log_action("podman_pod_logs", params, {"pod_name": pod_name})
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_logs", params, error=e)
+            raise RuntimeError(f"Failed to get pod logs: {str(e)}") from e
+
+    def podman_pod_stop(self, pod_name: str) -> dict:
+        """Stop a pod (real ``pods.get(...).stop()``)."""
+        params = {"pod_name": pod_name}
+        try:
+            self.client.pods.get(pod_name).stop()
+            result = {"pod_name": pod_name, "status": "stopped"}
+            self.log_action("podman_pod_stop", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_stop", params, error=e)
+            raise RuntimeError(f"Failed to stop pod: {str(e)}") from e
+
+    def podman_pod_rm(self, pod_name: str) -> dict:
+        """Remove a pod (real ``pods.get(...).remove()``)."""
+        params = {"pod_name": pod_name}
+        try:
+            self.client.pods.get(pod_name).remove()
+            result = {"pod_name": pod_name, "status": "removed"}
+            self.log_action("podman_pod_rm", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_pod_rm", params, error=e)
+            raise RuntimeError(f"Failed to remove pod: {str(e)}") from e
+
+    def podman_network_create(
+        self, network_name: str, driver: str = "bridge", subnet: str | None = None
+    ) -> dict:
+        """Create a network (real ``networks.create``)."""
+        params = {"network_name": network_name, "driver": driver, "subnet": subnet}
+        try:
+            kwargs: dict[str, Any] = {"driver": driver}
+            if subnet:
+                kwargs["subnet"] = subnet
+            network = self.client.networks.create(network_name, **kwargs)
+            attrs = getattr(network, "attrs", {}) or {}
+            result = {
+                "network_name": network_name,
+                "id": attrs.get("Id") or getattr(network, "id", None),
+                "driver": driver,
+                "subnet": subnet,
+                "status": "created",
+            }
+            self.log_action("podman_network_create", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_network_create", params, error=e)
+            raise RuntimeError(f"Failed to create network: {str(e)}") from e
+
+    def podman_network_list(self) -> list[dict]:
+        """List networks (real ``networks.list``)."""
+        params: dict[str, Any] = {}
+        try:
+            result = []
+            for net in self.client.networks.list():
+                attrs = getattr(net, "attrs", {}) or {}
+                result.append(
+                    {
+                        "name": attrs.get("Name") or getattr(net, "name", "unknown"),
+                        "id": attrs.get("Id") or getattr(net, "id", "unknown"),
+                        "driver": attrs.get("Driver", "unknown"),
+                    }
+                )
+            self.log_action("podman_network_list", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("podman_network_list", params, error=e)
+            raise RuntimeError(f"Failed to list networks: {str(e)}") from e
+
+    def podman_network_inspect(self, network_name: str) -> dict:
+        """Inspect a network (real ``networks.get(...).attrs``)."""
+        params = {"network_name": network_name}
+        try:
+            net = self.client.networks.get(network_name)
+            result = getattr(net, "attrs", {}) or {}
+            self.log_action(
+                "podman_network_inspect", params, {"network_name": network_name}
+            )
+            return result
+        except Exception as e:
+            self.log_action("podman_network_inspect", params, error=e)
+            raise RuntimeError(f"Failed to inspect network: {str(e)}") from e
+
+    def podman_volume_create(self, volume_name: str, driver: str = "local") -> dict:
+        """Create a volume (real ``volumes.create``)."""
+        params = {"volume_name": volume_name, "driver": driver}
+        try:
+            volume = self.client.volumes.create(name=volume_name, driver=driver)
+            attrs = getattr(volume, "attrs", {}) or {}
+            result = {
+                "volume_name": volume_name,
+                "driver": attrs.get("Driver", driver),
+                "mountpoint": attrs.get("Mountpoint"),
+                "status": "created",
+            }
+            self.log_action("podman_volume_create", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_volume_create", params, error=e)
+            raise RuntimeError(f"Failed to create volume: {str(e)}") from e
+
+    def podman_volume_list(self) -> list[dict]:
+        """List volumes (real ``volumes.list``)."""
+        params: dict[str, Any] = {}
+        try:
+            result = []
+            for v in self.client.volumes.list():
+                attrs = getattr(v, "attrs", {}) or {}
+                result.append(
+                    {
+                        "name": attrs.get("Name") or getattr(v, "name", "unknown"),
+                        "driver": attrs.get("Driver", "unknown"),
+                        "mountpoint": attrs.get("Mountpoint", "unknown"),
+                    }
+                )
+            self.log_action("podman_volume_list", params, {"count": len(result)})
+            return result
+        except Exception as e:
+            self.log_action("podman_volume_list", params, error=e)
+            raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
+
+    def podman_volume_inspect(self, volume_name: str) -> dict:
+        """Inspect a volume (real ``volumes.get(...).attrs``)."""
+        params = {"volume_name": volume_name}
+        try:
+            volume = self.client.volumes.get(volume_name)
+            result = getattr(volume, "attrs", {}) or {}
+            self.log_action(
+                "podman_volume_inspect", params, {"volume_name": volume_name}
+            )
+            return result
+        except Exception as e:
+            self.log_action("podman_volume_inspect", params, error=e)
+            raise RuntimeError(f"Failed to inspect volume: {str(e)}") from e
+
+    def podman_system_prune(self) -> dict:
+        """Prune unused resources via ``podman system prune -f``."""
+        params: dict[str, Any] = {}
+        try:
+            output = self._podman_cli(["system", "prune", "-f"], "podman_system_prune")
+            result = {"status": "pruned", "output": output.strip()}
+            self.log_action("podman_system_prune", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_system_prune", params, error=e)
+            raise RuntimeError(f"Failed to prune system: {str(e)}") from e
+
+    def podman_health_check(self, container_id: str, config: dict) -> dict:
+        """Run a container's healthcheck via ``podman healthcheck run``."""
+        params = {"container_id": container_id, "config": config}
+        try:
+            output = self._podman_cli(
+                ["healthcheck", "run", container_id], "podman_health_check"
+            )
+            result = {
+                "container_id": container_id,
+                "status": "healthy",
+                "output": output.strip(),
+            }
+            self.log_action("podman_health_check", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_health_check", params, error=e)
+            raise RuntimeError(f"Failed to run health check: {str(e)}") from e
+
+    def podman_generate_kube_yaml(
+        self, pod_name: str, namespace: str = "default"
+    ) -> dict:
+        """Generate Kubernetes YAML via ``podman generate kube``."""
+        params = {"pod_name": pod_name, "namespace": namespace}
+        try:
+            output = self._podman_cli(
+                ["generate", "kube", pod_name], "podman_generate_kube_yaml"
+            )
+            result = {
+                "pod_name": pod_name,
+                "namespace": namespace,
+                "yaml": output,
+                "status": "generated",
+            }
+            self.log_action("podman_generate_kube_yaml", params, {"pod_name": pod_name})
+            return result
+        except Exception as e:
+            self.log_action("podman_generate_kube_yaml", params, error=e)
+            raise RuntimeError(f"Failed to generate kube YAML: {str(e)}") from e
+
+    def podman_play_kube_yaml(self, yaml_path: str) -> dict:
+        """Apply a Kubernetes YAML via ``podman play kube``."""
+        params = {"yaml_path": yaml_path}
+        try:
+            if not os.path.exists(yaml_path):
+                raise FileNotFoundError(f"YAML file not found: {yaml_path}")
+            output = self._podman_cli(
+                ["play", "kube", yaml_path], "podman_play_kube_yaml"
+            )
+            result = {
+                "yaml_path": yaml_path,
+                "output": output.strip(),
+                "status": "played",
+            }
+            self.log_action("podman_play_kube_yaml", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_play_kube_yaml", params, error=e)
+            raise RuntimeError(f"Failed to play kube YAML: {str(e)}") from e
+
+    def podman_checkpoint(self, container_id: str, checkpoint_dir: str) -> dict:
+        """Checkpoint a container via ``podman container checkpoint``."""
+        params = {"container_id": container_id, "checkpoint_dir": checkpoint_dir}
+        try:
+            args = ["container", "checkpoint"]
+            if checkpoint_dir:
+                args += ["--export", checkpoint_dir]
+            args.append(container_id)
+            output = self._podman_cli(args, "podman_checkpoint")
+            result = {
+                "container_id": container_id,
+                "checkpoint_dir": checkpoint_dir,
+                "output": output.strip(),
+                "status": "checkpointed",
+            }
+            self.log_action("podman_checkpoint", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_checkpoint", params, error=e)
+            raise RuntimeError(f"Failed to create checkpoint: {str(e)}") from e
+
+    def podman_restore(self, container_id: str, checkpoint_dir: str) -> dict:
+        """Restore a container via ``podman container restore``."""
+        params = {"container_id": container_id, "checkpoint_dir": checkpoint_dir}
+        try:
+            args = ["container", "restore"]
+            if checkpoint_dir:
+                args += ["--import", checkpoint_dir]
+            args.append(container_id)
+            output = self._podman_cli(args, "podman_restore")
+            result = {
+                "container_id": container_id,
+                "checkpoint_dir": checkpoint_dir,
+                "output": output.strip(),
+                "status": "restored",
+            }
+            self.log_action("podman_restore", params, result)
+            return result
+        except Exception as e:
+            self.log_action("podman_restore", params, error=e)
+            raise RuntimeError(f"Failed to restore checkpoint: {str(e)}") from e
 
 
 def is_app_installed(app_name: str = "docker") -> bool:
