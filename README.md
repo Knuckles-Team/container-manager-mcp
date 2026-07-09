@@ -32,9 +32,9 @@
 
 **Container Manager Mcp** is a production-grade Agent and Model Context Protocol (MCP) server designed to interface directly with Container Manager - manage Docker, Docker Swarm, Podman, **and Kubernetes** containers and workloads. MCP+A2A Servers Out of the Box!.
 
-**Full coverage across all three engines:** Docker (incl. advanced Swarm/service/stack/config/secret/node
-operations via `cm_docker_advanced`), Podman (incl. advanced pods, `generate`/`play kube`, checkpoint/restore
-via `cm_podman_advanced`), and a **complete Kubernetes surface** (RKE2 / k3s / vanilla) spanning workloads,
+**Full coverage across all three engines:** Docker (incl. Swarm/service/stack/config/secret/node
+operations via `cm_docker_swarm`), Podman (incl. pod/kube operations, `generate`/`play kube`, checkpoint/restore
+via `cm_podman`), and a **complete Kubernetes surface** (RKE2 / k3s / vanilla) spanning workloads,
 config, networking, storage, RBAC, cluster admin, governance, and observability through 8 themed `cm_k8s_*`
 tools built on the official `kubernetes` Python client. A `cm_multi_context` tool lets an agent fan out
 operations across several Docker/Podman/Swarm/Kubernetes contexts in parallel, and `cm_ingest_inventory` feeds
@@ -45,7 +45,7 @@ Docker, Swarm, **and Kubernetes** resources into the ontology-driven Knowledge G
 ## Key Features
 
 - **Consolidated Action-Routed MCP Tools:** Minimizes token overhead and eliminates tool bloat in LLM contexts by grouping methods into optimized, togglable tool modules.
-- **Full Docker + Swarm + Podman + Kubernetes Coverage:** First-class support for Docker (incl. advanced Swarm/service/stack/config/secret/node ops), rootless Podman (incl. pods, `generate`/`play kube`, checkpoint/restore), and a full Kubernetes surface (RKE2 / k3s / vanilla) across workloads, config, networking, storage, RBAC, cluster admin, governance, and observability. See [Kubernetes](#kubernetes) below.
+- **Full Docker + Swarm + Podman + Kubernetes Coverage:** First-class support for Docker (incl. Swarm/service/stack/config/secret/node ops), rootless Podman (incl. pods, `generate`/`play kube`, checkpoint/restore), and a full Kubernetes surface (RKE2 / k3s / vanilla) across workloads, config, networking, storage, RBAC, cluster admin, governance, and observability. See [Kubernetes](#kubernetes) below.
 - **Multi-Context Parallel Operation:** `cm_multi_context` fans operations out across several Docker, Podman, Swarm, and/or Kubernetes contexts at once (`ThreadPoolExecutor`-backed), with health checks and lazy reconnect.
 - **Enterprise-Grade Security:** Comprehensive support for Eunomia policies, OIDC token delegation, and granular execution context tracking.
 - **Integrated Graph Agent:** Built-in Pydantic AI agent supporting the Agent Control Protocol (ACP) and standard Web interfaces (AG-UI).
@@ -95,7 +95,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 |----------|----------------|-------------|
 | `cm_compose_operations` | `COMPOSETOOL` | Manage docker-compose or podman-compose operations. |
 | `cm_container_operations` | `CONTAINERTOOL` | Manage container operations. |
-| `cm_docker_advanced` | `DOCKERSWARMTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
 | `cm_image_operations` | `IMAGETOOL` | Manage container images. |
 | `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
 | `cm_ingest_inventory` | `MISCTOOL` | Natively ingest the container inventory into epistemic-graph as typed nodes. |
@@ -110,7 +110,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_list_hosts` | `INVENTORYTOOL` | List the host aliases you can pass as ``host`` to any cm_* operation |
 | `cm_multi_context` | `MULTICONTEXTTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
 | `cm_network_operations` | `NETWORKTOOL` | Manage network operations. |
-| `cm_podman_advanced` | `PODMANTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
 | `cm_swarm_operations` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_system_operations` | `SYSTEMTOOL` | Manage container manager system operations. |
 | `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
@@ -129,25 +129,25 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_container_operations__prune_containers` | `CONTAINERTOOL` | Manage container operations. |
 | `cm_container_operations__remove_container` | `CONTAINERTOOL` | Manage container operations. |
 | `cm_container_operations__stop_container` | `CONTAINERTOOL` | Manage container operations. |
-| `cm_docker_advanced__docker_config_create` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_config_list` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_node_inspect` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_node_ls` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_node_update` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_secret_create` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_secret_list` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_service_create` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_service_list` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_service_logs` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_service_ps` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_service_rm` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_service_update` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_stack_deploy` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_stack_rm` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_stack_services` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_swarm_init` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_swarm_join` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_advanced__docker_swarm_leave` | `ADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_config_create` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_config_list` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_node_inspect` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_node_ls` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_node_update` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_secret_create` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_secret_list` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_create` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_list` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_logs` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_ps` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_rm` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_update` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_stack_deploy` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_stack_rm` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_stack_services` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_swarm_init` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_swarm_join` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_swarm_leave` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
 | `cm_image_operations__list_images` | `IMAGETOOL` | Manage container images. |
 | `cm_image_operations__prune_images` | `IMAGETOOL` | Manage container images. |
 | `cm_image_operations__pull_image` | `IMAGETOOL` | Manage container images. |
@@ -367,26 +367,26 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_network_operations__list_networks` | `NETWORKTOOL` | Manage network operations. |
 | `cm_network_operations__prune_networks` | `NETWORKTOOL` | Manage network operations. |
 | `cm_network_operations__remove_network` | `NETWORKTOOL` | Manage network operations. |
-| `cm_podman_advanced__podman_checkpoint` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_generate_kube_yaml` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_health_check` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_network_create` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_network_inspect` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_network_list` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_play_kube_yaml` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_create` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_inspect` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_list` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_logs` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_rm` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_stats` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_stop` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_pod_top` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_restore` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_system_prune` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_volume_create` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_volume_inspect` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman_advanced__podman_volume_list` | `ADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_checkpoint` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_generate_kube_yaml` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_health_check` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_network_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_network_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_network_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_play_kube_yaml` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_logs` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_rm` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_stats` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_stop` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_pod_top` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_restore` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_system_prune` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_volume_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_volume_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_volume_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
 | `cm_swarm_operations__create_service` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_swarm_operations__init_swarm` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_swarm_operations__inspect_node` | `SWARMTOOL` | Manage swarm operations. |
@@ -965,7 +965,7 @@ common operational flows:
 | `container-manager-config-walkthrough` | Onboarding — choosing `CONTAINER_MANAGER_TYPE`, wiring `.env`/`mcp_config` toggles, remote Docker/Podman hosts (inventory) vs. remote Kubernetes clusters (kubeconfig contexts), first-run verification |
 | `container-manager-lifecycle` | Docker/Podman container and image lifecycle on local or remote hosts (list/inspect/stop/remove/exec, logs, port tracing, image pull/prune, Compose) |
 | `container-manager-swarm` | Docker Swarm cluster orchestration (init/leave, nodes, services) |
-| `container-manager-podman-operations` | Advanced rootless Podman — pods, `generate`/`play kube`, checkpoint/restore, pod-scoped networks/volumes, health, system prune |
+| `container-manager-podman-operations` | Rootless Podman pod/kube operations — pods, `generate`/`play kube`, checkpoint/restore, pod-scoped networks/volumes, health, system prune |
 | `container-manager-kubernetes-operations` | The full Kubernetes operational surface — workloads, config, networking, storage, RBAC, cluster, governance, observability |
 | `container-manager-multi-context` | Operating several Docker/Podman/Swarm/Kubernetes backends and contexts at once via `cm_multi_context` |
 | `container-manager-kg-ingestion` | Snapshotting Docker/Podman/Swarm **and Kubernetes** inventory into the epistemic-graph Knowledge Graph via `cm_ingest_inventory` |

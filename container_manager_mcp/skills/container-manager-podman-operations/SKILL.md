@@ -1,7 +1,7 @@
 ---
 name: container-manager-podman-operations
 description: >-
-  Advanced rootless Podman operations via the container-manager-mcp MCP server —
+  Rootless Podman pod/kube operations via the container-manager-mcp MCP server —
   pods (create/list/stats/top/inspect/logs/stop/rm), Kubernetes YAML interop
   (generate/play kube), checkpoint/restore, pod-scoped networks and volumes,
   health checks, and system prune. Use when the agent must drive Podman pod-level
@@ -14,10 +14,10 @@ metadata:
   author: Genius
   version: '0.1.0'
 ---
-# Podman Advanced Operations
+# Podman Pod/Kube Operations
 
-Domain-typed control of **Podman pods** and Podman-specific advanced features through
-the single `cm_podman_advanced` tool on the **container-manager-mcp** server. Podman
+Domain-typed control of **Podman pods** and Podman-specific features through
+the single `cm_podman` tool on the **container-manager-mcp** server. Podman
 groups containers into local **pods** (its rootless analogue of a Kubernetes pod) and
 adds checkpoint/restore and Kubernetes-YAML interop that plain Docker doesn't have.
 Prefer this `cm_*` tool over raw `podman` shell.
@@ -49,17 +49,17 @@ A reachable Podman engine is required (rootless or rootful).
 | Variable | Required | Notes |
 |----------|----------|-------|
 | `CONTAINER_MANAGER_TYPE` | optional | Set to `podman` to force Podman (else auto-detect) |
-| `PODMANADVANCEDTOOL` | optional | Tool toggle, default `true`; set `false` to hide `cm_podman_advanced` |
+| `PODMANTOOL` | optional | Tool toggle, default `true`; set `false` to hide `cm_podman` |
 
 ## Tools & actions
 | Tool | Group | Actions |
 |------|-------|---------|
-| `cm_podman_advanced` | Kubernetes interop | `podman_generate_kube_yaml`, `podman_play_kube_yaml` |
-| `cm_podman_advanced` | Checkpoint/restore | `podman_checkpoint`, `podman_restore` |
-| `cm_podman_advanced` | Pod management | `podman_pod_create`, `podman_pod_list`, `podman_pod_stats`, `podman_pod_top`, `podman_pod_inspect`, `podman_pod_logs`, `podman_pod_stop`, `podman_pod_rm` |
-| `cm_podman_advanced` | Network | `podman_network_create`, `podman_network_list`, `podman_network_inspect` |
-| `cm_podman_advanced` | Volume | `podman_volume_create`, `podman_volume_list`, `podman_volume_inspect` |
-| `cm_podman_advanced` | System | `podman_system_prune`, `podman_health_check` |
+| `cm_podman` | Kubernetes interop | `podman_generate_kube_yaml`, `podman_play_kube_yaml` |
+| `cm_podman` | Checkpoint/restore | `podman_checkpoint`, `podman_restore` |
+| `cm_podman` | Pod management | `podman_pod_create`, `podman_pod_list`, `podman_pod_stats`, `podman_pod_top`, `podman_pod_inspect`, `podman_pod_logs`, `podman_pod_stop`, `podman_pod_rm` |
+| `cm_podman` | Network | `podman_network_create`, `podman_network_list`, `podman_network_inspect` |
+| `cm_podman` | Volume | `podman_volume_create`, `podman_volume_list`, `podman_volume_inspect` |
+| `cm_podman` | System | `podman_system_prune`, `podman_health_check` |
 
 ### Key parameters
 - `pod_name` — required for every pod-scoped action (`podman_pod_*`) and for
@@ -85,38 +85,38 @@ A reachable Podman engine is required (rootless or rootful).
    ```
 2. **Create a pod and inspect it.**
    ```
-   cm_podman_advanced action=podman_pod_create pod_name=web-pod image=nginx:latest
-   cm_podman_advanced action=podman_pod_list
-   cm_podman_advanced action=podman_pod_inspect pod_name=web-pod
+   cm_podman action=podman_pod_create pod_name=web-pod image=nginx:latest
+   cm_podman action=podman_pod_list
+   cm_podman action=podman_pod_inspect pod_name=web-pod
    ```
 3. **Verify health and logs.**
    ```
-   cm_podman_advanced action=podman_health_check container_id=<id> config={"test":["CMD","curl","-f","http://localhost/"]}
-   cm_podman_advanced action=podman_pod_logs pod_name=web-pod tail_lines=100
+   cm_podman action=podman_health_check container_id=<id> config={"test":["CMD","curl","-f","http://localhost/"]}
+   cm_podman action=podman_pod_logs pod_name=web-pod tail_lines=100
    ```
 
 ## Recipes
 Migration dry run — snapshot a running pod to Kubernetes YAML, then replay it:
 ```
-cm_podman_advanced action=podman_generate_kube_yaml pod_name=web-pod namespace=prod
-cm_podman_advanced action=podman_play_kube_yaml yaml_path=/srv/web-pod.yaml
+cm_podman action=podman_generate_kube_yaml pod_name=web-pod namespace=prod
+cm_podman action=podman_play_kube_yaml yaml_path=/srv/web-pod.yaml
 ```
 (Once validated, hand the same manifest to a real cluster via
 `container-manager-kubernetes-operations`.)
 
 Checkpoint a container before a host maintenance window, restore after:
 ```
-cm_podman_advanced action=podman_checkpoint container_id=<id> checkpoint_dir=/srv/checkpoints/web-2026-07-09
+cm_podman action=podman_checkpoint container_id=<id> checkpoint_dir=/srv/checkpoints/web-2026-07-09
 # ... host maintenance ...
-cm_podman_advanced action=podman_restore container_id=<id> checkpoint_dir=/srv/checkpoints/web-2026-07-09
+cm_podman action=podman_restore container_id=<id> checkpoint_dir=/srv/checkpoints/web-2026-07-09
 ```
 Create an isolated pod network with an explicit subnet:
 ```
-cm_podman_advanced action=podman_network_create network_name=web-net driver=bridge subnet=10.89.10.0/24
+cm_podman action=podman_network_create network_name=web-net driver=bridge subnet=10.89.10.0/24
 ```
 Sustain: prune unused pods/images/volumes on a schedule:
 ```
-cm_podman_advanced action=podman_system_prune
+cm_podman action=podman_system_prune
 ```
 
 ## Gotchas

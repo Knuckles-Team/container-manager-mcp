@@ -89,8 +89,8 @@ Each of the eight `cm_k8s_*` tools can be individually hidden (e.g. to shrink th
 tool surface exposed to a given agent) via a `TOOL=false` env var:
 `K8SWORKLOADSTOOL`, `K8SCONFIGTOOL`, `K8SNETWORKINGTOOL`, `K8SSTORAGETOOL`,
 `K8SRBACTOOL`, `K8SCLUSTERTOOL`, `K8SGOVERNANCETOOL`, `K8SOBSERVABILITYTOOL` — all
-default `true`. The advanced tools have their own toggles: `PODMANADVANCEDTOOL`,
-`DOCKERADVANCEDTOOL`, `MULTICONTEXTTOOL` — also default `true`.
+default `true`. The Podman and Docker Swarm tools have their own toggles: `PODMANTOOL`,
+`DOCKERSWARMTOOL`, `MULTICONTEXTTOOL` — also default `true`.
 
 ## Full environment reference
 | Variable | Applies to | Notes |
@@ -107,7 +107,7 @@ default `true`. The advanced tools have their own toggles: `PODMANADVANCEDTOOL`,
 | `MULTI_CONTEXT_MAX_WORKERS` | multi-context | Fan-out thread-pool size, default `8` |
 | `MCP_TOOL_MODE` | all | `condensed` \| `verbose` \| `both`; these skills assume `condensed` |
 | `K8SWORKLOADSTOOL` .. `K8SOBSERVABILITYTOOL` | Kubernetes | Per-theme tool visibility toggles, default `true` |
-| `PODMANADVANCEDTOOL` / `DOCKERADVANCEDTOOL` / `MULTICONTEXTTOOL` | advanced | Tool visibility toggles, default `true` |
+| `PODMANTOOL` / `DOCKERSWARMTOOL` / `MULTICONTEXTTOOL` | Podman / Docker Swarm / multi-context | Tool visibility toggles, default `true` |
 
 ## Walkthrough — first-run checklist
 1. **Identify what container-manager-mcp is currently pointed at.**

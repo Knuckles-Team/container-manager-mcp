@@ -32,8 +32,8 @@
       "kubernetes_cluster": ["node cordon/drain/taint/affinity/conditions", "kubeconfig context management", "CSR approve/deny", "API resource discovery", "cluster info dump", "admission plugin inspection"],
       "kubernetes_governance": ["ResourceQuotas, LimitRanges, PriorityClasses, PodDisruptionBudgets, HorizontalPodAutoscalers (full CRUD)"],
       "kubernetes_observability": ["top pods/nodes", "pod/node/cluster resource summaries", "autoscaler metrics/history", "watch/stream/events", "debug_pod/node/service/deployment"],
-      "podman_advanced": ["rootless pod create/list/stats/top/inspect/logs/stop/rm", "generate/play Kubernetes YAML", "checkpoint/restore", "pod-scoped networks/volumes", "health checks", "system prune"],
-      "docker_advanced": ["swarm init/join/leave", "service create/list/update/rm/logs/ps", "stack deploy/services/rm", "config/secret create/list", "node ls/update/inspect"],
+      "podman": ["rootless pod create/list/stats/top/inspect/logs/stop/rm", "generate/play Kubernetes YAML", "checkpoint/restore", "pod-scoped networks/volumes", "health checks", "system prune"],
+      "docker_swarm": ["swarm init/join/leave", "service create/list/update/rm/logs/ps", "stack deploy/services/rm", "config/secret create/list", "node ls/update/inspect"],
       "multi_context": ["list configured backends/contexts", "run container/image/volume/network/service verbs against a named backend+context", "Kubernetes-subset pod/deployment ops per context"],
       "kg": ["ingest inventory via cm_ingest_inventory -> :Container/:ContainerImage/:ContainerVolume/:ContainerNetwork/:SwarmService/:SwarmNode", "resolve :usesImage / :runsOn / :scheduledOnNode links"]
     },
@@ -51,5 +51,5 @@
     ]
   },
   "skills": ["container-manager-lifecycle", "container-manager-swarm", "container-manager-kg-ingestion", "container-manager-kubernetes-operations", "container-manager-podman-operations", "container-manager-multi-context", "container-manager-config-walkthrough"],
-  "tools": ["cm_container_operations", "cm_image_operations", "cm_volume_operations", "cm_network_operations", "cm_swarm_operations", "cm_compose_operations", "cm_ingest_inventory", "cm_list_hosts", "cm_k8s_workloads", "cm_k8s_config", "cm_k8s_networking", "cm_k8s_storage", "cm_k8s_rbac", "cm_k8s_cluster", "cm_k8s_governance", "cm_k8s_observability", "cm_podman_advanced", "cm_docker_advanced", "cm_multi_context"]
+  "tools": ["cm_container_operations", "cm_image_operations", "cm_volume_operations", "cm_network_operations", "cm_swarm_operations", "cm_compose_operations", "cm_ingest_inventory", "cm_list_hosts", "cm_k8s_workloads", "cm_k8s_config", "cm_k8s_networking", "cm_k8s_storage", "cm_k8s_rbac", "cm_k8s_cluster", "cm_k8s_governance", "cm_k8s_observability", "cm_podman", "cm_docker_swarm", "cm_multi_context"]
 }

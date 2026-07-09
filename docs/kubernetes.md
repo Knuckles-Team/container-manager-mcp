@@ -32,7 +32,7 @@ kind and name. Use it whenever a domain tool doesn't have a dedicated action for
 
 `cm_k8s_networking`'s `list_k8s_services` / `get_k8s_service` / `create_k8s_service` / `delete_k8s_service`
 operate on **real Kubernetes `Service` objects**. This is intentionally distinct from the Swarm-parity
-`list_services` exposed by `cm_multi_context` (and `cm_docker_advanced`/`cm_swarm_operations`), which is
+`list_services` exposed by `cm_multi_context` (and `cm_docker_swarm`/`cm_swarm_operations`), which is
 **Deployment-shaped** so it can be compared uniformly across Docker Swarm and Kubernetes backends in a single
 multi-context call. If you need the literal `Service` resource (`ClusterIP`/`NodePort`/`LoadBalancer`,
 selectors, ports), use the `cm_k8s_networking` actions; if you need a cross-backend "what's running" view,

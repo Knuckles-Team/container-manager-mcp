@@ -19,8 +19,8 @@
 | `CONCEPT:CN-OS.governance.cmgr-7` | Swarm Operations | MCP tool domain `swarm` — Action-routed dynamic tool registration |
 | `CONCEPT:CN-OS.governance.cmgr-8` | System Information & Health | MCP tool domain `system` — Action-routed dynamic tool registration |
 | `CONCEPT:CN-OS.governance.cmgr-9` | Volume Operations | MCP tool domain `volume` — Action-routed dynamic tool registration |
-| `CONCEPT:CN-OS.governance.cmgr-10` | Docker Advanced Operations | MCP tool domain `cm_docker_advanced` — Swarm, services, stacks, configs, secrets, nodes |
-| `CONCEPT:CN-OS.governance.cmgr-11` | Podman Advanced Operations | MCP tool domain `cm_podman_advanced` — pods, `generate`/`play kube`, checkpoint/restore, system |
+| `CONCEPT:CN-OS.governance.cmgr-10` | Docker Swarm Operations | MCP tool domain `cm_docker_swarm` — Swarm, services, stacks, configs, secrets, nodes |
+| `CONCEPT:CN-OS.governance.cmgr-11` | Podman Operations | MCP tool domain `cm_podman` — pods, `generate`/`play kube`, checkpoint/restore, system |
 | `CONCEPT:CN-OS.governance.cmgr-12` | Kubernetes Workloads | MCP tool domain `cm_k8s_workloads` — pods, rollouts, StatefulSets, DaemonSets, ReplicaSets, Jobs, CronJobs |
 | `CONCEPT:CN-OS.governance.cmgr-13` | Kubernetes Config | MCP tool domain `cm_k8s_config` — ConfigMaps, Secrets, Namespaces, CRDs, `patch_resource`, state tracking |
 | `CONCEPT:CN-OS.governance.cmgr-14` | Kubernetes Networking | MCP tool domain `cm_k8s_networking` — Ingress, NetworkPolicies, DNS, native Services |

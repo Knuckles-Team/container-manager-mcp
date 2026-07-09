@@ -25,8 +25,8 @@ agent for conversational orchestration. It provides:
   the full Kubernetes workload/config/networking/storage/RBAC/cluster/governance/
   observability surface.
 - **Action-routed MCP tools** — consolidated, togglable tool modules (info, image,
-  container, volume, network, swarm, system, compose, plus advanced Docker, advanced
-  Podman, and 8 themed Kubernetes tool modules) that minimize LLM context overhead.
+  container, volume, network, swarm, system, compose, plus Docker Swarm, Podman,
+  and 8 themed Kubernetes tool modules) that minimize LLM context overhead.
   See [Kubernetes](kubernetes.md) for the full k8s tool breakdown.
 - **Multi-context parallel operation** — `cm_multi_context` fans a single call out
   across several Docker, Podman, Swarm, and/or Kubernetes contexts at once.
