@@ -32,6 +32,84 @@ Example agent prompts that map onto these tools:
 Every tool accepts an optional `host` argument to target a remote machine over SSH —
 see [Multi-Host](multi_host.md).
 
+### Kubernetes
+
+Kubernetes is exposed as 8 themed, action-routed tools instead of the `host`-based inventory routing used
+by Docker/Podman — see [Kubernetes](kubernetes.md) for the full tool-by-tool breakdown and
+[Multi-Host](multi_host.md#kubernetes-kubeconfig-contexts) for how remote/multi-cluster targeting differs
+from the Docker-host inventory model. Set `CONTAINER_MANAGER_TYPE=kubernetes` (and optionally
+`CONTAINER_MANAGER_KUBECONTEXT`) to point the server at a cluster.
+
+Example calls:
+
+```json
+{"name": "cm_k8s_workloads", "arguments": {"action": "list_pods", "namespace": "default"}}
+```
+
+```json
+{"name": "cm_k8s_workloads", "arguments": {"action": "describe_pod", "namespace": "default", "name": "web-7d8f9c-abcde"}}
+```
+
+```json
+{"name": "cm_k8s_config", "arguments": {"action": "create_secret", "namespace": "default", "name": "db-creds", "data": {"password": "hunter2"}}}
+```
+
+```json
+{
+  "name": "cm_k8s_config",
+  "arguments": {
+    "action": "patch_resource",
+    "namespace": "default",
+    "kind": "Deployment",
+    "name": "web",
+    "patch_type": "strategic",
+    "body": {"spec": {"replicas": 3}}
+  }
+}
+```
+
+```json
+{"name": "cm_k8s_networking", "arguments": {"action": "list_k8s_services", "namespace": "default"}}
+```
+
+```json
+{"name": "cm_k8s_workloads", "arguments": {"action": "rollout_restart", "namespace": "default", "name": "web"}}
+```
+
+```json
+{"name": "cm_k8s_cluster", "arguments": {"action": "cordon_node", "name": "node-3"}}
+```
+
+```json
+{"name": "cm_k8s_cluster", "arguments": {"action": "drain_node", "name": "node-3"}}
+```
+
+```json
+{"name": "cm_k8s_observability", "arguments": {"action": "top_pods", "namespace": "default"}}
+```
+
+Example agent prompts:
+
+- *"List every pod in the `default` namespace."* → `cm_k8s_workloads`, `list_pods`
+- *"Scale the `web` deployment to 3 replicas."* → `cm_k8s_config`, `patch_resource`
+- *"Restart the rollout for the `web` deployment."* → `cm_k8s_workloads`, `rollout_restart`
+- *"What's the CPU/memory usage of pods in `default`?"* → `cm_k8s_observability`, `top_pods`
+- *"Cordon and drain `node-3` for maintenance."* → `cm_k8s_cluster`, `cordon_node` then `drain_node`
+
+### Multi-context
+
+`cm_multi_context` (toggle `MULTICONTEXTTOOL`) targets several Docker/Podman/Swarm/Kubernetes contexts in one
+call — configure the pool via `K8S_CONTEXTS` / `DOCKER_CONTEXTS` / `SWARM_CONTEXTS` and their
+`DEFAULT_*_CONTEXT` values:
+
+```json
+{"name": "cm_multi_context", "arguments": {"action": "list_contexts"}}
+```
+
+```json
+{"name": "cm_multi_context", "arguments": {"action": "list_pods", "context": "prod-cluster", "namespace": "default"}}
+```
+
 ## As a Python API
 
 `DockerManager` and `PodmanManager` are typed facades over the respective engines. A

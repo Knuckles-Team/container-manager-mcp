@@ -1,7 +1,8 @@
 # container-manager-mcp
 
-Manage Docker, Docker Swarm, and Podman containers through a typed **MCP server**
-and an integrated **A2A agent** — local or across a fleet of hosts over SSH.
+Manage Docker, Docker Swarm, Podman, and **Kubernetes** through a typed **MCP server**
+and an integrated **A2A agent** — local or across a fleet of hosts over SSH, or across
+multiple Kubernetes clusters via kubeconfig contexts.
 
 !!! info "Official documentation"
     This site is the canonical reference for `container-manager-mcp`, maintained
@@ -14,19 +15,27 @@ and an integrated **A2A agent** — local or across a fleet of hosts over SSH.
 
 ## Overview
 
-`container-manager-mcp` exposes the Docker and Podman engines as a compact set of
-**action-routed MCP tools** an agent or IDE can call, plus a Pydantic-AI graph agent
-for conversational orchestration. It provides:
+`container-manager-mcp` exposes the Docker, Podman, and Kubernetes engines as a compact
+set of **action-routed MCP tools** an agent or IDE can call, plus a Pydantic-AI graph
+agent for conversational orchestration. It provides:
 
-- **`DockerManager` / `PodmanManager`** — typed Python facades over the Docker and
-  Podman engines covering images, containers, volumes, networks, Swarm services, and
-  Compose stacks.
+- **`DockerManager` / `PodmanManager` / `KubernetesManager`** — typed Python facades
+  over the Docker, Podman, and Kubernetes (official `kubernetes` client) engines
+  covering images, containers, volumes, networks, Swarm services, Compose stacks, and
+  the full Kubernetes workload/config/networking/storage/RBAC/cluster/governance/
+  observability surface.
 - **Action-routed MCP tools** — consolidated, togglable tool modules (info, image,
-  container, volume, network, swarm, system, compose) that minimize LLM context
-  overhead.
-- **Zero-script multi-host control** — route any operation to a remote host over a
-  standard SSH channel, with no Docker TCP socket exposed, driven from a unified
-  `inventory.yml` (`.yaml` legacy fallback).
+  container, volume, network, swarm, system, compose, plus advanced Docker, advanced
+  Podman, and 8 themed Kubernetes tool modules) that minimize LLM context overhead.
+  See [Kubernetes](kubernetes.md) for the full k8s tool breakdown.
+- **Multi-context parallel operation** — `cm_multi_context` fans a single call out
+  across several Docker, Podman, Swarm, and/or Kubernetes contexts at once.
+- **Zero-script multi-host control** — route any Docker/Podman operation to a remote
+  host over a standard SSH channel, with no Docker TCP socket exposed, driven from a
+  unified `inventory.yml` (`.yaml` legacy fallback); remote Kubernetes clusters are
+  reached instead via kubeconfig contexts (`K8S_CONTEXTS`) — see [Multi-Host](multi_host.md).
+- **Ontology-driven KG ingestion** — `cm_ingest_inventory` maps live Docker/Swarm/
+  Kubernetes inventory into typed OWL/RDF nodes in the epistemic-graph Knowledge Graph.
 
 ## Explore the documentation
 
@@ -36,7 +45,8 @@ for conversational orchestration. It provides:
 - :material-server-network: **[Deployment](deployment.md)** — run the MCP and agent servers, Docker Compose, Caddy + Technitium.
 - :material-console: **[Usage](usage.md)** — the MCP tools, the `DockerManager` Python API, and the CLI.
 - :material-sitemap: **[Overview](overview.md)** — ecosystem role, enterprise readiness, and architecture.
-- :material-lan-connect: **[Multi-Host](multi_host.md)** — zero-script Docker-over-SSH control plane.
+- :material-lan-connect: **[Multi-Host](multi_host.md)** — zero-script Docker-over-SSH control plane, and the Kubernetes kubeconfig-context equivalent.
+- :material-kubernetes: **[Kubernetes](kubernetes.md)** — the 8 `cm_k8s_*` tools, `patch_resource`, true core Services, and multi-context.
 - :material-tag-multiple: **[Concepts](concepts.md)** — the `CONCEPT:CMGR-*` registry.
 
 </div>

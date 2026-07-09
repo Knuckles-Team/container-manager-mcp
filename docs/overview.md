@@ -5,7 +5,26 @@
 
 ## Description
 
-Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box!
+Container Manager - manage Docker, Docker Swarm, Podman, and Kubernetes containers and workloads.
+MCP+A2A Servers Out of the Box!
+
+## Capability Overview
+
+`container-manager-mcp` provides **full coverage across all three engines**:
+
+- **Docker** — the base `cm_container_operations` / `cm_image_operations` / `cm_network_operations` /
+  `cm_volume_operations` / `cm_system_operations` / `cm_compose_operations` surface, plus advanced
+  Swarm/service/stack/config/secret/node operations via `cm_docker_advanced`.
+- **Podman** — the same base surface (rootless-compatible) plus advanced pod-level operations
+  (pods, `generate`/`play kube`, checkpoint/restore, health) via `cm_podman_advanced`.
+- **Kubernetes** (RKE2 / k3s / vanilla) — a full operational surface built on the official `kubernetes`
+  Python client, exposed as 8 themed tools: `cm_k8s_workloads`, `cm_k8s_config`, `cm_k8s_networking`,
+  `cm_k8s_storage`, `cm_k8s_rbac`, `cm_k8s_cluster`, `cm_k8s_governance`, and `cm_k8s_observability`.
+- **Multi-context** — `cm_multi_context` operates several Docker/Podman/Swarm/Kubernetes contexts
+  simultaneously with parallel fan-out, health checks, and lazy reconnect.
+- **Knowledge Graph ingestion** — `cm_ingest_inventory` maps live inventory (containers, images, volumes,
+  networks, Swarm services/nodes, and — on a Kubernetes manager — pods, deployments, namespaces, and native
+  k8s Services) into typed OWL/RDF nodes for cross-source reasoning.
 
 ## Enterprise Readiness
 

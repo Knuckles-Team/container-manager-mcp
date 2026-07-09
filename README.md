@@ -30,15 +30,26 @@
 
 ## Overview
 
-**Container Manager Mcp** is a production-grade Agent and Model Context Protocol (MCP) server designed to interface directly with Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box!.
+**Container Manager Mcp** is a production-grade Agent and Model Context Protocol (MCP) server designed to interface directly with Container Manager - manage Docker, Docker Swarm, Podman, **and Kubernetes** containers and workloads. MCP+A2A Servers Out of the Box!.
+
+**Full coverage across all three engines:** Docker (incl. advanced Swarm/service/stack/config/secret/node
+operations via `cm_docker_advanced`), Podman (incl. advanced pods, `generate`/`play kube`, checkpoint/restore
+via `cm_podman_advanced`), and a **complete Kubernetes surface** (RKE2 / k3s / vanilla) spanning workloads,
+config, networking, storage, RBAC, cluster admin, governance, and observability through 8 themed `cm_k8s_*`
+tools built on the official `kubernetes` Python client. A `cm_multi_context` tool lets an agent fan out
+operations across several Docker/Podman/Swarm/Kubernetes contexts in parallel, and `cm_ingest_inventory` feeds
+Docker, Swarm, **and Kubernetes** resources into the ontology-driven Knowledge Graph as typed nodes.
 
 ---
 
 ## Key Features
 
 - **Consolidated Action-Routed MCP Tools:** Minimizes token overhead and eliminates tool bloat in LLM contexts by grouping methods into optimized, togglable tool modules.
+- **Full Docker + Swarm + Podman + Kubernetes Coverage:** First-class support for Docker (incl. advanced Swarm/service/stack/config/secret/node ops), rootless Podman (incl. pods, `generate`/`play kube`, checkpoint/restore), and a full Kubernetes surface (RKE2 / k3s / vanilla) across workloads, config, networking, storage, RBAC, cluster admin, governance, and observability. See [Kubernetes](#kubernetes) below.
+- **Multi-Context Parallel Operation:** `cm_multi_context` fans operations out across several Docker, Podman, Swarm, and/or Kubernetes contexts at once (`ThreadPoolExecutor`-backed), with health checks and lazy reconnect.
 - **Enterprise-Grade Security:** Comprehensive support for Eunomia policies, OIDC token delegation, and granular execution context tracking.
 - **Integrated Graph Agent:** Built-in Pydantic AI agent supporting the Agent Control Protocol (ACP) and standard Web interfaces (AG-UI).
+- **Ontology-Driven KG Ingestion:** `cm_ingest_inventory` maps live Docker/Swarm/Kubernetes inventory (containers, images, volumes, networks, services, nodes, pods, deployments, namespaces, native k8s Services) into typed OWL/RDF nodes for cross-source reasoning.
 - **Native Telemetry & Tracing:** Out-of-the-box OpenTelemetry exports and native Langfuse tracing.
 
 ---
@@ -84,19 +95,72 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 |----------|----------------|-------------|
 | `cm_compose_operations` | `COMPOSETOOL` | Manage docker-compose or podman-compose operations. |
 | `cm_container_operations` | `CONTAINERTOOL` | Manage container operations. |
+| `cm_docker_advanced` | `DOCKERADVANCEDTOOL` | Manage advanced Docker operations (Swarm, services, stacks, configs, secrets, nodes). |
 | `cm_image_operations` | `IMAGETOOL` | Manage container images. |
 | `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
+| `cm_k8s_cluster` | `K8SCLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_config` | `K8SCONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
+| `cm_k8s_governance` | `K8SGOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
+| `cm_k8s_networking` | `K8SNETWORKINGTOOL` | Manage Kubernetes networking (ingress, ingress classes, network policies, endpoints, DNS, native services). |
+| `cm_k8s_observability` | `K8SOBSERVABILITYTOOL` | Observe Kubernetes resources (metrics, autoscaler metrics, watch/stream/events, debug helpers). |
+| `cm_k8s_rbac` | `K8SRBACTOOL` | Manage Kubernetes RBAC and security (roles, bindings, service accounts, tokens, access reviews, pod security, secret mapping). |
+| `cm_k8s_storage` | `K8SSTORAGETOOL` | Manage Kubernetes storage (PV, PVC, storage classes, volume snapshots, CSI drivers). |
+| `cm_k8s_workloads` | `K8SWORKLOADSTOOL` | Manage Kubernetes workloads (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs). |
 | `cm_list_hosts` | `INVENTORYTOOL` | List the host aliases you can pass as ``host`` to any cm_* operation |
+| `cm_multi_context` | `MULTICONTEXTTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
 | `cm_network_operations` | `NETWORKTOOL` | Manage network operations. |
+| `cm_podman_advanced` | `PODMANADVANCEDTOOL` | Manage advanced Podman operations (pods, networks, volumes, checkpoint/restore, system). |
 | `cm_swarm_operations` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_system_operations` | `SYSTEMTOOL` | Manage container manager system operations. |
 | `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
 | `trace_port_namespace` | `MISCTOOL` | Locate the container actively using/mapping the specified port on the target host. |
 
-_10 action-routed tool(s) (default) · 0 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_21 action-routed tool(s) (default) · 0 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
+
+### Kubernetes
+
+`container-manager-mcp` ships **full Kubernetes coverage** (RKE2 / k3s / vanilla) through the **official
+`kubernetes` Python client**, exposed as 8 themed, action-routed MCP tools (replacing an earlier, messier
+tool sprawl):
+
+| Tool | Covers |
+|------|--------|
+| `cm_k8s_workloads` | Pods, Deployments, StatefulSets, DaemonSets, Jobs, CronJobs, ReplicaSets, rollouts (status/history/restart/undo/pause/resume), exec/logs/attach/copy |
+| `cm_k8s_config` | ConfigMaps, Secrets, Namespaces, CRDs, Events, label/annotate, generic `patch_resource`, and ConfigMap/Secret config-state tracking |
+| `cm_k8s_networking` | Ingress, IngressClasses, NetworkPolicies, Endpoints/EndpointSlices, DNS checks, and **true core Services** (`list_k8s_services` / `get_k8s_service` / `create_k8s_service` / `delete_k8s_service`) |
+| `cm_k8s_storage` | PersistentVolumes, PersistentVolumeClaims, StorageClasses, VolumeSnapshots, CSI drivers, `expand_pvc` |
+| `cm_k8s_rbac` | Roles, ClusterRoles, RoleBindings, ClusterRoleBindings, ServiceAccounts, tokens, `auth_can_i`, `subject_access_review`, pod-security |
+| `cm_k8s_cluster` | Nodes (cordon/drain/taint/affinity), kubeconfig contexts, CertificateSigningRequests, API resources, cluster-info |
+| `cm_k8s_governance` | ResourceQuotas, LimitRanges, PriorityClasses, PodDisruptionBudgets, HorizontalPodAutoscalers (full CRUD) |
+| `cm_k8s_observability` | `top`/metrics, autoscaler metrics, watch/stream/events, and `debug_pod`/`debug_node`/`debug_service`/`debug_deployment` helpers |
+
+Two details worth knowing:
+
+- **`patch_resource`** (on `cm_k8s_config`) is a generic patch action supporting `strategic` / `merge` / `json`
+  patch types against any resource kind — use it when there's no dedicated action for a field-level update.
+- **True core Services vs. Swarm-parity services** — `cm_k8s_networking`'s `list_k8s_services` /
+  `get_k8s_service` / `create_k8s_service` / `delete_k8s_service` operate on real Kubernetes `Service`
+  objects. This is distinct from `cm_multi_context`'s Swarm-parity `list_services`, which is
+  Deployment-shaped for cross-backend comparability.
+
+Kubernetes access is configured via `CONTAINER_MANAGER_TYPE=kubernetes` and `CONTAINER_MANAGER_KUBECONTEXT`
+(see [Environment Variables](#environment-variables)); for operating several clusters at once, see
+`K8S_CONTEXTS` / `cm_multi_context` below. For a full worked walkthrough of the tool surface, see the
+[`container-manager-kubernetes-operations`](container_manager_mcp/skills/container-manager-kubernetes-operations)
+skill and [docs/usage.md](docs/usage.md#kubernetes).
+
+### Multi-Context Operation
+
+`cm_multi_context` (toggle `MULTICONTEXTTOOL`) lets a single MCP call operate across **several Docker,
+Podman, Swarm, and/or Kubernetes contexts at once** — configured via `K8S_CONTEXTS`, `DOCKER_CONTEXTS`,
+`SWARM_CONTEXTS`, and their `DEFAULT_*_CONTEXT` defaults (`MULTI_CONTEXT_MODE=True` routes every call through
+it). Fan-out is parallel (`ThreadPoolExecutor`-backed) with per-backend health checks and lazy reconnect, so
+an agent can compare, migrate between, or simultaneously act on multiple clusters/engines/hosts in one call.
+See the [`container-manager-multi-context`](container_manager_mcp/skills/container-manager-multi-context)
+skill and [docs/usage.md](docs/usage.md#multi-context) for examples.
 
 ### Dynamic Tool Selection & Visibility
 
@@ -527,9 +591,29 @@ operation.
 | [Usage](https://knuckles-team.github.io/container-manager-mcp/usage/) | the MCP tools, the `DockerManager` API, the CLI |
 | [Overview](https://knuckles-team.github.io/container-manager-mcp/overview/) | ecosystem role, enterprise readiness, architecture |
 | [Multi-Host](https://knuckles-team.github.io/container-manager-mcp/multi_host/) | zero-script Docker-over-SSH control plane |
+| [Kubernetes](https://knuckles-team.github.io/container-manager-mcp/kubernetes/) | the 8 `cm_k8s_*` tools, `patch_resource`, true core Services, multi-context |
 | [Concepts](https://knuckles-team.github.io/container-manager-mcp/concepts/) | concept registry (`CONCEPT:CMGR-*`) |
 
 `AGENTS.md` is the canonical contributor/agent guidance.
+
+### Skills
+
+Alongside the MCP tools, `container_manager_mcp/skills/` ships Universal Skills that guide an agent through
+common operational flows:
+
+| Skill | Covers |
+|-------|--------|
+| `container-manager-config-walkthrough` | Onboarding — choosing `CONTAINER_MANAGER_TYPE`, wiring `.env`/`mcp_config` toggles, remote Docker/Podman hosts (inventory) vs. remote Kubernetes clusters (kubeconfig contexts), first-run verification |
+| `container-manager-lifecycle` | Docker/Podman container and image lifecycle on local or remote hosts (list/inspect/stop/remove/exec, logs, port tracing, image pull/prune, Compose) |
+| `container-manager-swarm` | Docker Swarm cluster orchestration (init/leave, nodes, services) |
+| `container-manager-podman-operations` | Advanced rootless Podman — pods, `generate`/`play kube`, checkpoint/restore, pod-scoped networks/volumes, health, system prune |
+| `container-manager-kubernetes-operations` | The full Kubernetes operational surface — workloads, config, networking, storage, RBAC, cluster, governance, observability |
+| `container-manager-multi-context` | Operating several Docker/Podman/Swarm/Kubernetes backends and contexts at once via `cm_multi_context` |
+| `container-manager-kg-ingestion` | Snapshotting Docker/Podman/Swarm **and Kubernetes** inventory into the epistemic-graph Knowledge Graph via `cm_ingest_inventory` |
+
+`container-manager-kubernetes-operations`, `container-manager-podman-operations`,
+`container-manager-multi-context`, and `container-manager-config-walkthrough` are new; `lifecycle`, `swarm`,
+and `kg-ingestion` were updated for the expanded tool surface.
 
 ---
 
