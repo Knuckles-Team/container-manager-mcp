@@ -524,7 +524,9 @@ class WorkloadsMixin:
                 # Extract tar to local destination
                 tar_data = resp if isinstance(resp, bytes) else resp.encode()
                 tar_obj = tarfile.open(fileobj=io.BytesIO(tar_data), mode="r")
-                tar_obj.extractall(path=destination)
+                # Use the "data" extraction filter (PEP 706) to reject path
+                # traversal / absolute paths in the tar streamed from the pod.
+                tar_obj.extractall(path=destination, filter="data")
                 tar_obj.close()
 
                 result = {
