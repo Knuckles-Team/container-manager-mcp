@@ -9,10 +9,14 @@ from __future__ import annotations
 
 from container_manager_mcp.kg_ingest import (
     ingest_containers,
+    ingest_deployments,
     ingest_entities,
     ingest_images,
+    ingest_k8s_services,
+    ingest_namespaces,
     ingest_networks,
     ingest_nodes,
+    ingest_pods,
     ingest_services,
     ingest_volumes,
 )
@@ -193,6 +197,104 @@ def test_ingest_nodes_maps_role_and_availability():
     assert n["type"] == "SwarmNode"
     assert n["nodeRole"] == "manager"
     assert n["nodeAvailability"] == "active"
+
+
+def test_ingest_pods_maps_phase_namespace_and_node():
+    c = _FakeClient()
+    res = ingest_pods(
+        [
+            {
+                "name": "web-abc123",
+                "namespace": "default",
+                "status": "Running",
+                "node": "node-1",
+                "deployment": "web",
+                "created": "2026-07-08T00:00:00Z",
+            }
+        ],
+        client=c,
+    )
+    # pod node + runsInNamespace + managedByDeployment + scheduledOnK8sNode
+    assert res == {"nodes": 1, "edges": 3}
+    pod = c.txn.nodes["container:pod:default/web-abc123"]
+    assert pod["type"] == "Pod"
+    assert pod["podPhase"] == "Running"
+    assert pod["externalToolId"] == "web-abc123"
+    assert (
+        "container:pod:default/web-abc123",
+        "container:namespace:default",
+        {"type": "runsInNamespace"},
+    ) in c.edges.edges
+    assert (
+        "container:pod:default/web-abc123",
+        "container:deployment:web",
+        {"type": "managedByDeployment"},
+    ) in c.edges.edges
+    assert (
+        "container:pod:default/web-abc123",
+        "container:k8snode:node-1",
+        {"type": "scheduledOnK8sNode"},
+    ) in c.edges.edges
+
+
+def test_ingest_deployments_maps_replicas_image_and_namespace():
+    c = _FakeClient()
+    res = ingest_deployments(
+        [
+            {
+                "id": "dep123",
+                "name": "web",
+                "namespace": "default",
+                "image": "nginx:latest",
+                "replicas": 3,
+                "ports": "80",
+            }
+        ],
+        client=c,
+    )
+    # deployment + image = 2 nodes; usesImage + runsInNamespace = 2 edges
+    assert res == {"nodes": 2, "edges": 2}
+    dep = c.txn.nodes["container:deployment:dep123"]
+    assert dep["type"] == "Deployment"
+    assert dep["deploymentReplicas"] == 3
+    assert (
+        "container:deployment:dep123",
+        "container:image:nginx:latest",
+        {"type": "usesImage"},
+    ) in c.edges.edges
+    assert (
+        "container:deployment:dep123",
+        "container:namespace:default",
+        {"type": "runsInNamespace"},
+    ) in c.edges.edges
+
+
+def test_ingest_namespaces_maps_status():
+    c = _FakeClient()
+    res = ingest_namespaces(
+        [{"name": "kube-system", "status": "Active"}], client=c
+    )
+    assert res == {"nodes": 1, "edges": 0}
+    ns = c.txn.nodes["container:namespace:kube-system"]
+    assert ns["type"] == "Namespace"
+    assert ns["namespaceStatus"] == "Active"
+
+
+def test_ingest_k8s_services_maps_type_and_namespace():
+    c = _FakeClient()
+    res = ingest_k8s_services(
+        [{"name": "web", "namespace": "default", "type": "ClusterIP"}], client=c
+    )
+    # service node + runsInNamespace edge
+    assert res == {"nodes": 1, "edges": 1}
+    svc = c.txn.nodes["container:k8sservice:default/web"]
+    assert svc["type"] == "K8sService"
+    assert svc["serviceType"] == "ClusterIP"
+    assert (
+        "container:k8sservice:default/web",
+        "container:namespace:default",
+        {"type": "runsInNamespace"},
+    ) in c.edges.edges
 
 
 def test_ingest_noops_without_engine():

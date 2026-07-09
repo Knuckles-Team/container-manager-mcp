@@ -348,3 +348,209 @@ def ingest_nodes(
             }
         )
     return ingest_entities(entities, None, client=client, graph=graph)
+
+
+def ingest_pods(
+    records: list[dict[str, Any]],
+    *,
+    client: Any | None = None,
+    graph: str | None = None,
+) -> dict[str, int] | None:
+    """Map Kubernetes pod records (``list_pods``) → ``:Pod`` nodes.
+
+    Each record carries ``name`` / ``namespace`` / ``status`` (phase) / ``node`` /
+    ``created`` / ``labels``. Emits a ``:Pod`` node with ``+podPhase`` and best-effort
+    ``:runsInNamespace`` (-> ``:Namespace``), ``:managedByDeployment`` (-> ``:Deployment``,
+    when a ``deployment`` field is present) and ``:scheduledOnK8sNode`` (-> ``:K8sNode``) links.
+    """
+    entities: list[dict[str, Any]] = []
+    relationships: list[dict[str, Any]] = []
+    for rec in records or []:
+        name = _s(rec.get("name"))
+        if not name:
+            continue
+        ns = _s(rec.get("namespace"))
+        node_id = f"container:pod:{ns}/{name}" if ns else f"container:pod:{name}"
+        entities.append(
+            {
+                "id": node_id,
+                "type": "Pod",
+                "name": name,
+                "namespace": ns,
+                "podPhase": _s(rec.get("status")),
+                "created_at": _s(rec.get("created")),
+                "externalToolId": name,
+            }
+        )
+        if ns:
+            relationships.append(
+                {
+                    "source": node_id,
+                    "target": f"container:namespace:{ns}",
+                    "type": "runsInNamespace",
+                }
+            )
+        dep = _s(rec.get("deployment"))
+        if dep:
+            relationships.append(
+                {
+                    "source": node_id,
+                    "target": f"container:deployment:{dep}",
+                    "type": "managedByDeployment",
+                }
+            )
+        k8s_node = _s(rec.get("node"))
+        if k8s_node:
+            relationships.append(
+                {
+                    "source": node_id,
+                    "target": f"container:k8snode:{k8s_node}",
+                    "type": "scheduledOnK8sNode",
+                }
+            )
+    return ingest_entities(entities, relationships, client=client, graph=graph)
+
+
+def ingest_deployments(
+    records: list[dict[str, Any]],
+    *,
+    client: Any | None = None,
+    graph: str | None = None,
+) -> dict[str, int] | None:
+    """Map Kubernetes deployment records (Deployment-shaped ``list_services``) → ``:Deployment`` nodes.
+
+    Each record carries ``id`` / ``name`` / ``namespace`` / ``image`` / ``replicas`` /
+    ``ports`` / ``created``. Emits a ``:Deployment`` node with ``+deploymentReplicas``
+    (and ``+deploymentReadyReplicas`` when present), an optional ``:ContainerImage`` it
+    ``:usesImage``, and a best-effort ``:runsInNamespace`` link.
+    """
+    entities: list[dict[str, Any]] = []
+    relationships: list[dict[str, Any]] = []
+    seen_images: set[str] = set()
+    for rec in records or []:
+        did = _s(rec.get("id")) or _s(rec.get("name"))
+        if not did:
+            continue
+        node_id = f"container:deployment:{did}"
+        ns = _s(rec.get("namespace"))
+        image_ref = _s(rec.get("image"))
+        replicas = rec.get("replicas")
+        ready = rec.get("ready_replicas")
+        entities.append(
+            {
+                "id": node_id,
+                "type": "Deployment",
+                "name": _s(rec.get("name")),
+                "namespace": ns,
+                "image": image_ref,
+                "deploymentReplicas": (
+                    int(replicas)
+                    if isinstance(replicas, (int, str)) and str(replicas).isdigit()
+                    else None
+                ),
+                "deploymentReadyReplicas": (
+                    int(ready)
+                    if isinstance(ready, (int, str)) and str(ready).isdigit()
+                    else None
+                ),
+                "portMappings": _s(rec.get("ports")),
+                "created_at": _s(rec.get("created")),
+                "updated_at": _s(rec.get("updated")),
+                "externalToolId": did,
+            }
+        )
+        if image_ref and image_ref not in ("unknown", "none"):
+            img_id = f"container:image:{image_ref}"
+            if image_ref not in seen_images:
+                seen_images.add(image_ref)
+                entities.append(
+                    {
+                        "id": img_id,
+                        "type": "ContainerImage",
+                        "name": image_ref,
+                        "externalToolId": image_ref,
+                    }
+                )
+            relationships.append(
+                {"source": node_id, "target": img_id, "type": "usesImage"}
+            )
+        if ns:
+            relationships.append(
+                {
+                    "source": node_id,
+                    "target": f"container:namespace:{ns}",
+                    "type": "runsInNamespace",
+                }
+            )
+    return ingest_entities(entities, relationships, client=client, graph=graph)
+
+
+def ingest_namespaces(
+    records: list[dict[str, Any]],
+    *,
+    client: Any | None = None,
+    graph: str | None = None,
+) -> dict[str, int] | None:
+    """Map Kubernetes namespace records (``list_namespaces``) → ``:Namespace`` nodes."""
+    entities: list[dict[str, Any]] = []
+    for rec in records or []:
+        name = _s(rec.get("name"))
+        if not name:
+            continue
+        entities.append(
+            {
+                "id": f"container:namespace:{name}",
+                "type": "Namespace",
+                "name": name,
+                "namespaceStatus": _s(rec.get("status")),
+                "created_at": _s(rec.get("created")),
+                "externalToolId": name,
+            }
+        )
+    return ingest_entities(entities, None, client=client, graph=graph)
+
+
+def ingest_k8s_services(
+    records: list[dict[str, Any]],
+    *,
+    client: Any | None = None,
+    graph: str | None = None,
+) -> dict[str, int] | None:
+    """Map native Kubernetes service records (``list_native_services``) → ``:K8sService`` nodes.
+
+    Each record carries ``name`` / ``namespace`` / ``type`` / ``cluster_ip`` / ``ports`` /
+    ``created``. Emits a ``:K8sService`` node with ``+serviceType`` and a best-effort
+    ``:runsInNamespace`` (-> ``:Namespace``) link.
+    """
+    entities: list[dict[str, Any]] = []
+    relationships: list[dict[str, Any]] = []
+    for rec in records or []:
+        name = _s(rec.get("name"))
+        if not name:
+            continue
+        ns = _s(rec.get("namespace"))
+        node_id = (
+            f"container:k8sservice:{ns}/{name}"
+            if ns
+            else f"container:k8sservice:{name}"
+        )
+        entities.append(
+            {
+                "id": node_id,
+                "type": "K8sService",
+                "name": name,
+                "namespace": ns,
+                "serviceType": _s(rec.get("type")),
+                "created_at": _s(rec.get("created")),
+                "externalToolId": name,
+            }
+        )
+        if ns:
+            relationships.append(
+                {
+                    "source": node_id,
+                    "target": f"container:namespace:{ns}",
+                    "type": "runsInNamespace",
+                }
+            )
+    return ingest_entities(entities, relationships, client=client, graph=graph)

@@ -1204,9 +1204,13 @@ def register_misc_tools(mcp: FastMCP):
             "networks",
             "services",
             "nodes",
+            "pods",
+            "deployments",
+            "namespaces",
+            "k8s_services",
         ] = Field(
             default="all",
-            description="Which resource inventory to ingest. 'all' sweeps containers/images/volumes/networks and (on a swarm manager) services/nodes.",
+            description="Which resource inventory to ingest. 'all' sweeps containers/images/volumes/networks and (on a swarm manager) services/nodes, and (on a kubernetes manager) pods/deployments/namespaces/k8s_services.",
         ),
         host: str | None = Field(
             default=None,
@@ -1246,11 +1250,15 @@ def register_misc_tools(mcp: FastMCP):
             )
 
         manager = create_manager(manager_type, host=host)
-        want = (
-            {"containers", "images", "volumes", "networks", "services", "nodes"}
-            if modality == "all"
-            else {modality}
-        )
+        is_k8s = type(manager).__name__ == "KubernetesManager"
+        if modality == "all":
+            # Docker/swarm modalities always sweep (services/nodes no-op off-swarm);
+            # the k8s modalities are only added when the active manager is Kubernetes.
+            want = {"containers", "images", "volumes", "networks", "services", "nodes"}
+            if is_k8s:
+                want |= {"pods", "deployments", "namespaces", "k8s_services"}
+        else:
+            want = {modality}
         result: dict[str, Any] = {"host": host, "modalities": {}}
 
         async def _sweep(name: str, lister, mapper, **kw) -> None:
@@ -1286,6 +1294,23 @@ def register_misc_tools(mcp: FastMCP):
             await _sweep("services", manager.list_services, kg_ingest.ingest_services)
         if "nodes" in want:
             await _sweep("nodes", manager.list_nodes, kg_ingest.ingest_nodes)
+        if "pods" in want:
+            await _sweep("pods", manager.list_pods, kg_ingest.ingest_pods)
+        if "deployments" in want:
+            # Deployment-shaped list_services on the Kubernetes manager.
+            await _sweep(
+                "deployments", manager.list_services, kg_ingest.ingest_deployments
+            )
+        if "namespaces" in want:
+            await _sweep(
+                "namespaces", manager.list_namespaces, kg_ingest.ingest_namespaces
+            )
+        if "k8s_services" in want:
+            await _sweep(
+                "k8s_services",
+                manager.list_native_services,
+                kg_ingest.ingest_k8s_services,
+            )
 
         return result
 

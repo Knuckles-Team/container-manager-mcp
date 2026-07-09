@@ -1,5 +1,5 @@
 {
-  "_comment": "Tier-1 mcp_tool source presets for container-manager-mcp (AU-KG.ingest.mcp-tool-connector). Declarative sync of the Docker/Podman inventory into the KG via the container-manager-mcp MCP server. For full typed-node ingestion (containers/images/volumes/networks/services/nodes + :usesImage/:runsOn links) call the cm_ingest_inventory tool instead. Contributed presets win over the central MCP_TOOL_PRESETS.",
+  "_comment": "Tier-1 mcp_tool source presets for container-manager-mcp (AU-KG.ingest.mcp-tool-connector). Declarative sync of the Docker/Podman/Kubernetes inventory into the KG via the container-manager-mcp MCP server. Docker/Podman presets: containers/images. Kubernetes presets: k8s-pods (cm_k8s_workloads/list_pods), k8s-deployments (cm_k8s_workloads/list_services, Deployment-shaped), k8s-namespaces (cm_k8s_config/list_namespaces), k8s-services (cm_k8s_networking/list_k8s_services). For full typed-node ingestion (containers/images/volumes/networks/services/nodes + pods/deployments/namespaces/k8s_services + :usesImage/:runsOn/:runsInNamespace links) call the cm_ingest_inventory tool instead — the full-fidelity path. Contributed presets win over the central MCP_TOOL_PRESETS.",
   "container-containers": {
     "server": "container-manager-mcp",
     "tool": "cm_container_operations",
@@ -22,5 +22,49 @@
     "text_field": "tag",
     "updated_field": "created",
     "doc_type": "container-image"
+  },
+  "k8s-pods": {
+    "server": "container-manager-mcp",
+    "tool": "cm_k8s_workloads",
+    "action": "list_pods",
+    "records_path": "",
+    "id_field": "name",
+    "title_field": "name",
+    "text_field": "status",
+    "updated_field": "created",
+    "doc_type": "k8s-pod"
+  },
+  "k8s-deployments": {
+    "server": "container-manager-mcp",
+    "tool": "cm_k8s_workloads",
+    "action": "list_services",
+    "records_path": "",
+    "id_field": "id",
+    "title_field": "name",
+    "text_field": "image",
+    "updated_field": "created",
+    "doc_type": "k8s-deployment"
+  },
+  "k8s-namespaces": {
+    "server": "container-manager-mcp",
+    "tool": "cm_k8s_config",
+    "action": "list_namespaces",
+    "records_path": "",
+    "id_field": "name",
+    "title_field": "name",
+    "text_field": "status",
+    "updated_field": "created",
+    "doc_type": "k8s-namespace"
+  },
+  "k8s-services": {
+    "server": "container-manager-mcp",
+    "tool": "cm_k8s_networking",
+    "action": "list_k8s_services",
+    "records_path": "",
+    "id_field": "name",
+    "title_field": "name",
+    "text_field": "type",
+    "updated_field": "created",
+    "doc_type": "k8s-service"
   }
 }
