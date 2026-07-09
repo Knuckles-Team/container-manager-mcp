@@ -77,6 +77,32 @@ This agent wraps the Container Manager - manage Docker, Docker Swarm, and Podman
 
 Detailed instructions on how to use the underlying API wrappers, extended schema bindings, and developer SDK references are maintained in [docs/index.md](docs/index.md).
 
+### Environment doctor
+
+Not sure your environment is wired up? Run the guided **doctor** first. It probes
+every surface with real checks — python client libs + CLIs, `CONTAINER_MANAGER_TYPE`
+/ toggles / `K8S_CONTEXTS` parsing, the tunnel-manager SSH **inventory** (and per-host
+reachability), the **docker** / **podman** daemons, and each **kubernetes** context —
+and prints concrete remediation for anything that is not OK, so you are walked through
+connecting to your environments. Available as the `container-manager-doctor` CLI and
+the `cm_doctor` MCP tool.
+
+```bash
+container-manager-doctor                       # diagnose everything (exit 1 if any FAIL)
+container-manager-doctor --guided              # + probe every inventory host
+container-manager-doctor --backend inventory --host <alias>
+container-manager-doctor --backend kubernetes --context <ctx>
+container-manager-doctor --backend docker --host <alias>
+container-manager-doctor --json                # machine-readable report
+```
+
+The `cm_doctor` MCP tool mirrors it: `action=run` for a full sweep, or a focused
+`check_backends` / `check_inventory` / `check_docker` / `check_podman` /
+`check_kubernetes`. Each check returns `{name, category, status: ok|warn|fail, detail,
+remediation}` plus a summary. Start here, then follow the
+[container-manager-config-walkthrough](container_manager_mcp/skills/container-manager-config-walkthrough/SKILL.md)
+skill.
+
 ---
 
 ## MCP
@@ -96,6 +122,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_compose_operations` | `COMPOSETOOL` | Manage docker-compose or podman-compose operations. |
 | `cm_container_operations` | `CONTAINERTOOL` | Manage container operations. |
 | `cm_docker_swarm` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_doctor` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
 | `cm_image_operations` | `IMAGETOOL` | Manage container images. |
 | `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
 | `cm_ingest_inventory` | `MISCTOOL` | Natively ingest the container inventory into epistemic-graph as typed nodes. |
@@ -110,7 +137,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_list_hosts` | `INVENTORYTOOL` | List the host aliases you can pass as ``host`` to any cm_* operation |
 | `cm_multi_context` | `MULTICONTEXTTOOL` | Manage containers across multiple backends (Kubernetes, Docker, Podman, Swarm) with context selection. |
 | `cm_network_operations` | `NETWORKTOOL` | Manage network operations. |
-| `cm_podman` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
 | `cm_swarm_operations` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_system_operations` | `SYSTEMTOOL` | Manage container manager system operations. |
 | `cm_volume_operations` | `VOLUMETOOL` | Manage volume operations. |
@@ -119,7 +146,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 #### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
 
 <details>
-<summary>285 per-operation tools — one per public API method (click to expand)</summary>
+<summary>291 per-operation tools — one per public API method (click to expand)</summary>
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
@@ -129,25 +156,31 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_container_operations__prune_containers` | `CONTAINERTOOL` | Manage container operations. |
 | `cm_container_operations__remove_container` | `CONTAINERTOOL` | Manage container operations. |
 | `cm_container_operations__stop_container` | `CONTAINERTOOL` | Manage container operations. |
-| `cm_docker_swarm__docker_config_create` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_config_list` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_node_inspect` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_node_ls` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_node_update` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_secret_create` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_secret_list` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_service_create` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_service_list` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_service_logs` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_service_ps` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_service_rm` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_service_update` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_stack_deploy` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_stack_rm` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_stack_services` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_swarm_init` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_swarm_join` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
-| `cm_docker_swarm__docker_swarm_leave` | `DOCKERSWARMTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_config_create` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_config_list` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_node_inspect` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_node_ls` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_node_update` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_secret_create` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_secret_list` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_create` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_list` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_logs` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_ps` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_rm` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_service_update` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_stack_deploy` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_stack_rm` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_stack_services` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_swarm_init` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_swarm_join` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_docker_swarm__docker_swarm_leave` | `DOCKERTOOL` | Manage Docker Swarm operations (Swarm, services, stacks, configs, secrets, nodes). |
+| `cm_doctor__check_backends` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
+| `cm_doctor__check_docker` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
+| `cm_doctor__check_inventory` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
+| `cm_doctor__check_kubernetes` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
+| `cm_doctor__check_podman` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
+| `cm_doctor__run` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
 | `cm_image_operations__list_images` | `IMAGETOOL` | Manage container images. |
 | `cm_image_operations__prune_images` | `IMAGETOOL` | Manage container images. |
 | `cm_image_operations__pull_image` | `IMAGETOOL` | Manage container images. |
@@ -367,26 +400,26 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_network_operations__list_networks` | `NETWORKTOOL` | Manage network operations. |
 | `cm_network_operations__prune_networks` | `NETWORKTOOL` | Manage network operations. |
 | `cm_network_operations__remove_network` | `NETWORKTOOL` | Manage network operations. |
-| `cm_podman__podman_checkpoint` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_generate_kube_yaml` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_health_check` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_network_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_network_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_network_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_play_kube_yaml` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_logs` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_rm` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_stats` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_stop` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_pod_top` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_restore` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_system_prune` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_volume_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_volume_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
-| `cm_podman__podman_volume_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, system). |
+| `cm_podman__podman_checkpoint` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_generate_kube_yaml` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_health_check` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_network_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_network_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_network_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_play_kube_yaml` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_logs` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_rm` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_stats` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_stop` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_pod_top` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_restore` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_system_prune` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_volume_create` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_volume_inspect` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
+| `cm_podman__podman_volume_list` | `PODMANTOOL` | Manage Podman operations (pods, networks, volumes, checkpoint/restore, kube interop, system). |
 | `cm_swarm_operations__create_service` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_swarm_operations__init_swarm` | `SWARMTOOL` | Manage swarm operations. |
 | `cm_swarm_operations__inspect_node` | `SWARMTOOL` | Manage swarm operations. |
@@ -411,7 +444,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 
 </details>
 
-_22 action-routed tool(s) (default) · 285 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_23 action-routed tool(s) (default) · 291 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
@@ -514,6 +547,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "DEFAULT_SWARM_CONTEXT": "",
         "DOCKERSWARMTOOL": "True",
         "DOCKER_CONTEXTS": "",
+        "DOCTORTOOL": "True",
         "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
         "INFOTOOL": "True",
@@ -527,6 +561,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8SSTORAGETOOL": "True",
         "K8SWORKLOADSTOOL": "True",
         "K8S_CONTEXTS": "",
+        "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
@@ -578,6 +613,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "DEFAULT_SWARM_CONTEXT": "",
         "DOCKERSWARMTOOL": "True",
         "DOCKER_CONTEXTS": "",
+        "DOCTORTOOL": "True",
         "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
         "INFOTOOL": "True",
@@ -591,6 +627,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8SSTORAGETOOL": "True",
         "K8SWORKLOADSTOOL": "True",
         "K8S_CONTEXTS": "",
+        "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
@@ -643,6 +680,7 @@ docker run -d \
   -e DEFAULT_SWARM_CONTEXT="" \
   -e DOCKERSWARMTOOL=True \
   -e DOCKER_CONTEXTS="" \
+  -e DOCTORTOOL=True \
   -e HEALTH_CHECK_TTL_SECONDS=30 \
   -e IMAGETOOL=True \
   -e INFOTOOL=True \
@@ -656,6 +694,7 @@ docker run -d \
   -e K8SSTORAGETOOL=True \
   -e K8SWORKLOADSTOOL=True \
   -e K8S_CONTEXTS="" \
+  -e KUBECONFIG="" \
   -e KUBERNETES_SERVICE_HOST="" \
   -e MISCTOOL=True \
   -e MULTICONTEXTTOOL=True \
@@ -715,6 +754,7 @@ consumed from a **remote deployment**. The
 | `CONTAINER_MANAGER_HOST` | — | remote docker daemon host (e.g. tcp://host:2375); empty = local |
 | `CONTAINER_MANAGER_PODMAN_BASE_URL` | — | podman service base URL (e.g. unix:///run/podman/podman.sock) |
 | `CONTAINER_MANAGER_KUBECONTEXT` | — | kubeconfig context name; empty = current-context |
+| `KUBECONFIG` | — | path(s) to kubeconfig file(s); empty = ~/.kube/config |
 | `KUBERNETES_SERVICE_HOST` | — | injected by the cluster when running in-pod; leave empty |
 | `INVENTORYTOOL` | `True` |  |
 | `INFOTOOL` | `True` |  |
@@ -726,6 +766,7 @@ consumed from a **remote deployment**. The
 | `SYSTEMTOOL` | `True` |  |
 | `COMPOSETOOL` | `True` |  |
 | `MISCTOOL` | `True` |  |
+| `DOCTORTOOL` | `True` |  |
 | `SPECIALIST_DEPLOYMENTTOOL` | `True` |  |
 | `K8SWORKLOADSTOOL` | `True` |  |
 | `K8SCONFIGTOOL` | `True` |  |
@@ -768,7 +809,7 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_48 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_50 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 

@@ -19,9 +19,38 @@ metadata:
 
 The one-time (or per-environment) setup path for **container-manager-mcp** before
 using any of its operational skills. This skill is a checklist and decision guide,
-not an operations surface — it drives only the read-only discovery tools
-(`cm_info_operations`, `cm_list_hosts`, `cm_k8s_cluster action=list_contexts`) needed
-to confirm the environment is wired correctly.
+not an operations surface — it drives only the read-only discovery/diagnostic tools
+(`cm_doctor`, `cm_info_operations`, `cm_list_hosts`,
+`cm_k8s_cluster action=list_contexts`) needed to confirm the environment is wired
+correctly.
+
+## Step 1 — run the doctor first (diagnose + get remediation)
+Before anything else, run the guided **environment doctor** — it probes every
+surface (backends, config/env, inventory, docker, podman, kubernetes) with real
+checks and prints concrete remediation for each non-OK result, so you are walked
+through connecting to your environments instead of guessing.
+
+CLI:
+```
+container-manager-doctor              # diagnose everything (exit 1 if any FAIL)
+container-manager-doctor --guided     # + probe every inventory host, verbose remediation
+container-manager-doctor --backend kubernetes --context prod
+container-manager-doctor --backend inventory --host <alias>
+container-manager-doctor --backend docker --host <alias>
+container-manager-doctor --json       # machine-readable report
+```
+
+MCP tool (same engine):
+```
+cm_doctor action=run                          # full sweep
+cm_doctor action=check_backends               # python libs + CLIs + config/env
+cm_doctor action=check_inventory host=<alias> # inventory file + SSH reachability
+cm_doctor action=check_docker host=<alias>    # docker daemon (local or over-SSH)
+cm_doctor action=check_podman                 # podman service socket
+cm_doctor action=check_kubernetes context=<ctx>  # kubeconfig + per-context probe
+```
+Each check returns `{name, category, status: ok|warn|fail, detail, remediation}`.
+Fix (or hand off) every `fail`, then continue with the decision guide below.
 
 ## When to use
 - Standing up container-manager-mcp against a new environment for the first time.
@@ -110,7 +139,11 @@ default `true`. The Podman and Docker Swarm tools have their own toggles: `PODMA
 | `PODMANTOOL` / `DOCKERSWARMTOOL` / `MULTICONTEXTTOOL` | Podman / Docker Swarm / multi-context | Tool visibility toggles, default `true` |
 
 ## Walkthrough — first-run checklist
-1. **Identify what container-manager-mcp is currently pointed at.**
+1. **Run the doctor** (see Step 1 above) and resolve every `fail` first.
+   ```
+   container-manager-doctor            # or: cm_doctor action=run
+   ```
+   Then confirm what container-manager-mcp is currently pointed at:
    ```
    cm_info_operations action=get_info
    ```

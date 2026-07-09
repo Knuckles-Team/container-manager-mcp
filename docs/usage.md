@@ -168,6 +168,27 @@ focused:
 container-manager-mcp --toolsets container,image
 ```
 
+### Environment doctor
+
+`container-manager-doctor` diagnoses AND helps resolve the environment — the
+tunnel-manager SSH inventory, kubeconfig/contexts, and docker/podman runtimes —
+with real probes and concrete remediation for anything that is not OK. It exits
+`0` when no check fails, `1` otherwise, so it drops into CI/health scripts.
+
+```bash
+container-manager-doctor                       # diagnose everything
+container-manager-doctor --guided              # + probe every inventory host
+container-manager-doctor --backend inventory --host r820
+container-manager-doctor --backend kubernetes --context prod
+container-manager-doctor --backend docker --host r820
+container-manager-doctor --json                # machine-readable report
+```
+
+The same engine is exposed as the `cm_doctor` MCP tool (`action=run` or a focused
+`check_backends` / `check_inventory` / `check_docker` / `check_podman` /
+`check_kubernetes`), returning per-check
+`{name, category, status: ok|warn|fail, detail, remediation}` plus a summary.
+
 The companion agent runs as an interactive command-line / Web-UI front end:
 
 ```bash

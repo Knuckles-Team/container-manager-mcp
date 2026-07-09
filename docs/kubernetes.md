@@ -50,6 +50,19 @@ See [Multi-Host → Kubernetes Kubeconfig Contexts](multi_host.md#kubernetes-kub
 differs from the Docker/Podman remote-host inventory model, and [Usage → Kubernetes](usage.md#kubernetes) for
 worked examples of each tool.
 
+Setting a cluster up for the first time? Run the **doctor** to verify the kubeconfig is
+found, valid, and each context reaches its API server — with concrete remediation when it
+does not:
+
+```bash
+container-manager-doctor --backend kubernetes --context prod   # or: cm_doctor action=check_kubernetes context=prod
+```
+
+It checks kubeconfig presence (`KUBECONFIG` / `~/.kube/config` / in-cluster), runs
+`validate_kubeconfig`, lists contexts, and probes each target context via
+`get_version`/`list_nodes` — pointing you at `K8S_CONTEXTS`/`DEFAULT_K8S_CONTEXT` or the
+`kubernetes-mesh-provisioner` skill when a context is unreachable.
+
 ## Multi-context operation
 
 `cm_multi_context` (toggle `MULTICONTEXTTOOL`) lets one call fan out across several Docker, Podman, Swarm,
