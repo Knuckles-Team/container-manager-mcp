@@ -223,6 +223,44 @@ def test_cm_doctor_tool_maps_actions_to_backend(monkeypatch):
     assert seen["context"] == "prod"
 
 
+def test_cm_doctor_tool_with_ctx_does_not_raise(monkeypatch):
+    """Regression: ``ctx_log`` previously required a ``server_logger`` argument
+    the doctor tool never passed, so any call with a real (truthy) ``ctx``
+    raised ``TypeError: ctx_log() missing 1 required positional argument:
+    'message'``. The other ``cm_doctor`` tests above only exercise
+    ``ctx=None`` (the ``if ctx:`` guard short-circuits), so they never
+    caught it — this test passes a truthy ctx to hit the log call.
+    """
+    from container_manager_mcp.mcp import mcp_doctor
+
+    sentinel = {"checks": [], "summary": {"status": "ok", "fail": 0}}
+    monkeypatch.setattr(mcp_doctor, "run_doctor", lambda **k: sentinel)
+    tool = _capture_tool(mcp_doctor.register_doctor_tools)
+
+    fake_ctx = MagicMock()
+    result = asyncio.run(tool(action="check_backends", ctx=fake_ctx))
+
+    assert result == sentinel
+    assert fake_ctx.info.called
+
+
+def test_cm_doctor_tool_with_ctx_error_path_does_not_raise(monkeypatch):
+    """Same regression, but through the ``except`` branch's ``ctx_log`` call."""
+    from container_manager_mcp.mcp import mcp_doctor
+
+    def _boom(**k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(mcp_doctor, "run_doctor", _boom)
+    tool = _capture_tool(mcp_doctor.register_doctor_tools)
+
+    fake_ctx = MagicMock()
+    result = asyncio.run(tool(action="check_backends", ctx=fake_ctx))
+
+    assert result == {"error": "boom", "action": "check_backends"}
+    assert fake_ctx.error.called
+
+
 def test_register_doctor_tools_gated_off(monkeypatch):
     from container_manager_mcp.mcp_server import register_doctor_tools
 
