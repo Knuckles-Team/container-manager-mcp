@@ -15,6 +15,7 @@ in one place.
 from __future__ import annotations
 
 import asyncio
+import sys
 from functools import lru_cache
 
 import pytest
@@ -25,7 +26,14 @@ from container_manager_mcp.mcp_server import get_mcp_instance
 @lru_cache(maxsize=1)
 def _tool_actions() -> dict[str, set[str]]:
     """Map every registered tool name → the set of actions its schema enumerates."""
-    _args, mcp, _mw = get_mcp_instance()
+    # get_mcp_instance() parses sys.argv for server flags (--port, etc.); isolate it
+    # so the test is hermetic under any pytest invocation (e.g. `-p no:cacheprovider`).
+    _saved_argv = sys.argv
+    sys.argv = [_saved_argv[0] if _saved_argv else "container-manager-mcp"]
+    try:
+        _args, mcp, _mw = get_mcp_instance()
+    finally:
+        sys.argv = _saved_argv
     tools = asyncio.run(mcp.list_tools())
     out: dict[str, set[str]] = {}
     for tool in tools:
