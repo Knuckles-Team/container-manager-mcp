@@ -28,12 +28,12 @@ RUN apt-get update \
 # Slim MCP-only dependency closure.
 FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow container-manager-mcp[mcp]>=2.1.3
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow container-manager-mcp[mcp]>=2.1.4
 
 # Full agent runtime dependency closure.
 FROM builder-base AS builder-agent
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --upgrade --break-system-packages --prerelease=allow container-manager-mcp[agent]>=2.1.3
+    uv pip install --system --upgrade --break-system-packages --prerelease=allow container-manager-mcp[agent]>=2.1.4
 
 # ── Kubernetes auth CLIs ──────────────────────────────────────────────────────
 # cm shells out to `kubectl` (copy_to_pod/copy_from_pod use `kubectl cp`) and,
