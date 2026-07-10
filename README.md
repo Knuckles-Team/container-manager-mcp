@@ -103,6 +103,64 @@ remediation}` plus a summary. Start here, then follow the
 [container-manager-config-walkthrough](container_manager_mcp/skills/container-manager-config-walkthrough/SKILL.md)
 skill.
 
+### Save a Kubernetes environment (register a kubeconfig context)
+
+Dynamically add a kube context to the kubeconfig cm reads (`$KUBECONFIG` first entry,
+else `~/.kube/config`) so you can reuse it later (via `use_context` /
+`CONTAINER_MANAGER_KUBECONTEXT` / `K8S_CONTEXTS`). The merge is non-destructive —
+existing entries are never clobbered, and a context-name collision errors unless you
+pass `--overwrite`. Available as the `container-manager-save-context` CLI and the
+`cm_k8s_cluster` `save_context` MCP action (both call the same core function). Secrets
+(tokens, key data) are kept out of logs; cert/key files are embedded as base64 so the
+saved context is portable.
+
+Four credential input modes, each saved under a context name you choose:
+
+1. **URL + token** — server URL + bearer token (ServiceAccount / OIDC id-token).
+2. **URL + client-cert + client-key + CA** — mTLS (how an RKE2 admin kubeconfig
+   authenticates); certs accept file paths or inline PEM/base64.
+3. **URL + username + password → OIDC** — for OIDC-backed clusters only. The
+   Kubernetes API server does **not** accept plain username/password (basic auth
+   was removed), so this drives an OIDC resource-owner password grant against the
+   issuer and embeds the resulting id-token; it requires `--oidc-issuer` +
+   `--oidc-client-id` and fails clearly if they are missing.
+4. **Import a kubeconfig** — merge an existing file/blob, or capture the cluster
+   you are currently on.
+
+```bash
+# 1. URL + token
+container-manager-save-context --name prod --server https://10.0.0.10:6443 \
+    --token "$TOKEN" --ca-cert /path/to/ca.crt --namespace default --use
+
+# 2. URL + client cert/key + CA (mTLS, e.g. RKE2 admin)
+container-manager-save-context --name rke2 --server https://10.0.0.10:6443 \
+    --client-cert ./client.crt --client-key ./client.key --ca-cert ./ca.crt
+
+# 3. URL + username + password -> OIDC login (id-token embedded)
+container-manager-save-context --name oidc-dev --server https://10.0.0.10:6443 \
+    --username alice --password "$PW" \
+    --oidc-issuer https://keycloak/realms/homelab --oidc-client-id kubernetes
+
+# 4. import + merge an existing kubeconfig (file or raw YAML on stdin)
+container-manager-save-context --from-file ./other-kubeconfig
+cat cluster.yaml | container-manager-save-context --from-yaml -
+
+# capture the cluster you are currently on (in-cluster SA token+CA, or the
+# current kubeconfig context) and save a portable copy under a new name
+container-manager-save-context --name exported --capture-current --use
+
+# on name collision, --overwrite replaces; otherwise it errors
+container-manager-save-context --name prod --overwrite --from-file ./prod-kubeconfig
+```
+
+After saving, the context is loaded and `list_nodes` is called to validate
+reachability (skip with `--no-validate`); the node count or a clear error is returned.
+The `cm_k8s_cluster` MCP action mirrors every flag (`action=save_context`,
+`context_name`, `server`/`token`/`client_cert`/`client_key`/`ca_cert`/
+`insecure_skip_tls_verify`, `username`/`password`/`oidc_issuer`/`oidc_client_id`/
+`oidc_client_secret`, `source_file`/`source_yaml`, `capture_current`,
+`overwrite`, `use`, `validate`).
+
 ---
 
 ## MCP
@@ -146,7 +204,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 #### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
 
 <details>
-<summary>291 per-operation tools — one per public API method (click to expand)</summary>
+<summary>292 per-operation tools — one per public API method (click to expand)</summary>
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
@@ -205,6 +263,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_k8s_cluster__list_node_taints` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__list_nodes` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__rename_context` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__save_context` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__set_node_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__set_pod_anti_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__taint_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
@@ -444,7 +503,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 
 </details>
 
-_23 action-routed tool(s) (default) · 291 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_23 action-routed tool(s) (default) · 292 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
@@ -563,6 +622,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8S_CONTEXTS": "",
         "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
+        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
         "MULTI_CONTEXT_MAX_WORKERS": "",
@@ -629,6 +689,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8S_CONTEXTS": "",
         "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
+        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
         "MULTI_CONTEXT_MAX_WORKERS": "",
@@ -696,6 +757,7 @@ docker run -d \
   -e K8S_CONTEXTS="" \
   -e KUBECONFIG="" \
   -e KUBERNETES_SERVICE_HOST="" \
+  -e KUBERNETES_SERVICE_PORT="" \
   -e MISCTOOL=True \
   -e MULTICONTEXTTOOL=True \
   -e MULTI_CONTEXT_MAX_WORKERS="" \
@@ -756,6 +818,7 @@ consumed from a **remote deployment**. The
 | `CONTAINER_MANAGER_KUBECONTEXT` | — | kubeconfig context name; empty = current-context |
 | `KUBECONFIG` | — | path(s) to kubeconfig file(s); empty = ~/.kube/config |
 | `KUBERNETES_SERVICE_HOST` | — | injected by the cluster when running in-pod; leave empty |
+| `KUBERNETES_SERVICE_PORT` | — | injected by the cluster when running in-pod (save-context capture); leave empty |
 | `INVENTORYTOOL` | `True` |  |
 | `INFOTOOL` | `True` |  |
 | `IMAGETOOL` | `True` |  |
@@ -809,7 +872,7 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_50 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_51 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 

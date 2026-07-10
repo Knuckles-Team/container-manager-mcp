@@ -31,6 +31,7 @@ test = [
 container-manager-mcp = "container_manager_mcp.mcp_server:mcp_server"
 container-manager-agent = "container_manager_mcp.agent_server:agent_server"
 container-manager-doctor = "container_manager_mcp.doctor:doctor"
+container-manager-save-context = "container_manager_mcp.k8s.kubeconfig_import:main"
 
 [project.entry-points."agent_utilities.skill_providers"]
 container-manager-mcp = "container_manager_mcp.skills"

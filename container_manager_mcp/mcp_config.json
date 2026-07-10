@@ -35,6 +35,7 @@
         "K8S_CONTEXTS": "",
         "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
+        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
         "MULTI_CONTEXT_MAX_WORKERS": "",
