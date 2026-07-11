@@ -100,6 +100,23 @@ class MultiContextManager:
                         f"Failed to initialize K8S context '{context_name}': {e}"
                     )
 
+        # In-cluster fallback: when running inside a Kubernetes pod with no
+        # explicit K8S_CONTEXTS, register the pod's own service-account context
+        # so the k8s tools target the cluster we're deployed into. The
+        # KubernetesManager already loads in-cluster config when
+        # KUBERNETES_SERVICE_HOST is set (k8s/base.py), so an empty context
+        # value resolves to load_incluster_config().
+        if not self.k8s_managers and os.environ.get("KUBERNETES_SERVICE_HOST"):
+            try:
+                self._add_k8s_context("in-cluster", "")
+                self.logger.info(
+                    "Registered in-cluster K8S context from the pod service account"
+                )
+            except Exception as e:
+                self.logger.error(
+                    f"Failed to initialize in-cluster K8S context: {e}"
+                )
+
         # Set default K8S context
         self.default_k8s_context = os.environ.get("DEFAULT_K8S_CONTEXT")
         if self.default_k8s_context and self.default_k8s_context in self.k8s_managers:
