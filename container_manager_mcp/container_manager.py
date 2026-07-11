@@ -3037,7 +3037,13 @@ def create_manager(
         multi_context: Enable multi-context mode (returns MultiContextManager)
 
     Returns:
-        ContainerManagerBase instance
+        ContainerManagerBase instance. In multi-context mode, a specific
+        ``manager_type`` (e.g. "kubernetes"/"docker"/"podman"/"swarm") is
+        resolved to that backend's default-context concrete manager (a
+        ``KubernetesManager``/``DockerManager``/``PodmanManager``) rather than
+        the ``MultiContextManager`` pool itself, so callers see the full verb
+        surface they expect. Only ``manager_type=None`` or ``"multi"`` returns
+        the raw ``MultiContextManager`` (pool-level operations).
     """
     if host is None:
         host = os.environ.get("CONTAINER_MANAGER_HOST", None)
@@ -3050,7 +3056,25 @@ def create_manager(
     ):
         from container_manager_mcp.multi_context_manager import MultiContextManager
 
-        return MultiContextManager(silent=silent, log_file=log_file)
+        multi_manager = MultiContextManager(silent=silent, log_file=log_file)
+
+        if manager_type is None or manager_type == "multi":
+            return multi_manager
+
+        # A specific backend was requested while multi-context mode is
+        # active (e.g. the themed cm_k8s_*/cm_docker_swarm/cm_podman tools
+        # call create_manager("kubernetes"/"docker"/"podman")). Resolve to
+        # that backend's default-context manager so callers get the real
+        # ~40-verb interface instead of the pooling MultiContextManager,
+        # which only exposes pool-management plus a handful of generic
+        # delegated methods and would otherwise raise
+        # AttributeError for any backend-specific verb (e.g. get_cluster_info,
+        # list_nodes). Mirrors the get_manager(backend, context) resolution
+        # already used by the cm_multi_context tool.
+        backend = manager_type.lower()
+        if backend in ("rke2", "k3s"):
+            backend = "kubernetes"
+        return multi_manager.get_manager(backend)
 
     if manager_type is None:
         manager_type = os.environ.get("CONTAINER_MANAGER_TYPE", None)
