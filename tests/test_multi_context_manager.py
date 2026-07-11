@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.multi_context_manager import MultiContextManager
 
 
@@ -380,3 +381,77 @@ def test_cm_multi_context_tool_with_ctx_does_not_raise(monkeypatch):
 
     assert result == ["default"]
     assert fake_ctx.info.called
+
+
+# ---------------------------------------------------------------------------
+# Regression: create_manager(<backend>) under MULTI_CONTEXT_MODE must resolve
+# to the concrete per-backend manager (KubernetesManager/DockerManager/
+# PodmanManager), not the MultiContextManager pool itself. Every themed MCP
+# tool (cm_k8s_cluster, cm_k8s_workloads, ..., cm_docker_swarm, cm_podman)
+# calls create_manager("kubernetes"/"docker"/"podman") and then invokes
+# backend-specific verbs (e.g. manager.get_cluster_info(), manager.list_nodes())
+# directly on the result. Before this fix, multi-context mode always returned
+# the bare MultiContextManager -- which only defines pool-management methods
+# plus a handful of generic list_* delegators -- so every backend-specific
+# verb raised AttributeError.
+# ---------------------------------------------------------------------------
+class TestCreateManagerMultiContextDelegation:
+    def test_create_manager_kubernetes_resolves_to_default_k8s_manager(
+        self, monkeypatch, patched_backends
+    ):
+        monkeypatch.setenv("MULTI_CONTEXT_MODE", "true")
+        monkeypatch.setenv("K8S_CONTEXTS", "only=ctxOnly")
+        monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
+        monkeypatch.setenv("PODMAN_ENABLED", "false")
+
+        manager = create_manager("kubernetes")
+
+        # Not the pooling wrapper -- the concrete default-context manager.
+        assert not isinstance(manager, MultiContextManager)
+
+        # A representative k8s-only verb (absent from MultiContextManager)
+        # must be reachable and callable without AttributeError.
+        manager.get_cluster_info.return_value = {"version": "v1.31"}
+        manager.list_namespaces.return_value = ["default", "kube-system"]
+
+        assert manager.get_cluster_info() == {"version": "v1.31"}
+        assert manager.list_namespaces() == ["default", "kube-system"]
+
+    def test_create_manager_multi_still_returns_pool(
+        self, monkeypatch, patched_backends
+    ):
+        monkeypatch.setenv("MULTI_CONTEXT_MODE", "true")
+        monkeypatch.setenv("K8S_CONTEXTS", "only=ctxOnly")
+        monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
+        monkeypatch.setenv("PODMAN_ENABLED", "false")
+
+        manager = create_manager("multi")
+
+        assert isinstance(manager, MultiContextManager)
+
+    def test_create_manager_kubernetes_no_context_configured_raises_clear_error(
+        self, monkeypatch, patched_backends
+    ):
+        """No K8S_CONTEXTS configured: resolution must fail with a clear,
+        catchable error -- not crash or silently return an unusable object."""
+        monkeypatch.setenv("MULTI_CONTEXT_MODE", "true")
+        monkeypatch.delenv("K8S_CONTEXTS", raising=False)
+        monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
+        monkeypatch.setenv("PODMAN_ENABLED", "false")
+
+        with pytest.raises(ValueError, match="K8S context"):
+            create_manager("kubernetes")
+
+    def test_create_manager_docker_resolves_to_default_docker_manager(
+        self, monkeypatch, patched_backends
+    ):
+        monkeypatch.setenv("MULTI_CONTEXT_MODE", "true")
+        monkeypatch.delenv("K8S_CONTEXTS", raising=False)
+        monkeypatch.setenv("DOCKER_CONTEXTS", "local=")
+        monkeypatch.setenv("PODMAN_ENABLED", "false")
+
+        manager = create_manager("docker")
+
+        assert not isinstance(manager, MultiContextManager)
+        manager.docker_service_list.return_value = []
+        assert manager.docker_service_list() == []
