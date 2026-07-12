@@ -320,17 +320,61 @@ class MultiContextManager:
         else:
             raise ValueError(f"Unsupported backend for reconnect: {backend}")
 
-    def get_k8s_manager(self, context_name: str | None = None) -> Any:
-        """Get a Kubernetes manager by context name, lazily reconnecting if unhealthy."""
-        if context_name is None:
-            context_name = self.default_k8s_context
+    def _entitled(self, namespace: str, names: list[str]) -> list[str]:
+        """Filter a context pool to what the calling identity may reach.
 
-        if context_name not in self.k8s_managers:
-            available = ", ".join(self.k8s_managers.keys())
-            raise ValueError(
-                f"K8S context '{context_name}' not found. "
-                f"Available contexts: {available}"
+        Routes the pool through agent-utilities' shared identity-scoped resolver
+        (CONCEPT:AU-OS.identity.identity-scoped-resource-autoload): a caller's
+        Okta/Keycloak groups decide which contexts auto-load for them. The
+        ambient ``SYSTEM_ACTOR`` (unauthenticated/local) holds ``admin`` → sees
+        all, so behaviour is unchanged until a real identity scopes it down.
+        Degrades to the full pool if agent-utilities predates the resolver.
+        """
+        try:
+            from agent_utilities.security.entitlements import (
+                identity_scoped_resources,
             )
+        except Exception:
+            return names
+        return list(identity_scoped_resources(namespace, names))
+
+    def _resolve_context(
+        self, namespace: str, pool: dict[str, Any], default: str | None,
+        context_name: str | None,
+    ) -> str:
+        """Resolve + authorize a context against the caller's entitlements."""
+        entitled = self._entitled(namespace, list(pool.keys()))
+        if context_name is None:
+            if default in entitled:
+                return default
+            if entitled:
+                return entitled[0]
+            raise ValueError(
+                f"No {namespace} contexts are available to your identity. "
+                "Your Okta/Keycloak groups grant none of the configured contexts."
+            )
+        if context_name not in pool:
+            raise ValueError(
+                f"{namespace} context '{context_name}' not found. "
+                f"Available contexts: {', '.join(pool.keys())}"
+            )
+        if context_name not in entitled:
+            raise PermissionError(
+                f"Your identity is not entitled to the {namespace} context "
+                f"'{context_name}'. Entitled: {', '.join(entitled) or '(none)'}"
+            )
+        return context_name
+
+    def get_k8s_manager(self, context_name: str | None = None) -> Any:
+        """Get a Kubernetes manager by context name, lazily reconnecting if unhealthy.
+
+        The context is resolved against the caller's identity entitlements: an
+        omitted ``context_name`` auto-selects the caller's entitled default, and
+        a named context they are not entitled to is denied.
+        """
+        context_name = self._resolve_context(
+            "k8s", self.k8s_managers, self.default_k8s_context, context_name
+        )
 
         manager = self.k8s_managers[context_name]
         if not self._is_healthy(manager, "kubernetes", context_name):
@@ -344,16 +388,13 @@ class MultiContextManager:
         return manager
 
     def get_docker_manager(self, context_name: str | None = None) -> Any:
-        """Get a Docker manager by context name, lazily reconnecting if unhealthy."""
-        if context_name is None:
-            context_name = self.default_docker_context
+        """Get a Docker manager by context name, lazily reconnecting if unhealthy.
 
-        if context_name not in self.docker_managers:
-            available = ", ".join(self.docker_managers.keys())
-            raise ValueError(
-                f"Docker context '{context_name}' not found. "
-                f"Available contexts: {available}"
-            )
+        Context resolved against the caller's identity entitlements (see
+        :meth:`get_k8s_manager`)."""
+        context_name = self._resolve_context(
+            "docker", self.docker_managers, self.default_docker_context, context_name
+        )
 
         manager = self.docker_managers[context_name]
         if not self._is_healthy(manager, "docker", context_name):
@@ -367,16 +408,13 @@ class MultiContextManager:
         return manager
 
     def get_swarm_manager(self, context_name: str | None = None) -> Any:
-        """Get a Swarm manager by context name, lazily reconnecting if unhealthy."""
-        if context_name is None:
-            context_name = self.default_swarm_context
+        """Get a Swarm manager by context name, lazily reconnecting if unhealthy.
 
-        if context_name not in self.swarm_managers:
-            available = ", ".join(self.swarm_managers.keys())
-            raise ValueError(
-                f"Swarm context '{context_name}' not found. "
-                f"Available contexts: {available}"
-            )
+        Context resolved against the caller's identity entitlements (see
+        :meth:`get_k8s_manager`)."""
+        context_name = self._resolve_context(
+            "swarm", self.swarm_managers, self.default_swarm_context, context_name
+        )
 
         manager = self.swarm_managers[context_name]
         if not self._is_healthy(manager, "swarm", context_name):
@@ -429,19 +467,34 @@ class MultiContextManager:
             raise ValueError(f"Unsupported backend: {backend}")
 
     def list_available_contexts(self) -> dict[str, dict]:
-        """List all available contexts across all backends."""
+        """List the contexts the CALLER may reach, per backend.
+
+        Auto-scoped to the caller's Okta/Keycloak identity: each backend's pool
+        is filtered to the contexts their groups entitle
+        (CONCEPT:AU-OS.identity.identity-scoped-resource-autoload), so an
+        operator connects to exactly the environments they have access to with
+        no manual context selection. Unauthenticated/local (SYSTEM_ACTOR) sees
+        all — unchanged from today."""
+        k8s = self._entitled("k8s", list(self.k8s_managers.keys()))
+        docker = self._entitled("docker", list(self.docker_managers.keys()))
+        swarm = self._entitled("swarm", list(self.swarm_managers.keys()))
         return {
             "kubernetes": {
-                "contexts": list(self.k8s_managers.keys()),
-                "default": self.default_k8s_context,
+                "contexts": k8s,
+                "default": self.default_k8s_context if self.default_k8s_context in k8s
+                else (k8s[0] if k8s else None),
             },
             "docker": {
-                "contexts": list(self.docker_managers.keys()),
-                "default": self.default_docker_context,
+                "contexts": docker,
+                "default": self.default_docker_context
+                if self.default_docker_context in docker
+                else (docker[0] if docker else None),
             },
             "swarm": {
-                "contexts": list(self.swarm_managers.keys()),
-                "default": self.default_swarm_context,
+                "contexts": swarm,
+                "default": self.default_swarm_context
+                if self.default_swarm_context in swarm
+                else (swarm[0] if swarm else None),
             },
             "podman": {"enabled": self.podman_manager is not None},
         }
