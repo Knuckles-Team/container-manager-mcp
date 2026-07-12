@@ -446,7 +446,9 @@ def _notify(message: str) -> None:
             ).encode(),
             headers={"Content-Type": "application/json"},
         )
-        urllib.request.urlopen(req, timeout=5)  # noqa: S310  # nosec B310 — operator-configured URL
+        urllib.request.urlopen(
+            req, timeout=5
+        )  # noqa: S310  # nosec B310 — operator-configured URL
     except Exception as e:  # noqa: BLE001 — notification is best-effort
         logger.debug("notify skipped: %s", e)
 
