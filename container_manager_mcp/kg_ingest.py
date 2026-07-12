@@ -20,13 +20,21 @@ installed agent_utilities, it falls back to a self-contained txn writer. Node id
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
+from urllib.parse import urlsplit
 
 logger = logging.getLogger("container_manager_mcp.kg")
 
 _SOURCE = "container-manager-mcp"
 _DOMAIN = "container"
 _DEFAULT_GRAPH = "__commons__"
+
+# OCI image-source labels, in priority order: the standard
+# ``org.opencontainers.image.source`` annotation, falling back to the legacy
+# ``org.label-schema.vcs-url`` convention some older images still carry.
+_SOURCE_LABEL = "org.opencontainers.image.source"
+_VCS_URL_LABEL = "org.label-schema.vcs-url"
 
 
 def _client() -> tuple[Any | None, str]:
@@ -189,14 +197,64 @@ def ingest_containers(
     return ingest_entities(entities, relationships, client=client, graph=graph)
 
 
+def _normalize_source_url(url: Any) -> tuple[str, str] | None:
+    """Normalize an OCI source-label URL -> ``(clean_url, repo_node_id)``, or ``None``.
+
+    Mirrors ``portainer_agent.kg_ingest._normalize_repo_url``'s ``git:repo:<host>/<path>``
+    id convention (so a deployed ``:Stack``'s ``:Repository`` and this image's
+    ``:Repository`` land on the same node id), plus the case/``www.``-insensitive
+    normalization ``agent_utilities.observability.repo_crosswalk.normalize_clone_url``
+    uses (so the same repo always yields the same id regardless of label casing) —
+    the crosswalk then ``owl:sameAs``-unifies this URL-keyed node with the numeric-id
+    node the code ingestors (github-agent/gitlab-api) create. Handles HTTP(S) and
+    SCP-style (``git@host:owner/name.git``) remotes; strips embedded credentials, a
+    trailing ``.git``/slash and a leading ``www.``. Returns ``None`` for an unusable
+    value.
+    """
+    if not url or not isinstance(url, str):
+        return None
+    raw = url.strip()
+    if not raw:
+        return None
+    if "://" in raw:
+        parts = urlsplit(raw)
+        host = (parts.hostname or "").lower()
+        path = parts.path or ""
+    elif "@" in raw and ":" in raw:
+        # SCP-style remote, e.g. git@github.com:owner/name.git
+        _, _, rest = raw.partition("@")
+        host, _, path = rest.partition(":")
+        host = host.lower()
+    else:
+        return None
+    host = re.sub(r"^www\.", "", host)
+    path = path.strip("/")
+    if path.endswith(".git"):
+        path = path[: -len(".git")]
+    path = path.lower()
+    if not host or not path:
+        return None
+    return f"https://{host}/{path}", f"git:repo:{host}/{path}"
+
+
 def ingest_images(
     images: list[dict[str, Any]],
     *,
     client: Any | None = None,
     graph: str | None = None,
 ) -> dict[str, int] | None:
-    """Map image records (``ImageInfo``) → ``:ContainerImage`` nodes."""
+    """Map image records (``ImageInfo``) → ``:ContainerImage`` nodes.
+
+    When an image record carries a ``labels`` dict with the OCI source label
+    (``org.opencontainers.image.source``, falling back to the legacy
+    ``org.label-schema.vcs-url``), also emits a ``:Repository`` node and a
+    ``:builtFrom`` edge (``:ContainerImage -[:builtFrom]-> :Repository``) — the
+    image->source-repo provenance hop (gap #1,
+    ``reports/autonomous-sdlc-loop-design.md``). No label -> no edge (graceful).
+    """
     entities: list[dict[str, Any]] = []
+    relationships: list[dict[str, Any]] = []
+    seen_repos: set[str] = set()
     for rec in images or []:
         iid = _s(rec.get("id"))
         repo = _s(rec.get("repository"))
@@ -204,9 +262,10 @@ def ingest_images(
         ext = iid or (f"{repo}:{tag}" if repo else None)
         if not ext:
             continue
+        img_id = f"container:image:{ext}"
         entities.append(
             {
-                "id": f"container:image:{ext}",
+                "id": img_id,
                 "type": "ContainerImage",
                 "name": f"{repo}:{tag}" if repo and tag else (repo or ext),
                 "imageRepository": repo,
@@ -216,7 +275,20 @@ def ingest_images(
                 "externalToolId": ext,
             }
         )
-    return ingest_entities(entities, None, client=client, graph=graph)
+        labels = rec.get("labels") or {}
+        source_url = _s(labels.get(_SOURCE_LABEL)) or _s(labels.get(_VCS_URL_LABEL))
+        normalized = _normalize_source_url(source_url) if source_url else None
+        if normalized:
+            clean_url, repo_node = normalized
+            if repo_node not in seen_repos:
+                seen_repos.add(repo_node)
+                entities.append(
+                    {"id": repo_node, "type": "Repository", "url": clean_url}
+                )
+            relationships.append(
+                {"source": img_id, "target": repo_node, "type": "builtFrom"}
+            )
+    return ingest_entities(entities, relationships or None, client=client, graph=graph)
 
 
 def ingest_volumes(

@@ -133,6 +133,81 @@ def test_ingest_images_maps_repo_tag_size():
     assert img["imageSize"] == "142MB"
 
 
+def test_ingest_images_with_source_label_emits_repository_and_builtfrom():
+    c = _FakeClient()
+    res = ingest_images(
+        [
+            {
+                "id": "f00dcafe",
+                "repository": "nginx",
+                "tag": "latest",
+                "size": "142MB",
+                "labels": {
+                    "org.opencontainers.image.source": "https://github.com/Org/Repo.git"
+                },
+            }
+        ],
+        client=c,
+    )
+    assert res == {"nodes": 2, "edges": 1}
+    repo = c.txn.nodes["git:repo:github.com/org/repo"]
+    assert repo["type"] == "Repository"
+    assert repo["url"] == "https://github.com/org/repo"
+    assert (
+        "container:image:f00dcafe",
+        "git:repo:github.com/org/repo",
+        {"type": "builtFrom"},
+    ) in c.edges.edges
+
+
+def test_ingest_images_with_vcs_url_label_fallback():
+    c = _FakeClient()
+    res = ingest_images(
+        [
+            {
+                "id": "cafef00d",
+                "repository": "myapp",
+                "tag": "1.0",
+                "labels": {"org.label-schema.vcs-url": "git@gitlab.com:team/myapp.git"},
+            }
+        ],
+        client=c,
+    )
+    assert res == {"nodes": 2, "edges": 1}
+    assert "git:repo:gitlab.com/team/myapp" in c.txn.nodes
+    assert (
+        "container:image:cafef00d",
+        "git:repo:gitlab.com/team/myapp",
+        {"type": "builtFrom"},
+    ) in c.edges.edges
+
+
+def test_ingest_images_without_source_label_emits_no_builtfrom_edge():
+    c = _FakeClient()
+    res = ingest_images(
+        [
+            {
+                "id": "deadbeef",
+                "repository": "redis",
+                "tag": "7",
+                "labels": {"maintainer": "nobody"},
+            }
+        ],
+        client=c,
+    )
+    assert res == {"nodes": 1, "edges": 0}
+    assert c.edges.edges == []
+
+
+def test_ingest_images_no_labels_at_all_is_graceful_noop_edge():
+    c = _FakeClient()
+    res = ingest_images(
+        [{"id": "abc12345", "repository": "alpine", "tag": "latest"}], client=c
+    )
+    assert res == {"nodes": 1, "edges": 0}
+    assert c.edges.edges == []
+
+
 def test_ingest_volumes_and_networks():
     c = _FakeClient()
     assert ingest_volumes(

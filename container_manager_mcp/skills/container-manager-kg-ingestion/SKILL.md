@@ -5,8 +5,8 @@ description: >-
   Snapshot a host's Docker/Podman/Swarm inventory into the epistemic-graph
   knowledge graph as typed OWL nodes via the container-manager-mcp MCP server —
   containers, images, volumes, networks, swarm services and nodes, with their
-  :usesImage / :runsOn links. Use when the agent must record live container
-  state into the KG for cross-source reasoning, drift detection, or provenance.
+  :usesImage / :runsOn / :builtFrom links. Use when the agent must record live
+  container state into the KG for cross-source reasoning, drift detection, or provenance.
   Do NOT use for operating containers (use container-manager-lifecycle) or
   managing swarm services (use container-manager-swarm).
 license: MIT
@@ -80,7 +80,7 @@ the hub under `http://knuckles.team/kg/container` (reusing the shared `:Containe
 | Modality | Node type | Id scheme | Links |
 |----------|-----------|-----------|-------|
 | containers | `:Container` | `container:container:<id>` | `:usesImage` → `:ContainerImage`, `:runsOn` → `:Host` |
-| images | `:ContainerImage` | `container:image:<id-or-ref>` | — |
+| images | `:ContainerImage` | `container:image:<id-or-ref>` | `:builtFrom` → `:Repository` (`git:repo:<host>/<path>`), only when the image carries the `org.opencontainers.image.source` OCI label (`org.label-schema.vcs-url` fallback); no label → no edge |
 | volumes | `:ContainerVolume` | `container:volume:<name>` | — |
 | networks | `:ContainerNetwork` | `container:network:<id>` | — |
 | services | `:SwarmService` | `container:service:<id>` | `:usesImage` → `:ContainerImage` |

@@ -22,7 +22,7 @@ from container_manager_mcp.models import (
     VolumeInfo,
 )
 
-__version__ = "2.2.0"
+__version__ = "2.3.0"
 
 try:
     from docker.errors import DockerException
@@ -103,6 +103,18 @@ class ContainerManagerBase(ABC):
                 f"Error in {action}: {type(error).__name__}: {str(error)}"
             )
             self.logger.error(f"Traceback: {traceback.format_exc()}")
+
+    def _extract_image_labels(self, attrs: dict) -> dict[str, str] | None:
+        """Return an image's OCI labels from either list-summary or inspect ``attrs``.
+
+        The Docker/Podman ``/images/json`` list summary carries ``Labels`` at the
+        top level; the ``/images/{id}/json`` inspect shape nests them under
+        ``Config.Labels``. Checked in that order so either source works.
+        """
+        labels = attrs.get("Labels")
+        if not labels:
+            labels = (attrs.get("Config") or {}).get("Labels")
+        return labels or None
 
     def _format_size(self, size_bytes: int | float) -> str:
         """Helper to format bytes to human-readable (e.g., 1.23GB)."""
@@ -531,7 +543,7 @@ class DockerManager(ContainerManagerBase):
                 size_bytes = attrs.get("Size", 0)
                 size_str = self._format_size(size_bytes) if size_bytes else "0B"
 
-                simplified = {
+                simplified: dict[str, Any] = {
                     "repository": repository,
                     "tag": tag,
                     "id": (
@@ -541,6 +553,7 @@ class DockerManager(ContainerManagerBase):
                     ),
                     "created": created_str,
                     "size": size_str,
+                    "labels": self._extract_image_labels(attrs),
                 }
                 result.append(ImageInfo(**simplified))
 
@@ -2165,7 +2178,7 @@ class PodmanManager(ContainerManagerBase):
                 created_str = self._parse_timestamp(created)
                 size_bytes = attrs.get("Size", 0)
                 size_str = self._format_size(size_bytes) if size_bytes else "0B"
-                simplified = {
+                simplified: dict[str, Any] = {
                     "repository": repository,
                     "tag": tag,
                     "id": (
@@ -2175,6 +2188,7 @@ class PodmanManager(ContainerManagerBase):
                     ),
                     "created": created_str,
                     "size": size_str,
+                    "labels": self._extract_image_labels(attrs),
                 }
                 result.append(ImageInfo(**simplified))
             self.log_action("list_images", params, [i.model_dump() for i in result])

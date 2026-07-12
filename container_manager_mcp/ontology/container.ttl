@@ -20,6 +20,9 @@
 # and the links :runsOn (Container->Host), :belongsToStack (Container->ContainerStack),
 # and the field :runtime. This leg only adds the volume / network / swarm resources and
 # the container-scoped links/fields the connector materializes.
+#
+# REUSE (defined in portainer_agent's portainer.ttl — NOT redefined here):
+#   :Repository — the git source repository an artifact was built/deployed from.
 
 # --- net-new classes (owl:Class) ---
 
@@ -81,6 +84,12 @@
     rdfs:label "uses image" ;
     rdfs:comment "Links a Container, SwarmService, Pod or Deployment to the ContainerImage it was created from." ;
     rdfs:range :ContainerImage .
+
+:builtFrom a owl:ObjectProperty ;
+    rdfs:label "built from" ;
+    rdfs:comment "Links a ContainerImage to the source-code Repository it was built from, resolved from the image's OCI org.opencontainers.image.source label (org.label-schema.vcs-url fallback) via cm_ingest_inventory. The gap-#1 predicate closing the service<->repo<->image provenance chain (reports/autonomous-sdlc-loop-design.md); agent_utilities.observability.repo_crosswalk owl:sameAs-unifies the resulting URL-keyed Repository node with the numeric-id node the code ingestors (github-agent/gitlab-api) create." ;
+    rdfs:domain :ContainerImage ;
+    rdfs:range :Repository .
 
 :mountsVolume a owl:ObjectProperty ;
     rdfs:label "mounts volume" ;
@@ -254,7 +263,8 @@
     rdfs:label "Container Manager Ontology" ;
     rdfs:comment """Container-runtime resource model for the container-manager-mcp connector —
     Docker / Podman / Swarm containers, images, volumes, networks, swarm services and nodes,
-    with their usesImage / mountsVolume / attachedToNetwork / scheduledOnNode relationships.
+    with their usesImage / mountsVolume / attachedToNetwork / scheduledOnNode / builtFrom
+    relationships (builtFrom resolves a ContainerImage's OCI source label to its Repository).
     Also covers the Kubernetes surface — :Pod / :Deployment / :StatefulSet / :DaemonSet /
     :K8sService / :Namespace / :K8sNode / :Ingress with runsInNamespace / managedByDeployment /
     scheduledOnK8sNode / exposedByIngress — materialized by the cm_k8s_* themed tools
