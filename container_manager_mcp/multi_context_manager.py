@@ -113,9 +113,7 @@ class MultiContextManager:
                     "Registered in-cluster K8S context from the pod service account"
                 )
             except Exception as e:
-                self.logger.error(
-                    f"Failed to initialize in-cluster K8S context: {e}"
-                )
+                self.logger.error(f"Failed to initialize in-cluster K8S context: {e}")
 
         # Set default K8S context
         self.default_k8s_context = os.environ.get("DEFAULT_K8S_CONTEXT")

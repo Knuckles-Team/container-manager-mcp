@@ -538,6 +538,9 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "MCP_TOOL_MODE": "condensed",
         "COMPOSETOOL": "True",
         "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
+        "CONTAINER_MANAGER_HEALTH_INGEST": "true",
+        "CONTAINER_MANAGER_HEALTH_NOTIFY_URL": "",
         "CONTAINER_MANAGER_HOST": "",
         "CONTAINER_MANAGER_KUBECONTEXT": "",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
@@ -604,6 +607,9 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "MCP_TOOL_MODE": "condensed",
         "COMPOSETOOL": "True",
         "CONTAINERTOOL": "True",
+        "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
+        "CONTAINER_MANAGER_HEALTH_INGEST": "true",
+        "CONTAINER_MANAGER_HEALTH_NOTIFY_URL": "",
         "CONTAINER_MANAGER_HOST": "",
         "CONTAINER_MANAGER_KUBECONTEXT": "",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
@@ -671,6 +677,9 @@ docker run -d \
   -e MCP_TOOL_MODE=condensed \
   -e COMPOSETOOL=True \
   -e CONTAINERTOOL=True \
+  -e CONTAINER_MANAGER_HEALTH_AGGREGATE_S=3600 \
+  -e CONTAINER_MANAGER_HEALTH_INGEST=true \
+  -e CONTAINER_MANAGER_HEALTH_NOTIFY_URL="" \
   -e CONTAINER_MANAGER_HOST="" \
   -e CONTAINER_MANAGER_KUBECONTEXT="" \
   -e CONTAINER_MANAGER_PODMAN_BASE_URL="" \
@@ -756,6 +765,9 @@ consumed from a **remote deployment**. The
 | `CONTAINER_MANAGER_KUBECONTEXT` | — | kubeconfig context name; empty = current-context |
 | `KUBECONFIG` | — | path(s) to kubeconfig file(s); empty = ~/.kube/config |
 | `KUBERNETES_SERVICE_HOST` | — | injected by the cluster when running in-pod; leave empty |
+| `CONTAINER_MANAGER_HEALTH_INGEST` | `true` | write :HealthTrend/:HealthBaseline/:HealthAnomaly nodes |
+| `CONTAINER_MANAGER_HEALTH_AGGREGATE_S` | `3600` | per-node/signal trend-buffer flush window (seconds) |
+| `CONTAINER_MANAGER_HEALTH_NOTIFY_URL` | — | best-effort webhook for derivation-pass anomaly alerts |
 | `INVENTORYTOOL` | `True` |  |
 | `INFOTOOL` | `True` |  |
 | `IMAGETOOL` | `True` |  |
@@ -809,7 +821,7 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_50 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_53 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
