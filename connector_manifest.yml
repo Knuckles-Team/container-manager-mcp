@@ -407,9 +407,11 @@ sync:
   updated_field: created
   pagination: null
   doc_type: container
+  tool_schema_sha256: a977a24486bb17afc52241d14551d486a382b1d18dd8ae68c8079eb14f5bbeeb
   raw:
     server: container-manager-mcp
     tool: cm_container_operations
+    params_style: args
     action: list_containers
     params:
       all_containers: true
@@ -430,9 +432,11 @@ sync:
   updated_field: created
   pagination: null
   doc_type: container-image
+  tool_schema_sha256: 42724d6685092e1bd1ac36dc8b460182fac87d70a8e171608efb8ca490f925b0
   raw:
     server: container-manager-mcp
     tool: cm_image_operations
+    params_style: args
     action: list_images
     records_path: ''
     id_field: id
@@ -451,9 +455,11 @@ sync:
   updated_field: created
   pagination: null
   doc_type: k8s-deployment
+  tool_schema_sha256: 1869d52a5bfbecc70965e51cfcd9c896b161d714d9d2b76bfb3f57077caf95ef
   raw:
     server: container-manager-mcp
     tool: cm_k8s_workloads
+    params_style: args
     action: list_services
     records_path: ''
     id_field: id
@@ -472,9 +478,11 @@ sync:
   updated_field: created
   pagination: null
   doc_type: k8s-namespace
+  tool_schema_sha256: 7e58e8c86ac219c4d31f3e89af16360bf5f92075fec0735f2df8626ccb070a3b
   raw:
     server: container-manager-mcp
     tool: cm_k8s_config
+    params_style: args
     action: list_namespaces
     records_path: ''
     id_field: name
@@ -493,9 +501,11 @@ sync:
   updated_field: created
   pagination: null
   doc_type: k8s-pod
+  tool_schema_sha256: 1869d52a5bfbecc70965e51cfcd9c896b161d714d9d2b76bfb3f57077caf95ef
   raw:
     server: container-manager-mcp
     tool: cm_k8s_workloads
+    params_style: args
     action: list_pods
     records_path: ''
     id_field: name
@@ -514,9 +524,11 @@ sync:
   updated_field: created
   pagination: null
   doc_type: k8s-service
+  tool_schema_sha256: 5f80b42a40bf2da0def9c9a8749778fb65e9292dab4d319ae3244c4f59c61bf9
   raw:
     server: container-manager-mcp
     tool: cm_k8s_networking
+    params_style: args
     action: list_k8s_services
     records_path: ''
     id_field: name
@@ -526,17 +538,20 @@ sync:
     doc_type: k8s-service
 provenance:
   generated_by: scripts/generate_connector_manifests.py
-  generated_at: '2026-07-09T00:00:00Z'
+  generated_at: '2026-07-18T15:00:00Z'
   source_artifacts:
   - a2a.json
   - container_manager_mcp/connectors/mcp_source_presets.json
+  - container_manager_mcp/connectors/tool_schema_fingerprints.json
   - container_manager_mcp/ontology/container.ttl
   integrity:
     algorithm: urdna2015-sha256
     hash: 97169902bf7ed616fa48999907841f6a9a38b68d8443513613fd700dcfec4da1
     triple_count: 114
   signer: ontology-manifest-generator
-  signature: b99f027e3dcf8ac34accee1e3c85acc13f752593da36f76f8d0e02a263eaa35b
+  signature_algorithm: ed25519
+  signing_public_key: q0Cp7bmQMqJhbofGKKw8xXC6KbFzukBDDke0UYVi8y4
+  signature: 004sYGCape6oJGeKnGKkQCFbNBLiUPip_XjEhtdAO0pB28bEAs1iloucO1fVzohedrpBq7r4CsbZS9Ohtp_VCg
 policy:
   pii_fields: {}
   tenant_boundary: null
@@ -545,6 +560,8 @@ review_todos:
 - "policy.rls / policy.tenant_boundary are unset \u2014 no row-level-security predicate has been reviewed\
   \ for this connector."
 - "relation 'attachedToNetwork' has no declared rdfs:domain resolving to a known resource in this connector's\
+  \ ontology \u2014 not attached to any resource; verify its true domain manually."
+- "relation 'builtFrom' has no declared rdfs:domain resolving to a known resource in this connector's\
   \ ontology \u2014 not attached to any resource; verify its true domain manually."
 - "relation 'hostsResource' has no declared rdfs:domain resolving to a known resource in this connector's\
   \ ontology \u2014 not attached to any resource; verify its true domain manually."

@@ -31,7 +31,7 @@ class ComposeMixin:
                 return apply.stdout
         except Exception as e:
             self.log_action("compose_up", params, error=e)
-            raise RuntimeError(f"Failed to apply manifests: {str(e)}") from e
+            raise RuntimeError("Failed to apply manifests") from e
 
     def compose_down(self, compose_file: str) -> str:
         params = {"compose_file": compose_file}
@@ -56,7 +56,7 @@ class ComposeMixin:
                 return delete.stdout
         except Exception as e:
             self.log_action("compose_down", params, error=e)
-            raise RuntimeError(f"Failed to delete manifests: {str(e)}") from e
+            raise RuntimeError("Failed to delete manifests") from e
 
     def compose_ps(self, compose_file: str) -> str:
         params = {"compose_file": compose_file}
@@ -72,7 +72,7 @@ class ComposeMixin:
             return result.stdout
         except Exception as e:
             self.log_action("compose_ps", params, error=e)
-            raise RuntimeError(f"Failed to list resources: {str(e)}") from e
+            raise RuntimeError("Failed to list resources") from e
 
     def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         params = {"compose_file": compose_file, "service": service}
@@ -86,4 +86,4 @@ class ComposeMixin:
             return result.stdout
         except Exception as e:
             self.log_action("compose_logs", params, error=e)
-            raise RuntimeError(f"Failed to get logs: {str(e)}") from e
+            raise RuntimeError("Failed to get logs") from e

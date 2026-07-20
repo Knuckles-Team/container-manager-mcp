@@ -1,0 +1,107 @@
+# Container Inventory → Knowledge Graph
+
+Push a host's live container inventory into the ONE epistemic-graph knowledge graph as
+**typed OWL nodes**, natively from the **container-manager-mcp** server. The authoritative
+native-ingest transaction is required; engine failures are returned as tool failures.
+
+## When to use
+- Record the current containers/images/volumes/networks (and swarm services/nodes) of a
+  host into the KG for later querying, drift detection, or cross-source joins.
+- Record a Kubernetes cluster's live pods/deployments/namespaces/native services into
+  the KG (when `CONTAINER_MANAGER_TYPE=kubernetes`).
+- Refresh the KG snapshot after a deploy or before an audit.
+
+## When NOT to use
+- Operating containers (start/stop/logs/exec) → `container-manager-lifecycle`.
+- Managing swarm services/nodes → `container-manager-swarm`.
+- Generic KG queries → the graph-os `graph_query` / `graph_search` surface.
+
+## Prerequisites & environment
+Connect via the `mcp-client` skill against the **`container-manager-mcp`** MCP server.
+A reachable Docker/Podman engine is required; a reachable epistemic-graph engine is
+required; an unavailable engine is reported as a native-ingest failure.
+
+| Variable | Required | Notes |
+|----------|----------|-------|
+| `CONTAINER_MANAGER_TYPE` | optional | `docker` / `podman`; auto-detected |
+| `CONTAINER_MANAGER_HOST` | optional | Default host alias (else LOCAL socket) |
+
+The typed nodes match `container_manager_mcp.ontology` (`container.ttl`), federated into
+the hub under `[configured-endpoint]` (reusing the shared `:Container`,
+`:ContainerImage`, `:ContainerStack`, `:Host` classes).
+
+## Tools & actions
+| Tool | Modalities |
+|------|------------|
+| `cm_ingest_inventory` | `all`, `containers`, `images`, `volumes`, `networks`, `services`, `nodes`, `pods`, `deployments`, `namespaces`, `k8s_services` |
+
+> **Kubernetes modalities (`pods`, `deployments`, `namespaces`, `k8s_services`):**
+> live. `cm_ingest_inventory` snapshots a Kubernetes cluster into `:Pod` /
+> `:Deployment` / `:Namespace` / `:K8sService` typed nodes (mirroring the
+> containers/images pattern) alongside the Docker/Podman/Swarm modalities. `all`
+> sweeps them automatically **when the active manager is a Kubernetes manager**
+> (`manager_type=kubernetes`); on a Docker/Swarm manager `all` stays Docker/Swarm-scoped.
+> Call a single k8s modality directly, e.g.
+> `cm_ingest_inventory action=... modality=pods manager_type=kubernetes`.
+
+### Kubernetes modalities
+| Modality | Node type | Source list | Links |
+|----------|-----------|-------------|-------|
+| `pods` | `:Pod` | `cm_k8s_workloads action=list_pods` | `:runsOn` → `:Host`/Node, `:usesImage` → `:ContainerImage` |
+| `deployments` | `:Deployment` | `cm_k8s_workloads` (StatefulSet/DaemonSet/ReplicaSet listers) | `:scheduledOnNode` fan-out via owned Pods |
+| `namespaces` | `:Namespace` | `cm_k8s_config action=list_namespaces` | scoping context for the above |
+| `k8s_services` | `:K8sService` | `cm_k8s_networking action=list_k8s_services` | `:selects` → `:Pod` via selector |
+
+### Key parameters
+- `modality` — which inventory to sweep (`all` covers everything; swarm modalities are
+  skipped gracefully off a manager).
+- `host` — remote alias (omit for LOCAL); swarm modalities need a **manager**.
+- `all_containers` — include stopped containers (default `true`).
+
+### Node model
+| Modality | Node type | Id scheme | Links |
+|----------|-----------|-----------|-------|
+| containers | `:Container` | `container:container:<id>` | `:usesImage` → `:ContainerImage`, `:runsOn` → `:Host` |
+| images | `:ContainerImage` | `container:image:<id-or-ref>` | `:builtFrom` → `:Repository` (`git:repo:<host>/<path>`), only when the image carries the `org.opencontainers.image.source` OCI label (`org.label-schema.vcs-url` fallback); no label → no edge |
+| volumes | `:ContainerVolume` | `container:volume:<name>` | — |
+| networks | `:ContainerNetwork` | `container:network:<id>` | — |
+| services | `:SwarmService` | `container:service:<id>` | `:usesImage` → `:ContainerImage` |
+| nodes | `:SwarmNode` | `container:node:<id>` | — |
+
+## Recipes
+Full local snapshot:
+```
+cm_ingest_inventory modality=all
+```
+Only running-vs-all containers on a remote host:
+```
+cm_ingest_inventory modality=containers host=<alias> all_containers=true
+```
+Swarm services + nodes from a manager:
+```
+cm_ingest_inventory modality=services host=<manager-alias>
+cm_ingest_inventory modality=nodes host=<manager-alias>
+```
+Kubernetes snapshot:
+```
+cm_ingest_inventory modality=pods
+cm_ingest_inventory modality=namespaces
+cm_ingest_inventory modality=k8s_services
+```
+
+## Gotchas
+- Returns `{"modalities": {<name>: {"listed": n, "ingested": {"nodes": n, "edges": n}}}}`.
+  An unavailable or conflicting KG transaction fails explicitly.
+- Swarm modalities off a non-manager host surface a per-modality `error` but do not abort
+  the rest of the sweep.
+- Node ids are content-addressed from the engine (`container:<class>:<extId>`), so re-runs
+  MERGE (update-in-place) rather than duplicate.
+- This is a read+ingest tool (idempotent); it never mutates the containers themselves.
+
+## Related
+- **`container-manager-lifecycle`** / **`container-manager-swarm`** /
+  **`container-manager-kubernetes-operations`** — produce the inventory this skill
+  snapshots (or, for Kubernetes today, the live reads to hand-map until the
+  `pods`/`deployments`/`namespaces`/`k8s_services` modalities are wired).
+- The underlying mapper lives in `container_manager_mcp.kg_ingest`
+  (CONCEPT:AU-KG.ingest.enterprise-source-extractor).

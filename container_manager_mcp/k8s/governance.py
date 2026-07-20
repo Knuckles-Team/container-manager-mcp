@@ -28,7 +28,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_resource_quotas", params, error=e)
-            raise RuntimeError(f"Failed to list resource quotas: {str(e)}") from e
+            raise RuntimeError("Failed to list resource quotas") from e
 
     def list_limit_ranges(self, namespace: str | None = None) -> list[dict]:
         """List LimitRanges in a namespace."""
@@ -49,7 +49,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_limit_ranges", params, error=e)
-            raise RuntimeError(f"Failed to list limit ranges: {str(e)}") from e
+            raise RuntimeError("Failed to list limit ranges") from e
 
     def list_priority_classes(self) -> list[dict]:
         """List PriorityClasses."""
@@ -77,7 +77,7 @@ class GovernanceMixin:
             raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("list_priority_classes", params, error=e)
-            raise RuntimeError(f"Failed to list priority classes: {str(e)}") from e
+            raise RuntimeError("Failed to list priority classes") from e
 
     def list_pod_disruption_budgets(self, namespace: str | None = None) -> list[dict]:
         """List PodDisruptionBudgets in a namespace."""
@@ -108,7 +108,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("list_pod_disruption_budgets", params, error=e)
             raise RuntimeError(
-                f"Failed to list pod disruption budgets: {str(e)}"
+                f"Failed to list pod disruption budgets: {type(e).__name__}"
             ) from e
 
     def list_horizontal_pod_autoscalers(
@@ -146,7 +146,7 @@ class GovernanceMixin:
             raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("list_horizontal_pod_autoscalers", params, error=e)
-            raise RuntimeError(f"Failed to list HPAs: {str(e)}") from e
+            raise RuntimeError("Failed to list HPAs") from e
 
     def describe_resource_quota(self, name: str, namespace: str) -> dict:
         """Describe a ResourceQuota."""
@@ -166,7 +166,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("describe_resource_quota", params, error=e)
-            raise RuntimeError(f"Failed to describe ResourceQuota: {str(e)}") from e
+            raise RuntimeError("Failed to describe ResourceQuota") from e
 
     def create_resource_quota(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a ResourceQuota."""
@@ -187,7 +187,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_resource_quota", params, error=e)
-            raise RuntimeError(f"Failed to create ResourceQuota: {str(e)}") from e
+            raise RuntimeError("Failed to create ResourceQuota") from e
 
     def update_resource_quota(self, name: str, namespace: str, spec: dict) -> dict:
         """Update a ResourceQuota."""
@@ -209,7 +209,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("update_resource_quota", params, error=e)
-            raise RuntimeError(f"Failed to update ResourceQuota: {str(e)}") from e
+            raise RuntimeError("Failed to update ResourceQuota") from e
 
     def delete_resource_quota(self, name: str, namespace: str) -> dict:
         """Delete a ResourceQuota."""
@@ -221,7 +221,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_resource_quota", params, error=e)
-            raise RuntimeError(f"Failed to delete ResourceQuota: {str(e)}") from e
+            raise RuntimeError("Failed to delete ResourceQuota") from e
 
     def describe_limit_range(self, name: str, namespace: str) -> dict:
         """Describe a LimitRange."""
@@ -240,7 +240,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("describe_limit_range", params, error=e)
-            raise RuntimeError(f"Failed to describe LimitRange: {str(e)}") from e
+            raise RuntimeError("Failed to describe LimitRange") from e
 
     def create_limit_range(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a LimitRange."""
@@ -261,7 +261,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_limit_range", params, error=e)
-            raise RuntimeError(f"Failed to create LimitRange: {str(e)}") from e
+            raise RuntimeError("Failed to create LimitRange") from e
 
     def delete_limit_range(self, name: str, namespace: str) -> dict:
         """Delete a LimitRange."""
@@ -273,7 +273,7 @@ class GovernanceMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_limit_range", params, error=e)
-            raise RuntimeError(f"Failed to delete LimitRange: {str(e)}") from e
+            raise RuntimeError("Failed to delete LimitRange") from e
 
     def describe_priority_class(self, name: str) -> dict:
         """Describe a PriorityClass."""
@@ -297,7 +297,7 @@ class GovernanceMixin:
             raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_priority_class", params, error=e)
-            raise RuntimeError(f"Failed to describe PriorityClass: {str(e)}") from e
+            raise RuntimeError("Failed to describe PriorityClass") from e
 
     def create_priority_class(self, name: str, spec: dict) -> dict:
         """Create a PriorityClass."""
@@ -323,7 +323,7 @@ class GovernanceMixin:
             raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("create_priority_class", params, error=e)
-            raise RuntimeError(f"Failed to create PriorityClass: {str(e)}") from e
+            raise RuntimeError("Failed to create PriorityClass") from e
 
     def delete_priority_class(self, name: str) -> dict:
         """Delete a PriorityClass."""
@@ -338,7 +338,7 @@ class GovernanceMixin:
             raise RuntimeError("Scheduling client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_priority_class", params, error=e)
-            raise RuntimeError(f"Failed to delete PriorityClass: {str(e)}") from e
+            raise RuntimeError("Failed to delete PriorityClass") from e
 
     def describe_pod_disruption_budget(self, name: str, namespace: str) -> dict:
         """Describe a PodDisruptionBudget."""
@@ -362,7 +362,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("describe_pod_disruption_budget", params, error=e)
             raise RuntimeError(
-                f"Failed to describe PodDisruptionBudget: {str(e)}"
+                f"Failed to describe PodDisruptionBudget: {type(e).__name__}"
             ) from e
 
     def create_pod_disruption_budget(
@@ -389,7 +389,7 @@ class GovernanceMixin:
             raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("create_pod_disruption_budget", params, error=e)
-            raise RuntimeError(f"Failed to create PodDisruptionBudget: {str(e)}") from e
+            raise RuntimeError("Failed to create PodDisruptionBudget") from e
 
     def delete_pod_disruption_budget(self, name: str, namespace: str) -> dict:
         """Delete a PodDisruptionBudget."""
@@ -404,7 +404,7 @@ class GovernanceMixin:
             raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_pod_disruption_budget", params, error=e)
-            raise RuntimeError(f"Failed to delete PodDisruptionBudget: {str(e)}") from e
+            raise RuntimeError("Failed to delete PodDisruptionBudget") from e
 
     def describe_horizontal_pod_autoscaler(self, name: str, namespace: str) -> dict:
         """Describe a HorizontalPodAutoscaler."""
@@ -430,7 +430,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("describe_horizontal_pod_autoscaler", params, error=e)
             raise RuntimeError(
-                f"Failed to describe HorizontalPodAutoscaler: {str(e)}"
+                f"Failed to describe HorizontalPodAutoscaler: {type(e).__name__}"
             ) from e
 
     def create_horizontal_pod_autoscaler(
@@ -460,7 +460,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("create_horizontal_pod_autoscaler", params, error=e)
             raise RuntimeError(
-                f"Failed to create HorizontalPodAutoscaler: {str(e)}"
+                f"Failed to create HorizontalPodAutoscaler: {type(e).__name__}"
             ) from e
 
     def update_horizontal_pod_autoscaler(
@@ -491,7 +491,7 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("update_horizontal_pod_autoscaler", params, error=e)
             raise RuntimeError(
-                f"Failed to update HorizontalPodAutoscaler: {str(e)}"
+                f"Failed to update HorizontalPodAutoscaler: {type(e).__name__}"
             ) from e
 
     def delete_horizontal_pod_autoscaler(self, name: str, namespace: str) -> dict:
@@ -508,5 +508,5 @@ class GovernanceMixin:
         except _km.ApiException as e:
             self.log_action("delete_horizontal_pod_autoscaler", params, error=e)
             raise RuntimeError(
-                f"Failed to delete HorizontalPodAutoscaler: {str(e)}"
+                f"Failed to delete HorizontalPodAutoscaler: {type(e).__name__}"
             ) from e

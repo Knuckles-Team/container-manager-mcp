@@ -38,6 +38,7 @@ class ImageInfo(BaseDictModel):
     tag: str
     created: str
     size: str
+    labels: dict[str, str] | None = None
 
 
 class ContainerInfo(BaseDictModel):

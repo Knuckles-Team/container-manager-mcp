@@ -35,7 +35,7 @@ class NetworkingMixin:
             return []
         except _km.ApiException as e:
             self.log_action("list_ingress", params, error=e)
-            raise RuntimeError(f"Failed to list ingress: {str(e)}") from e
+            raise RuntimeError("Failed to list ingress") from e
 
     def create_ingress(
         self, name: str, namespace: str | None = None, spec: dict | None = None
@@ -59,7 +59,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking API not available") from None
         except _km.ApiException as e:
             self.log_action("create_ingress", params, error=e)
-            raise RuntimeError(f"Failed to create ingress: {str(e)}") from e
+            raise RuntimeError("Failed to create ingress") from e
 
     def delete_ingress(self, name: str, namespace: str | None = None) -> dict:
         """Delete an Ingress resource."""
@@ -75,7 +75,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking API not available") from None
         except _km.ApiException as e:
             self.log_action("delete_ingress", params, error=e)
-            raise RuntimeError(f"Failed to delete ingress: {str(e)}") from e
+            raise RuntimeError("Failed to delete ingress") from e
 
     def list_networkpolicies(self, namespace: str | None = None) -> list[dict]:
         """List NetworkPolicies in a namespace."""
@@ -106,7 +106,7 @@ class NetworkingMixin:
             return []
         except _km.ApiException as e:
             self.log_action("list_networkpolicies", params, error=e)
-            raise RuntimeError(f"Failed to list networkpolicies: {str(e)}") from e
+            raise RuntimeError("Failed to list networkpolicies") from e
 
     def create_networkpolicy(
         self, name: str, namespace: str | None = None, spec: dict | None = None
@@ -130,7 +130,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking API not available") from None
         except _km.ApiException as e:
             self.log_action("create_networkpolicy", params, error=e)
-            raise RuntimeError(f"Failed to create networkpolicy: {str(e)}") from e
+            raise RuntimeError("Failed to create networkpolicy") from e
 
     def delete_networkpolicy(self, name: str, namespace: str | None = None) -> dict:
         """Delete a NetworkPolicy."""
@@ -146,7 +146,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking API not available") from None
         except _km.ApiException as e:
             self.log_action("delete_networkpolicy", params, error=e)
-            raise RuntimeError(f"Failed to delete networkpolicy: {str(e)}") from e
+            raise RuntimeError("Failed to delete networkpolicy") from e
 
     def list_endpoints(self, namespace: str | None = None) -> list[dict]:
         """List Endpoints in a namespace."""
@@ -167,7 +167,7 @@ class NetworkingMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_endpoints", params, error=e)
-            raise RuntimeError(f"Failed to list endpoints: {str(e)}") from e
+            raise RuntimeError("Failed to list endpoints") from e
 
     def list_endpointslices(self, namespace: str | None = None) -> list[dict]:
         """List EndpointSlices in a namespace."""
@@ -192,7 +192,7 @@ class NetworkingMixin:
             raise RuntimeError("Discovery client not available") from None
         except _km.ApiException as e:
             self.log_action("list_endpointslices", params, error=e)
-            raise RuntimeError(f"Failed to list endpointslices: {str(e)}") from e
+            raise RuntimeError("Failed to list endpointslices") from e
 
     def _native_service_summary(self, svc) -> dict:
         spec = svc.spec
@@ -232,7 +232,7 @@ class NetworkingMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_native_services", params, error=e)
-            raise RuntimeError(f"Failed to list native services: {str(e)}") from e
+            raise RuntimeError("Failed to list native services") from e
 
     def get_native_service(self, name: str, namespace: str | None = None) -> dict:
         """Get one real Kubernetes (core/v1) Service."""
@@ -245,7 +245,7 @@ class NetworkingMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_native_service", params, error=e)
-            raise RuntimeError(f"Failed to get native service: {str(e)}") from e
+            raise RuntimeError("Failed to get native service") from e
 
     def create_native_service(
         self,
@@ -298,7 +298,7 @@ class NetworkingMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_native_service", params, error=e)
-            raise RuntimeError(f"Failed to create native service: {str(e)}") from e
+            raise RuntimeError("Failed to create native service") from e
 
     def delete_native_service(self, name: str, namespace: str | None = None) -> dict:
         """Delete a real Kubernetes (core/v1) Service."""
@@ -311,7 +311,7 @@ class NetworkingMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_native_service", params, error=e)
-            raise RuntimeError(f"Failed to delete native service: {str(e)}") from e
+            raise RuntimeError("Failed to delete native service") from e
 
     def list_ingress_classes(self) -> list[dict]:
         """List IngressClasses."""
@@ -334,7 +334,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking client not available") from None
         except _km.ApiException as e:
             self.log_action("list_ingress_classes", params, error=e)
-            raise RuntimeError(f"Failed to list IngressClasses: {str(e)}") from e
+            raise RuntimeError("Failed to list IngressClasses") from e
 
     def describe_ingress_class(self, name: str) -> dict:
         """Describe an IngressClass."""
@@ -355,7 +355,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_ingress_class", params, error=e)
-            raise RuntimeError(f"Failed to describe IngressClass: {str(e)}") from e
+            raise RuntimeError("Failed to describe IngressClass") from e
 
     def create_ingress_class(self, name: str, spec: dict) -> dict:
         """Create an IngressClass."""
@@ -378,7 +378,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking client not available") from None
         except _km.ApiException as e:
             self.log_action("create_ingress_class", params, error=e)
-            raise RuntimeError(f"Failed to create IngressClass: {str(e)}") from e
+            raise RuntimeError("Failed to create IngressClass") from e
 
     def set_default_ingress_class(self, name: str) -> dict:
         """Set the default IngressClass."""
@@ -415,7 +415,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking client not available") from None
         except _km.ApiException as e:
             self.log_action("set_default_ingress_class", params, error=e)
-            raise RuntimeError(f"Failed to set default IngressClass: {str(e)}") from e
+            raise RuntimeError("Failed to set default IngressClass") from e
 
     def create_network_policy_with_cidr(
         self, name: str, namespace: str, spec: dict
@@ -444,7 +444,7 @@ class NetworkingMixin:
         except _km.ApiException as e:
             self.log_action("create_network_policy_with_cidr", params, error=e)
             raise RuntimeError(
-                f"Failed to create NetworkPolicy with CIDR: {str(e)}"
+                f"Failed to create NetworkPolicy with CIDR: {type(e).__name__}"
             ) from e
 
     def update_network_policy_rules(
@@ -480,7 +480,7 @@ class NetworkingMixin:
             raise RuntimeError("Networking client not available") from None
         except _km.ApiException as e:
             self.log_action("update_network_policy_rules", params, error=e)
-            raise RuntimeError(f"Failed to update NetworkPolicy rules: {str(e)}") from e
+            raise RuntimeError("Failed to update NetworkPolicy rules") from e
 
     def test_network_policy_connectivity(
         self, namespace: str, policy_name: str
@@ -522,7 +522,7 @@ class NetworkingMixin:
         except _km.ApiException as e:
             self.log_action("test_network_policy_connectivity", params, error=e)
             raise RuntimeError(
-                f"Failed to test NetworkPolicy connectivity: {str(e)}"
+                f"Failed to test NetworkPolicy connectivity: {type(e).__name__}"
             ) from e
 
     def check_dns_resolution(
@@ -555,7 +555,7 @@ class NetworkingMixin:
             }
         except Exception as e:
             self.log_action("check_dns_resolution", params, error=e)
-            raise RuntimeError(f"Failed to check DNS resolution: {str(e)}") from e
+            raise RuntimeError("Failed to check DNS resolution") from e
 
     def list_dns_endpoints(self, namespace: str, service_name: str) -> dict:
         """List DNS endpoints for a service."""
@@ -593,7 +593,7 @@ class NetworkingMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_dns_endpoints", params, error=e)
-            raise RuntimeError(f"Failed to list DNS endpoints: {str(e)}") from e
+            raise RuntimeError("Failed to list DNS endpoints") from e
 
     def test_dns_connectivity(self, namespace: str, target: str) -> dict:
         """Test DNS connectivity to a target."""
@@ -630,7 +630,7 @@ class NetworkingMixin:
             }
         except Exception as e:
             self.log_action("test_dns_connectivity", params, error=e)
-            raise RuntimeError(f"Failed to test DNS connectivity: {str(e)}") from e
+            raise RuntimeError("Failed to test DNS connectivity") from e
 
     def list_ingresses(self, namespace: str | None = None) -> list[dict]:
         """List Ingress resources."""
@@ -653,4 +653,4 @@ class NetworkingMixin:
             return result
         except Exception as e:
             self.log_action("list_ingresses", params, error=e)
-            raise RuntimeError(f"Failed to list ingresses: {str(e)}") from e
+            raise RuntimeError("Failed to list ingresses") from e

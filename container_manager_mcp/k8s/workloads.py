@@ -18,7 +18,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_services", params, error=e)
-            raise RuntimeError(f"Failed to list services: {str(e)}") from e
+            raise RuntimeError("Failed to list services") from e
 
     def create_service(
         self,
@@ -87,7 +87,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_service", params, error=e)
-            raise RuntimeError(f"Failed to create service: {str(e)}") from e
+            raise RuntimeError("Failed to create service") from e
 
     def remove_service(self, service_id: str) -> dict:
         params = {"service_id": service_id}
@@ -102,7 +102,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("remove_service", params, error=e)
-            raise RuntimeError(f"Failed to remove service: {str(e)}") from e
+            raise RuntimeError("Failed to remove service") from e
 
     def inspect_service(self, service_id: str) -> dict:
         params = {"service_id": service_id}
@@ -113,7 +113,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("inspect_service", params, error=e)
-            raise RuntimeError(f"Failed to inspect service: {str(e)}") from e
+            raise RuntimeError("Failed to inspect service") from e
 
     def scale_service(self, service_id: str, replicas: int) -> dict:
         params = {"service_id": service_id, "replicas": replicas}
@@ -126,7 +126,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("scale_service", params, error=e)
-            raise RuntimeError(f"Failed to scale service: {str(e)}") from e
+            raise RuntimeError("Failed to scale service") from e
 
     def update_service(
         self,
@@ -181,7 +181,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("update_service", params, error=e)
-            raise RuntimeError(f"Failed to update service: {str(e)}") from e
+            raise RuntimeError("Failed to update service") from e
 
     def service_ps(self, service_id: str) -> list[dict]:
         params = {"service_id": service_id}
@@ -213,7 +213,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("service_ps", params, error=e)
-            raise RuntimeError(f"Failed to list service tasks: {str(e)}") from e
+            raise RuntimeError("Failed to list service tasks") from e
 
     def service_logs(
         self, service_id: str, tail: int = 100, follow: bool = False
@@ -301,7 +301,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("service_logs", params, error=e)
-            raise RuntimeError(f"Failed to get service logs: {str(e)}") from e
+            raise RuntimeError("Failed to get service logs") from e
 
     def list_pods(
         self, namespace: str | None = None, label_selector: str | None = None
@@ -331,7 +331,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_pods", params, error=e)
-            raise RuntimeError(f"Failed to list pods: {str(e)}") from e
+            raise RuntimeError("Failed to list pods") from e
 
     def describe_pod(self, pod_name: str, namespace: str | None = None) -> dict:
         """Get detailed pod information."""
@@ -344,7 +344,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("describe_pod", params, error=e)
-            raise RuntimeError(f"Failed to describe pod: {str(e)}") from e
+            raise RuntimeError("Failed to describe pod") from e
 
     def exec_pod(
         self,
@@ -395,7 +395,7 @@ class WorkloadsMixin:
             ) from None
         except _km.ApiException as e:
             self.log_action("exec_pod", params, error=e)
-            raise RuntimeError(f"Failed to exec in pod: {str(e)}") from e
+            raise RuntimeError("Failed to exec in pod") from e
 
     def port_forward_pod(
         self,
@@ -440,7 +440,7 @@ class WorkloadsMixin:
             ) from None
         except _km.ApiException as e:
             self.log_action("port_forward_pod", params, error=e)
-            raise RuntimeError(f"Failed to port forward to pod: {str(e)}") from e
+            raise RuntimeError("Failed to port forward to pod") from e
 
     def attach_pod(
         self, pod_name: str, namespace: str | None = None, container: str | None = None
@@ -478,7 +478,7 @@ class WorkloadsMixin:
             ) from None
         except _km.ApiException as e:
             self.log_action("attach_pod", params, error=e)
-            raise RuntimeError(f"Failed to attach to pod: {str(e)}") from e
+            raise RuntimeError("Failed to attach to pod") from e
 
     def cp_pod(
         self,
@@ -523,7 +523,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_statefulsets", params, error=e)
-            raise RuntimeError(f"Failed to list statefulsets: {str(e)}") from e
+            raise RuntimeError("Failed to list statefulsets") from e
 
     def scale_statefulset(
         self, name: str, namespace: str | None = None, replicas: int = 1
@@ -540,7 +540,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("scale_statefulset", params, error=e)
-            raise RuntimeError(f"Failed to scale statefulset: {str(e)}") from e
+            raise RuntimeError("Failed to scale statefulset") from e
 
     def list_daemonsets(self, namespace: str | None = None) -> list[dict]:
         """List DaemonSets in a namespace."""
@@ -567,7 +567,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_daemonsets", params, error=e)
-            raise RuntimeError(f"Failed to list daemonsets: {str(e)}") from e
+            raise RuntimeError("Failed to list daemonsets") from e
 
     def rollout_status(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -606,7 +606,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("rollout_status", params, error=e)
-            raise RuntimeError(f"Failed to check rollout status: {str(e)}") from e
+            raise RuntimeError("Failed to check rollout status") from e
 
     def rollout_history(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -637,7 +637,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("rollout_history", params, error=e)
-            raise RuntimeError(f"Failed to get rollout history: {str(e)}") from e
+            raise RuntimeError("Failed to get rollout history") from e
 
     def rollout_restart(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -664,7 +664,7 @@ class WorkloadsMixin:
             raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_restart", params, error=e)
-            raise RuntimeError(f"Failed to restart rollout: {str(e)}") from e
+            raise RuntimeError("Failed to restart rollout") from e
 
     def rollout_undo(
         self,
@@ -711,7 +711,7 @@ class WorkloadsMixin:
             raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_undo", params, error=e)
-            raise RuntimeError(f"Failed to undo rollout: {str(e)}") from e
+            raise RuntimeError("Failed to undo rollout") from e
 
     def rollout_pause(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -732,7 +732,7 @@ class WorkloadsMixin:
             raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_pause", params, error=e)
-            raise RuntimeError(f"Failed to pause rollout: {str(e)}") from e
+            raise RuntimeError("Failed to pause rollout") from e
 
     def rollout_resume(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -753,7 +753,7 @@ class WorkloadsMixin:
             raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_resume", params, error=e)
-            raise RuntimeError(f"Failed to resume rollout: {str(e)}") from e
+            raise RuntimeError("Failed to resume rollout") from e
 
     def list_jobs(self, namespace: str | None = None) -> list[dict]:
         """List Jobs in a namespace."""
@@ -778,7 +778,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_jobs", params, error=e)
-            raise RuntimeError(f"Failed to list jobs: {str(e)}") from e
+            raise RuntimeError("Failed to list jobs") from e
 
     def list_cron_jobs(self, namespace: str | None = None) -> list[dict]:
         """List CronJobs in a namespace."""
@@ -809,7 +809,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("list_cron_jobs", params, error=e)
-            raise RuntimeError(f"Failed to list cron jobs: {str(e)}") from e
+            raise RuntimeError("Failed to list cron jobs") from e
 
     def list_replicasets(self, namespace: str | None = None) -> list[dict]:
         """List ReplicaSets in a namespace."""
@@ -834,7 +834,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_replicasets", params, error=e)
-            raise RuntimeError(f"Failed to list replicasets: {str(e)}") from e
+            raise RuntimeError("Failed to list replicasets") from e
 
     def describe_job(self, name: str, namespace: str) -> dict:
         """Describe a Job."""
@@ -857,7 +857,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_job", params, error=e)
-            raise RuntimeError(f"Failed to describe Job: {str(e)}") from e
+            raise RuntimeError("Failed to describe Job") from e
 
     def create_job(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a Job."""
@@ -881,7 +881,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("create_job", params, error=e)
-            raise RuntimeError(f"Failed to create Job: {str(e)}") from e
+            raise RuntimeError("Failed to create Job") from e
 
     def delete_job(self, name: str, namespace: str) -> dict:
         """Delete a Job."""
@@ -896,7 +896,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_job", params, error=e)
-            raise RuntimeError(f"Failed to delete Job: {str(e)}") from e
+            raise RuntimeError("Failed to delete Job") from e
 
     def describe_cron_job(self, name: str, namespace: str) -> dict:
         """Describe a CronJob."""
@@ -919,7 +919,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_cron_job", params, error=e)
-            raise RuntimeError(f"Failed to describe CronJob: {str(e)}") from e
+            raise RuntimeError("Failed to describe CronJob") from e
 
     def create_cron_job(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a CronJob."""
@@ -943,7 +943,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("create_cron_job", params, error=e)
-            raise RuntimeError(f"Failed to create CronJob: {str(e)}") from e
+            raise RuntimeError("Failed to create CronJob") from e
 
     def delete_cron_job(self, name: str, namespace: str) -> dict:
         """Delete a CronJob."""
@@ -958,7 +958,7 @@ class WorkloadsMixin:
             raise RuntimeError("Batch client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_cron_job", params, error=e)
-            raise RuntimeError(f"Failed to delete CronJob: {str(e)}") from e
+            raise RuntimeError("Failed to delete CronJob") from e
 
     def list_replica_sets(self, namespace: str | None = None) -> list[dict]:
         """List ReplicaSets."""
@@ -982,7 +982,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_replica_sets", params, error=e)
-            raise RuntimeError(f"Failed to list ReplicaSets: {str(e)}") from e
+            raise RuntimeError("Failed to list ReplicaSets") from e
 
     def describe_replica_set(self, name: str, namespace: str) -> dict:
         """Describe a ReplicaSet."""
@@ -1002,7 +1002,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("describe_replica_set", params, error=e)
-            raise RuntimeError(f"Failed to describe ReplicaSet: {str(e)}") from e
+            raise RuntimeError("Failed to describe ReplicaSet") from e
 
     def set_deployment_strategy(
         self, name: str, namespace: str, strategy: dict
@@ -1024,7 +1024,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("set_deployment_strategy", params, error=e)
-            raise RuntimeError(f"Failed to set deployment strategy: {str(e)}") from e
+            raise RuntimeError("Failed to set deployment strategy") from e
 
     def get_deployment_strategy(self, name: str, namespace: str) -> dict:
         """Get current deployment strategy."""
@@ -1044,7 +1044,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_deployment_strategy", params, error=e)
-            raise RuntimeError(f"Failed to get deployment strategy: {str(e)}") from e
+            raise RuntimeError("Failed to get deployment strategy") from e
 
     def set_daemonset_update_strategy(
         self, name: str, namespace: str, strategy: dict
@@ -1067,7 +1067,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("set_daemonset_update_strategy", params, error=e)
             raise RuntimeError(
-                f"Failed to set DaemonSet update strategy: {str(e)}"
+                f"Failed to set DaemonSet update strategy: {type(e).__name__}"
             ) from e
 
     def get_daemonset_update_strategy(self, name: str, namespace: str) -> dict:
@@ -1089,7 +1089,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("get_daemonset_update_strategy", params, error=e)
             raise RuntimeError(
-                f"Failed to get DaemonSet update strategy: {str(e)}"
+                f"Failed to get DaemonSet update strategy: {type(e).__name__}"
             ) from e
 
     def set_statefulset_update_strategy(
@@ -1113,7 +1113,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("set_statefulset_update_strategy", params, error=e)
             raise RuntimeError(
-                f"Failed to set StatefulSet update strategy: {str(e)}"
+                f"Failed to set StatefulSet update strategy: {type(e).__name__}"
             ) from e
 
     def get_statefulset_update_strategy(self, name: str, namespace: str) -> dict:
@@ -1135,7 +1135,7 @@ class WorkloadsMixin:
         except _km.ApiException as e:
             self.log_action("get_statefulset_update_strategy", params, error=e)
             raise RuntimeError(
-                f"Failed to get StatefulSet update strategy: {str(e)}"
+                f"Failed to get StatefulSet update strategy: {type(e).__name__}"
             ) from e
 
     def scale_replica_set(self, name: str, namespace: str, replicas: int) -> dict:
@@ -1155,7 +1155,7 @@ class WorkloadsMixin:
             return result
         except _km.ApiException as e:
             self.log_action("scale_replica_set", params, error=e)
-            raise RuntimeError(f"Failed to scale ReplicaSet: {str(e)}") from e
+            raise RuntimeError("Failed to scale ReplicaSet") from e
 
     def _kubectl_cp(self, src: str, dst: str, action: str) -> str:
         """Run ``kubectl cp <src> <dst>`` (binary-safe) and return stdout.
@@ -1204,7 +1204,7 @@ class WorkloadsMixin:
             return result
         except Exception as e:
             self.log_action("copy_to_pod", params, error=e)
-            raise RuntimeError(f"Failed to copy to pod: {str(e)}") from e
+            raise RuntimeError("Failed to copy to pod") from e
 
     def copy_from_pod(
         self, pod_name: str, namespace: str, source: str, destination: str
@@ -1232,7 +1232,7 @@ class WorkloadsMixin:
             return result
         except Exception as e:
             self.log_action("copy_from_pod", params, error=e)
-            raise RuntimeError(f"Failed to copy from pod: {str(e)}") from e
+            raise RuntimeError("Failed to copy from pod") from e
 
     def create_stateful_set(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a StatefulSet."""
@@ -1249,7 +1249,7 @@ class WorkloadsMixin:
             return result
         except Exception as e:
             self.log_action("create_stateful_set", params, error=e)
-            raise RuntimeError(f"Failed to create stateful set: {str(e)}") from e
+            raise RuntimeError("Failed to create stateful set") from e
 
     def list_stateful_sets(self, namespace: str | None = None) -> list[dict]:
         """List StatefulSets."""
@@ -1273,7 +1273,7 @@ class WorkloadsMixin:
             return result
         except Exception as e:
             self.log_action("list_stateful_sets", params, error=e)
-            raise RuntimeError(f"Failed to list stateful sets: {str(e)}") from e
+            raise RuntimeError("Failed to list stateful sets") from e
 
     def create_daemon_set(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a DaemonSet."""
@@ -1290,7 +1290,7 @@ class WorkloadsMixin:
             return result
         except Exception as e:
             self.log_action("create_daemon_set", params, error=e)
-            raise RuntimeError(f"Failed to create daemon set: {str(e)}") from e
+            raise RuntimeError("Failed to create daemon set") from e
 
     def list_daemon_sets(self, namespace: str | None = None) -> list[dict]:
         """List DaemonSets."""
@@ -1318,4 +1318,4 @@ class WorkloadsMixin:
             return result
         except Exception as e:
             self.log_action("list_daemon_sets", params, error=e)
-            raise RuntimeError(f"Failed to list daemon sets: {str(e)}") from e
+            raise RuntimeError("Failed to list daemon sets") from e

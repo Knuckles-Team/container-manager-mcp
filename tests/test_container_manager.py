@@ -501,6 +501,29 @@ class TestDockerManager:
         assert result[0]["tag"] == "latest"
         assert result[0]["id"] == "abcdef123456"
         assert result[0]["size"] == "127.00MB"
+        assert result[0]["labels"] is None
+
+    @patch("container_manager_mcp.container_manager.docker")
+    def test_list_images_captures_source_label(self, mock_docker):
+        """list_images surfaces the OCI Labels dict (top-level list-summary shape)."""
+        mock_client = MagicMock()
+        mock_image = MagicMock()
+        mock_image.attrs = {
+            "Id": "sha256:abcdef1234567890abcdef1234567890abcdef12",
+            "RepoTags": ["nginx:latest"],
+            "Created": 1234567890.0,
+            "Size": 133169152,
+            "Labels": {"org.opencontainers.image.source": "https://github.com/o/n"},
+        }
+        mock_client.images.list.return_value = [mock_image]
+        mock_docker.from_env.return_value = mock_client
+
+        manager = DockerManager()
+        result = manager.list_images()
+
+        assert result[0]["labels"] == {
+            "org.opencontainers.image.source": "https://github.com/o/n"
+        }
 
     @patch("container_manager_mcp.container_manager.docker")
     def test_list_images_no_tags(self, mock_docker):

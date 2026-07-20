@@ -50,15 +50,15 @@ uv run container-manager-mcp
 
 ## Prebuilt Docker image
 
-A multi-stage, slim image is published on every release (installs
+A multi-stage runtime image is published on every release (installs
 `container-manager-mcp[all]`, entrypoint `container-manager-mcp`):
 
 ```bash
-docker pull knucklessg1/container-manager-mcp:latest
+docker pull example/container-manager-mcp@sha256:<digest>
 
 docker run --rm -i \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  knucklessg1/container-manager-mcp:latest        # stdio transport (default)
+  example/container-manager-mcp@sha256:<digest>        # stdio transport (default)
 ```
 
 For an HTTP server with a published port and the agent server, see
