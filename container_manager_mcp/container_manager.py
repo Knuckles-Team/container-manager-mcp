@@ -24,20 +24,33 @@ from container_manager_mcp.models import (
 
 __version__ = "2.3.0"
 
+
+class _MissingRuntimeError(Exception):
+    """Placeholder so 'except <Runtime>Exception' can't catch unrelated errors when the SDK is absent.
+
+    Bound to ``DockerException`` / ``PodmanError`` below when ``docker-py`` /
+    ``podman-py`` aren't installed, instead of the base ``Exception`` — rebinding
+    to ``Exception`` would make every ``except DockerException:`` / ``except
+    PodmanError:`` in this module catch *all* errors, masking unrelated bugs
+    (see GH issue #3). This class is never raised by application code, so it
+    can never accidentally match a real error.
+    """
+
+
 try:
     from docker.errors import DockerException
 
     import docker  # type: ignore
 except ImportError:
     docker = None  # type: ignore
-    DockerException = Exception
+    DockerException = _MissingRuntimeError
 
 try:
     from podman import PodmanClient
     from podman.errors import PodmanError
 except ImportError:
     PodmanClient = None
-    PodmanError = Exception
+    PodmanError = _MissingRuntimeError
 
 
 def _build_exec_result(
