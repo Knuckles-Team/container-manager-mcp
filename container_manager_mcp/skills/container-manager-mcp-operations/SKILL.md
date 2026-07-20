@@ -1,5 +1,6 @@
 ---
 name: container-manager-mcp-operations
+skill_type: skill
 description: >-
   Operate container-manager-mcp through its governed MCP and GraphOS capabilities, including container manager config walkthrough, container manager kg ingestion, container manager kubernetes operations, container manager lifecycle, container manager multi context, container manager podman operations, container manager swarm, kubernetes mesh provisioner, and related workflows. Use when a request requires this provider's read, change, automation, ingestion, troubleshooting, or evidence workflows.
 ---
