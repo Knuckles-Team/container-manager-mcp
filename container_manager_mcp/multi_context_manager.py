@@ -83,7 +83,7 @@ class MultiContextManager:
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Multi-Context Manager logging initialized to {log_file}")
+        self.logger.info("Multi-context manager logging initialized")
 
     def _initialize_managers(self):
         """Initialize all configured managers from environment variables."""
@@ -97,7 +97,8 @@ class MultiContextManager:
                     self._add_k8s_context(context_name, context_value)
                 except Exception as e:
                     self.logger.error(
-                        f"Failed to initialize K8S context '{context_name}': {e}"
+                        "Failed to initialize Kubernetes context: error_type=%s",
+                        type(e).__name__,
                     )
 
         # In-cluster fallback: when running inside a Kubernetes pod with no
@@ -118,7 +119,7 @@ class MultiContextManager:
         # Set default K8S context
         self.default_k8s_context = os.environ.get("DEFAULT_K8S_CONTEXT")
         if self.default_k8s_context and self.default_k8s_context in self.k8s_managers:
-            self.logger.info(f"Default K8S context set to: {self.default_k8s_context}")
+            self.logger.info("Default Kubernetes context configured")
         elif self.k8s_managers:
             self.default_k8s_context = list(self.k8s_managers.keys())[0]
             self.logger.info(
@@ -135,7 +136,8 @@ class MultiContextManager:
                     self._add_docker_context(context_name, host)
                 except Exception as e:
                     self.logger.error(
-                        f"Failed to initialize Docker context '{context_name}': {e}"
+                        "Failed to initialize Docker context: error_type=%s",
+                        type(e).__name__,
                     )
 
         # Set default Docker context
@@ -163,7 +165,8 @@ class MultiContextManager:
                     self._add_swarm_context(context_name, host)
                 except Exception as e:
                     self.logger.error(
-                        f"Failed to initialize Swarm context '{context_name}': {e}"
+                        "Failed to initialize Swarm context: error_type=%s",
+                        type(e).__name__,
                     )
 
         # Set default Swarm context
@@ -191,7 +194,7 @@ class MultiContextManager:
             try:
                 self._add_podman_manager()
             except Exception as e:
-                self.logger.error(f"Failed to initialize Podman manager: {e}")
+                self.logger.error("Operation failed: error_type=%s", type(e).__name__)
 
         self.logger.info(
             f"Multi-Context Manager initialized: "
@@ -221,7 +224,7 @@ class MultiContextManager:
         """Add a Kubernetes context to the manager pool."""
         from container_manager_mcp.k8s_manager import KubernetesManager
 
-        self.logger.info(f"Adding K8S context: {context_name} -> {context_value}")
+        self.logger.info("Adding configured Kubernetes context")
         manager = KubernetesManager(
             context=context_value, silent=self.silent, log_file=self.log_file
         )
@@ -231,7 +234,7 @@ class MultiContextManager:
 
     def _add_docker_context(self, context_name: str, host: str):
         """Add a Docker context to the manager pool."""
-        self.logger.info(f"Adding Docker context: {context_name} -> {host}")
+        self.logger.info("Adding configured Docker context")
         manager = DockerManager(
             host=host if host else None, silent=self.silent, log_file=self.log_file
         )
@@ -241,7 +244,7 @@ class MultiContextManager:
 
     def _add_swarm_context(self, context_name: str, host: str):
         """Add a Swarm context to the manager pool."""
-        self.logger.info(f"Adding Swarm context: {context_name} -> {host}")
+        self.logger.info("Adding configured Swarm context")
         manager = DockerManager(
             host=host if host else None, silent=self.silent, log_file=self.log_file
         )
@@ -292,7 +295,9 @@ class MultiContextManager:
                 healthy = True
         except Exception as e:
             self.logger.warning(
-                f"Health check failed for {backend}/{context_name}: {e}"
+                "Context health check failed: backend_type=%s error_type=%s",
+                backend,
+                type(e).__name__,
             )
             healthy = False
 
@@ -310,7 +315,7 @@ class MultiContextManager:
             )
         original_value = backend_config[context_name]
 
-        self.logger.info(f"Reconnecting {backend} context '{context_name}'...")
+        self.logger.info("Reconnecting configured context: backend_type=%s", backend)
         if backend == "kubernetes":
             self._add_k8s_context(context_name, original_value)
         elif backend == "docker":
@@ -569,8 +574,8 @@ class MultiContextManager:
             try:
                 results[context_name] = future.result()
             except Exception as e:
-                self.logger.error(f"fan_out: {backend}/{context_name}.{op} failed: {e}")
-                results[context_name] = {"error": str(e)}
+                self.logger.error("Operation failed: error_type=%s", type(e).__name__)
+                results[context_name] = {"error": "Operation failed"}
 
         return results
 

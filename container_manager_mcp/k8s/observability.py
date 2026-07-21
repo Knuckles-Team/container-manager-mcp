@@ -68,7 +68,7 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             # Metrics server might not be installed, fall back to basic info
-            if "NotFound" in str(e) or "ServiceUnavailable" in str(e):
+            if "NotFound" in type(e).__name__ or "ServiceUnavailable" in type(e).__name__:
                 ns = namespace or self.namespace
                 pods = self.core.list_namespaced_pod(ns).items
                 result = [
@@ -88,7 +88,7 @@ class ObservabilityMixin:
                 )
                 return result
             self.log_action("top_pods", params, error=e)
-            raise RuntimeError(f"Failed to get pod metrics: {str(e)}") from e
+            raise RuntimeError("Failed to get pod metrics") from e
 
     def top_nodes(self) -> list[dict]:
         """Get resource usage for nodes using metrics server."""
@@ -140,7 +140,7 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             # Metrics server might not be installed, fall back to basic info
-            if "NotFound" in str(e) or "ServiceUnavailable" in str(e):
+            if "NotFound" in type(e).__name__ or "ServiceUnavailable" in type(e).__name__:
                 nodes = self.core.list_node().items
                 result = [
                     {
@@ -166,7 +166,7 @@ class ObservabilityMixin:
                 )
                 return result
             self.log_action("top_nodes", params, error=e)
-            raise RuntimeError(f"Failed to get node metrics: {str(e)}") from e
+            raise RuntimeError("Failed to get node metrics") from e
 
     def get_pod_metrics(self, namespace: str | None = None) -> list[dict]:
         """Get pod metrics."""
@@ -197,7 +197,7 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_pod_metrics", params, error=e)
-            raise RuntimeError(f"Failed to get pod metrics: {str(e)}") from e
+            raise RuntimeError("Failed to get pod metrics") from e
 
     def get_node_metrics(self) -> list[dict]:
         """Get node metrics."""
@@ -220,7 +220,7 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_node_metrics", params, error=e)
-            raise RuntimeError(f"Failed to get node metrics: {str(e)}") from e
+            raise RuntimeError("Failed to get node metrics") from e
 
     def get_top_pods(self, namespace: str | None = None) -> list[dict]:
         """Get top pods by resource usage."""
@@ -243,7 +243,7 @@ class ObservabilityMixin:
             return result
         except Exception as e:
             self.log_action("get_top_pods", params, error=e)
-            raise RuntimeError(f"Failed to get top pods: {str(e)}") from e
+            raise RuntimeError("Failed to get top pods") from e
 
     def get_top_nodes(self) -> list[dict]:
         """Get top nodes by resource usage."""
@@ -265,7 +265,7 @@ class ObservabilityMixin:
             return result
         except Exception as e:
             self.log_action("get_top_nodes", params, error=e)
-            raise RuntimeError(f"Failed to get top nodes: {str(e)}") from e
+            raise RuntimeError("Failed to get top nodes") from e
 
     def get_pod_resource_usage(self, pod_name: str, namespace: str) -> dict:
         """Get detailed resource usage for a pod."""
@@ -287,7 +287,7 @@ class ObservabilityMixin:
             raise ValueError(f"Pod {pod_name} not found in metrics")
         except Exception as e:
             self.log_action("get_pod_resource_usage", params, error=e)
-            raise RuntimeError(f"Failed to get pod resource usage: {str(e)}") from e
+            raise RuntimeError("Failed to get pod resource usage") from e
 
     def get_cluster_resource_summary(self) -> dict:
         """Get cluster-wide resource summary."""
@@ -324,7 +324,7 @@ class ObservabilityMixin:
         except Exception as e:
             self.log_action("get_cluster_resource_summary", params, error=e)
             raise RuntimeError(
-                f"Failed to get cluster resource summary: {str(e)}"
+                f"Failed to get cluster resource summary: {type(e).__name__}"
             ) from e
 
     def get_autoscaler_metrics(self, name: str, namespace: str) -> dict:
@@ -352,7 +352,7 @@ class ObservabilityMixin:
             raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("get_autoscaler_metrics", params, error=e)
-            raise RuntimeError(f"Failed to get autoscaler metrics: {str(e)}") from e
+            raise RuntimeError("Failed to get autoscaler metrics") from e
 
     def set_autoscaler_metrics(
         self, name: str, namespace: str, metrics: list[dict]
@@ -399,7 +399,7 @@ class ObservabilityMixin:
             raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("set_autoscaler_metrics", params, error=e)
-            raise RuntimeError(f"Failed to set autoscaler metrics: {str(e)}") from e
+            raise RuntimeError("Failed to set autoscaler metrics") from e
 
     def scale_deployment_autoscaler(
         self, name: str, namespace: str, min_replicas: int, max_replicas: int
@@ -437,7 +437,7 @@ class ObservabilityMixin:
             raise RuntimeError("Autoscaling client not available") from None
         except _km.ApiException as e:
             self.log_action("scale_deployment_autoscaler", params, error=e)
-            raise RuntimeError(f"Failed to scale autoscaler: {str(e)}") from e
+            raise RuntimeError("Failed to scale autoscaler") from e
 
     def get_autoscaler_history(self, name: str, namespace: str) -> dict:
         """Get autoscaler scaling history."""
@@ -474,7 +474,7 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_autoscaler_history", params, error=e)
-            raise RuntimeError(f"Failed to get autoscaler history: {str(e)}") from e
+            raise RuntimeError("Failed to get autoscaler history") from e
 
     def debug_pod(self, pod_name: str, namespace: str) -> dict:
         """Debug a pod by gathering diagnostic information."""
@@ -501,7 +501,7 @@ class ObservabilityMixin:
             return result
         except Exception as e:
             self.log_action("debug_pod", params, error=e)
-            raise RuntimeError(f"Failed to debug pod: {str(e)}") from e
+            raise RuntimeError("Failed to debug pod") from e
 
     def debug_node(self, node_name: str) -> dict:
         """Debug a node by gathering diagnostic information."""
@@ -525,7 +525,7 @@ class ObservabilityMixin:
             return result
         except Exception as e:
             self.log_action("debug_node", params, error=e)
-            raise RuntimeError(f"Failed to debug node: {str(e)}") from e
+            raise RuntimeError("Failed to debug node") from e
 
     def debug_service(self, service_name: str, namespace: str) -> dict:
         """Debug a service by gathering diagnostic information."""
@@ -551,7 +551,7 @@ class ObservabilityMixin:
             return result
         except Exception as e:
             self.log_action("debug_service", params, error=e)
-            raise RuntimeError(f"Failed to debug service: {str(e)}") from e
+            raise RuntimeError("Failed to debug service") from e
 
     def debug_deployment(self, deployment_name: str, namespace: str) -> dict:
         """Debug a deployment by gathering diagnostic information."""
@@ -584,4 +584,4 @@ class ObservabilityMixin:
             return result
         except Exception as e:
             self.log_action("debug_deployment", params, error=e)
-            raise RuntimeError(f"Failed to debug deployment: {str(e)}") from e
+            raise RuntimeError("Failed to debug deployment") from e

@@ -37,7 +37,7 @@ container-manager-mcp --help
 docker run --rm -i \
   -v $HOME/.config/agent-utilities:/root/.config/agent-utilities:ro \
   -v $HOME/.ssh:/root/.ssh:ro \
-  knucklessg1/container-manager-mcp:latest
+  example/container-manager-mcp@sha256:<digest>
 ```
 
 ## 2. Configuration

@@ -27,13 +27,11 @@ import os
 import sys
 from typing import Any, Literal
 
-from agent_utilities.mcp_utilities import (
-    create_mcp_server,
-    load_config,
-    register_tool_surface,
-    resolve_action,
-    run_blocking,
-)
+from agent_utilities.core.config import load_config
+from agent_utilities.mcp.action_dispatch import resolve_action
+from agent_utilities.mcp.concurrency import run_blocking
+from agent_utilities.mcp.server_factory import create_mcp_server
+from agent_utilities.mcp.verbose_tools import register_tool_surface
 
 _SERVICE = "container-manager-mcp"
 
@@ -192,9 +190,9 @@ def register_inventory_tools(mcp: FastMCP):
         """
         try:
             return list_inventory_hosts()
-        except Exception as e:  # missing/empty inventory, etc.
+        except Exception:  # missing/empty inventory, etc.
             return {
-                "error": str(e),
+                "error": "Operation failed",
                 "hosts": {},
                 "hint": (
                     "No inventory configured. Add hosts to "
@@ -254,7 +252,7 @@ def register_info_tools(mcp: FastMCP):
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
-            return f"Error executing {action}: {e}"
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_image_tools(mcp: FastMCP):
@@ -344,8 +342,8 @@ def register_image_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_container_tools(mcp: FastMCP):
@@ -465,8 +463,8 @@ def register_container_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_volume_tools(mcp: FastMCP):
@@ -548,8 +546,8 @@ def register_volume_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_network_tools(mcp: FastMCP):
@@ -627,8 +625,8 @@ def register_network_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_swarm_tools(mcp: FastMCP):
@@ -871,8 +869,8 @@ def register_swarm_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_system_tools(mcp: FastMCP):
@@ -939,8 +937,8 @@ def register_system_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_compose_tools(mcp: FastMCP):
@@ -1004,7 +1002,7 @@ def register_compose_tools(mcp: FastMCP):
             else:
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
-            return f"Error executing {action}: {e}"
+            return f"Error executing {action}: {type(e).__name__}"
 
 
 def register_k8sworkloads_tools(mcp: FastMCP):
@@ -1224,7 +1222,7 @@ def register_misc_tools(mcp: FastMCP):
         Locate the container actively using/mapping the specified port on the target host.
         """
         if ctx:
-            ctx_log(ctx, logging.INFO, f"Tracing port {port} on host {host}")
+            ctx_log(ctx, logging.INFO, "Tracing a configured network endpoint")
 
         try:
             manager = create_manager(manager_type, host=host)
@@ -1245,8 +1243,8 @@ def register_misc_tools(mcp: FastMCP):
             return matching_containers
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error tracing port {port}: {e}")
-            return f"Error tracing port {port}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error tracing port {port}: {type(e).__name__}")
+            return f"Error tracing port {port}: {type(e).__name__}"
 
     @mcp.tool(
         annotations={
@@ -1299,10 +1297,13 @@ def register_misc_tools(mcp: FastMCP):
         Lists resources via the real container-manager client and pushes them into the
         knowledge graph as ``:Container`` / ``:ContainerImage`` / ``:ContainerVolume`` /
         ``:ContainerNetwork`` / ``:SwarmService`` / ``:SwarmNode`` nodes (+ ``:usesImage`` /
-        ``:runsOn`` links) via the fast engine client. Best-effort: ``ingested`` is ``None``
-        per modality when no engine is reachable.
+        ``:runsOn`` links) through the authoritative native-ingest transaction.
         CONCEPT:AU-KG.ingest.enterprise-source-extractor.
         """
+        from agent_utilities.knowledge_graph.memory.native_ingest import (
+            NativeIngestError,
+        )
+
         from container_manager_mcp import kg_ingest
 
         if ctx:
@@ -1337,10 +1338,10 @@ def register_misc_tools(mcp: FastMCP):
                     "listed": len(data),
                     "ingested": ingested,
                 }
-            except (
-                Exception
-            ) as e:  # noqa: BLE001 — one modality failing must not abort the sweep
-                result["modalities"][name] = {"error": str(e)}
+            except NativeIngestError:
+                raise
+            except Exception:  # noqa: BLE001 — isolate source API failures
+                result["modalities"][name] = {"error": "Operation failed"}
 
         if "containers" in want:
             await _sweep(

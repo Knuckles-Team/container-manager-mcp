@@ -25,7 +25,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_roles", params, error=e)
-            raise RuntimeError(f"Failed to list roles: {str(e)}") from e
+            raise RuntimeError("Failed to list roles") from e
 
     def create_role(
         self, name: str, namespace: str | None = None, rules: list[dict] | None = None
@@ -48,7 +48,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_role", params, error=e)
-            raise RuntimeError(f"Failed to create role: {str(e)}") from e
+            raise RuntimeError("Failed to create role") from e
 
     def delete_role(self, name: str, namespace: str | None = None) -> dict:
         """Delete a Role."""
@@ -61,7 +61,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_role", params, error=e)
-            raise RuntimeError(f"Failed to delete role: {str(e)}") from e
+            raise RuntimeError("Failed to delete role") from e
 
     def list_cluster_roles(self) -> list[dict]:
         """List ClusterRoles."""
@@ -80,7 +80,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_cluster_roles", params, error=e)
-            raise RuntimeError(f"Failed to list cluster roles: {str(e)}") from e
+            raise RuntimeError("Failed to list cluster roles") from e
 
     def list_rolebindings(self, namespace: str | None = None) -> list[dict]:
         """List RoleBindings in a namespace."""
@@ -102,7 +102,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_rolebindings", params, error=e)
-            raise RuntimeError(f"Failed to list rolebindings: {str(e)}") from e
+            raise RuntimeError("Failed to list rolebindings") from e
 
     def create_rolebinding(
         self,
@@ -136,7 +136,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_rolebinding", params, error=e)
-            raise RuntimeError(f"Failed to create rolebinding: {str(e)}") from e
+            raise RuntimeError("Failed to create rolebinding") from e
 
     def delete_rolebinding(self, name: str, namespace: str | None = None) -> dict:
         """Delete a RoleBinding."""
@@ -149,7 +149,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_rolebinding", params, error=e)
-            raise RuntimeError(f"Failed to delete rolebinding: {str(e)}") from e
+            raise RuntimeError("Failed to delete rolebinding") from e
 
     def list_serviceaccounts(self, namespace: str | None = None) -> list[dict]:
         """List ServiceAccounts in a namespace."""
@@ -170,7 +170,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_serviceaccounts", params, error=e)
-            raise RuntimeError(f"Failed to list serviceaccounts: {str(e)}") from e
+            raise RuntimeError("Failed to list serviceaccounts") from e
 
     def create_serviceaccount(self, name: str, namespace: str | None = None) -> dict:
         """Create a ServiceAccount."""
@@ -189,7 +189,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_serviceaccount", params, error=e)
-            raise RuntimeError(f"Failed to create serviceaccount: {str(e)}") from e
+            raise RuntimeError("Failed to create serviceaccount") from e
 
     def delete_serviceaccount(self, name: str, namespace: str | None = None) -> dict:
         """Delete a ServiceAccount."""
@@ -202,7 +202,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_serviceaccount", params, error=e)
-            raise RuntimeError(f"Failed to delete serviceaccount: {str(e)}") from e
+            raise RuntimeError("Failed to delete serviceaccount") from e
 
     def auth_can_i(
         self, verb: str, resource: str, namespace: str | None = None
@@ -227,7 +227,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("auth_can_i", params, error=e)
-            raise RuntimeError(f"Failed to check authorization: {str(e)}") from e
+            raise RuntimeError("Failed to check authorization") from e
 
     def list_cluster_rolebindings(self) -> list[dict]:
         """List ClusterRoleBindings."""
@@ -247,7 +247,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_cluster_rolebindings", params, error=e)
-            raise RuntimeError(f"Failed to list cluster rolebindings: {str(e)}") from e
+            raise RuntimeError("Failed to list cluster rolebindings") from e
 
     def create_cluster_rolebinding(
         self,
@@ -271,7 +271,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_cluster_rolebinding", params, error=e)
-            raise RuntimeError(f"Failed to create cluster rolebinding: {str(e)}") from e
+            raise RuntimeError("Failed to create cluster rolebinding") from e
 
     def delete_cluster_rolebinding(self, name: str) -> dict:
         """Delete a ClusterRoleBinding."""
@@ -283,7 +283,7 @@ class RbacMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_cluster_rolebinding", params, error=e)
-            raise RuntimeError(f"Failed to delete cluster rolebinding: {str(e)}") from e
+            raise RuntimeError("Failed to delete cluster rolebinding") from e
 
     def create_service_account_token(
         self, name: str, namespace: str, token_spec: dict
@@ -315,7 +315,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("create_service_account_token", params, error=e)
             raise RuntimeError(
-                f"Failed to create ServiceAccount token: {str(e)}"
+                f"Failed to create ServiceAccount token: {type(e).__name__}"
             ) from e
 
     def list_service_account_tokens(self, name: str, namespace: str) -> list[dict]:
@@ -353,7 +353,7 @@ class RbacMixin:
             raise RuntimeError("Authentication client not available") from None
         except _km.ApiException as e:
             self.log_action("list_service_account_tokens", params, error=e)
-            raise RuntimeError(f"Failed to list ServiceAccount tokens: {str(e)}") from e
+            raise RuntimeError("Failed to list ServiceAccount tokens") from e
 
     def delete_service_account_token(
         self, name: str, namespace: str, token_name: str
@@ -376,7 +376,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("delete_service_account_token", params, error=e)
             raise RuntimeError(
-                f"Failed to delete ServiceAccount token: {str(e)}"
+                f"Failed to delete ServiceAccount token: {type(e).__name__}"
             ) from e
 
     def subject_access_review(self, spec: dict) -> dict:
@@ -400,7 +400,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("subject_access_review", params, error=e)
             raise RuntimeError(
-                f"Failed to perform SubjectAccessReview: {str(e)}"
+                f"Failed to perform SubjectAccessReview: {type(e).__name__}"
             ) from e
 
     def local_subject_access_review(self, namespace: str, spec: dict) -> dict:
@@ -427,7 +427,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("local_subject_access_review", params, error=e)
             raise RuntimeError(
-                f"Failed to perform LocalSubjectAccessReview: {str(e)}"
+                f"Failed to perform LocalSubjectAccessReview: {type(e).__name__}"
             ) from e
 
     def create_aggregated_cluster_role(self, name: str, aggregation_rule: dict) -> dict:
@@ -452,7 +452,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("create_aggregated_cluster_role", params, error=e)
             raise RuntimeError(
-                f"Failed to create aggregated ClusterRole: {str(e)}"
+                f"Failed to create aggregated ClusterRole: {type(e).__name__}"
             ) from e
 
     def update_aggregated_cluster_role(self, name: str, aggregation_rule: dict) -> dict:
@@ -477,7 +477,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("update_aggregated_cluster_role", params, error=e)
             raise RuntimeError(
-                f"Failed to update aggregated ClusterRole: {str(e)}"
+                f"Failed to update aggregated ClusterRole: {type(e).__name__}"
             ) from e
 
     def list_pod_security_policies(self) -> list[dict]:
@@ -502,7 +502,7 @@ class RbacMixin:
             raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("list_pod_security_policies", params, error=e)
-            raise RuntimeError(f"Failed to list PodSecurityPolicies: {str(e)}") from e
+            raise RuntimeError("Failed to list PodSecurityPolicies") from e
 
     def describe_pod_security_policy(self, name: str) -> dict:
         """Describe a PodSecurityPolicy."""
@@ -523,7 +523,7 @@ class RbacMixin:
             raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_pod_security_policy", params, error=e)
-            raise RuntimeError(f"Failed to describe PodSecurityPolicy: {str(e)}") from e
+            raise RuntimeError("Failed to describe PodSecurityPolicy") from e
 
     def create_pod_security_policy(self, name: str, spec: dict) -> dict:
         """Create a PodSecurityPolicy."""
@@ -546,7 +546,7 @@ class RbacMixin:
             raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("create_pod_security_policy", params, error=e)
-            raise RuntimeError(f"Failed to create PodSecurityPolicy: {str(e)}") from e
+            raise RuntimeError("Failed to create PodSecurityPolicy") from e
 
     def delete_pod_security_policy(self, name: str) -> dict:
         """Delete a PodSecurityPolicy."""
@@ -561,7 +561,7 @@ class RbacMixin:
             raise RuntimeError("Policy client not available") from None
         except _km.ApiException as e:
             self.log_action("delete_pod_security_policy", params, error=e)
-            raise RuntimeError(f"Failed to delete PodSecurityPolicy: {str(e)}") from e
+            raise RuntimeError("Failed to delete PodSecurityPolicy") from e
 
     def evaluate_pod_security(self, namespace: str, pod_spec: dict) -> dict:
         """Evaluate pod security against policies."""
@@ -595,7 +595,7 @@ class RbacMixin:
             raise RuntimeError("Authentication client not available") from None
         except _km.ApiException as e:
             self.log_action("evaluate_pod_security", params, error=e)
-            raise RuntimeError(f"Failed to evaluate pod security: {str(e)}") from e
+            raise RuntimeError("Failed to evaluate pod security") from e
 
     def list_service_account_mapped_secrets(
         self, name: str, namespace: str
@@ -630,7 +630,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("list_service_account_mapped_secrets", params, error=e)
             raise RuntimeError(
-                f"Failed to list ServiceAccount mapped secrets: {str(e)}"
+                f"Failed to list ServiceAccount mapped secrets: {type(e).__name__}"
             ) from e
 
     def map_secret_to_service_account(
@@ -673,7 +673,7 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("map_secret_to_service_account", params, error=e)
             raise RuntimeError(
-                f"Failed to map secret to ServiceAccount: {str(e)}"
+                f"Failed to map secret to ServiceAccount: {type(e).__name__}"
             ) from e
 
     def unmap_secret_from_service_account(
@@ -705,5 +705,5 @@ class RbacMixin:
         except _km.ApiException as e:
             self.log_action("unmap_secret_from_service_account", params, error=e)
             raise RuntimeError(
-                f"Failed to unmap secret from ServiceAccount: {str(e)}"
+                f"Failed to unmap secret from ServiceAccount: {type(e).__name__}"
             ) from e

@@ -6,6 +6,7 @@ Tests will be skipped if the required runtime is not available.
 """
 
 import os
+import re
 import subprocess
 import time
 from unittest.mock import patch
@@ -66,9 +67,24 @@ def check_podman_available():
         return False
 
 
-# Test images - small, lightweight images for testing
-TEST_IMAGE = "alpine:latest"
-TEST_IMAGE_ALT = "alpine:latest"  # Using same image for Podman compatibility (nginx:alpine requires registry config)
+# Live image pulls require operator-reviewed immutable references. They are never
+# defaulted to a mutable registry tag.
+TEST_IMAGE = os.environ.get("CONTAINER_MANAGER_TEST_IMAGE", "")
+TEST_IMAGE_ALT = os.environ.get("CONTAINER_MANAGER_TEST_IMAGE_ALT", TEST_IMAGE)
+_DIGEST_REF = re.compile(r"^[A-Za-z0-9._/:~-]+@sha256:[0-9a-f]{64}$")
+pytestmark = pytest.mark.skipif(
+    not (_DIGEST_REF.fullmatch(TEST_IMAGE) and _DIGEST_REF.fullmatch(TEST_IMAGE_ALT)),
+    reason=(
+        "set CONTAINER_MANAGER_TEST_IMAGE and CONTAINER_MANAGER_TEST_IMAGE_ALT "
+        "to reviewed sha256 image references"
+    ),
+)
+TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST = (
+    TEST_IMAGE.split("@", 1) if "@" in TEST_IMAGE else ("", "")
+)
+TEST_IMAGE_ALT_REPOSITORY, TEST_IMAGE_ALT_DIGEST = (
+    TEST_IMAGE_ALT.split("@", 1) if "@" in TEST_IMAGE_ALT else ("", "")
+)
 
 
 class TestContainerManagerIntegration:
@@ -149,7 +165,7 @@ class TestContainerManagerIntegration:
         manager = request.getfixturevalue(f"{manager_type}_manager")
 
         # Pull a small image for testing
-        result = manager.pull_image(TEST_IMAGE, "latest")
+        result = manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         assert result is not None
         assert "repository" in result
         assert result["repository"] == "alpine"
@@ -171,7 +187,7 @@ class TestContainerManagerIntegration:
 
         # Ensure image is available
         try:
-            manager.pull_image(TEST_IMAGE, "latest")
+            manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         except Exception:
             pass
 
@@ -210,7 +226,7 @@ class TestContainerManagerIntegration:
 
         # Ensure image is available
         try:
-            manager.pull_image(TEST_IMAGE, "latest")
+            manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         except Exception:
             pass
 
@@ -259,7 +275,7 @@ class TestContainerManagerIntegration:
 
         # Ensure image is available
         try:
-            manager.pull_image(TEST_IMAGE, "latest")
+            manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         except Exception:
             pass
 
@@ -342,7 +358,7 @@ class TestContainerManagerIntegration:
 
         # Pull a test image
         try:
-            manager.pull_image(TEST_IMAGE_ALT, "latest")
+            manager.pull_image(TEST_IMAGE_ALT_REPOSITORY, TEST_IMAGE_ALT_DIGEST)
         except Exception:
             pytest.skip(f"Could not pull test image {TEST_IMAGE_ALT}")
 
@@ -364,7 +380,7 @@ class TestContainerManagerIntegration:
 
         # Ensure image is available
         try:
-            manager.pull_image(TEST_IMAGE, "latest")
+            manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         except Exception:
             pytest.skip("Could not pull test image")
 
@@ -437,7 +453,7 @@ class TestContainerManagerIntegration:
 
         # Ensure image is available
         try:
-            manager.pull_image(TEST_IMAGE, "latest")
+            manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         except Exception:
             pass
 
@@ -479,7 +495,7 @@ class TestContainerManagerIntegration:
 
         # Ensure image is available
         try:
-            manager.pull_image(TEST_IMAGE, "latest")
+            manager.pull_image(TEST_IMAGE_REPOSITORY, TEST_IMAGE_DIGEST)
         except Exception:
             pass
 

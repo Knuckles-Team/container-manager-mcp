@@ -100,7 +100,7 @@ def _probe_tcp(hostname: str, port: int, timeout: float = 5.0) -> tuple[bool, st
         with socket.create_connection((hostname, int(port)), timeout=timeout):
             return True, f"TCP {hostname}:{port} reachable"
     except Exception as e:
-        return False, f"cannot reach {hostname}:{port}: {e}"
+        return False, f"configured endpoint is unreachable: {type(e).__name__}"
 
 
 _CLI_INSTALL = {
@@ -295,7 +295,7 @@ def _check_inventory(
                 "inventory file",
                 "inventory",
                 "fail",
-                f"failed to parse {path}: {e}",
+                f"failed to parse {path}: {type(e).__name__}",
                 "Fix the YAML (Ansible-style tree or a flat alias map); see the tunnel-manager inventory schema",
             )
         )
@@ -382,7 +382,7 @@ def _check_docker(host: str | None = None, focused: bool = False) -> list[dict]:
         manager = create_manager("docker", host=host)
         version = manager.get_version()
         v = version.get("version") if isinstance(version, dict) else version
-        where = f"remote host '{host}' (Docker over SSH)" if host else "local socket"
+        where = "configured remote host" if host else "local socket"
         return [
             _check("docker daemon", "docker", "ok", f"Docker {v} reachable via {where}")
         ]
@@ -393,7 +393,7 @@ def _check_docker(host: str | None = None, focused: bool = False) -> list[dict]:
                 "Docker daemon is running (run this doctor with --backend inventory --host "
                 f"{host} to test SSH reachability)"
             )
-            where = f"remote host '{host}' (via SSH)"
+            where = "configured remote host"
         else:
             remediation = (
                 "Start dockerd (`systemctl start docker`), check /var/run/docker.sock "
@@ -405,7 +405,7 @@ def _check_docker(host: str | None = None, focused: bool = False) -> list[dict]:
                 "docker daemon",
                 "docker",
                 bad,
-                f"cannot reach Docker at {where}: {e}",
+                f"cannot reach Docker at {where}: {type(e).__name__}",
                 remediation,
             )
         ]
@@ -435,7 +435,7 @@ def _check_podman(focused: bool = False) -> list[dict]:
                 "podman service",
                 "podman",
                 bad,
-                f"cannot reach Podman: {e}",
+                f"cannot reach Podman: {type(e).__name__}",
                 "Enable the Podman API socket: `systemctl --user enable --now podman.socket` "
                 "(or set CONTAINER_MANAGER_PODMAN_BASE_URL to an explicit socket URL)",
             )
@@ -458,7 +458,7 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
                 "kubeconfig",
                 "kubernetes",
                 bad,
-                f"no kubeconfig found (checked {kubeconfig}) and not running in-cluster",
+                "no kubeconfig found and not running in-cluster",
                 "Place a kubeconfig at ~/.kube/config or set KUBECONFIG; for multiple clusters set "
                 "K8S_CONTEXTS/DEFAULT_K8S_CONTEXT; use the kubernetes-mesh-provisioner skill to stand up an RKE2 cluster",
             )
@@ -472,7 +472,7 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
             (
                 "in-cluster service account"
                 if in_cluster
-                else f"kubeconfig at {kubeconfig}"
+                else "configured kubeconfig"
             ),
         )
     )
@@ -505,10 +505,10 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
         except Exception as e:
             checks.append(
                 _check(
-                    f"kubernetes context {label}",
+                    "kubernetes context",
                     "kubernetes",
                     "fail",
-                    f"cannot construct a client for context '{label}': {e}",
+                    f"cannot construct a client: {type(e).__name__}",
                     "Install the kubernetes client and ensure the context exists in kubeconfig "
                     "(`kubectl config get-contexts`)",
                 )
@@ -524,10 +524,10 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
             ):
                 checks.append(
                     _check(
-                        f"kubeconfig valid ({label})",
+                        "kubeconfig valid",
                         "kubernetes",
                         "fail",
-                        f"validate_kubeconfig reported: {validation.get('error', 'invalid')}",
+                        "validate_kubeconfig reported an invalid configuration",
                         "Fix the kubeconfig for this context (`kubectl config view`)",
                     )
                 )
@@ -542,10 +542,10 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
                 nodes = manager.list_nodes()
                 node_detail = f", {len(nodes)} node(s)"
             except Exception as ne:
-                node_detail = f" (node list failed: {ne})"
+                node_detail = f" (node list failed: {type(ne).__name__})"
             checks.append(
                 _check(
-                    f"kubernetes context {label}",
+                    "kubernetes context",
                     "kubernetes",
                     "ok",
                     f"API reachable, server {v}{node_detail}",
@@ -554,12 +554,11 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
         except Exception as e:
             checks.append(
                 _check(
-                    f"kubernetes context {label}",
+                    "kubernetes context",
                     "kubernetes",
                     "fail",
-                    f"cluster unreachable for context '{label}': {e}",
-                    f"Verify the cluster is up and context '{label}' points at a reachable API server "
-                    f"(`kubectl --context {label} get nodes`); use the kubernetes-mesh-provisioner "
+                    f"cluster unreachable: {type(e).__name__}",
+                    "Verify the cluster is up and the configured context points at a reachable API server; use the kubernetes-mesh-provisioner "
                     "skill to (re)provision RKE2",
                 )
             )
@@ -621,7 +620,7 @@ def run_doctor(
                 "doctor",
                 "doctor",
                 "fail",
-                f"unexpected internal error: {e}",
+                f"unexpected internal error: {type(e).__name__}",
                 "This is a bug in the doctor — please report it",
             )
         )

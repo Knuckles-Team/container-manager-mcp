@@ -9,10 +9,10 @@ description = "Container Manager - manage Docker, Docker Swarm, and Podman conta
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.11, <3.15"
-dependencies = [ "agent-utilities[mcp]>=1.0.0", "docker[ssh]>=7.1.0", "tunnel-manager>=2.0.0",]
+dependencies = [ "agent-utilities[mcp]>=1.27.1,<2.0.0", "docker[ssh]>=7.1.0", "tunnel-manager>=2.0.0",]
 [[project.authors]]
-name = "Audel Rouhi"
-email = "knucklessg1@gmail.com"
+name = "Project Maintainers"
+email = "maintainers@users.noreply.github.com"
 
 [project.license]
 text = "MIT"
@@ -21,8 +21,8 @@ text = "MIT"
 podman = [ "podman>=5.6.0",]
 docker = [ "docker[ssh]>=7.1.0",]
 kubernetes = [ "kubernetes>=29.0.0",]
-mcp = [ "agent-utilities[mcp]>=1.0.0", "docker[ssh]>=7.1.0", "podman>=5.6.0", "kubernetes>=29.0.0",]
-agent = [ "agent-utilities[agent,logfire]>=1.0.0", "container-manager-mcp[mcp]>=2.0.0",]
+mcp = [ "agent-utilities[mcp]>=1.27.1,<2.0.0", "docker[ssh]>=7.1.0", "podman>=5.6.0", "kubernetes>=29.0.0",]
+agent = [ "agent-utilities[agent-runtime,logfire]>=1.27.1,<2.0.0", "container-manager-mcp[mcp]>=2.0.0",]
 all = [ "container-manager-mcp[docker,podman,kubernetes,mcp,agent]>=2.0.0",]
 test = [
     "pytest-xdist>=3.6.0", "pytest", "pytest-asyncio", "pytest-cov",]

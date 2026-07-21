@@ -52,7 +52,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_configmaps", params, error=e)
-            raise RuntimeError(f"Failed to list configmaps: {str(e)}") from e
+            raise RuntimeError("Failed to list configmaps") from e
 
     def create_configmap(
         self,
@@ -89,7 +89,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_configmap", params, error=e)
-            raise RuntimeError(f"Failed to create configmap: {str(e)}") from e
+            raise RuntimeError("Failed to create configmap") from e
 
     def list_secrets(self, namespace: str | None = None) -> list[dict]:
         """List all Secrets (metadata only, no data values)."""
@@ -110,7 +110,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_secrets", params, error=e)
-            raise RuntimeError(f"Failed to list secrets: {str(e)}") from e
+            raise RuntimeError("Failed to list secrets") from e
 
     def create_secret(
         self,
@@ -142,7 +142,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_secret", params, error=e)
-            raise RuntimeError(f"Failed to create secret: {str(e)}") from e
+            raise RuntimeError("Failed to create secret") from e
 
     def list_namespaces(self) -> list[dict]:
         """List all namespaces."""
@@ -162,7 +162,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_namespaces", params, error=e)
-            raise RuntimeError(f"Failed to list namespaces: {str(e)}") from e
+            raise RuntimeError("Failed to list namespaces") from e
 
     def list_events(
         self, namespace: str | None = None, field_selector: str | None = None
@@ -193,7 +193,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_events", params, error=e)
-            raise RuntimeError(f"Failed to list events: {str(e)}") from e
+            raise RuntimeError("Failed to list events") from e
 
     def list_crds(self) -> list[dict]:
         """List Custom Resource Definitions."""
@@ -220,7 +220,7 @@ class ConfigMixin:
             raise RuntimeError("API extensions client not available") from None
         except _km.ApiException as e:
             self.log_action("list_crds", params, error=e)
-            raise RuntimeError(f"Failed to list CRDs: {str(e)}") from e
+            raise RuntimeError("Failed to list CRDs") from e
 
     def describe_crd(self, crd_name: str) -> dict:
         """Get detailed CRD information."""
@@ -235,7 +235,7 @@ class ConfigMixin:
             raise RuntimeError("API extensions client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_crd", params, error=e)
-            raise RuntimeError(f"Failed to describe CRD: {str(e)}") from e
+            raise RuntimeError("Failed to describe CRD") from e
 
     def list_custom_resources(
         self, group: str, version: str, plural: str, namespace: str | None = None
@@ -278,7 +278,7 @@ class ConfigMixin:
             raise RuntimeError("Dynamic client not available") from None
         except Exception as e:
             self.log_action("list_custom_resources", params, error=e)
-            raise RuntimeError(f"Failed to list custom resources: {str(e)}") from e
+            raise RuntimeError("Failed to list custom resources") from e
 
     def patch_resource(
         self,
@@ -353,7 +353,7 @@ class ConfigMixin:
         except _km.ApiException as e:
             self.log_action("patch_resource", params, error=e)
             raise RuntimeError(
-                f"Failed to patch {resource_type} {name}: {str(e)}"
+                f"Failed to patch {resource_type} {name}: {type(e).__name__}"
             ) from e
 
     def label_resource(
@@ -430,7 +430,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_namespace", params, error=e)
-            raise RuntimeError(f"Failed to create namespace: {str(e)}") from e
+            raise RuntimeError("Failed to create namespace") from e
 
     def delete_namespace(self, name: str) -> dict:
         """Delete a namespace."""
@@ -442,7 +442,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("delete_namespace", params, error=e)
-            raise RuntimeError(f"Failed to delete namespace: {str(e)}") from e
+            raise RuntimeError("Failed to delete namespace") from e
 
     def compare_configmap_state(
         self, name: str, namespace: str, expected_data: dict
@@ -484,7 +484,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("compare_configmap_state", params, error=e)
-            raise RuntimeError(f"Failed to compare ConfigMap state: {str(e)}") from e
+            raise RuntimeError("Failed to compare ConfigMap state") from e
 
     def sync_configmap_from_file(
         self, name: str, namespace: str, file_path: str
@@ -495,7 +495,7 @@ class ConfigMixin:
             import os
 
             if not os.path.exists(file_path):
-                raise FileNotFoundError(f"File not found: {file_path}")
+                raise FileNotFoundError("Configured file was not found")
 
             with open(file_path) as f:
                 content = f.read()
@@ -522,7 +522,7 @@ class ConfigMixin:
             return result
         except Exception as e:
             self.log_action("sync_configmap_from_file", params, error=e)
-            raise RuntimeError(f"Failed to sync ConfigMap from file: {str(e)}") from e
+            raise RuntimeError("Failed to sync ConfigMap from file") from e
 
     def get_secret_state_hash(self, name: str, namespace: str) -> dict:
         """Get hash of Secret state for comparison."""
@@ -550,7 +550,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_secret_state_hash", params, error=e)
-            raise RuntimeError(f"Failed to get Secret state hash: {str(e)}") from e
+            raise RuntimeError("Failed to get Secret state hash") from e
 
     def track_resource_version(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -590,7 +590,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("track_resource_version", params, error=e)
-            raise RuntimeError(f"Failed to track resource version: {str(e)}") from e
+            raise RuntimeError("Failed to track resource version") from e
 
     def wait_for_resource_version(
         self,
@@ -636,7 +636,7 @@ class ConfigMixin:
             }
         except Exception as e:
             self.log_action("wait_for_resource_version", params, error=e)
-            raise RuntimeError(f"Failed to wait for resource version: {str(e)}") from e
+            raise RuntimeError("Failed to wait for resource version") from e
 
     def watch_resource(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -692,7 +692,7 @@ class ConfigMixin:
             return result
         except Exception as e:
             self.log_action("watch_resource", params, error=e)
-            raise RuntimeError(f"Failed to watch resource: {str(e)}") from e
+            raise RuntimeError("Failed to watch resource") from e
 
     def stream_pod_logs(
         self, pod_name: str, namespace: str, tail_lines: int = 100
@@ -719,7 +719,7 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("stream_pod_logs", params, error=e)
-            raise RuntimeError(f"Failed to stream pod logs: {str(e)}") from e
+            raise RuntimeError("Failed to stream pod logs") from e
 
     def get_resource_events(
         self, resource_type: str, name: str, namespace: str | None = None
@@ -757,7 +757,7 @@ class ConfigMixin:
             return resource_events
         except _km.ApiException as e:
             self.log_action("get_resource_events", params, error=e)
-            raise RuntimeError(f"Failed to get resource events: {str(e)}") from e
+            raise RuntimeError("Failed to get resource events") from e
 
     def list_field_selector(
         self, resource_type: str, field_selector: str, namespace: str | None = None
@@ -791,4 +791,4 @@ class ConfigMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_field_selector", params, error=e)
-            raise RuntimeError(f"Failed to list with field selector: {str(e)}") from e
+            raise RuntimeError("Failed to list with field selector") from e

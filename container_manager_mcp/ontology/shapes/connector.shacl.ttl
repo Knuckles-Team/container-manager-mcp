@@ -1,0 +1,244 @@
+@prefix : <http://knuckles.team/kg#> .
+@prefix shape: <http://knuckles.team/kg/container/shape#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+shape:ContainerNetworkGovernanceShape a sh:NodeShape ;
+    sh:targetClass :ContainerNetwork ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:ContainerVolumeGovernanceShape a sh:NodeShape ;
+    sh:targetClass :ContainerVolume ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:DaemonSetGovernanceShape a sh:NodeShape ;
+    sh:targetClass :DaemonSet ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:DeploymentGovernanceShape a sh:NodeShape ;
+    sh:targetClass :Deployment ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:IngressGovernanceShape a sh:NodeShape ;
+    sh:targetClass :Ingress ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:K8sNodeGovernanceShape a sh:NodeShape ;
+    sh:targetClass :K8sNode ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:K8sServiceGovernanceShape a sh:NodeShape ;
+    sh:targetClass :K8sService ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:NamespaceGovernanceShape a sh:NodeShape ;
+    sh:targetClass :Namespace ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:PodGovernanceShape a sh:NodeShape ;
+    sh:targetClass :Pod ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:StatefulSetGovernanceShape a sh:NodeShape ;
+    sh:targetClass :StatefulSet ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:SwarmNodeGovernanceShape a sh:NodeShape ;
+    sh:targetClass :SwarmNode ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .
+
+shape:SwarmServiceGovernanceShape a sh:NodeShape ;
+    sh:targetClass :SwarmService ;
+    sh:closed false ;
+    sh:property [
+        sh:path :sourceRecordRef ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :tenantReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :accessPolicyReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] ;
+    sh:property [
+        sh:path :provenanceReference ;
+        sh:minCount 1 ; sh:maxCount 1 ; sh:datatype xsd:string
+    ] .

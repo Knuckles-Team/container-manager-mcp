@@ -10,7 +10,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import traceback
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
@@ -71,6 +70,20 @@ def _build_exec_result(
     }
 
 
+def _privacy_safe_shape(value: Any) -> str:
+    """Describe a value without serializing operator data into logs."""
+
+    if value is None:
+        return "none"
+    if isinstance(value, dict):
+        return f"mapping(keys={len(value)})"
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return f"collection(items={len(value)})"
+    if isinstance(value, (bytes, bytearray, memoryview, str)):
+        return f"{type(value).__name__}(length={len(value)})"
+    return type(value).__name__
+
+
 class ContainerManagerBase(ABC):
     def __init__(self, silent: bool = False, log_file: str | None = None):
         self.silent = silent
@@ -86,7 +99,7 @@ class ContainerManagerBase(ABC):
             format="%(asctime)s - %(levelname)s - %(message)s",
         )
         self.logger = logging.getLogger(__name__)
-        self.logger.info(f"Logging initialized to {log_file}")
+        self.logger.info("Container manager logging initialized")
 
     def log_action(
         self,
@@ -95,14 +108,43 @@ class ContainerManagerBase(ABC):
         result: Any | None = None,
         error: Exception | None = None,
     ):
-        self.logger.info(f"Performing action: {action} with params: {params}")
-        if result:
-            self.logger.info(f"Result: {result}")
+        safe_action = (
+            action
+            if action
+            and len(action) <= 64
+            and all(char.isalnum() or char in "_.-" for char in action)
+            else "custom_action"
+        )
+        parameter_count = len(params) if isinstance(params, dict) else 0
+        self.logger.info(
+            "Container action started: action=%s parameter_count=%d",
+            safe_action,
+            parameter_count,
+        )
+        if result is not None:
+            self.logger.info(
+                "Container action completed: action=%s result_shape=%s",
+                safe_action,
+                _privacy_safe_shape(result),
+            )
         if error:
             self.logger.error(
-                f"Error in {action}: {type(error).__name__}: {str(error)}"
+                "Container action failed: action=%s error_type=%s",
+                safe_action,
+                type(error).__name__,
             )
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
+
+    def _extract_image_labels(self, attrs: dict) -> dict[str, str] | None:
+        """Return an image's OCI labels from either list-summary or inspect ``attrs``.
+
+        The Docker/Podman ``/images/json`` list summary carries ``Labels`` at the
+        top level; the ``/images/{id}/json`` inspect shape nests them under
+        ``Config.Labels``. Checked in that order so either source works.
+        """
+        labels = attrs.get("Labels")
+        if not labels:
+            labels = (attrs.get("Config") or {}).get("Labels")
+        return labels or None
 
     def _extract_image_labels(self, attrs: dict) -> dict[str, str] | None:
         """Return an image's OCI labels from either list-summary or inspect ``attrs``.
@@ -425,24 +467,23 @@ class DockerManager(ContainerManagerBase):
         try:
             if host:
                 host_info = resolve_host_from_inventory(host)
-                user = host_info.get("user", "genius")
+                user = host_info.get("user")
                 hostname = host_info.get("hostname")
                 port = host_info.get("port", 22)
                 if not hostname:
                     raise ValueError(
-                        f"No hostname specified for host '{host}' in configuration"
+                        "No hostname was specified for the configured host"
                     )
 
-                base_url = f"ssh://{user}@{hostname}:{port}"
-                self.logger.info(f"Connecting to remote Docker daemon at {base_url}")
+                authority = f"{user}@" if user else ""
+                base_url = f"ssh://{authority}{hostname}:{port}"
+                self.logger.info("Connecting to configured remote Docker daemon")
                 self.client = docker.DockerClient(base_url=base_url)  # type: ignore
             else:
                 self.client = docker.from_env()  # type: ignore
         except Exception as e:
-            self.logger.error(f"Failed to connect to Docker daemon: {str(e)}")
-            raise RuntimeError(
-                f"Host '{host or 'localhost'}' is offline or unreachable via SSH, or Docker daemon is not running: {str(e)}"
-            ) from e
+            self.logger.error("Operation failed: error_type=%s", type(e).__name__)
+            raise RuntimeError("Configured Docker daemon is unavailable") from e
 
     def prune_system(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
@@ -457,7 +498,10 @@ class DockerManager(ContainerManagerBase):
                     "VolumesDeleted": [],
                     "NetworksDeleted": [],
                 }
-            self.logger.debug(f"Raw prune_system result: {result}")
+            self.logger.debug(
+                "Container prune result received: shape=%s",
+                _privacy_safe_shape(result),
+            )
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "images_removed": (
@@ -486,7 +530,7 @@ class DockerManager(ContainerManagerBase):
             return pruned
         except Exception as e:
             self.log_action("prune_system", params, error=e)
-            raise RuntimeError(f"Failed to prune system: {str(e)}") from e
+            raise RuntimeError("Failed to prune system") from e
 
     def get_version(self) -> dict:
         params: dict[str, Any] = {}
@@ -503,7 +547,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("get_version", params, error=e)
-            raise RuntimeError(f"Failed to get version: {str(e)}") from e
+            raise RuntimeError("Failed to get version") from e
 
     def get_info(self) -> dict:
         params: dict[str, Any] = {}
@@ -522,7 +566,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("get_info", params, error=e)
-            raise RuntimeError(f"Failed to get info: {str(e)}") from e
+            raise RuntimeError("Failed to get info") from e
 
     def list_images(self) -> list[ImageInfo]:
         params: dict[str, Any] = {}
@@ -561,7 +605,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_images", params, error=e)
-            raise RuntimeError(f"Failed to list images: {str(e)}") from e
+            raise RuntimeError("Failed to list images") from e
 
     def pull_image(
         self, image: str, tag: str = "latest", platform: str | None = None
@@ -594,7 +638,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("pull_image", params, error=e)
-            raise RuntimeError(f"Failed to pull image: {str(e)}") from e
+            raise RuntimeError("Failed to pull image") from e
 
     def remove_image(self, image: str, force: bool = False) -> dict:
         params = {"image": image, "force": force}
@@ -605,7 +649,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_image", params, error=e)
-            raise RuntimeError(f"Failed to remove image: {str(e)}") from e
+            raise RuntimeError("Failed to remove image") from e
 
     def prune_images(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
@@ -620,7 +664,7 @@ class DockerManager(ContainerManagerBase):
                             removed.append(img.attrs["Id"][7:19])
                     except Exception as e:
                         self.logger.info(
-                            f"Info: Failed to remove image {img.attrs.get('Id', 'unknown')}: {e}"
+                            "Image removal failed: error_type=%s", type(e).__name__
                         )
                         continue
                 result = {
@@ -632,7 +676,10 @@ class DockerManager(ContainerManagerBase):
                 result = self.client.images.prune(filters=filters)
                 if result is None:
                     result = {"SpaceReclaimed": 0, "ImagesDeleted": []}  # type: ignore
-                self.logger.debug(f"Raw prune_images result: {result}")
+                self.logger.debug(
+                    "Image prune result received: shape=%s",
+                    _privacy_safe_shape(result),
+                )
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
                     space_reclaimed = 0
@@ -658,7 +705,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("prune_images", params, error=e)
-            raise RuntimeError(f"Failed to prune images: {str(e)}") from e
+            raise RuntimeError("Failed to prune images") from e
 
     def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         params = {"all": all}
@@ -690,7 +737,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_containers", params, error=e)
-            raise RuntimeError(f"Failed to list containers: {str(e)}") from e
+            raise RuntimeError("Failed to list containers") from e
 
     def run_container(
         self,
@@ -754,7 +801,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("run_container", params, error=e)
-            raise RuntimeError(f"Failed to run container: {str(e)}") from e
+            raise RuntimeError("Failed to run container") from e
 
     def inspect_container(self, container_id: str) -> dict:
         params = {"container_id": container_id}
@@ -765,7 +812,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("inspect_container", params, error=e)
-            raise RuntimeError(f"Failed to inspect container: {str(e)}") from e
+            raise RuntimeError("Failed to inspect container") from e
 
     def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         params = {"container_id": container_id, "timeout": timeout}
@@ -777,7 +824,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("stop_container", params, error=e)
-            raise RuntimeError(f"Failed to stop container: {str(e)}") from e
+            raise RuntimeError("Failed to stop container") from e
 
     def remove_container(self, container_id: str, force: bool = False) -> dict:
         params = {"container_id": container_id, "force": force}
@@ -789,13 +836,16 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_container", params, error=e)
-            raise RuntimeError(f"Failed to remove container: {str(e)}") from e
+            raise RuntimeError("Failed to remove container") from e
 
     def prune_containers(self) -> dict:
         params: dict[str, Any] = {}
         try:
             result = self.client.containers.prune()
-            self.logger.debug(f"Raw prune_containers result: {result}")
+            self.logger.debug(
+                "Container prune result received: shape=%s",
+                _privacy_safe_shape(result),
+            )
             if result is None:
                 result = {"SpaceReclaimed": 0, "ContainersDeleted": []}
             pruned = {
@@ -810,17 +860,15 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_containers", params, pruned)
             return pruned
         except TypeError as e:
-            self.logger.error(f"TypeError in prune_containers: {str(e)}")
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
+            self.logger.error("Container prune failed: error_type=TypeError")
             self.log_action("prune_containers", params, error=e)
-            raise RuntimeError(f"Failed to prune containers: {str(e)}") from e
+            raise RuntimeError("Failed to prune containers") from e
         except Exception as e:
             self.logger.error(
-                f"Unexpected exception in prune_containers: {type(e).__name__}: {str(e)}"
+                "Container prune failed: error_type=%s", type(e).__name__
             )
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
             self.log_action("prune_containers", params, error=e)
-            raise RuntimeError(f"Failed to prune containers: {str(e)}") from e
+            raise RuntimeError("Failed to prune containers") from e
 
     def get_container_logs(self, container_id: str, tail: str = "50") -> str:
         params = {"container_id": container_id, "tail": tail}
@@ -831,7 +879,7 @@ class DockerManager(ContainerManagerBase):
             return logs
         except Exception as e:
             self.log_action("get_container_logs", params, error=e)
-            raise RuntimeError(f"Failed to get container logs: {str(e)}") from e
+            raise RuntimeError("Failed to get container logs") from e
 
     def exec_in_container(
         self,
@@ -857,7 +905,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("exec_in_container", params, error=e)
-            raise RuntimeError(f"Failed to exec in container: {str(e)}") from e
+            raise RuntimeError("Failed to exec in container") from e
 
     def list_volumes(self) -> list[VolumeInfo]:
         params: dict[str, Any] = {}
@@ -878,7 +926,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_volumes", params, error=e)
-            raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
+            raise RuntimeError("Failed to list volumes") from e
 
     def create_volume(self, name: str) -> VolumeInfo:
         params = {"name": name}
@@ -897,7 +945,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("create_volume", params, error=e)
-            raise RuntimeError(f"Failed to create volume: {str(e)}") from e
+            raise RuntimeError("Failed to create volume") from e
 
     def remove_volume(self, name: str, force: bool = False) -> dict:
         params = {"name": name, "force": force}
@@ -909,7 +957,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_volume", params, error=e)
-            raise RuntimeError(f"Failed to remove volume: {str(e)}") from e
+            raise RuntimeError("Failed to remove volume") from e
 
     def prune_volumes(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
@@ -923,7 +971,7 @@ class DockerManager(ContainerManagerBase):
                         removed.append(v.attrs["Name"])
                     except Exception as e:
                         self.logger.info(
-                            f"Info: Failed to remove volume {v.attrs.get('Name', 'unknown')}: {e}"
+                            "Volume removal failed: error_type=%s", type(e).__name__
                         )
                         continue
                 result = {
@@ -934,7 +982,10 @@ class DockerManager(ContainerManagerBase):
                 result = self.client.volumes.prune()
                 if result is None:
                     result = {"SpaceReclaimed": 0, "VolumesDeleted": []}  # type: ignore
-                self.logger.debug(f"Raw prune_volumes result: {result}")
+                self.logger.debug(
+                    "Volume prune result received: shape=%s",
+                    _privacy_safe_shape(result),
+                )
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
                     space_reclaimed = 0
@@ -952,7 +1003,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("prune_volumes", params, error=e)
-            raise RuntimeError(f"Failed to prune volumes: {str(e)}") from e
+            raise RuntimeError("Failed to prune volumes") from e
 
     def list_networks(self) -> list[NetworkInfo]:
         params: dict[str, Any] = {}
@@ -977,7 +1028,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_networks", params, error=e)
-            raise RuntimeError(f"Failed to list networks: {str(e)}") from e
+            raise RuntimeError("Failed to list networks") from e
 
     def create_network(self, name: str, driver: str = "bridge") -> NetworkInfo:
         params = {"name": name, "driver": driver}
@@ -999,7 +1050,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("create_network", params, error=e)
-            raise RuntimeError(f"Failed to create network: {str(e)}") from e
+            raise RuntimeError("Failed to create network") from e
 
     def remove_network(self, network_id: str) -> dict:
         params = {"network_id": network_id}
@@ -1011,7 +1062,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_network", params, error=e)
-            raise RuntimeError(f"Failed to remove network: {str(e)}") from e
+            raise RuntimeError("Failed to remove network") from e
 
     def prune_networks(self) -> dict:
         params: dict[str, Any] = {}
@@ -1019,7 +1070,10 @@ class DockerManager(ContainerManagerBase):
             result = self.client.networks.prune()
             if result is None:
                 result = {"SpaceReclaimed": 0, "NetworksDeleted": []}
-            self.logger.debug(f"Raw prune_networks result: {result}")
+            self.logger.debug(
+                "Network prune result received: shape=%s",
+                _privacy_safe_shape(result),
+            )
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "networks_removed": (
@@ -1033,7 +1087,7 @@ class DockerManager(ContainerManagerBase):
             return pruned
         except Exception as e:
             self.log_action("prune_networks", params, error=e)
-            raise RuntimeError(f"Failed to prune networks: {str(e)}") from e
+            raise RuntimeError("Failed to prune networks") from e
 
     def compose_up(
         self, compose_file: str, detach: bool = True, build: bool = False
@@ -1052,7 +1106,7 @@ class DockerManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_up", params, error=e)
-            raise RuntimeError(f"Failed to compose up: {str(e)}") from e
+            raise RuntimeError("Failed to compose up") from e
 
     def compose_down(self, compose_file: str) -> str:
         params = {"compose_file": compose_file}
@@ -1065,7 +1119,7 @@ class DockerManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_down", params, error=e)
-            raise RuntimeError(f"Failed to compose down: {str(e)}") from e
+            raise RuntimeError("Failed to compose down") from e
 
     def compose_ps(self, compose_file: str) -> str:
         params = {"compose_file": compose_file}
@@ -1078,7 +1132,7 @@ class DockerManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_ps", params, error=e)
-            raise RuntimeError(f"Failed to compose ps: {str(e)}") from e
+            raise RuntimeError("Failed to compose ps") from e
 
     def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         params = {"compose_file": compose_file, "service": service}
@@ -1093,7 +1147,7 @@ class DockerManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_logs", params, error=e)
-            raise RuntimeError(f"Failed to compose logs: {str(e)}") from e
+            raise RuntimeError("Failed to compose logs") from e
 
     def init_swarm(self, advertise_addr: str | None = None) -> dict:
         params = {"advertise_addr": advertise_addr}
@@ -1104,7 +1158,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("init_swarm", params, error=e)
-            raise RuntimeError(f"Failed to init swarm: {str(e)}") from e
+            raise RuntimeError("Failed to init swarm") from e
 
     def leave_swarm(self, force: bool = False) -> dict:
         params = {"force": force}
@@ -1115,7 +1169,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("leave_swarm", params, error=e)
-            raise RuntimeError(f"Failed to leave swarm: {str(e)}") from e
+            raise RuntimeError("Failed to leave swarm") from e
 
     def list_nodes(self) -> list[dict]:
         params: dict[str, Any] = {}
@@ -1142,7 +1196,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_nodes", params, error=e)
-            raise RuntimeError(f"Failed to list nodes: {str(e)}") from e
+            raise RuntimeError("Failed to list nodes") from e
 
     def list_services(self) -> list[dict]:
         params: dict[str, Any] = {}
@@ -1179,7 +1233,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_services", params, error=e)
-            raise RuntimeError(f"Failed to list services: {str(e)}") from e
+            raise RuntimeError("Failed to list services") from e
 
     def create_service(
         self,
@@ -1243,7 +1297,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("create_service", params, error=e)
-            raise RuntimeError(f"Failed to create service: {str(e)}") from e
+            raise RuntimeError("Failed to create service") from e
 
     def remove_service(self, service_id: str) -> dict:
         params = {"service_id": service_id}
@@ -1255,7 +1309,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_service", params, error=e)
-            raise RuntimeError(f"Failed to remove service: {str(e)}") from e
+            raise RuntimeError("Failed to remove service") from e
 
     # ------------------------------------------------------------------
     # Swarm node operations
@@ -1304,7 +1358,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("inspect_node", params, error=e)
-            raise RuntimeError(f"Failed to inspect node: {str(e)}") from e
+            raise RuntimeError("Failed to inspect node") from e
 
     def update_node(
         self,
@@ -1348,7 +1402,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("update_node", params, error=e)
-            raise RuntimeError(f"Failed to update node: {str(e)}") from e
+            raise RuntimeError("Failed to update node") from e
 
     def remove_node(self, node_id: str, force: bool = False) -> dict:
         params = {"node_id": node_id, "force": force}
@@ -1360,7 +1414,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_node", params, error=e)
-            raise RuntimeError(f"Failed to remove node: {str(e)}") from e
+            raise RuntimeError("Failed to remove node") from e
 
     # ------------------------------------------------------------------
     # Swarm service operations
@@ -1374,7 +1428,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("inspect_service", params, error=e)
-            raise RuntimeError(f"Failed to inspect service: {str(e)}") from e
+            raise RuntimeError("Failed to inspect service") from e
 
     def scale_service(self, service_id: str, replicas: int) -> dict:
         params = {"service_id": service_id, "replicas": replicas}
@@ -1386,7 +1440,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("scale_service", params, error=e)
-            raise RuntimeError(f"Failed to scale service: {str(e)}") from e
+            raise RuntimeError("Failed to scale service") from e
 
     def update_service(
         self,
@@ -1457,7 +1511,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("update_service", params, error=e)
-            raise RuntimeError(f"Failed to update service: {str(e)}") from e
+            raise RuntimeError("Failed to update service") from e
 
     def service_ps(self, service_id: str) -> list[dict]:
         params = {"service_id": service_id}
@@ -1480,7 +1534,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("service_ps", params, error=e)
-            raise RuntimeError(f"Failed to list service tasks: {str(e)}") from e
+            raise RuntimeError("Failed to list service tasks") from e
 
     def service_logs(self, service_id: str, tail: int = 100) -> dict:
         params = {"service_id": service_id, "tail": tail}
@@ -1496,7 +1550,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("service_logs", params, error=e)
-            raise RuntimeError(f"Failed to get service logs: {str(e)}") from e
+            raise RuntimeError("Failed to get service logs") from e
 
     # ------------------------------------------------------------------
     # Swarm / service / stack / config / secret / node operations
@@ -1525,7 +1579,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_swarm_init", params, error=e)
-            raise RuntimeError(f"Failed to initialize swarm: {str(e)}") from e
+            raise RuntimeError("Failed to initialize swarm") from e
 
     def docker_swarm_join(
         self, remote_addr: str, token: str, worker: bool = True
@@ -1541,7 +1595,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_swarm_join", params, error=e)
-            raise RuntimeError(f"Failed to join swarm: {str(e)}") from e
+            raise RuntimeError("Failed to join swarm") from e
 
     def docker_swarm_leave(self, force: bool = False) -> dict:
         """Leave the swarm (real ``swarm.leave`` via :meth:`leave_swarm`)."""
@@ -1552,7 +1606,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_swarm_leave", params, error=e)
-            raise RuntimeError(f"Failed to leave swarm: {str(e)}") from e
+            raise RuntimeError("Failed to leave swarm") from e
 
     @staticmethod
     def _ports_list_to_map(ports: list | None) -> dict[str, str] | None:
@@ -1595,7 +1649,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_service_create", params, error=e)
-            raise RuntimeError(f"Failed to create service: {str(e)}") from e
+            raise RuntimeError("Failed to create service") from e
 
     def docker_service_list(self) -> list[dict]:
         """List services (real ``services.list`` via :meth:`list_services`)."""
@@ -1638,7 +1692,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_service_ps", params, error=e)
-            raise RuntimeError(f"Failed to list service tasks: {str(e)}") from e
+            raise RuntimeError("Failed to list service tasks") from e
 
     def docker_stack_deploy(self, stack_name: str, compose_file: str) -> dict:
         """Deploy a stack via ``docker stack deploy`` (no SDK equivalent)."""
@@ -1658,7 +1712,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_stack_deploy", params, error=e)
-            raise RuntimeError(f"Failed to deploy stack: {str(e)}") from e
+            raise RuntimeError("Failed to deploy stack") from e
 
     def docker_stack_services(self, stack_name: str) -> list[dict]:
         """List a stack's services via ``docker stack services`` (no SDK)."""
@@ -1691,7 +1745,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_stack_services", params, error=e)
-            raise RuntimeError(f"Failed to list stack services: {str(e)}") from e
+            raise RuntimeError("Failed to list stack services") from e
 
     def docker_stack_rm(self, stack_name: str) -> dict:
         """Remove a stack via ``docker stack rm`` (no SDK equivalent)."""
@@ -1707,7 +1761,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_stack_rm", params, error=e)
-            raise RuntimeError(f"Failed to remove stack: {str(e)}") from e
+            raise RuntimeError("Failed to remove stack") from e
 
     def docker_config_create(self, config_name: str, data: str) -> dict:
         """Create a swarm config (real ``configs.create``)."""
@@ -1725,7 +1779,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_config_create", params, error=e)
-            raise RuntimeError(f"Failed to create config: {str(e)}") from e
+            raise RuntimeError("Failed to create config") from e
 
     def docker_config_list(self) -> list[dict]:
         """List swarm configs (real ``configs.list``)."""
@@ -1745,7 +1799,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_config_list", params, error=e)
-            raise RuntimeError(f"Failed to list configs: {str(e)}") from e
+            raise RuntimeError("Failed to list configs") from e
 
     def docker_secret_create(self, secret_name: str, data: str) -> dict:
         """Create a swarm secret (real ``secrets.create``)."""
@@ -1763,7 +1817,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_secret_create", params, error=e)
-            raise RuntimeError(f"Failed to create secret: {str(e)}") from e
+            raise RuntimeError("Failed to create secret") from e
 
     def docker_secret_list(self) -> list[dict]:
         """List swarm secrets (real ``secrets.list``)."""
@@ -1783,7 +1837,7 @@ class DockerManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("docker_secret_list", params, error=e)
-            raise RuntimeError(f"Failed to list secrets: {str(e)}") from e
+            raise RuntimeError("Failed to list secrets") from e
 
     def docker_node_ls(self) -> list[dict]:
         """List swarm nodes (real ``nodes.list`` via :meth:`list_nodes`)."""
@@ -1811,14 +1865,13 @@ class PodmanManager(ContainerManagerBase):
             raise RuntimeError("Failed to connect to Podman: No valid socket found")
         try:
             self.client = PodmanClient(base_url=base_url)
-            self.logger.info(f"Connected to Podman with base_url: {base_url}")
+            self.logger.info("Connected to configured Podman daemon")
         except PodmanError as e:
             self.logger.error(
-                f"Failed to connect to Podman daemon with {base_url}: {str(e)}"
+                "Failed to connect to Podman daemon: error_type=%s",
+                type(e).__name__,
             )
-            raise RuntimeError(
-                f"Failed to connect to Podman with {base_url}: {str(e)}"
-            ) from e
+            raise RuntimeError("Configured Podman daemon is unavailable") from e
 
     def _is_wsl(self) -> bool:
         """Check if running inside WSL2."""
@@ -1848,7 +1901,7 @@ class PodmanManager(ContainerManagerBase):
             client.version()
             return client
         except (PodmanError, Exception) as e:
-            self.logger.debug(f"Connection failed for {base_url}: {str(e)}")
+            self.logger.debug("Operation failed: error_type=%s", type(e).__name__)
             return None
 
     def _get_podman_cli_sockets(self) -> list[str]:
@@ -1877,7 +1930,7 @@ class PodmanManager(ContainerManagerBase):
                 except json.JSONDecodeError:
                     return []
         except Exception as e:
-            self.logger.debug(f"Failed to get sockets from podman CLI: {e}")
+            self.logger.debug("Operation failed: error_type=%s", type(e).__name__)
         return []
 
     def _autodetect_podman_url(self) -> str | None:
@@ -1939,7 +1992,7 @@ class PodmanManager(ContainerManagerBase):
 
             client = self._try_connect(url)
             if client:
-                self.logger.info(f"Autodetected Podman socket: {url}")
+                self.logger.info("Autodetected a Podman socket")
                 return url
 
         return None
@@ -1957,7 +2010,7 @@ class PodmanManager(ContainerManagerBase):
                             removed.append(img.attrs["Id"][7:19])
                     except Exception as e:
                         self.logger.info(
-                            f"Info: Failed to remove image {img.attrs.get('Id', 'unknown')}: {e}"
+                            "Image removal failed: error_type=%s", type(e).__name__
                         )
                         continue
                 result = {
@@ -1969,7 +2022,10 @@ class PodmanManager(ContainerManagerBase):
                 result = self.client.images.prune(filters=filters)
                 if result is None:
                     result = {"SpaceReclaimed": 0, "ImagesRemoved": []}  # type: ignore
-                self.logger.debug(f"Raw prune_images result: {result}")
+                self.logger.debug(
+                    "Image prune result received: shape=%s",
+                    _privacy_safe_shape(result),
+                )
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
                     space_reclaimed = 0
@@ -1985,13 +2041,16 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("prune_images", params, error=e)
-            raise RuntimeError(f"Failed to prune images: {str(e)}") from e
+            raise RuntimeError("Failed to prune images") from e
 
     def prune_containers(self) -> dict:
         params: dict[str, Any] = {}
         try:
             result = self.client.containers.prune()
-            self.logger.debug(f"Raw prune_containers result: {result}")
+            self.logger.debug(
+                "Container prune result received: shape=%s",
+                _privacy_safe_shape(result),
+            )
             if result is None:
                 result = {"SpaceReclaimed": 0, "ContainersDeleted": []}  # type: ignore
             pruned = {
@@ -2007,17 +2066,17 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_containers", params, pruned)
             return pruned
         except PodmanError as e:
-            self.logger.error(f"PodmanError in prune_containers: {str(e)}")
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
+            self.logger.error(
+                "Container prune failed: error_type=%s", type(e).__name__
+            )
             self.log_action("prune_containers", params, error=e)
-            raise RuntimeError(f"Failed to prune containers: {str(e)}") from e
+            raise RuntimeError("Failed to prune containers") from e
         except Exception as e:
             self.logger.error(
-                f"Unexpected exception in prune_containers: {type(e).__name__}: {str(e)}"
+                "Container prune failed: error_type=%s", type(e).__name__
             )
-            self.logger.error(f"Traceback: {traceback.format_exc()}")
             self.log_action("prune_containers", params, error=e)
-            raise RuntimeError(f"Failed to prune containers: {str(e)}") from e
+            raise RuntimeError("Failed to prune containers") from e
 
     def prune_volumes(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
@@ -2031,7 +2090,7 @@ class PodmanManager(ContainerManagerBase):
                         removed.append(v.attrs["Name"])
                     except Exception as e:
                         self.logger.info(
-                            f"Info: Failed to remove volume {v.attrs.get('Name', 'unknown')}: {e}"
+                            "Volume removal failed: error_type=%s", type(e).__name__
                         )
                         continue
                 result = {
@@ -2042,7 +2101,10 @@ class PodmanManager(ContainerManagerBase):
                 result = self.client.volumes.prune()
                 if result is None:
                     result = {"SpaceReclaimed": 0, "VolumesRemoved": []}  # type: ignore
-                self.logger.debug(f"Raw prune_volumes result: {result}")
+                self.logger.debug(
+                    "Volume prune result received: shape=%s",
+                    _privacy_safe_shape(result),
+                )
                 space_reclaimed = result.get("SpaceReclaimed", 0)
                 if not isinstance(space_reclaimed, (int, float)):
                     space_reclaimed = 0
@@ -2067,7 +2129,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("prune_volumes", params, error=e)
-            raise RuntimeError(f"Failed to prune volumes: {str(e)}") from e
+            raise RuntimeError("Failed to prune volumes") from e
 
     def prune_networks(self) -> dict:
         params: dict[str, Any] = {}
@@ -2075,7 +2137,10 @@ class PodmanManager(ContainerManagerBase):
             result = self.client.networks.prune()
             if result is None:
                 result = {"SpaceReclaimed": 0, "NetworksRemoved": []}
-            self.logger.debug(f"Raw prune_networks result: {result}")
+            self.logger.debug(
+                "Network prune result received: shape=%s",
+                _privacy_safe_shape(result),
+            )
             pruned = {
                 "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
                 "networks_removed": (
@@ -2093,7 +2158,7 @@ class PodmanManager(ContainerManagerBase):
             return pruned
         except Exception as e:
             self.log_action("prune_networks", params, error=e)
-            raise RuntimeError(f"Failed to prune networks: {str(e)}") from e
+            raise RuntimeError("Failed to prune networks") from e
 
     def prune_system(self, force: bool = False, all: bool = False) -> dict:
         params = {"force": force, "all": all}
@@ -2110,7 +2175,10 @@ class PodmanManager(ContainerManagerBase):
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
                 raise RuntimeError(result.stderr)
-            self.logger.debug(f"Raw prune_system result: {result.stdout}")
+            self.logger.debug(
+                "System prune command completed: output_shape=%s",
+                _privacy_safe_shape(result.stdout),
+            )
             pruned = {
                 "output": result.stdout.strip(),
                 "space_reclaimed": "Check output",
@@ -2123,7 +2191,7 @@ class PodmanManager(ContainerManagerBase):
             return pruned
         except Exception as e:
             self.log_action("prune_system", params, error=e)
-            raise RuntimeError(f"Failed to prune system: {str(e)}") from e
+            raise RuntimeError("Failed to prune system") from e
 
     def get_version(self) -> dict:
         params: dict[str, Any] = {}
@@ -2140,7 +2208,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("get_version", params, error=e)
-            raise RuntimeError(f"Failed to get version: {str(e)}") from e
+            raise RuntimeError("Failed to get version") from e
 
     def get_info(self) -> dict:
         params: dict[str, Any] = {}
@@ -2160,7 +2228,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("get_info", params, error=e)
-            raise RuntimeError(f"Failed to get info: {str(e)}") from e
+            raise RuntimeError("Failed to get info") from e
 
     def list_images(self) -> list[ImageInfo]:
         params: dict[str, Any] = {}
@@ -2195,7 +2263,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_images", params, error=e)
-            raise RuntimeError(f"Failed to list images: {str(e)}") from e
+            raise RuntimeError("Failed to list images") from e
 
     def pull_image(
         self, image: str, tag: str = "latest", platform: str | None = None
@@ -2228,7 +2296,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("pull_image", params, error=e)
-            raise RuntimeError(f"Failed to pull image: {str(e)}") from e
+            raise RuntimeError("Failed to pull image") from e
 
     def remove_image(self, image: str, force: bool = False) -> dict:
         params = {"image": image, "force": force}
@@ -2239,7 +2307,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_image", params, error=e)
-            raise RuntimeError(f"Failed to remove image: {str(e)}") from e
+            raise RuntimeError("Failed to remove image") from e
 
     def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         params = {"all": all}
@@ -2269,7 +2337,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_containers", params, error=e)
-            raise RuntimeError(f"Failed to list containers: {str(e)}") from e
+            raise RuntimeError("Failed to list containers") from e
 
     def run_container(
         self,
@@ -2338,7 +2406,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("run_container", params, error=e)
-            raise RuntimeError(f"Failed to run container: {str(e)}") from e
+            raise RuntimeError("Failed to run container") from e
 
     def inspect_container(self, container_id: str) -> dict:
         params = {"container_id": container_id}
@@ -2349,7 +2417,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("inspect_container", params, error=e)
-            raise RuntimeError(f"Failed to inspect container: {str(e)}") from e
+            raise RuntimeError("Failed to inspect container") from e
 
     def stop_container(self, container_id: str, timeout: int = 10) -> dict:
         params = {"container_id": container_id, "timeout": timeout}
@@ -2361,7 +2429,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("stop_container", params, error=e)
-            raise RuntimeError(f"Failed to stop container: {str(e)}") from e
+            raise RuntimeError("Failed to stop container") from e
 
     def remove_container(self, container_id: str, force: bool = False) -> dict:
         params = {"container_id": container_id, "force": force}
@@ -2373,7 +2441,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_container", params, error=e)
-            raise RuntimeError(f"Failed to remove container: {str(e)}") from e
+            raise RuntimeError("Failed to remove container") from e
 
     def get_container_logs(self, container_id: str, tail: str = "50") -> str:
         params = {"container_id": container_id, "tail": tail}
@@ -2398,7 +2466,7 @@ class PodmanManager(ContainerManagerBase):
             return logs
         except Exception as e:
             self.log_action("get_container_logs", params, error=e)
-            raise RuntimeError(f"Failed to get container logs: {str(e)}") from e
+            raise RuntimeError("Failed to get container logs") from e
 
     def exec_in_container(
         self,
@@ -2424,7 +2492,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("exec_in_container", params, error=e)
-            raise RuntimeError(f"Failed to exec in container: {str(e)}") from e
+            raise RuntimeError("Failed to exec in container") from e
 
     def list_volumes(self) -> list[VolumeInfo]:
         params: dict[str, Any] = {}
@@ -2445,7 +2513,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_volumes", params, error=e)
-            raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
+            raise RuntimeError("Failed to list volumes") from e
 
     def create_volume(self, name: str) -> VolumeInfo:
         params = {"name": name}
@@ -2464,7 +2532,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("create_volume", params, error=e)
-            raise RuntimeError(f"Failed to create volume: {str(e)}") from e
+            raise RuntimeError("Failed to create volume") from e
 
     def remove_volume(self, name: str, force: bool = False) -> dict:
         params = {"name": name, "force": force}
@@ -2476,7 +2544,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_volume", params, error=e)
-            raise RuntimeError(f"Failed to remove volume: {str(e)}") from e
+            raise RuntimeError("Failed to remove volume") from e
 
     def list_networks(self) -> list[NetworkInfo]:
         params: dict[str, Any] = {}
@@ -2503,7 +2571,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("list_networks", params, error=e)
-            raise RuntimeError(f"Failed to list networks: {str(e)}") from e
+            raise RuntimeError("Failed to list networks") from e
 
     def create_network(self, name: str, driver: str = "bridge") -> NetworkInfo:
         params = {"name": name, "driver": driver}
@@ -2525,7 +2593,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("create_network", params, error=e)
-            raise RuntimeError(f"Failed to create network: {str(e)}") from e
+            raise RuntimeError("Failed to create network") from e
 
     def remove_network(self, network_id: str) -> dict:
         params = {"network_id": network_id}
@@ -2537,7 +2605,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("remove_network", params, error=e)
-            raise RuntimeError(f"Failed to remove network: {str(e)}") from e
+            raise RuntimeError("Failed to remove network") from e
 
     def compose_up(
         self, compose_file: str, detach: bool = True, build: bool = False
@@ -2556,7 +2624,7 @@ class PodmanManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_up", params, error=e)
-            raise RuntimeError(f"Failed to compose up: {str(e)}") from e
+            raise RuntimeError("Failed to compose up") from e
 
     def compose_down(self, compose_file: str) -> str:
         params = {"compose_file": compose_file}
@@ -2569,7 +2637,7 @@ class PodmanManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_down", params, error=e)
-            raise RuntimeError(f"Failed to compose down: {str(e)}") from e
+            raise RuntimeError("Failed to compose down") from e
 
     def compose_ps(self, compose_file: str) -> str:
         params = {"compose_file": compose_file}
@@ -2582,7 +2650,7 @@ class PodmanManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_ps", params, error=e)
-            raise RuntimeError(f"Failed to compose ps: {str(e)}") from e
+            raise RuntimeError("Failed to compose ps") from e
 
     def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         params = {"compose_file": compose_file, "service": service}
@@ -2597,7 +2665,7 @@ class PodmanManager(ContainerManagerBase):
             return result.stdout
         except Exception as e:
             self.log_action("compose_logs", params, error=e)
-            raise RuntimeError(f"Failed to compose logs: {str(e)}") from e
+            raise RuntimeError("Failed to compose logs") from e
 
     def init_swarm(self, advertise_addr: str | None = None) -> dict:
         raise RuntimeError("Swarm not supported in Podman")
@@ -2699,7 +2767,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_create", params, error=e)
-            raise RuntimeError(f"Failed to create pod: {str(e)}") from e
+            raise RuntimeError("Failed to create pod") from e
 
     def podman_pod_list(self) -> list[dict]:
         """List pods (real ``pods.list``)."""
@@ -2722,7 +2790,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_list", params, error=e)
-            raise RuntimeError(f"Failed to list pods: {str(e)}") from e
+            raise RuntimeError("Failed to list pods") from e
 
     def podman_pod_inspect(self, pod_name: str) -> dict:
         """Inspect a pod (real ``pods.get(...).attrs``)."""
@@ -2734,7 +2802,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_inspect", params, error=e)
-            raise RuntimeError(f"Failed to inspect pod: {str(e)}") from e
+            raise RuntimeError("Failed to inspect pod") from e
 
     def podman_pod_stats(self, pod_name: str) -> dict:
         """Get pod stats via ``podman pod stats`` (not in podman-py)."""
@@ -2753,7 +2821,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_stats", params, error=e)
-            raise RuntimeError(f"Failed to get pod stats: {str(e)}") from e
+            raise RuntimeError("Failed to get pod stats") from e
 
     def podman_pod_top(self, pod_name: str) -> dict:
         """Get pod processes via ``podman pod top`` (not in podman-py)."""
@@ -2765,7 +2833,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_top", params, error=e)
-            raise RuntimeError(f"Failed to get pod top: {str(e)}") from e
+            raise RuntimeError("Failed to get pod top") from e
 
     def podman_pod_logs(self, pod_name: str, tail_lines: int = 100) -> dict:
         """Get pod logs via ``podman pod logs`` (not in podman-py)."""
@@ -2780,7 +2848,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_logs", params, error=e)
-            raise RuntimeError(f"Failed to get pod logs: {str(e)}") from e
+            raise RuntimeError("Failed to get pod logs") from e
 
     def podman_pod_stop(self, pod_name: str) -> dict:
         """Stop a pod (real ``pods.get(...).stop()``)."""
@@ -2792,7 +2860,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_stop", params, error=e)
-            raise RuntimeError(f"Failed to stop pod: {str(e)}") from e
+            raise RuntimeError("Failed to stop pod") from e
 
     def podman_pod_rm(self, pod_name: str) -> dict:
         """Remove a pod (real ``pods.get(...).remove()``)."""
@@ -2804,7 +2872,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_pod_rm", params, error=e)
-            raise RuntimeError(f"Failed to remove pod: {str(e)}") from e
+            raise RuntimeError("Failed to remove pod") from e
 
     def podman_network_create(
         self, network_name: str, driver: str = "bridge", subnet: str | None = None
@@ -2828,7 +2896,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_network_create", params, error=e)
-            raise RuntimeError(f"Failed to create network: {str(e)}") from e
+            raise RuntimeError("Failed to create network") from e
 
     def podman_network_list(self) -> list[dict]:
         """List networks (real ``networks.list``)."""
@@ -2848,7 +2916,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_network_list", params, error=e)
-            raise RuntimeError(f"Failed to list networks: {str(e)}") from e
+            raise RuntimeError("Failed to list networks") from e
 
     def podman_network_inspect(self, network_name: str) -> dict:
         """Inspect a network (real ``networks.get(...).attrs``)."""
@@ -2862,7 +2930,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_network_inspect", params, error=e)
-            raise RuntimeError(f"Failed to inspect network: {str(e)}") from e
+            raise RuntimeError("Failed to inspect network") from e
 
     def podman_volume_create(self, volume_name: str, driver: str = "local") -> dict:
         """Create a volume (real ``volumes.create``)."""
@@ -2880,7 +2948,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_volume_create", params, error=e)
-            raise RuntimeError(f"Failed to create volume: {str(e)}") from e
+            raise RuntimeError("Failed to create volume") from e
 
     def podman_volume_list(self) -> list[dict]:
         """List volumes (real ``volumes.list``)."""
@@ -2900,7 +2968,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_volume_list", params, error=e)
-            raise RuntimeError(f"Failed to list volumes: {str(e)}") from e
+            raise RuntimeError("Failed to list volumes") from e
 
     def podman_volume_inspect(self, volume_name: str) -> dict:
         """Inspect a volume (real ``volumes.get(...).attrs``)."""
@@ -2914,7 +2982,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_volume_inspect", params, error=e)
-            raise RuntimeError(f"Failed to inspect volume: {str(e)}") from e
+            raise RuntimeError("Failed to inspect volume") from e
 
     def podman_system_prune(self) -> dict:
         """Prune unused resources via ``podman system prune -f``."""
@@ -2926,7 +2994,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_system_prune", params, error=e)
-            raise RuntimeError(f"Failed to prune system: {str(e)}") from e
+            raise RuntimeError("Failed to prune system") from e
 
     def podman_health_check(self, container_id: str, config: dict) -> dict:
         """Run a container's healthcheck via ``podman healthcheck run``."""
@@ -2944,7 +3012,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_health_check", params, error=e)
-            raise RuntimeError(f"Failed to run health check: {str(e)}") from e
+            raise RuntimeError("Failed to run health check") from e
 
     def podman_generate_kube_yaml(
         self, pod_name: str, namespace: str = "default"
@@ -2965,14 +3033,14 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_generate_kube_yaml", params, error=e)
-            raise RuntimeError(f"Failed to generate kube YAML: {str(e)}") from e
+            raise RuntimeError("Failed to generate kube YAML") from e
 
     def podman_play_kube_yaml(self, yaml_path: str) -> dict:
         """Apply a Kubernetes YAML via ``podman play kube``."""
         params = {"yaml_path": yaml_path}
         try:
             if not os.path.exists(yaml_path):
-                raise FileNotFoundError(f"YAML file not found: {yaml_path}")
+                raise FileNotFoundError("Configured YAML file was not found")
             output = self._podman_cli(
                 ["play", "kube", yaml_path], "podman_play_kube_yaml"
             )
@@ -2985,7 +3053,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_play_kube_yaml", params, error=e)
-            raise RuntimeError(f"Failed to play kube YAML: {str(e)}") from e
+            raise RuntimeError("Failed to play kube YAML") from e
 
     def podman_checkpoint(self, container_id: str, checkpoint_dir: str) -> dict:
         """Checkpoint a container via ``podman container checkpoint``."""
@@ -3006,7 +3074,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_checkpoint", params, error=e)
-            raise RuntimeError(f"Failed to create checkpoint: {str(e)}") from e
+            raise RuntimeError("Failed to create checkpoint") from e
 
     def podman_restore(self, container_id: str, checkpoint_dir: str) -> dict:
         """Restore a container via ``podman container restore``."""
@@ -3027,7 +3095,7 @@ class PodmanManager(ContainerManagerBase):
             return result
         except Exception as e:
             self.log_action("podman_restore", params, error=e)
-            raise RuntimeError(f"Failed to restore checkpoint: {str(e)}") from e
+            raise RuntimeError("Failed to restore checkpoint") from e
 
 
 def is_app_installed(app_name: str = "docker") -> bool:

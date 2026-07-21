@@ -9,7 +9,7 @@ import json
 import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import run_blocking
+from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
@@ -316,5 +316,5 @@ def register_k8srbac_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Container Manager MCP Operations"
+  short_description: "Help with Container Manager MCP Operations tasks"
+  default_prompt: "Use $container-manager-mcp-operations to complete a governed provider workflow."
