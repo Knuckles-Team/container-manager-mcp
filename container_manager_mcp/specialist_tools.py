@@ -16,14 +16,16 @@ import logging
 import os
 from typing import Any
 
-from agent_utilities.mcp_utilities import run_blocking
+from agent_utilities.mcp.concurrency import run_blocking
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
 # Graceful import — becomes no-op without agent-utilities
 try:
-    from agent_utilities.core.registry_cli import ContainerConfig  # noqa: F401
+    from agent_utilities.core.registry.package_adapter import (
+        ContainerConfig,  # noqa: F401
+    )
 
     _HAS_AGENT_UTILITIES = True
 except ImportError:
@@ -49,7 +51,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
     )
     async def deploy_specialist_container(
         image: str = Field(
-            description="Container image (e.g. knucklessg1/salesforce-agent:latest)"
+            description="Immutable container image (for example, registry.example.invalid/service@sha256:<digest>)"
         ),
         name: str = Field(description="Container name", default=""),
         ports: str = Field(
@@ -86,7 +88,7 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
             env_map = json.loads(env) if isinstance(env, str) else env
             label_map = json.loads(labels) if isinstance(labels, str) else labels
         except json.JSONDecodeError as e:
-            return {"success": False, "error": f"Invalid JSON parameter: {e}"}
+            return {"success": False, "error": f"Invalid JSON parameter: {type(e).__name__}"}
 
         try:
             manager = create_manager(manager_type, silent=False, log_file=None)
@@ -120,8 +122,8 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
                 "status": "running",
             }
         except Exception as e:
-            logger.error(f"[Agent OS] Failed to deploy specialist container: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error("Operation failed: error_type=%s", type(e).__name__)
+            return {"success": False, "error": "Operation failed"}
 
     @mcp.tool(
         annotations={
@@ -161,8 +163,8 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
             return result
         except Exception as e:
-            logger.error(f"[Agent OS] Failed to stop specialist container: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error("Operation failed: error_type=%s", type(e).__name__)
+            return {"success": False, "error": "Operation failed"}
 
     @mcp.tool(
         annotations={
@@ -198,8 +200,8 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
                 "labels": info.get("Config", {}).get("Labels", {}),
             }
         except Exception as e:
-            logger.error(f"[Agent OS] Failed to get specialist status: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error("Operation failed: error_type=%s", type(e).__name__)
+            return {"success": False, "error": "Operation failed"}
 
     @mcp.tool(
         annotations={
@@ -247,5 +249,5 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
             return {"specialists": specialists, "count": len(specialists)}
         except Exception as e:
-            logger.error(f"[Agent OS] Failed to list specialist containers: {e}")
-            return {"success": False, "error": str(e)}
+            logger.error("Operation failed: error_type=%s", type(e).__name__)
+            return {"success": False, "error": "Operation failed"}

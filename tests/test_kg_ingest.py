@@ -7,6 +7,9 @@ container-manager record → typed-node mapping. CONCEPT:AU-KG.ingest.enterprise
 
 from __future__ import annotations
 
+import pytest
+from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
+
 from container_manager_mcp.kg_ingest import (
     ingest_containers,
     ingest_deployments,
@@ -25,6 +28,7 @@ from container_manager_mcp.kg_ingest import (
 class _FakeTxn:
     def __init__(self):
         self.nodes = {}
+        self.edges = []
         self.committed = False
 
     def begin(self, graph=None):
@@ -34,33 +38,27 @@ class _FakeTxn:
     def add_node(self, txn, node_id, props):
         self.nodes[node_id] = props
 
+    def add_edge(self, txn, source, target, props):
+        self.edges.append((source, target, props))
+
     def commit(self, txn):
         self.committed = True
         return True
 
 
-class _FakeEdges:
-    def __init__(self):
-        self.edges = []
-
-    def add(self, src, dst, props):
-        self.edges.append((src, dst, props))
-
-
 class _FakeClient:
     def __init__(self):
         self.txn = _FakeTxn()
-        self.edges = _FakeEdges()
 
 
 def test_ingest_entities_writes_nodes_and_edges():
     c = _FakeClient()
     res = ingest_entities(
         [
-            {"id": "a", "type": "Container", "name": "web"},
-            {"id": "b", "type": "ContainerImage"},
+            {"id": "a", "node_type": "Container", "name": "web"},
+            {"id": "b", "node_type": "ContainerImage"},
         ],
-        [{"source": "a", "target": "b", "type": "usesImage"}],
+        [{"source": "a", "target": "b", "relationship": "usesImage"}],
         client=c,
         graph="__commons__",
     )
@@ -70,7 +68,7 @@ def test_ingest_entities_writes_nodes_and_edges():
     # provenance is stamped
     assert c.txn.nodes["a"]["source"] == "container-manager-mcp"
     assert c.txn.nodes["a"]["domain"] == "container"
-    assert c.edges.edges == [("a", "b", {"type": "usesImage"})]
+    assert c.txn.edges == [("a", "b", {"relationship": "usesImage"})]
 
 
 def test_ingest_containers_maps_container_image_and_host():
@@ -93,22 +91,22 @@ def test_ingest_containers_maps_container_image_and_host():
     # container + image + host = 3 nodes; usesImage + runsOn = 2 edges
     assert res == {"nodes": 3, "edges": 2}
     cont = c.txn.nodes["container:container:abc123"]
-    assert cont["type"] == "Container"
+    assert cont["node_type"] == "Container"
     assert cont["containerStatus"] == "running"
     assert cont["portMappings"] == "0.0.0.0:8080->80/tcp"
     assert cont["externalToolId"] == "abc123"
-    assert c.txn.nodes["container:image:nginx:latest"]["type"] == "ContainerImage"
-    assert c.txn.nodes["container:host:rw710"]["type"] == "Host"
+    assert c.txn.nodes["container:image:nginx:latest"]["node_type"] == "ContainerImage"
+    assert c.txn.nodes["container:host:rw710"]["node_type"] == "Host"
     assert (
         "container:container:abc123",
         "container:image:nginx:latest",
-        {"type": "usesImage"},
-    ) in c.edges.edges
+        {"relationship": "usesImage"},
+    ) in c.txn.edges
     assert (
         "container:container:abc123",
         "container:host:rw710",
-        {"type": "runsOn"},
-    ) in c.edges.edges
+        {"relationship": "runsOn"},
+    ) in c.txn.edges
 
 
 def test_ingest_images_maps_repo_tag_size():
@@ -127,7 +125,7 @@ def test_ingest_images_maps_repo_tag_size():
     )
     assert res == {"nodes": 1, "edges": 0}
     img = c.txn.nodes["container:image:f00dcafe"]
-    assert img["type"] == "ContainerImage"
+    assert img["node_type"] == "ContainerImage"
     assert img["imageRepository"] == "nginx"
     assert img["imageTag"] == "latest"
     assert img["imageSize"] == "142MB"
@@ -221,7 +219,7 @@ def test_ingest_volumes_and_networks():
         client=c2,
     ) == {"nodes": 1, "edges": 0}
     n = c2.txn.nodes["container:network:net1"]
-    assert n["type"] == "ContainerNetwork"
+    assert n["node_type"] == "ContainerNetwork"
     assert n["networkDriver"] == "overlay"
     assert n["networkScope"] == "swarm"
 
@@ -242,13 +240,13 @@ def test_ingest_services_maps_replicas_and_image_edge():
     )
     assert res == {"nodes": 2, "edges": 1}
     svc = c.txn.nodes["container:service:svc1"]
-    assert svc["type"] == "SwarmService"
+    assert svc["node_type"] == "SwarmService"
     assert svc["serviceReplicas"] == 3
-    assert c.edges.edges == [
+    assert c.txn.edges == [
         (
             "container:service:svc1",
             "container:image:nginx:latest",
-            {"type": "usesImage"},
+            {"relationship": "usesImage"},
         )
     ]
 
@@ -269,7 +267,7 @@ def test_ingest_nodes_maps_role_and_availability():
     )
     assert res == {"nodes": 1, "edges": 0}
     n = c.txn.nodes["container:node:node1"]
-    assert n["type"] == "SwarmNode"
+    assert n["node_type"] == "SwarmNode"
     assert n["nodeRole"] == "manager"
     assert n["nodeAvailability"] == "active"
 
@@ -292,24 +290,24 @@ def test_ingest_pods_maps_phase_namespace_and_node():
     # pod node + runsInNamespace + managedByDeployment + scheduledOnK8sNode
     assert res == {"nodes": 1, "edges": 3}
     pod = c.txn.nodes["container:pod:default/web-abc123"]
-    assert pod["type"] == "Pod"
+    assert pod["node_type"] == "Pod"
     assert pod["podPhase"] == "Running"
     assert pod["externalToolId"] == "web-abc123"
     assert (
         "container:pod:default/web-abc123",
         "container:namespace:default",
-        {"type": "runsInNamespace"},
-    ) in c.edges.edges
+        {"relationship": "runsInNamespace"},
+    ) in c.txn.edges
     assert (
         "container:pod:default/web-abc123",
         "container:deployment:web",
-        {"type": "managedByDeployment"},
-    ) in c.edges.edges
+        {"relationship": "managedByDeployment"},
+    ) in c.txn.edges
     assert (
         "container:pod:default/web-abc123",
         "container:k8snode:node-1",
-        {"type": "scheduledOnK8sNode"},
-    ) in c.edges.edges
+        {"relationship": "scheduledOnK8sNode"},
+    ) in c.txn.edges
 
 
 def test_ingest_deployments_maps_replicas_image_and_namespace():
@@ -330,18 +328,18 @@ def test_ingest_deployments_maps_replicas_image_and_namespace():
     # deployment + image = 2 nodes; usesImage + runsInNamespace = 2 edges
     assert res == {"nodes": 2, "edges": 2}
     dep = c.txn.nodes["container:deployment:dep123"]
-    assert dep["type"] == "Deployment"
+    assert dep["node_type"] == "Deployment"
     assert dep["deploymentReplicas"] == 3
     assert (
         "container:deployment:dep123",
         "container:image:nginx:latest",
-        {"type": "usesImage"},
-    ) in c.edges.edges
+        {"relationship": "usesImage"},
+    ) in c.txn.edges
     assert (
         "container:deployment:dep123",
         "container:namespace:default",
-        {"type": "runsInNamespace"},
-    ) in c.edges.edges
+        {"relationship": "runsInNamespace"},
+    ) in c.txn.edges
 
 
 def test_ingest_namespaces_maps_status():
@@ -349,7 +347,7 @@ def test_ingest_namespaces_maps_status():
     res = ingest_namespaces([{"name": "kube-system", "status": "Active"}], client=c)
     assert res == {"nodes": 1, "edges": 0}
     ns = c.txn.nodes["container:namespace:kube-system"]
-    assert ns["type"] == "Namespace"
+    assert ns["node_type"] == "Namespace"
     assert ns["namespaceStatus"] == "Active"
 
 
@@ -361,22 +359,23 @@ def test_ingest_k8s_services_maps_type_and_namespace():
     # service node + runsInNamespace edge
     assert res == {"nodes": 1, "edges": 1}
     svc = c.txn.nodes["container:k8sservice:default/web"]
-    assert svc["type"] == "K8sService"
+    assert svc["node_type"] == "K8sService"
     assert svc["serviceType"] == "ClusterIP"
     assert (
         "container:k8sservice:default/web",
         "container:namespace:default",
-        {"type": "runsInNamespace"},
-    ) in c.edges.edges
+        {"relationship": "runsInNamespace"},
+    ) in c.txn.edges
 
 
-def test_ingest_noops_without_engine():
-    # No injected client + no reachable engine -> clean no-op.
-    assert ingest_entities([{"id": "a", "type": "Container"}]) is None
+def test_retired_node_type_alias_is_rejected():
+    with pytest.raises(NativeIngestError, match="canonical node_type"):
+        ingest_entities(
+            [{"id": "retired", "type": "RetiredAlias"}],
+            client=_FakeClient(),
+        )
 
 
-def test_ingest_empty_is_noop():
-    assert ingest_entities([], client=_FakeClient()) is None
-    assert ingest_containers([], client=_FakeClient()) is None
-    assert ingest_images([], client=_FakeClient()) is None
-    assert ingest_services([], client=_FakeClient()) is None
+def test_empty_native_ingest_is_rejected():
+    with pytest.raises(NativeIngestError, match="at least one entity"):
+        ingest_entities([], client=_FakeClient())

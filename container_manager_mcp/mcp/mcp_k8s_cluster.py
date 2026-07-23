@@ -8,7 +8,7 @@ cluster info, and admission plugins.
 import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import run_blocking
+from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
@@ -48,6 +48,7 @@ def register_k8scluster_tools(mcp: FastMCP):
             "get_config",
             "rename_context",
             "validate_kubeconfig",
+            "save_context",
             # Certificate signing requests
             "list_csr",
             "approve_csr",
@@ -113,12 +114,138 @@ def register_k8scluster_tools(mcp: FastMCP):
             default=None,
             description="Container manager: kubernetes (default: auto-detect)",
         ),
+        # --- save_context: register a kube environment into the kubeconfig cm reads ---
+        server: str | None = Field(
+            default=None,
+            description="save_context (explicit): API server URL, e.g. https://10.0.0.10:6443",
+        ),
+        token: str | None = Field(
+            default=None,
+            description="save_context (explicit): bearer token for authentication",
+        ),
+        client_cert: str | None = Field(
+            default=None,
+            description="save_context (explicit): client cert as a file path or PEM text",
+        ),
+        client_key: str | None = Field(
+            default=None,
+            description="save_context (explicit): client key as a file path or PEM text",
+        ),
+        ca_cert: str | None = Field(
+            default=None,
+            description="save_context (explicit): cluster CA cert as a file path or PEM text",
+        ),
+        insecure_skip_tls_verify: bool = Field(
+            default=False,
+            description="save_context (explicit): skip TLS verification instead of pinning a CA",
+        ),
+        username: str | None = Field(
+            default=None,
+            description="save_context (oidc): username for an OIDC-backed cluster (requires oidc_issuer + oidc_client_id; the API server has no basic auth)",
+        ),
+        password: str | None = Field(
+            default=None,
+            description="save_context (oidc): password for the OIDC resource-owner password grant",
+        ),
+        oidc_issuer: str | None = Field(
+            default=None,
+            description="save_context (oidc): OIDC issuer URL, e.g. https://keycloak/realms/<realm>",
+        ),
+        oidc_client_id: str | None = Field(
+            default=None,
+            description="save_context (oidc): OIDC client id used for the login",
+        ),
+        oidc_client_secret: str | None = Field(
+            default=None,
+            description="save_context (oidc): OIDC client secret for confidential clients (optional)",
+        ),
+        source_file: str | None = Field(
+            default=None,
+            description="save_context (import): path to an existing kubeconfig file to merge",
+        ),
+        source_yaml: str | None = Field(
+            default=None,
+            description="save_context (import): raw kubeconfig YAML to merge",
+        ),
+        capture_current: bool = Field(
+            default=False,
+            description="save_context (capture): export the cluster cm is currently on and save it under 'context_name'",
+        ),
+        kubeconfig_path: str | None = Field(
+            default=None,
+            description="save_context: target kubeconfig to write (default: $KUBECONFIG first entry, else ~/.kube/config)",
+        ),
+        overwrite: bool = Field(
+            default=False,
+            description="save_context: replace an existing context on name collision (default: error)",
+        ),
+        use: bool = Field(
+            default=False,
+            description="save_context: set current-context to the saved context",
+        ),
+        validate: bool = Field(
+            default=True,
+            description="save_context: after saving, load the context and list_nodes to validate reachability",
+        ),
         ctx: Context | None = None,
     ) -> dict | list | str:
-        """Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins)."""
-        manager = create_manager(manager_type or "kubernetes")
+        """Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins).
+
+        The ``save_context`` action registers a NEW Kubernetes environment into
+        the kubeconfig container-manager-mcp reads so it can be reused later
+        (via ``use_context`` / ``CONTAINER_MANAGER_KUBECONTEXT`` / ``K8S_CONTEXTS``).
+        Four input modes, non-destructive (a context-name collision errors unless
+        ``overwrite``): **token** (``context_name`` + ``server`` + ``token`` +
+        ``ca_cert`` or ``insecure_skip_tls_verify``), **mTLS** (``context_name`` +
+        ``server`` + ``client_cert`` + ``client_key`` + ``ca_cert``), **oidc**
+        (``context_name`` + ``server`` + ``username`` + ``password`` +
+        ``oidc_issuer`` + ``oidc_client_id`` — drives an OIDC password-grant login
+        and embeds the id-token; the API server has no basic auth, so this REQUIRES
+        the OIDC params and fails clearly otherwise), and **import** (``source_file``/
+        ``source_yaml`` to merge an existing kubeconfig, or ``capture_current=True``
+        to export the cluster you are currently on). ``namespace`` is optional. With
+        ``use`` it becomes current-context; with ``validate`` the saved context is
+        loaded and node count returned.
+        """
         if ctx:
             ctx_log(ctx, logging.INFO, f"Executing cm_k8s_cluster: {action}")
+
+        # save_context is handled WITHOUT constructing a manager: registering a
+        # new environment must work even when no cluster is yet reachable (that
+        # is precisely what this action bootstraps).
+        if action == "save_context":
+            from container_manager_mcp.k8s.kubeconfig_import import save_kube_context
+
+            try:
+                return await run_blocking(
+                    save_kube_context,
+                    name=context_name,
+                    kubeconfig_path=kubeconfig_path,
+                    source_file=source_file,
+                    source_yaml=source_yaml,
+                    server=server,
+                    token=token,
+                    client_cert=client_cert,
+                    client_key=client_key,
+                    ca_cert=ca_cert,
+                    insecure_skip_tls_verify=insecure_skip_tls_verify,
+                    namespace=namespace,
+                    username=username,
+                    password=password,
+                    oidc_issuer=oidc_issuer,
+                    oidc_client_id=oidc_client_id,
+                    oidc_client_secret=oidc_client_secret,
+                    capture_current=capture_current,
+                    overwrite=overwrite,
+                    use=use,
+                    validate=validate,
+                )
+            except Exception as e:
+                if ctx:
+                    ctx_log(ctx, logging.ERROR, f"Error executing save_context: {e}")
+                return f"Error executing save_context: {e}"
+
+        manager = create_manager(manager_type or "kubernetes")
 
         try:
             # Nodes
@@ -249,5 +376,5 @@ def register_k8scluster_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {e}")
-            return f"Error executing {action}: {e}"
+                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+            return f"Error executing {action}: {type(e).__name__}"

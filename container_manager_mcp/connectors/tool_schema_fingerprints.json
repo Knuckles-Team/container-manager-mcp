@@ -1,0 +1,12 @@
+{
+  "algorithm": "agent-utilities:mcp-tool-schema-compat:v1",
+  "connector": "container-manager-mcp",
+  "schema_version": "1",
+  "tools": {
+    "cm_container_operations": "a977a24486bb17afc52241d14551d486a382b1d18dd8ae68c8079eb14f5bbeeb",
+    "cm_image_operations": "42724d6685092e1bd1ac36dc8b460182fac87d70a8e171608efb8ca490f925b0",
+    "cm_k8s_config": "7e58e8c86ac219c4d31f3e89af16360bf5f92075fec0735f2df8626ccb070a3b",
+    "cm_k8s_networking": "5f80b42a40bf2da0def9c9a8749778fb65e9292dab4d319ae3244c4f59c61bf9",
+    "cm_k8s_workloads": "1869d52a5bfbecc70965e51cfcd9c896b161d714d9d2b76bfb3f57077caf95ef"
+  }
+}

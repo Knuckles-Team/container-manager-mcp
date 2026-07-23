@@ -32,7 +32,7 @@ class StorageMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_persistent_volumes", params, error=e)
-            raise RuntimeError(f"Failed to list persistent volumes: {str(e)}") from e
+            raise RuntimeError("Failed to list persistent volumes") from e
 
     def list_persistent_volume_claims(self, namespace: str | None = None) -> list[dict]:
         """List PersistentVolumeClaims in a namespace."""
@@ -69,7 +69,7 @@ class StorageMixin:
         except _km.ApiException as e:
             self.log_action("list_persistent_volume_claims", params, error=e)
             raise RuntimeError(
-                f"Failed to list persistent volume claims: {str(e)}"
+                f"Failed to list persistent volume claims: {type(e).__name__}"
             ) from e
 
     def create_persistent_volume_claim(
@@ -92,7 +92,7 @@ class StorageMixin:
         except _km.ApiException as e:
             self.log_action("create_persistent_volume_claim", params, error=e)
             raise RuntimeError(
-                f"Failed to create persistent volume claim: {str(e)}"
+                f"Failed to create persistent volume claim: {type(e).__name__}"
             ) from e
 
     def delete_persistent_volume_claim(
@@ -109,7 +109,7 @@ class StorageMixin:
         except _km.ApiException as e:
             self.log_action("delete_persistent_volume_claim", params, error=e)
             raise RuntimeError(
-                f"Failed to delete persistent volume claim: {str(e)}"
+                f"Failed to delete persistent volume claim: {type(e).__name__}"
             ) from e
 
     def list_storage_classes(self) -> list[dict]:
@@ -137,7 +137,7 @@ class StorageMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_storage_classes", params, error=e)
-            raise RuntimeError(f"Failed to list storage classes: {str(e)}") from e
+            raise RuntimeError("Failed to list storage classes") from e
 
     def list_volume_snapshots(self, namespace: str | None = None) -> list[dict]:
         """List VolumeSnapshots (requires snapshot.k8s.io CRD)."""
@@ -167,7 +167,7 @@ class StorageMixin:
             raise RuntimeError("Dynamic client not available") from None
         except Exception as e:
             self.log_action("list_volume_snapshots", params, error=e)
-            raise RuntimeError(f"Failed to list volume snapshots: {str(e)}") from e
+            raise RuntimeError("Failed to list volume snapshots") from e
 
     def expand_pvc(
         self, name: str, namespace: str | None = None, size: str | None = None
@@ -192,7 +192,7 @@ class StorageMixin:
             return result
         except _km.ApiException as e:
             self.log_action("expand_pvc", params, error=e)
-            raise RuntimeError(f"Failed to expand PVC: {str(e)}") from e
+            raise RuntimeError("Failed to expand PVC") from e
 
     def list_csi_drivers(self) -> list[dict]:
         """List CSI drivers."""
@@ -220,7 +220,7 @@ class StorageMixin:
             raise RuntimeError("Storage client not available") from None
         except _km.ApiException as e:
             self.log_action("list_csi_drivers", params, error=e)
-            raise RuntimeError(f"Failed to list CSI drivers: {str(e)}") from e
+            raise RuntimeError("Failed to list CSI drivers") from e
 
     def describe_csi_driver(self, name: str) -> dict:
         """Describe a CSI driver."""
@@ -241,7 +241,7 @@ class StorageMixin:
             raise RuntimeError("Storage client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_csi_driver", params, error=e)
-            raise RuntimeError(f"Failed to describe CSI driver: {str(e)}") from e
+            raise RuntimeError("Failed to describe CSI driver") from e
 
     def get_csi_driver_capacity(self, driver_name: str) -> dict:
         """Get CSI driver capacity information."""
@@ -266,7 +266,7 @@ class StorageMixin:
             raise RuntimeError("Storage client not available") from None
         except _km.ApiException as e:
             self.log_action("get_csi_driver_capacity", params, error=e)
-            raise RuntimeError(f"Failed to get CSI driver capacity: {str(e)}") from e
+            raise RuntimeError("Failed to get CSI driver capacity") from e
 
     def set_default_storage_class(self, name: str) -> dict:
         """Set the default StorageClass."""
@@ -303,7 +303,7 @@ class StorageMixin:
             raise RuntimeError("Storage client not available") from None
         except _km.ApiException as e:
             self.log_action("set_default_storage_class", params, error=e)
-            raise RuntimeError(f"Failed to set default StorageClass: {str(e)}") from e
+            raise RuntimeError("Failed to set default StorageClass") from e
 
     def get_storage_class_provisioner(self, name: str) -> dict:
         """Get StorageClass provisioner information."""
@@ -327,7 +327,7 @@ class StorageMixin:
         except _km.ApiException as e:
             self.log_action("get_storage_class_provisioner", params, error=e)
             raise RuntimeError(
-                f"Failed to get StorageClass provisioner: {str(e)}"
+                f"Failed to get StorageClass provisioner: {type(e).__name__}"
             ) from e
 
     def expand_persistent_volume(self, name: str, namespace: str, size: str) -> dict:
@@ -355,7 +355,7 @@ class StorageMixin:
             return result
         except _km.ApiException as e:
             self.log_action("expand_persistent_volume", params, error=e)
-            raise RuntimeError(f"Failed to expand PersistentVolume: {str(e)}") from e
+            raise RuntimeError("Failed to expand PersistentVolume") from e
 
     def create_volume_snapshot(self, name: str, namespace: str, spec: dict) -> dict:
         """Create a VolumeSnapshot."""
@@ -383,7 +383,7 @@ class StorageMixin:
             return result
         except _km.ApiException as e:
             self.log_action("create_volume_snapshot", params, error=e)
-            raise RuntimeError(f"Failed to create VolumeSnapshot: {str(e)}") from e
+            raise RuntimeError("Failed to create VolumeSnapshot") from e
 
     def create_storage_class(
         self, name: str, provisioner: str, parameters: dict | None = None
@@ -403,7 +403,7 @@ class StorageMixin:
             return result
         except Exception as e:
             self.log_action("create_storage_class", params, error=e)
-            raise RuntimeError(f"Failed to create storage class: {str(e)}") from e
+            raise RuntimeError("Failed to create storage class") from e
 
     def create_persistent_volume(self, name: str, spec: dict) -> dict:
         """Create a PersistentVolume."""
@@ -419,4 +419,4 @@ class StorageMixin:
             return result
         except Exception as e:
             self.log_action("create_persistent_volume", params, error=e)
-            raise RuntimeError(f"Failed to create persistent volume: {str(e)}") from e
+            raise RuntimeError("Failed to create persistent volume") from e

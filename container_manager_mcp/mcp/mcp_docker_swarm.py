@@ -8,7 +8,7 @@ stacks, configs, secrets, and node management — dispatched directly onto the r
 import logging
 from typing import Literal
 
-from agent_utilities.mcp_utilities import run_blocking
+from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 

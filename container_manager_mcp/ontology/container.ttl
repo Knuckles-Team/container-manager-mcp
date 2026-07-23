@@ -147,7 +147,7 @@
 
 :portMappings a owl:DatatypeProperty ;
     rdfs:label "port mappings" ;
-    rdfs:comment "Published host->container port mappings of a Container or SwarmService (e.g. 0.0.0.0:8080->80/tcp)." ;
+    rdfs:comment "Published host-to-container port mappings of a Container or SwarmService, including all-interface bindings." ;
     rdfs:range xsd:string .
 
 :imageRepository a owl:DatatypeProperty ;

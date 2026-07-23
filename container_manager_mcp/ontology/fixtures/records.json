@@ -1,0 +1,93 @@
+{
+  "connector": "container-manager-mcp",
+  "fixtures": [
+    {
+      "expected": {
+        "acl_state": "quarantine",
+        "id": "fixture-record",
+        "title": "Synthetic certification record"
+      },
+      "preset": "container-containers",
+      "record": {
+        "acl_public": false,
+        "created": "2000-01-01T00:00:00Z",
+        "id": "fixture-record",
+        "image": "Synthetic content used only for contract validation.",
+        "name": "Synthetic certification record"
+      }
+    },
+    {
+      "expected": {
+        "acl_state": "quarantine",
+        "id": "fixture-record",
+        "title": "Synthetic certification record"
+      },
+      "preset": "container-images",
+      "record": {
+        "acl_public": false,
+        "created": "2000-01-01T00:00:00Z",
+        "id": "fixture-record",
+        "repository": "Synthetic certification record",
+        "tag": "Synthetic content used only for contract validation."
+      }
+    },
+    {
+      "expected": {
+        "acl_state": "quarantine",
+        "id": "fixture-record",
+        "title": "Synthetic certification record"
+      },
+      "preset": "k8s-deployments",
+      "record": {
+        "acl_public": false,
+        "created": "2000-01-01T00:00:00Z",
+        "id": "fixture-record",
+        "image": "Synthetic content used only for contract validation.",
+        "name": "Synthetic certification record"
+      }
+    },
+    {
+      "expected": {
+        "acl_state": "quarantine",
+        "id": "fixture-record",
+        "title": "Synthetic certification record"
+      },
+      "preset": "k8s-namespaces",
+      "record": {
+        "acl_public": false,
+        "created": "2000-01-01T00:00:00Z",
+        "name": "Synthetic certification record",
+        "status": "Synthetic content used only for contract validation."
+      }
+    },
+    {
+      "expected": {
+        "acl_state": "quarantine",
+        "id": "fixture-record",
+        "title": "Synthetic certification record"
+      },
+      "preset": "k8s-pods",
+      "record": {
+        "acl_public": false,
+        "created": "2000-01-01T00:00:00Z",
+        "name": "Synthetic certification record",
+        "status": "Synthetic content used only for contract validation."
+      }
+    },
+    {
+      "expected": {
+        "acl_state": "quarantine",
+        "id": "fixture-record",
+        "title": "Synthetic certification record"
+      },
+      "preset": "k8s-services",
+      "record": {
+        "acl_public": false,
+        "created": "2000-01-01T00:00:00Z",
+        "name": "Synthetic certification record",
+        "type": "Synthetic content used only for contract validation."
+      }
+    }
+  ],
+  "schema_version": "1"
+}

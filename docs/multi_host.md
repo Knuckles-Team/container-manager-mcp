@@ -67,15 +67,15 @@ aliases are **top-level keys** (no `hosts:` wrapper) — this is the flat form t
 
 ```yaml
 node-alpha:
-  hostname: "192.168.1.10"
+  hostname: "198.51.100.10"
   port: 22
   user: "ubuntu"
-  key_path: "/home/user/.ssh/id_rsa"
+  key_path: "${SSH_KEY_PATH}"
 node-beta:
-  hostname: "10.0.0.5"
+  hostname: "192.0.2.5"
   port: 2222
   user: "admin"
-  identity_file: "/home/user/.ssh/id_ed25519"
+  identity_file: "${SSH_IDENTITY_FILE}"
 ```
 
 The richer **Ansible-style** layout (group `vars`, `children`) is also supported —

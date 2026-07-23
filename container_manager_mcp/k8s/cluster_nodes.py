@@ -1,5 +1,9 @@
 """ClusterNodesMixin for KubernetesManager (split from k8s_manager.py)."""
 
+import json
+import os
+import tempfile
+from pathlib import Path
 from typing import Any
 
 import container_manager_mcp.k8s_manager as _km
@@ -34,7 +38,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_nodes", params, error=e)
-            raise RuntimeError(f"Failed to list nodes: {str(e)}") from e
+            raise RuntimeError("Failed to list nodes") from e
 
     def inspect_node(self, node_id: str) -> dict:
         params = {"node_id": node_id}
@@ -45,7 +49,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("inspect_node", params, error=e)
-            raise RuntimeError(f"Failed to inspect node: {str(e)}") from e
+            raise RuntimeError("Failed to inspect node") from e
 
     def update_node(
         self,
@@ -97,7 +101,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("update_node", params, error=e)
-            raise RuntimeError(f"Failed to update node: {str(e)}") from e
+            raise RuntimeError("Failed to update node") from e
 
     def remove_node(self, node_id: str, force: bool = False) -> dict:
         params = {"node_id": node_id, "force": force}
@@ -110,7 +114,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("remove_node", params, error=e)
-            raise RuntimeError(f"Failed to remove node: {str(e)}") from e
+            raise RuntimeError("Failed to remove node") from e
 
     def taint_node(self, node_name: str, taints: list[dict]) -> dict:
         """Taint a node with specified taints."""
@@ -128,7 +132,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("taint_node", params, error=e)
-            raise RuntimeError(f"Failed to taint node: {str(e)}") from e
+            raise RuntimeError("Failed to taint node") from e
 
     def list_contexts(self) -> list[dict]:
         """List kubeconfig contexts."""
@@ -143,7 +147,7 @@ class ClusterNodesMixin:
             return result
         except Exception as e:
             self.log_action("list_contexts", params, error=e)
-            raise RuntimeError(f"Failed to list contexts: {str(e)}") from e
+            raise RuntimeError("Failed to list contexts") from e
 
     def use_context(self, context_name: str) -> dict:
         """Switch kubeconfig context."""
@@ -155,7 +159,7 @@ class ClusterNodesMixin:
             return result
         except Exception as e:
             self.log_action("use_context", params, error=e)
-            raise RuntimeError(f"Failed to use context: {str(e)}") from e
+            raise RuntimeError("Failed to use context") from e
 
     def get_config(self) -> dict:
         """Get kubeconfig information."""
@@ -174,7 +178,7 @@ class ClusterNodesMixin:
             return result
         except Exception as e:
             self.log_action("get_config", params, error=e)
-            raise RuntimeError(f"Failed to get config: {str(e)}") from e
+            raise RuntimeError("Failed to get config") from e
 
     def rename_context(self, current_name: str, new_name: str) -> dict:
         """Rename a kubeconfig context."""
@@ -186,7 +190,7 @@ class ClusterNodesMixin:
             return result
         except Exception as e:
             self.log_action("rename_context", params, error=e)
-            raise RuntimeError(f"Failed to rename context: {str(e)}") from e
+            raise RuntimeError("Failed to rename context") from e
 
     def cordon_node(self, node_name: str, unschedulable: bool = True) -> dict:
         """Mark a node as unschedulable (cordon) or schedulable (uncordon)."""
@@ -203,7 +207,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("cordon_node", params, error=e)
-            raise RuntimeError(f"Failed to cordon/uncordon node: {str(e)}") from e
+            raise RuntimeError("Failed to cordon/uncordon node") from e
 
     def drain_node(
         self, node_name: str, force: bool = False, grace_period_seconds: int = 120
@@ -253,16 +257,21 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("drain_node", params, error=e)
-            raise RuntimeError(f"Failed to drain node: {str(e)}") from e
+            raise RuntimeError("Failed to drain node") from e
 
-    def cluster_info_dump(self, output_dir: str = "/tmp/k8s-cluster-dump") -> dict:
+    def cluster_info_dump(self, output_dir: str | None = None) -> dict:
         """Dump cluster information for debugging."""
-        params = {"output_dir": output_dir}
+        params = {"custom_output_dir": output_dir is not None}
         try:
-            import json as json_module
-            import os as os_module
-
-            os_module.makedirs(output_dir, exist_ok=True)
+            target = (
+                Path(output_dir).expanduser()
+                if output_dir is not None
+                else Path(tempfile.mkdtemp(prefix="k8s-cluster-dump-"))
+            )
+            if target.is_symlink():
+                raise ValueError("output directory cannot be a symbolic link")
+            target.mkdir(mode=0o700, parents=True, exist_ok=True)
+            target.chmod(0o700)
 
             dump_info = {}
 
@@ -290,16 +299,33 @@ class ClusterNodesMixin:
             ]
 
             # Write to file
-            dump_file = os_module.path.join(output_dir, "cluster-dump.json")
-            with open(dump_file, "w") as f:
-                json_module.dump(dump_info, f, indent=2)
+            directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+            directory_flags |= getattr(os, "O_NOFOLLOW", 0)
+            directory_fd = os.open(target, directory_flags)
+            try:
+                file_flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+                file_flags |= getattr(os, "O_NOFOLLOW", 0)
+                file_fd = os.open(
+                    "cluster-dump.json", file_flags, 0o600, dir_fd=directory_fd
+                )
+                if hasattr(os, "fchmod"):
+                    os.fchmod(file_fd, 0o600)
+                with os.fdopen(file_fd, "w", encoding="utf-8") as handle:
+                    json.dump(dump_info, handle, indent=2)
+            finally:
+                os.close(directory_fd)
 
-            result = {"output_dir": output_dir, "file": dump_file, "status": "dumped"}
+            dump_file = target / "cluster-dump.json"
+            result = {
+                "output_dir": str(target),
+                "file": str(dump_file),
+                "status": "dumped",
+            }
             self.log_action("cluster_info_dump", params, result)
             return result
         except Exception as e:
             self.log_action("cluster_info_dump", params, error=e)
-            raise RuntimeError(f"Failed to dump cluster info: {str(e)}") from e
+            raise RuntimeError("Failed to dump cluster info") from e
 
     def list_node_conditions(self, node_name: str | None = None) -> list[dict]:
         """List node conditions for all nodes or a specific node."""
@@ -335,7 +361,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_node_conditions", params, error=e)
-            raise RuntimeError(f"Failed to list node conditions: {str(e)}") from e
+            raise RuntimeError("Failed to list node conditions") from e
 
     def api_resources(self) -> list[dict]:
         """List all API resources available in the cluster."""
@@ -361,7 +387,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("api_resources", params, error=e)
-            raise RuntimeError(f"Failed to list API resources: {str(e)}") from e
+            raise RuntimeError("Failed to list API resources") from e
 
     def list_certificate_signing_requests(self) -> list[dict]:
         """List CertificateSigningRequests."""
@@ -388,7 +414,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Certificates client not available") from None
         except _km.ApiException as e:
             self.log_action("list_certificate_signing_requests", params, error=e)
-            raise RuntimeError(f"Failed to list CSRs: {str(e)}") from e
+            raise RuntimeError("Failed to list CSRs") from e
 
     def approve_csr(self, csr_name: str) -> dict:
         """Approve a CertificateSigningRequest."""
@@ -415,7 +441,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Certificates client not available") from None
         except _km.ApiException as e:
             self.log_action("approve_csr", params, error=e)
-            raise RuntimeError(f"Failed to approve CSR: {str(e)}") from e
+            raise RuntimeError("Failed to approve CSR") from e
 
     def deny_csr(self, csr_name: str, reason: str = "Denied by MCP") -> dict:
         """Deny a CertificateSigningRequest."""
@@ -442,7 +468,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Certificates client not available") from None
         except _km.ApiException as e:
             self.log_action("deny_csr", params, error=e)
-            raise RuntimeError(f"Failed to deny CSR: {str(e)}") from e
+            raise RuntimeError("Failed to deny CSR") from e
 
     def uncordon_node(self, node_name: str) -> dict:
         """Uncordon a node (mark it as schedulable)."""
@@ -455,7 +481,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("uncordon_node", params, error=e)
-            raise RuntimeError(f"Failed to uncordon node: {str(e)}") from e
+            raise RuntimeError("Failed to uncordon node") from e
 
     def get_node_conditions(self, node_name: str) -> dict:
         """Get detailed conditions for a node."""
@@ -490,7 +516,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_node_conditions", params, error=e)
-            raise RuntimeError(f"Failed to get node conditions: {str(e)}") from e
+            raise RuntimeError("Failed to get node conditions") from e
 
     def list_api_resources(self) -> list[dict]:
         """List all available API resources."""
@@ -519,7 +545,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Discovery client not available") from None
         except _km.ApiException as e:
             self.log_action("list_api_resources", params, error=e)
-            raise RuntimeError(f"Failed to list API resources: {str(e)}") from e
+            raise RuntimeError("Failed to list API resources") from e
 
     def describe_api_resource(self, resource_name: str) -> dict:
         """Describe a specific API resource."""
@@ -548,7 +574,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Discovery client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_api_resource", params, error=e)
-            raise RuntimeError(f"Failed to describe API resource: {str(e)}") from e
+            raise RuntimeError("Failed to describe API resource") from e
 
     def untaint_node(self, node_name: str, taint_key: str) -> dict:
         """Remove a taint from a node."""
@@ -570,7 +596,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("untaint_node", params, error=e)
-            raise RuntimeError(f"Failed to untaint node: {str(e)}") from e
+            raise RuntimeError("Failed to untaint node") from e
 
     def list_node_taints(self) -> list[dict]:
         """List all node taints."""
@@ -594,7 +620,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("list_node_taints", params, error=e)
-            raise RuntimeError(f"Failed to list node taints: {str(e)}") from e
+            raise RuntimeError("Failed to list node taints") from e
 
     def set_node_affinity(self, pod_name: str, namespace: str, affinity: dict) -> dict:
         """Set node affinity for a pod."""
@@ -621,7 +647,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("set_node_affinity", params, error=e)
-            raise RuntimeError(f"Failed to set node affinity: {str(e)}") from e
+            raise RuntimeError("Failed to set node affinity") from e
 
     def get_node_affinity(self, pod_name: str, namespace: str) -> dict:
         """Get node affinity for a pod."""
@@ -642,7 +668,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_node_affinity", params, error=e)
-            raise RuntimeError(f"Failed to get node affinity: {str(e)}") from e
+            raise RuntimeError("Failed to get node affinity") from e
 
     def set_pod_anti_affinity(
         self, pod_name: str, namespace: str, anti_affinity: dict
@@ -677,7 +703,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("set_pod_anti_affinity", params, error=e)
-            raise RuntimeError(f"Failed to set pod anti-affinity: {str(e)}") from e
+            raise RuntimeError("Failed to set pod anti-affinity") from e
 
     def list_cluster_plugins(self) -> list[dict]:
         """List cluster plugins (dynamic admission controllers)."""
@@ -718,7 +744,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Admission client not available") from None
         except _km.ApiException as e:
             self.log_action("list_cluster_plugins", params, error=e)
-            raise RuntimeError(f"Failed to list cluster plugins: {str(e)}") from e
+            raise RuntimeError("Failed to list cluster plugins") from e
 
     def describe_cluster_plugin(self, name: str, plugin_type: str) -> dict:
         """Describe a cluster plugin."""
@@ -747,7 +773,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Admission client not available") from None
         except _km.ApiException as e:
             self.log_action("describe_cluster_plugin", params, error=e)
-            raise RuntimeError(f"Failed to describe cluster plugin: {str(e)}") from e
+            raise RuntimeError("Failed to describe cluster plugin") from e
 
     def test_cluster_plugin(
         self, name: str, plugin_type: str, test_resource: dict
@@ -773,7 +799,7 @@ class ClusterNodesMixin:
             return result
         except Exception as e:
             self.log_action("test_cluster_plugin", params, error=e)
-            raise RuntimeError(f"Failed to test cluster plugin: {str(e)}") from e
+            raise RuntimeError("Failed to test cluster plugin") from e
 
     def get_cluster_info(self) -> dict:
         """Get cluster information."""
@@ -792,7 +818,7 @@ class ClusterNodesMixin:
             return result
         except _km.ApiException as e:
             self.log_action("get_cluster_info", params, error=e)
-            raise RuntimeError(f"Failed to get cluster info: {str(e)}") from e
+            raise RuntimeError("Failed to get cluster info") from e
 
     def get_api_server_info(self) -> dict:
         """Get API server information."""
@@ -812,7 +838,7 @@ class ClusterNodesMixin:
             raise RuntimeError("Discovery client not available") from None
         except _km.ApiException as e:
             self.log_action("get_api_server_info", params, error=e)
-            raise RuntimeError(f"Failed to get API server info: {str(e)}") from e
+            raise RuntimeError("Failed to get API server info") from e
 
     def validate_kubeconfig(self) -> dict:
         """Validate kubeconfig."""
@@ -834,4 +860,4 @@ class ClusterNodesMixin:
             return result
         except Exception as e:
             self.log_action("validate_kubeconfig", params, error=e)
-            return {"status": "invalid", "error": str(e)}
+            return {"status": "invalid", "error": "Operation failed"}

@@ -100,8 +100,65 @@ The `cm_doctor` MCP tool mirrors it: `action=run` for a full sweep, or a focused
 `check_backends` / `check_inventory` / `check_docker` / `check_podman` /
 `check_kubernetes`. Each check returns `{name, category, status: ok|warn|fail, detail,
 remediation}` plus a summary. Start here, then follow the
-[container-manager-config-walkthrough](container_manager_mcp/skills/container-manager-config-walkthrough/SKILL.md)
-skill.
+[container-manager configuration walkthrough](container_manager_mcp/skills/container-manager-config-walkthrough/WORKFLOW.md).
+
+### Save a Kubernetes environment (register a kubeconfig context)
+
+Dynamically add a kube context to the kubeconfig cm reads (`$KUBECONFIG` first entry,
+else `~/.kube/config`) so you can reuse it later (via `use_context` /
+`CONTAINER_MANAGER_KUBECONTEXT` / `K8S_CONTEXTS`). The merge is non-destructive —
+existing entries are never clobbered, and a context-name collision errors unless you
+pass `--overwrite`. Available as the `container-manager-save-context` CLI and the
+`cm_k8s_cluster` `save_context` MCP action (both call the same core function). Secrets
+(tokens, key data) are kept out of logs; cert/key files are embedded as base64 so the
+saved context is portable.
+
+Four credential input modes, each saved under a context name you choose:
+
+1. **URL + token** — server URL + bearer token (ServiceAccount / OIDC id-token).
+2. **URL + client-cert + client-key + CA** — mTLS (how an RKE2 admin kubeconfig
+   authenticates); certs accept file paths or inline PEM/base64.
+3. **URL + username + password → OIDC** — for OIDC-backed clusters only. The
+   Kubernetes API server does **not** accept plain username/password (basic auth
+   was removed), so this drives an OIDC resource-owner password grant against the
+   issuer and embeds the resulting id-token; it requires `--oidc-issuer` +
+   `--oidc-client-id` and fails clearly if they are missing.
+4. **Import a kubeconfig** — merge an existing file/blob, or capture the cluster
+   you are currently on.
+
+```bash
+# 1. URL + token
+container-manager-save-context --name prod --server https://10.0.0.10:6443 \
+    --token "$TOKEN" --ca-cert /path/to/ca.crt --namespace default --use
+
+# 2. URL + client cert/key + CA (mTLS, e.g. RKE2 admin)
+container-manager-save-context --name rke2 --server https://10.0.0.10:6443 \
+    --client-cert ./client.crt --client-key ./client.key --ca-cert ./ca.crt
+
+# 3. URL + username + password -> OIDC login (id-token embedded)
+container-manager-save-context --name oidc-dev --server https://10.0.0.10:6443 \
+    --username alice --password "$PW" \
+    --oidc-issuer https://keycloak/realms/homelab --oidc-client-id kubernetes
+
+# 4. import + merge an existing kubeconfig (file or raw YAML on stdin)
+container-manager-save-context --from-file ./other-kubeconfig
+cat cluster.yaml | container-manager-save-context --from-yaml -
+
+# capture the cluster you are currently on (in-cluster SA token+CA, or the
+# current kubeconfig context) and save a portable copy under a new name
+container-manager-save-context --name exported --capture-current --use
+
+# on name collision, --overwrite replaces; otherwise it errors
+container-manager-save-context --name prod --overwrite --from-file ./prod-kubeconfig
+```
+
+After saving, the context is loaded and `list_nodes` is called to validate
+reachability (skip with `--no-validate`); the node count or a clear error is returned.
+The `cm_k8s_cluster` MCP action mirrors every flag (`action=save_context`,
+`context_name`, `server`/`token`/`client_cert`/`client_key`/`ca_cert`/
+`insecure_skip_tls_verify`, `username`/`password`/`oidc_issuer`/`oidc_client_id`/
+`oidc_client_secret`, `source_file`/`source_yaml`, `capture_current`,
+`overwrite`, `use`, `validate`).
 
 ---
 
@@ -146,7 +203,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 #### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
 
 <details>
-<summary>291 per-operation tools — one per public API method (click to expand)</summary>
+<summary>292 per-operation tools — one per public API method (click to expand)</summary>
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
@@ -205,6 +262,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_k8s_cluster__list_node_taints` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__list_nodes` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__rename_context` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
+| `cm_k8s_cluster__save_context` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__set_node_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__set_pod_anti_affinity` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_cluster__taint_node` | `CLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
@@ -444,10 +502,10 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 
 </details>
 
-_23 action-routed tool(s) (default) · 291 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_23 action-routed tool(s) (default) · 292 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
-Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/mcp.md](docs/mcp.md).
+Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/usage.md](docs/usage.md).
 
 ### Kubernetes
 
@@ -516,11 +574,10 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
 
 <!-- MCP-CONFIG-EXAMPLES:START -->
 
-> **Install the slim `[mcp]` extra.** All examples install `container-manager-mcp[mcp]` — the
-> MCP-server extra that pulls only the FastMCP / FastAPI tooling (`agent-utilities[mcp]`).
-> It deliberately **excludes** the heavy agent runtime (`pydantic-ai`, the epistemic-graph
-> engine, `dspy`, `llama-index`), so `uvx` / container installs are far smaller. Use the
-> full `[agent]` extra only when you need the integrated Pydantic AI agent.
+> **Install the connector-focused `[mcp]` extra.** Examples use `container-manager-mcp[mcp]` to add
+> FastMCP / FastAPI through `agent-utilities[mcp]`; the required Agent Utilities core
+> still carries `epistemic-graph[full]`. The `[agent-runtime]` extra additionally
+> enables model orchestration.
 
 #### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
 
@@ -535,7 +592,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "container-manager-mcp"
       ],
       "env": {
-        "MCP_TOOL_MODE": "condensed",
+        "MCP_TOOL_MODE": "intent",
         "COMPOSETOOL": "True",
         "CONTAINERTOOL": "True",
         "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
@@ -545,11 +602,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "CONTAINER_MANAGER_KUBECONTEXT": "",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
         "CONTAINER_MANAGER_TYPE": "docker",
-        "DEFAULT_DOCKER_CONTEXT": "",
-        "DEFAULT_K8S_CONTEXT": "",
-        "DEFAULT_SWARM_CONTEXT": "",
         "DOCKERSWARMTOOL": "True",
-        "DOCKER_CONTEXTS": "",
         "DOCTORTOOL": "True",
         "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
@@ -566,16 +619,15 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8S_CONTEXTS": "",
         "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
+        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
-        "MULTI_CONTEXT_MAX_WORKERS": "",
         "MULTI_CONTEXT_MODE": "True",
         "NETWORKTOOL": "True",
         "PODMANTOOL": "True",
         "PODMAN_ENABLED": "true",
         "SPECIALIST_DEPLOYMENTTOOL": "True",
         "SWARMTOOL": "True",
-        "SWARM_CONTEXTS": "",
         "SYSTEMTOOL": "True",
         "VOLUMETOOL": "True"
       }
@@ -583,6 +635,10 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
   }
 }
 ```
+
+Runtime references require an alias-aware launcher such as GraphOS. Other
+launchers must omit those entries and inject the resolved values through their
+own runtime secret boundary.
 
 #### Streamable-HTTP Transport (networked / production)
 
@@ -602,9 +658,9 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
       ],
       "env": {
         "TRANSPORT": "streamable-http",
-        "HOST": "0.0.0.0",
+        "HOST": "127.0.0.1",
         "PORT": "8000",
-        "MCP_TOOL_MODE": "condensed",
+        "MCP_TOOL_MODE": "intent",
         "COMPOSETOOL": "True",
         "CONTAINERTOOL": "True",
         "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
@@ -614,11 +670,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "CONTAINER_MANAGER_KUBECONTEXT": "",
         "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
         "CONTAINER_MANAGER_TYPE": "docker",
-        "DEFAULT_DOCKER_CONTEXT": "",
-        "DEFAULT_K8S_CONTEXT": "",
-        "DEFAULT_SWARM_CONTEXT": "",
         "DOCKERSWARMTOOL": "True",
-        "DOCKER_CONTEXTS": "",
         "DOCTORTOOL": "True",
         "HEALTH_CHECK_TTL_SECONDS": "30",
         "IMAGETOOL": "True",
@@ -635,16 +687,15 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8S_CONTEXTS": "",
         "KUBECONFIG": "",
         "KUBERNETES_SERVICE_HOST": "",
+        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
-        "MULTI_CONTEXT_MAX_WORKERS": "",
         "MULTI_CONTEXT_MODE": "True",
         "NETWORKTOOL": "True",
         "PODMANTOOL": "True",
         "PODMAN_ENABLED": "true",
         "SPECIALIST_DEPLOYMENTTOOL": "True",
         "SWARMTOOL": "True",
-        "SWARM_CONTEXTS": "",
         "SYSTEMTOOL": "True",
         "VOLUMETOOL": "True"
       }
@@ -665,16 +716,18 @@ Alternatively, connect to a pre-deployed Streamable-HTTP instance by `url`:
 }
 ```
 
-Deploying the Streamable-HTTP server via Docker:
+Run a reviewed container image as a least-privilege stdio child (no
+listener or published port):
 
 ```bash
-docker run -d \
-  --name container-manager-mcp-mcp \
-  -p 8000:8000 \
-  -e TRANSPORT=streamable-http \
-  -e HOST=0.0.0.0 \
-  -e PORT=8000 \
-  -e MCP_TOOL_MODE=condensed \
+docker run -i --rm \
+  --read-only \
+  --cap-drop=ALL \
+  --security-opt=no-new-privileges \
+  --pids-limit=256 \
+  --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m \
+  -e TRANSPORT=stdio \
+  -e MCP_TOOL_MODE=intent \
   -e COMPOSETOOL=True \
   -e CONTAINERTOOL=True \
   -e CONTAINER_MANAGER_HEALTH_AGGREGATE_S=3600 \
@@ -684,11 +737,7 @@ docker run -d \
   -e CONTAINER_MANAGER_KUBECONTEXT="" \
   -e CONTAINER_MANAGER_PODMAN_BASE_URL="" \
   -e CONTAINER_MANAGER_TYPE=docker \
-  -e DEFAULT_DOCKER_CONTEXT="" \
-  -e DEFAULT_K8S_CONTEXT="" \
-  -e DEFAULT_SWARM_CONTEXT="" \
   -e DOCKERSWARMTOOL=True \
-  -e DOCKER_CONTEXTS="" \
   -e DOCTORTOOL=True \
   -e HEALTH_CHECK_TTL_SECONDS=30 \
   -e IMAGETOOL=True \
@@ -705,20 +754,24 @@ docker run -d \
   -e K8S_CONTEXTS="" \
   -e KUBECONFIG="" \
   -e KUBERNETES_SERVICE_HOST="" \
+  -e KUBERNETES_SERVICE_PORT="" \
   -e MISCTOOL=True \
   -e MULTICONTEXTTOOL=True \
-  -e MULTI_CONTEXT_MAX_WORKERS="" \
   -e MULTI_CONTEXT_MODE=True \
   -e NETWORKTOOL=True \
   -e PODMANTOOL=True \
   -e PODMAN_ENABLED=true \
   -e SPECIALIST_DEPLOYMENTTOOL=True \
   -e SWARMTOOL=True \
-  -e SWARM_CONTEXTS="" \
   -e SYSTEMTOOL=True \
   -e VOLUMETOOL=True \
-  knucklessg1/container-manager-mcp:mcp
+  registry.example.invalid/container-manager-mcp@sha256:<digest> container-manager-mcp
 ```
+
+For containerized network HTTP, supply an authenticated TLS ingress (or
+direct server TLS), exact `MCP_ALLOWED_HOSTS`, and an exact trusted-proxy
+CIDR policy through the operator-owned deployment profile. The generator
+does not emit an unauthenticated non-loopback listener.
 
 _Auto-generated from the code-read env surface (`MCP_TOOL_MODE` + package vars) — do not edit._
 <!-- MCP-CONFIG-EXAMPLES:END -->
@@ -726,16 +779,16 @@ _Auto-generated from the code-read env surface (`MCP_TOOL_MODE` + package vars) 
 <!-- BEGIN GENERATED: additional-deployment-options -->
 ### Additional Deployment Options
 
-`container-manager-mcp` can also run as a **local container** (Docker / Podman / `uv`) or be
-consumed from a **remote deployment**. The
-[Deployment guide](https://knuckles-team.github.io/container-manager-mcp/deployment/) has full, copy-paste
-`mcp_config.json` for all four transports — **stdio**, **streamable-http**,
-**local container / uv**, and **remote URL**:
+`container-manager-mcp` can run as a local stdio process or container, or behind a remote
+network boundary. The
+[Deployment guide](https://knuckles-team.github.io/container-manager-mcp/deployment/) carries
+the detailed transport contract.
 
-- **Local container / uv** — launch the server from `mcp_config.json` via `uvx`,
-  `docker run`, or `podman run`, or point at a local streamable-http container by `url`.
-- **Remote URL** — connect to a server deployed behind Caddy at
-  `http://container-manager-mcp.arpa/mcp` using the `"url"` key.
+- **Local container** — launch a reviewed immutable image as a least-privilege
+  stdio child with no listener or published port.
+- **Remote URL** — connect through an operator-supplied authenticated HTTPS
+  ingress. Keep its URL, outbound identity references, trust profile, and exact
+  `MCP_ALLOWED_HOSTS` in `AgentConfig`.
 <!-- END GENERATED: additional-deployment-options -->
 
 ---
@@ -768,6 +821,7 @@ consumed from a **remote deployment**. The
 | `CONTAINER_MANAGER_HEALTH_INGEST` | `true` | write :HealthTrend/:HealthBaseline/:HealthAnomaly nodes |
 | `CONTAINER_MANAGER_HEALTH_AGGREGATE_S` | `3600` | per-node/signal trend-buffer flush window (seconds) |
 | `CONTAINER_MANAGER_HEALTH_NOTIFY_URL` | — | best-effort webhook for derivation-pass anomaly alerts |
+| `KUBERNETES_SERVICE_PORT` | — | injected by the cluster when running in-pod (save-context capture); leave empty |
 | `INVENTORYTOOL` | `True` |  |
 | `INFOTOOL` | `True` |  |
 | `IMAGETOOL` | `True` |  |
@@ -796,7 +850,7 @@ consumed from a **remote deployment**. The
 | `MULTI_CONTEXT_MAX_WORKERS` | — |  |
 | `K8S_CONTEXTS` | — | Example: "dev=dev-cluster;prod=prod-cluster;staging=staging-cluster" |
 | `DEFAULT_K8S_CONTEXT` | — | Default Kubernetes context name (must match a key in K8S_CONTEXTS) |
-| `DOCKER_CONTEXTS` | — | Example: "local=unix:///var/run/docker.sock;remote=tcp://192.168.1.100:2375" |
+| `DOCKER_CONTEXTS` | — | Example: "local=unix:///var/run/docker.sock;remote=tcp://198.51.100.100:2375" |
 | `DEFAULT_DOCKER_CONTEXT` | — | Default Docker context name (must match a key in DOCKER_CONTEXTS) |
 | `SWARM_CONTEXTS` | — | Example: "swarm1=tcp://swarm1:2375;swarm2=tcp://swarm2:2375" |
 | `DEFAULT_SWARM_CONTEXT` | — | Default Swarm context name (must match a key in SWARM_CONTEXTS) |
@@ -821,7 +875,7 @@ consumed from a **remote deployment**. The
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_53 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_54 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
@@ -857,7 +911,7 @@ version: '3.8'
 
 services:
   container-manager-mcp-mcp:
-    image: knucklessg1/container-manager-mcp:mcp
+    image: example/container-manager-mcp:mcp
     container_name: container-manager-mcp-mcp
     hostname: container-manager-mcp-mcp
     restart: always
@@ -883,7 +937,7 @@ services:
         max-file: "3"
 
   container-manager-mcp-agent:
-    image: knucklessg1/container-manager-mcp:latest
+    image: example/container-manager-mcp@sha256:<digest>
     container_name: container-manager-mcp-agent
     hostname: container-manager-mcp-agent
     restart: always
@@ -917,7 +971,7 @@ services:
 
 ```
 
-Detailed graph node architecture explanations, custom skill configurations, and agentic trace guides are available in [docs/agent.md](docs/agent.md).
+Detailed graph node architecture explanations, custom skill configurations, and agentic trace guides are available in [docs/deployment.md](docs/deployment.md).
 
 ---
 
@@ -946,14 +1000,14 @@ Pick the extra that matches what you want to run:
 | Extra | Installs | Use when |
 |-------|----------|----------|
 | `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`agent-utilities[mcp]` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | You run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
-| `container-manager-mcp[agent]` | Full agent runtime (`agent-utilities[agent,logfire]` — Pydantic AI + the epistemic-graph engine) | You run the **integrated agent** |
+| `container-manager-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | You run the **integrated agent** |
 | `container-manager-mcp[all]` | Everything (`mcp` + `agent` + the `docker` / `podman` / `kubernetes` backends) | Development / both surfaces |
 
 ```bash
-# MCP server only (recommended for tool hosting — slim deps)
+# Connector-focused MCP server (includes the shared graph engine)
 uv pip install "container-manager-mcp[mcp]"
 
-# Full agent runtime (Pydantic AI + epistemic-graph engine)
+# Agent runtime (adds model orchestration to the shared graph engine)
 uv pip install "container-manager-mcp[agent]"
 
 # Everything (development)
@@ -966,26 +1020,27 @@ One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
-| `knucklessg1/container-manager-mcp:mcp` | `--target mcp` | `container-manager-mcp[mcp]` — **slim**, no engine/`pydantic-ai`/`dspy`/`llama-index`/`tree-sitter` | `container-manager-mcp` |
-| `knucklessg1/container-manager-mcp:latest` | `--target agent` (default) | `container-manager-mcp[agent]` — **full** agent runtime + epistemic-graph engine | `container-manager-agent` |
+| `example/container-manager-mcp:mcp` | `--target mcp` | `container-manager-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `container-manager-mcp` |
+| `example/container-manager-mcp@sha256:<digest>` | `--target agent` (default) | `container-manager-mcp[agent]` — **agent runtime**, model orchestration + `epistemic-graph[full]` | `container-manager-agent` |
 
 ```bash
-docker build --target mcp   -t knucklessg1/container-manager-mcp:mcp    docker/   # slim MCP server
-docker build --target agent -t knucklessg1/container-manager-mcp:latest docker/   # full agent
+docker build --target mcp   -t example/container-manager-mcp:mcp    docker/   # connector-focused MCP server
+docker build --target agent -t example/container-manager-mcp:agent-local docker/   # agent runtime
 ```
 
-`docker/mcp.compose.yml` runs the slim `:mcp` server; `docker/agent.compose.yml` runs the
-agent (`:latest`) with a co-located `:mcp` sidecar.
+`docker/mcp.compose.yml` runs the connector-focused `:mcp` server; `docker/agent.compose.yml` runs the
+agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-The **full agent** (`[agent]` / `:latest`) embeds the **epistemic-graph** engine (pulled in
-transitively via `agent-utilities[agent]`). For production — or to share one knowledge graph
-across multiple agents — run **epistemic-graph as its own database container** and point the
-agent at it instead of embedding it. Deployment recipes (single-node + Raft HA), connection
-config, and the full database architecture (with diagrams) are documented in the
+Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
+Agent Utilities core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+the server connector-focused; `[agent]` additionally enables model orchestration. Local
+deployments can use the bundled engine. For production or shared state, run
+**epistemic-graph as a dedicated database service** and configure the runtime to use it.
+Deployment recipes (single-node + Raft HA), connection configuration, and architecture
+diagrams are documented in the
 [epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
-The slim `[mcp]` server does **not** require the database.
 
 ---
 
@@ -1031,10 +1086,10 @@ and `kg-ingestion` were updated for the expanded tool surface.
 
 ## Repository Owners
 
-<img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=Knucklessg1&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
+<img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=example&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
 
-![GitHub followers](https://img.shields.io/github/followers/Knucklessg1)
-![GitHub User's stars](https://img.shields.io/github/stars/Knucklessg1)
+![GitHub followers](https://img.shields.io/github/followers/example)
+![GitHub User's stars](https://img.shields.io/github/stars/example)
 
 ---
 
@@ -1047,23 +1102,40 @@ Contributions are welcome! Please ensure code quality by executing local checks 
 - Execute test suites using `pytest`
 
 
-<!-- BEGIN agent-os-genesis-deploy (generated; do not edit between markers) -->
+<!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->
 
-## Deploy with `agent-os-genesis`
+## Deploy with `agent-utilities-deployment`
 
-This package can be provisioned for you — skill-guided — by the **`agent-os-genesis`**
-universal skill (its *single-package deploy mode*): it picks your install method, seeds
-secrets to OpenBao/Vault (or `.env`), trusts your enterprise CA, registers the MCP
-server, and verifies it — the same machinery that stands up the whole Agent OS, narrowed
-to just this package. Ask your agent to **"deploy `container-manager-mcp` with agent-os-genesis"**.
+Provision this package with the consolidated **`agent-utilities-deployment`**
+workflow. It selects an installed-package, editable-source, or immutable-container
+path; records only runtime secret and TLS-profile references in `AgentConfig`; and
+runs doctor, registration, policy, observability, and rollback gates. Ask your agent
+to **"deploy `container-manager-mcp` with agent-utilities-deployment"**.
 
 | Install mode | Command |
 |------|---------|
-| Bare-metal, prod (PyPI) | `uvx container-manager-mcp` · or `uv tool install container-manager-mcp` |
-| Bare-metal, dev (editable) | `uv pip install -e ".[all]"` · or `pip install -e ".[all]"` |
-| Container, prod | deploy `knucklessg1/container-manager-mcp:latest` via docker-compose / swarm / podman / podman-compose / kubernetes |
-| Container, dev (editable) | deploy `docker/compose.dev.yml` (source-mounted at `/src`; edits live on restart) |
+| Installed package | `uv tool install "container-manager-mcp[mcp]"`, then run `container-manager-mcp` |
+| Editable source | `uv pip install -e ".[agent]"`, then run `container-manager-mcp` |
+| Immutable container | deploy `registry.example.invalid/container-manager-mcp@sha256:<digest>` through the operator-selected orchestrator |
 
-Secrets are read-existing + seeded via `vault_sync` — you are only prompted for what's missing.
+The repository embeds no deployment profile, credential value, certificate path, or
+environment-specific endpoint. Supply those at runtime through `AgentConfig` and the
+configured secret provider.
 
-<!-- END agent-os-genesis-deploy -->
+<!-- END agent-utilities-deployment -->
+
+<!-- GOVERNED-CAPABILITY:START -->
+## Governed capability contract
+
+This package ships a compact canonical skill surface with specialist procedures
+kept as referenced workflows. The current MCP tools, skill metadata,
+`connector_manifest.yml`, ontology, mappings, shapes, fixtures, migrations,
+tool-schema fingerprints, and certification metadata form one versioned
+capability contract. Validate them together; do not rely on stale tool names or
+historical per-task skill wrappers.
+
+Runtime endpoints, credentials, certificate trust, tenant identity, retention,
+and observability policy are deployment inputs and are never packaged values.
+See [Configuration, trust, and privacy](docs/configuration.md) before enabling a
+network transport, connector ingestion, GraphOS delegation, or trace export.
+<!-- GOVERNED-CAPABILITY:END -->

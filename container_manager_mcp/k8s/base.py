@@ -30,11 +30,8 @@ class _K8sBase:
             else:
                 _km.k8s_config.load_kube_config(context=context)
         except Exception as e:
-            self.logger.error(f"Failed to load kubeconfig: {str(e)}")
-            raise RuntimeError(
-                f"Could not load Kubernetes config (context={context or 'default'}): "
-                f"{str(e)}"
-            ) from e
+            self.logger.error("Operation failed: error_type=%s", type(e).__name__)
+            raise RuntimeError("Could not load configured Kubernetes context") from e
         self.core = _km.k8s_client.CoreV1Api()
         self.apps = _km.k8s_client.AppsV1Api()
         # Centralized API-group clients (all constructed once here so mixins /
@@ -142,7 +139,7 @@ class _K8sBase:
             return result
         except _km.ApiException as e:
             self.log_action("get_version", params, error=e)
-            raise RuntimeError(f"Failed to get version: {str(e)}") from e
+            raise RuntimeError("Failed to get version") from e
 
     def get_info(self) -> dict:
         params: dict[str, Any] = {}
@@ -166,7 +163,7 @@ class _K8sBase:
             return result
         except _km.ApiException as e:
             self.log_action("get_info", params, error=e)
-            raise RuntimeError(f"Failed to get info: {str(e)}") from e
+            raise RuntimeError("Failed to get info") from e
 
     def init_swarm(self, advertise_addr: str | None = None) -> dict:
         result = {

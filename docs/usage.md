@@ -25,7 +25,7 @@ enabled by default.
 Example agent prompts that map onto these tools:
 
 - *"List every running container on this host."* → Container module, `list_containers`
-- *"Pull `nginx:latest` and start it."* → Image + Compose modules
+- *"Pull `nginx@sha256:<digest>` and start it."* → Image + Compose modules
 - *"Reclaim disk space — prune dangling images and stopped containers."* → System module, `prune_system`
 - *"List the services on the Swarm."* → Swarm module, `list_services`
 
