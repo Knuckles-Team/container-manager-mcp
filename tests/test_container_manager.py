@@ -133,6 +133,33 @@ class TestContainerManagerBase:
             def remove_service(self, service_id):
                 return {}
 
+            def inspect_container(self, container_id):
+                return {}
+
+            def inspect_node(self, node_id):
+                return {}
+
+            def update_node(self, node_id, availability=None, role=None):
+                return {}
+
+            def remove_node(self, node_id, force=False):
+                return {}
+
+            def inspect_service(self, service_id):
+                return {}
+
+            def scale_service(self, service_id, replicas):
+                return {}
+
+            def update_service(self, service_id, image=None, replicas=None):
+                return {}
+
+            def service_ps(self, service_id):
+                return []
+
+            def service_logs(self, service_id, tail=100):
+                return {}
+
         manager = ConcreteManager()
         assert manager.logger is not None
 
@@ -243,6 +270,33 @@ class TestContainerManagerBase:
                 return {}
 
             def remove_service(self, service_id):
+                return {}
+
+            def inspect_container(self, container_id):
+                return {}
+
+            def inspect_node(self, node_id):
+                return {}
+
+            def update_node(self, node_id, availability=None, role=None):
+                return {}
+
+            def remove_node(self, node_id, force=False):
+                return {}
+
+            def inspect_service(self, service_id):
+                return {}
+
+            def scale_service(self, service_id, replicas):
+                return {}
+
+            def update_service(self, service_id, image=None, replicas=None):
+                return {}
+
+            def service_ps(self, service_id):
+                return []
+
+            def service_logs(self, service_id, tail=100):
                 return {}
 
         manager = ConcreteManager()
@@ -364,6 +418,33 @@ class TestContainerManagerBase:
             def remove_service(self, service_id):
                 return {}
 
+            def inspect_container(self, container_id):
+                return {}
+
+            def inspect_node(self, node_id):
+                return {}
+
+            def update_node(self, node_id, availability=None, role=None):
+                return {}
+
+            def remove_node(self, node_id, force=False):
+                return {}
+
+            def inspect_service(self, service_id):
+                return {}
+
+            def scale_service(self, service_id, replicas):
+                return {}
+
+            def update_service(self, service_id, image=None, replicas=None):
+                return {}
+
+            def service_ps(self, service_id):
+                return []
+
+            def service_logs(self, service_id, tail=100):
+                return {}
+
         manager = ConcreteManager()
         assert manager._parse_timestamp(None) == "unknown"
         assert manager._parse_timestamp("") == "unknown"
@@ -405,7 +486,7 @@ class TestDockerManager:
         mock_docker.from_env.side_effect = DockerException("Connection failed")
         with pytest.raises(
             RuntimeError,
-            match="Host 'localhost' is offline or unreachable via SSH, or Docker daemon is not running",
+            match="Configured Docker daemon is unavailable",
         ):
             DockerManager()
 

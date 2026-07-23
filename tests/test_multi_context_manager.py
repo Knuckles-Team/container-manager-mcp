@@ -157,8 +157,10 @@ class TestFanOut:
             results = mgr.fan_out("kubernetes", "list_containers")
 
             assert results["b"] == ["b-container"]
-            assert "error" in results["a"]
-            assert "boom" in results["a"]["error"]
+            # per the security-hardening line (3ad52b5), fan_out reports a generic
+            # message and logs the real error server-side rather than leaking the
+            # raw exception text into the result payload.
+            assert results["a"] == {"error": "Operation failed"}
         finally:
             mgr.shutdown()
 
@@ -439,7 +441,7 @@ class TestCreateManagerMultiContextDelegation:
         monkeypatch.delenv("DOCKER_CONTEXTS", raising=False)
         monkeypatch.setenv("PODMAN_ENABLED", "false")
 
-        with pytest.raises(ValueError, match="K8S context"):
+        with pytest.raises(ValueError, match="No k8s contexts are available"):
             create_manager("kubernetes")
 
     def test_create_manager_docker_resolves_to_default_docker_manager(

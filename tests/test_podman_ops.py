@@ -151,7 +151,9 @@ def test_cli_failure_raises():
         try:
             m.podman_system_prune()
         except RuntimeError as e:
-            assert "boom" in str(e)
+            # the security-hardening line (3ad52b5) wraps the raw CLI stderr in a
+            # generic message and logs the real detail server-side instead.
+            assert "Failed to prune system" in str(e)
         else:  # pragma: no cover
             raise AssertionError("expected RuntimeError")
 

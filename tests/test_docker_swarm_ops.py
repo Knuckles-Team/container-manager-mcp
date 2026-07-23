@@ -124,7 +124,9 @@ def test_stack_rm_raises_on_cli_failure():
         try:
             m.docker_stack_rm("nope")
         except RuntimeError as e:
-            assert "no such stack" in str(e)
+            # the security-hardening line (3ad52b5) wraps the raw CLI stderr in a
+            # generic message and logs the real detail server-side instead.
+            assert "Failed to remove stack" in str(e)
         else:  # pragma: no cover
             raise AssertionError("expected RuntimeError")
 

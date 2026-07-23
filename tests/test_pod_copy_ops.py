@@ -53,7 +53,9 @@ def test_copy_to_pod_missing_source_raises():
         try:
             stub.copy_to_pod("mypod", "ns1", "/no/such/file", "/dst")
         except RuntimeError as e:
-            assert "not found" in str(e)
+            # the security-hardening line (3ad52b5) wraps the raw FileNotFoundError
+            # in a generic message and logs the real detail server-side instead.
+            assert "Failed to copy to pod" in str(e)
         else:  # pragma: no cover
             raise AssertionError("expected RuntimeError")
 
@@ -107,6 +109,8 @@ def test_kubectl_cp_failure_raises():
         try:
             stub.copy_from_pod("mypod", "ns1", "/a", "/b")
         except RuntimeError as e:
-            assert "pod not found" in str(e)
+            # the security-hardening line (3ad52b5) wraps the raw kubectl stderr
+            # in a generic message and logs the real detail server-side instead.
+            assert "Failed to copy from pod" in str(e)
         else:  # pragma: no cover
             raise AssertionError("expected RuntimeError")

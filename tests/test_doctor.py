@@ -257,7 +257,9 @@ def test_cm_doctor_tool_with_ctx_error_path_does_not_raise(monkeypatch):
     fake_ctx = MagicMock()
     result = asyncio.run(tool(action="check_backends", ctx=fake_ctx))
 
-    assert result == {"error": "boom", "action": "check_backends"}
+    # the security-hardening line (3ad52b5) reports a generic message and logs
+    # the real error server-side rather than leaking the raw exception text.
+    assert result == {"error": "Operation failed", "action": "check_backends"}
     assert fake_ctx.error.called
 
 
