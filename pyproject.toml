@@ -8,7 +8,7 @@ version = "2.3.0"
 description = "Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box!"
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
-requires-python = ">=3.11, <3.15"
+requires-python = ">=3.12, <3.15"
 dependencies = [ "agent-utilities[mcp]>=1.27.1,<2.0.0", "docker[ssh]>=7.2.0", "tunnel-manager>=2.0.0",]
 [[project.authors]]
 name = "Project Maintainers"
