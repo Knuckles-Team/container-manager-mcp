@@ -330,18 +330,25 @@ class MultiContextManager:
 
         Routes the pool through agent-utilities' shared identity-scoped resolver
         (CONCEPT:AU-OS.identity.identity-scoped-resource-autoload): a caller's
-        Okta/Keycloak groups decide which contexts auto-load for them. The
-        ambient ``SYSTEM_ACTOR`` (unauthenticated/local) holds ``admin`` → sees
-        all, so behaviour is unchanged until a real identity scopes it down.
-        Degrades to the full pool if agent-utilities predates the resolver.
+        Okta/Keycloak groups decide which contexts auto-load for them.
+        Unauthenticated/local callers (no ambient actor bound at all) see the
+        full pool, so behaviour is unchanged until a real identity scopes it
+        down. Degrades to the full pool if agent-utilities predates the
+        resolver, or has no ambient identity bound (``IdentityRequiredError``)
+        — an authenticated caller who is simply under-entitled still gets
+        filtered/denied by ``identity_scoped_resources`` itself, not here.
         """
         try:
+            from agent_utilities.security.brain_context import IdentityRequiredError
             from agent_utilities.security.entitlements import (
                 identity_scoped_resources,
             )
         except Exception:
             return names
-        return list(identity_scoped_resources(namespace, names))
+        try:
+            return list(identity_scoped_resources(namespace, names))
+        except IdentityRequiredError:
+            return names
 
     def _resolve_context(
         self, namespace: str, pool: dict[str, Any], default: str | None,

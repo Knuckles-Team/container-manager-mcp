@@ -185,8 +185,17 @@ class TestPodmanErrorFallbackDoesNotMaskUnrelatedErrors:
         with patch(
             "container_manager_mcp.container_manager.PodmanError", _FakePodmanError
         ):
-            with pytest.raises(RuntimeError, match="Failed to connect to Podman"):
+            # The genuine-PodmanError path deliberately raises a NON-LEAKING
+            # message ("Configured Podman daemon is unavailable") and chains the
+            # real error with `from e`, rather than interpolating the daemon's
+            # own text into the message. "Failed to connect to Podman" belongs to
+            # the separate no-socket-found path. Assert the real contract, and
+            # assert the cause is preserved so the detail is still recoverable.
+            with pytest.raises(
+                RuntimeError, match="Configured Podman daemon is unavailable"
+            ) as excinfo:
                 PodmanManager(silent=True)
+            assert isinstance(excinfo.value.__cause__, _FakePodmanError)
 
 
 # ---------------------------------------------------------------------------
