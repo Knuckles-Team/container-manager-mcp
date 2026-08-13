@@ -93,5 +93,9 @@ def register_doctor_tools(mcp: FastMCP):
             )
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing cm_doctor {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx,
+                    logging.ERROR,
+                    f"Error executing cm_doctor {action}: {type(e).__name__}",
+                )
             return {"error": "Operation failed", "action": action}

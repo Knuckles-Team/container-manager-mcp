@@ -877,9 +877,7 @@ class DockerManager(ContainerManagerBase):
             self.log_action("prune_containers", params, error=e)
             raise RuntimeError("Failed to prune containers") from e
         except Exception as e:
-            self.logger.error(
-                "Container prune failed: error_type=%s", type(e).__name__
-            )
+            self.logger.error("Container prune failed: error_type=%s", type(e).__name__)
             self.log_action("prune_containers", params, error=e)
             raise RuntimeError("Failed to prune containers") from e
 
@@ -2079,15 +2077,11 @@ class PodmanManager(ContainerManagerBase):
             self.log_action("prune_containers", params, pruned)
             return pruned
         except PodmanError as e:
-            self.logger.error(
-                "Container prune failed: error_type=%s", type(e).__name__
-            )
+            self.logger.error("Container prune failed: error_type=%s", type(e).__name__)
             self.log_action("prune_containers", params, error=e)
             raise RuntimeError("Failed to prune containers") from e
         except Exception as e:
-            self.logger.error(
-                "Container prune failed: error_type=%s", type(e).__name__
-            )
+            self.logger.error("Container prune failed: error_type=%s", type(e).__name__)
             self.log_action("prune_containers", params, error=e)
             raise RuntimeError("Failed to prune containers") from e
 

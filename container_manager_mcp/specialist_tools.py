@@ -88,7 +88,10 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
             env_map = json.loads(env) if isinstance(env, str) else env
             label_map = json.loads(labels) if isinstance(labels, str) else labels
         except json.JSONDecodeError as e:
-            return {"success": False, "error": f"Invalid JSON parameter: {type(e).__name__}"}
+            return {
+                "success": False,
+                "error": f"Invalid JSON parameter: {type(e).__name__}",
+            }
 
         try:
             manager = create_manager(manager_type, silent=False, log_file=None)

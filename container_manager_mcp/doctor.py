@@ -469,11 +469,7 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
             "kubeconfig",
             "kubernetes",
             "ok",
-            (
-                "in-cluster service account"
-                if in_cluster
-                else "configured kubeconfig"
-            ),
+            ("in-cluster service account" if in_cluster else "configured kubeconfig"),
         )
     )
 

@@ -316,5 +316,7 @@ def register_k8srbac_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
