@@ -77,3 +77,11 @@ exclude = [".venv", "venv", "tests/"]
 dev = [
     "pytest-timeout>=2.4.0",
 ]
+
+[tool.uv]
+override-dependencies = [
+    "fastmcp-slim[client,server]>=4.0.0b1",
+]
+
+[tool.uv.sources]
+agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }
