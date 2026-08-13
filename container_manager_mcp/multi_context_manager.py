@@ -351,7 +351,10 @@ class MultiContextManager:
             return names
 
     def _resolve_context(
-        self, namespace: str, pool: dict[str, Any], default: str | None,
+        self,
+        namespace: str,
+        pool: dict[str, Any],
+        default: str | None,
         context_name: str | None,
     ) -> str:
         """Resolve + authorize a context against the caller's entitlements."""
@@ -493,20 +496,27 @@ class MultiContextManager:
         return {
             "kubernetes": {
                 "contexts": k8s,
-                "default": self.default_k8s_context if self.default_k8s_context in k8s
-                else (k8s[0] if k8s else None),
+                "default": (
+                    self.default_k8s_context
+                    if self.default_k8s_context in k8s
+                    else (k8s[0] if k8s else None)
+                ),
             },
             "docker": {
                 "contexts": docker,
-                "default": self.default_docker_context
-                if self.default_docker_context in docker
-                else (docker[0] if docker else None),
+                "default": (
+                    self.default_docker_context
+                    if self.default_docker_context in docker
+                    else (docker[0] if docker else None)
+                ),
             },
             "swarm": {
                 "contexts": swarm,
-                "default": self.default_swarm_context
-                if self.default_swarm_context in swarm
-                else (swarm[0] if swarm else None),
+                "default": (
+                    self.default_swarm_context
+                    if self.default_swarm_context in swarm
+                    else (swarm[0] if swarm else None)
+                ),
             },
             "podman": {"enabled": self.podman_manager is not None},
         }

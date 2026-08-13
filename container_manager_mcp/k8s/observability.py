@@ -68,7 +68,10 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             # Metrics server might not be installed, fall back to basic info
-            if "NotFound" in type(e).__name__ or "ServiceUnavailable" in type(e).__name__:
+            if (
+                "NotFound" in type(e).__name__
+                or "ServiceUnavailable" in type(e).__name__
+            ):
                 ns = namespace or self.namespace
                 pods = self.core.list_namespaced_pod(ns).items
                 result = [
@@ -140,7 +143,10 @@ class ObservabilityMixin:
             return result
         except _km.ApiException as e:
             # Metrics server might not be installed, fall back to basic info
-            if "NotFound" in type(e).__name__ or "ServiceUnavailable" in type(e).__name__:
+            if (
+                "NotFound" in type(e).__name__
+                or "ServiceUnavailable" in type(e).__name__
+            ):
                 nodes = self.core.list_node().items
                 result = [
                     {

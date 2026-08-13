@@ -171,7 +171,9 @@ def test_ingest_containers_maps_container_image_and_host():
     # fields before they reach durable storage.
     assert cont["portMappings"] == "[REDACTED_IPV4]:8080->80/tcp"
     assert cont["externalToolId"] == "abc123"
-    assert c.nodes.values["container:image:nginx:latest"]["node_type"] == "ContainerImage"
+    assert (
+        c.nodes.values["container:image:nginx:latest"]["node_type"] == "ContainerImage"
+    )
     assert c.nodes.values["container:host:test-node-1"]["node_type"] == "Host"
     assert (
         "container:container:abc123",
