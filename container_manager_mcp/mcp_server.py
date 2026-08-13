@@ -342,7 +342,9 @@ def register_image_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
 
 
@@ -463,7 +465,9 @@ def register_container_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
 
 
@@ -546,7 +550,9 @@ def register_volume_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
 
 
@@ -625,7 +631,9 @@ def register_network_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
 
 
@@ -869,7 +877,9 @@ def register_swarm_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
 
 
@@ -937,7 +947,9 @@ def register_system_tools(mcp: FastMCP):
                 return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
+                )
             return f"Error executing {action}: {type(e).__name__}"
 
 
@@ -1243,7 +1255,9 @@ def register_misc_tools(mcp: FastMCP):
             return matching_containers
         except Exception as e:
             if ctx:
-                ctx_log(ctx, logging.ERROR, f"Error tracing port {port}: {type(e).__name__}")
+                ctx_log(
+                    ctx, logging.ERROR, f"Error tracing port {port}: {type(e).__name__}"
+                )
             return f"Error tracing port {port}: {type(e).__name__}"
 
     @mcp.tool(

@@ -68,6 +68,7 @@ ignore = [ "E402", "E501", "B008",]
 
 [tool.setuptools.packages.find]
 where = [ ".",]
+include = [ "container_manager_mcp*",]
 
 [tool.vulture]
 ignore_names = ["request", "config"]
