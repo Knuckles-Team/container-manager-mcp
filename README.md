@@ -20,7 +20,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 3.0.0*
+*Version: 3.1.0*
 
 > **Documentation** — Installation, deployment, usage across the API, CLI, MCP, and
 > A2A agent interfaces, and the multi-host control plane are maintained in the
@@ -172,7 +172,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 
 <!-- MCP-TOOLS-TABLE:START -->
 
-#### Condensed action-routed tools (default — `MCP_TOOL_MODE=condensed`)
+#### Condensed action-routed tools (`MCP_TOOL_MODE=condensed`)
 
 | MCP Tool | Toggle Env Var | Description |
 |----------|----------------|-------------|
@@ -502,7 +502,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 
 </details>
 
-_23 action-routed tool(s) (default) · 292 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (`condensed` default · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+_23 action-routed tool(s) · 292 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
 
 Detailed tool schemas, parameter shapes, and validation constraints are preserved in [docs/usage.md](docs/usage.md).
@@ -597,10 +597,6 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "CONTAINERTOOL": "True",
         "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
         "CONTAINER_MANAGER_HEALTH_INGEST": "true",
-        "CONTAINER_MANAGER_HEALTH_NOTIFY_URL": "",
-        "CONTAINER_MANAGER_HOST": "",
-        "CONTAINER_MANAGER_KUBECONTEXT": "",
-        "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
         "CONTAINER_MANAGER_TYPE": "docker",
         "DOCKERSWARMTOOL": "True",
         "DOCTORTOOL": "True",
@@ -616,10 +612,6 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
         "K8SRBACTOOL": "True",
         "K8SSTORAGETOOL": "True",
         "K8SWORKLOADSTOOL": "True",
-        "K8S_CONTEXTS": "",
-        "KUBECONFIG": "",
-        "KUBERNETES_SERVICE_HOST": "",
-        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
         "MULTI_CONTEXT_MODE": "True",
@@ -665,10 +657,6 @@ own runtime secret boundary.
         "CONTAINERTOOL": "True",
         "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
         "CONTAINER_MANAGER_HEALTH_INGEST": "true",
-        "CONTAINER_MANAGER_HEALTH_NOTIFY_URL": "",
-        "CONTAINER_MANAGER_HOST": "",
-        "CONTAINER_MANAGER_KUBECONTEXT": "",
-        "CONTAINER_MANAGER_PODMAN_BASE_URL": "",
         "CONTAINER_MANAGER_TYPE": "docker",
         "DOCKERSWARMTOOL": "True",
         "DOCTORTOOL": "True",
@@ -684,10 +672,6 @@ own runtime secret boundary.
         "K8SRBACTOOL": "True",
         "K8SSTORAGETOOL": "True",
         "K8SWORKLOADSTOOL": "True",
-        "K8S_CONTEXTS": "",
-        "KUBECONFIG": "",
-        "KUBERNETES_SERVICE_HOST": "",
-        "KUBERNETES_SERVICE_PORT": "",
         "MISCTOOL": "True",
         "MULTICONTEXTTOOL": "True",
         "MULTI_CONTEXT_MODE": "True",
@@ -732,10 +716,6 @@ docker run -i --rm \
   -e CONTAINERTOOL=True \
   -e CONTAINER_MANAGER_HEALTH_AGGREGATE_S=3600 \
   -e CONTAINER_MANAGER_HEALTH_INGEST=true \
-  -e CONTAINER_MANAGER_HEALTH_NOTIFY_URL="" \
-  -e CONTAINER_MANAGER_HOST="" \
-  -e CONTAINER_MANAGER_KUBECONTEXT="" \
-  -e CONTAINER_MANAGER_PODMAN_BASE_URL="" \
   -e CONTAINER_MANAGER_TYPE=docker \
   -e DOCKERSWARMTOOL=True \
   -e DOCTORTOOL=True \
@@ -751,10 +731,6 @@ docker run -i --rm \
   -e K8SRBACTOOL=True \
   -e K8SSTORAGETOOL=True \
   -e K8SWORKLOADSTOOL=True \
-  -e K8S_CONTEXTS="" \
-  -e KUBECONFIG="" \
-  -e KUBERNETES_SERVICE_HOST="" \
-  -e KUBERNETES_SERVICE_PORT="" \
   -e MISCTOOL=True \
   -e MULTICONTEXTTOOL=True \
   -e MULTI_CONTEXT_MODE=True \
@@ -806,8 +782,8 @@ the detailed transport contract.
 | `TRANSPORT` | `stdio` | options: stdio, streamable-http, sse |
 | `ENABLE_OTEL` | `True` |  |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://localhost:8080/api/public/otel` |  |
-| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | `pk-...` |  |
-| `OTEL_EXPORTER_OTLP_SECRET_KEY` | `sk-...` |  |
+| `OTEL_EXPORTER_OTLP_PUBLIC_KEY` | secret-injected |  |
+| `OTEL_EXPORTER_OTLP_SECRET_KEY` | secret-injected |  |
 | `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` |  |
 | `EUNOMIA_TYPE` | `none` | options: none, embedded, remote |
 | `EUNOMIA_POLICY_FILE` | `mcp_policies.json` |  |
@@ -818,10 +794,10 @@ the detailed transport contract.
 | `CONTAINER_MANAGER_KUBECONTEXT` | — | kubeconfig context name; empty = current-context |
 | `KUBECONFIG` | — | path(s) to kubeconfig file(s); empty = ~/.kube/config |
 | `KUBERNETES_SERVICE_HOST` | — | injected by the cluster when running in-pod; leave empty |
+| `KUBERNETES_SERVICE_PORT` | — | injected by the cluster when running in-pod (save-context capture); leave empty |
 | `CONTAINER_MANAGER_HEALTH_INGEST` | `true` | write :HealthTrend/:HealthBaseline/:HealthAnomaly nodes |
 | `CONTAINER_MANAGER_HEALTH_AGGREGATE_S` | `3600` | per-node/signal trend-buffer flush window (seconds) |
 | `CONTAINER_MANAGER_HEALTH_NOTIFY_URL` | — | best-effort webhook for derivation-pass anomaly alerts |
-| `KUBERNETES_SERVICE_PORT` | — | injected by the cluster when running in-pod (save-context capture); leave empty |
 | `INVENTORYTOOL` | `True` |  |
 | `INFOTOOL` | `True` |  |
 | `IMAGETOOL` | `True` |  |
@@ -848,11 +824,11 @@ the detailed transport contract.
 | `MULTI_CONTEXT_MODE` | `True` | Multi-Context Configuration |
 | `HEALTH_CHECK_TTL_SECONDS` | `30` | Multi-context health-check cache TTL (seconds) and parallel worker cap |
 | `MULTI_CONTEXT_MAX_WORKERS` | — |  |
-| `K8S_CONTEXTS` | — | Example: "dev=dev-cluster;prod=prod-cluster;staging=staging-cluster" |
+| `K8S_CONTEXTS` | — | Kubernetes Contexts (format: "context1=kubeconfig_context;context2=another_context") Example: "dev=dev-cluster;prod=prod-cluster;staging=staging-cluster" |
 | `DEFAULT_K8S_CONTEXT` | — | Default Kubernetes context name (must match a key in K8S_CONTEXTS) |
-| `DOCKER_CONTEXTS` | — | Example: "local=unix:///var/run/docker.sock;remote=tcp://198.51.100.100:2375" |
+| `DOCKER_CONTEXTS` | — | Docker Contexts (format: "context1=tcp://host:port;context2=tcp://another:port") Example: "local=unix:///var/run/docker.sock;remote=tcp://192.168.1.100:2375" |
 | `DEFAULT_DOCKER_CONTEXT` | — | Default Docker context name (must match a key in DOCKER_CONTEXTS) |
-| `SWARM_CONTEXTS` | — | Example: "swarm1=tcp://swarm1:2375;swarm2=tcp://swarm2:2375" |
+| `SWARM_CONTEXTS` | — | Swarm Contexts (format: "context1=tcp://host:port;context2=tcp://another:port") Example: "swarm1=tcp://swarm1:2375;swarm2=tcp://swarm2:2375" |
 | `DEFAULT_SWARM_CONTEXT` | — | Default Swarm context name (must match a key in SWARM_CONTEXTS) |
 | `PODMAN_ENABLED` | `true` | Enable Podman (local only) |
 
@@ -860,14 +836,16 @@ the detailed transport contract.
 
 | Variable | Example | Description |
 |----------|---------|-------------|
-| `MCP_TOOL_MODE` | `condensed` | Tool surface: `condensed` | `verbose` | `both` |
+| `MCP_TOOL_MODE` | `intent` | Tool surface: `intent` \| `condensed` \| `verbose` \| `both` |
 | `MCP_ENABLED_TOOLS` | — | Comma-separated tool allow-list |
 | `MCP_DISABLED_TOOLS` | — | Comma-separated tool deny-list |
 | `MCP_ENABLED_TAGS` | — | Comma-separated tag allow-list |
 | `MCP_DISABLED_TAGS` | — | Comma-separated tag deny-list |
-| `MCP_CLIENT_AUTH` | — | Outbound MCP auth (`oidc-client-credentials` for fleet calls) |
+| `MCP_CLIENT_AUTH` | — | Outbound MCP child auth: `oidc-client-credentials` \| `basic` \| `none` |
 | `OIDC_CLIENT_ID` | — | OIDC client id (service-account auth) |
-| `OIDC_CLIENT_SECRET` | — | OIDC client secret (service-account auth) |
+| `OIDC_CLIENT_SECRET_REF` | `secret://identity/oidc-client-secret` | Runtime secret reference for the OIDC service account |
+| `MCP_BASIC_AUTH_USERNAME` | — | HTTP Basic username (`MCP_CLIENT_AUTH=basic`) |
+| `MCP_BASIC_AUTH_PASSWORD_REF` | `secret://identity/mcp-basic-password` | Runtime secret reference for HTTP Basic auth (`MCP_CLIENT_AUTH=basic`) |
 | `DEBUG` | `False` | Verbose logging |
 | `PYTHONUNBUFFERED` | `1` | Unbuffered stdout (recommended in containers) |
 | `MCP_URL` | `http://localhost:8000/mcp` | URL of the MCP server the agent connects to |
@@ -875,7 +853,7 @@ the detailed transport contract.
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_54 package + 14 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
+_54 package + 16 inherited variable(s). Auto-generated from `.env.example` + the shared agent-utilities set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
