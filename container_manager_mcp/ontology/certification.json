@@ -1,8 +1,7 @@
 {
   "api_version": "graphos.io/v1",
   "artifacts": {
-    "a2a.json": "6ea0fcd7cecf7f0b08d51dfb12499455e21c97060e1e423986a949cf26556aca",
-    "connector_manifest.yml": "594161a67b47761dca10d66c4db8b7e61882c1ffec65e11dcf90ecb6d8220fde",
+    "connector_manifest.yml": "46c383b9e6b274cd50aaebb7faf29dc9ffdb2b7944c0639cb780487cb2fe3c91",
     "container_manager_mcp/connectors/mcp_source_presets.json": "545ef82604b3ee600dbcc8797d1be1a22b361c60b15df91fa6fe922d6c5be9e7",
     "container_manager_mcp/connectors/tool_schema_fingerprints.json": "746ad2b43bea1df961eedf32ba5775b3d9708d7f71bc3fcfd5ee251752e72ef8",
     "container_manager_mcp/ontology/container.ttl": "2b1c71897f4ca0e063e9eda7fbc0246204aa9fcdcf4769e1b64b6931d8f765a5",
@@ -19,19 +18,19 @@
     "synthetic_fixture_contract": "passed"
   },
   "compatibility": {
-    "agent_utilities": ">=2.1.0,<3",
+    "agent_utilities": ">=2.4.0,<3",
     "bundle_schema": "2",
-    "epistemic_graph": ">=2.23.0,<3"
+    "epistemic_graph": ">=2.26.0,<3"
   },
   "connector": "container-manager-mcp",
   "kind": "ConnectorSourceAttestation",
   "live_certified": false,
   "mode": "offline-source",
   "schema_version": "2",
-  "signature": "6NYswhH8bTZr7XF2YI0THZHGx-NYgeA-DoNAcVspM5LAZV46UvaVC8aPU6wJuLquZI2BKvA4MbIw22SUDxYRDA",
-  "signature_algorithm": "ed25519",
-  "signer": "ontology-manifest-generator",
-  "signing_public_key": "QkigdPNpcUU7x7NcSkwCsUXIQpaFncMQbYSoiSgI2SY",
+  "signature": null,
+  "signature_algorithm": "none",
+  "signer": "UNSIGNED-PREVIEW",
+  "signing_public_key": "",
   "status": "source-validated",
-  "validated_at": "2026-07-31T04:00:00Z"
+  "validated_at": "2026-08-21T04:30:39Z"
 }
