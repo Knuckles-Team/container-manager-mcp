@@ -16,6 +16,229 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+_UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
+
+
+async def _dispatch_ingress_action(
+    action, manager, ns, ingress_name, ingress_spec, namespace
+):
+    if action == "list_ingress":
+        return await run_blocking(manager.list_ingress, namespace=namespace)
+    elif action == "create_ingress":
+        if not ingress_name:
+            return "Error: 'ingress_name' is required for create_ingress"
+        ing_spec = json.loads(ingress_spec) if ingress_spec else None
+        return await run_blocking(
+            manager.create_ingress,
+            name=ingress_name,
+            namespace=namespace,
+            spec=ing_spec,
+        )
+    elif action == "delete_ingress":
+        if not ingress_name:
+            return "Error: 'ingress_name' is required for delete_ingress"
+        return await run_blocking(
+            manager.delete_ingress, name=ingress_name, namespace=namespace
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_ingress_class_action(action, manager, ns, name, spec):
+    if action == "list_ingress_classes":
+        return await run_blocking(manager.list_ingress_classes)
+    elif action == "describe_ingress_class":
+        if not name:
+            return "Error: 'name' is required for describe_ingress_class"
+        return await run_blocking(manager.describe_ingress_class, name)
+    elif action == "create_ingress_class":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_ingress_class"
+        return await run_blocking(manager.create_ingress_class, name, spec)
+    elif action == "set_default_ingress_class":
+        if not name:
+            return "Error: 'name' is required for set_default_ingress_class"
+        return await run_blocking(manager.set_default_ingress_class, name)
+    return _UNHANDLED
+
+
+async def _dispatch_networkpolicy_action(
+    action, manager, ns, name, namespace, netpol_name, netpol_spec, rules, spec
+):
+    if action == "list_networkpolicies":
+        return await run_blocking(manager.list_networkpolicies, namespace=namespace)
+    elif action == "create_networkpolicy":
+        if not netpol_name:
+            return "Error: 'netpol_name' is required for create_networkpolicy"
+        np_spec = json.loads(netpol_spec) if netpol_spec else None
+        return await run_blocking(
+            manager.create_networkpolicy,
+            name=netpol_name,
+            namespace=namespace,
+            spec=np_spec,
+        )
+    elif action == "delete_networkpolicy":
+        if not netpol_name:
+            return "Error: 'netpol_name' is required for delete_networkpolicy"
+        return await run_blocking(
+            manager.delete_networkpolicy, name=netpol_name, namespace=namespace
+        )
+    elif action == "create_network_policy_with_cidr":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
+        return await run_blocking(
+            manager.create_network_policy_with_cidr, name, ns, spec
+        )
+    elif action == "update_network_policy_rules":
+        if not name or not rules:
+            return (
+                "Error: 'name' and 'rules' are required for update_network_policy_rules"
+            )
+        return await run_blocking(manager.update_network_policy_rules, name, ns, rules)
+    elif action == "test_network_policy_connectivity":
+        if not namespace or not name:
+            return "Error: 'namespace' and 'name' (policy_name) are required for test_network_policy_connectivity"
+        return await run_blocking(
+            manager.test_network_policy_connectivity, namespace, name
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_endpoint_action(action, manager, ns, namespace):
+    if action == "list_endpoints":
+        return await run_blocking(manager.list_endpoints, namespace=namespace)
+    elif action == "list_endpointslices":
+        return await run_blocking(manager.list_endpointslices, namespace=namespace)
+    return _UNHANDLED
+
+
+async def _dispatch_dns_action(
+    action, manager, ns, hostname, namespace, pod_name, service_name, target
+):
+    if action == "check_dns_resolution":
+        if not namespace or not pod_name or not hostname:
+            return "Error: 'namespace', 'pod_name', and 'hostname' are required for check_dns_resolution"
+        return await run_blocking(
+            manager.check_dns_resolution, namespace, pod_name, hostname
+        )
+    elif action == "list_dns_endpoints":
+        if not namespace or not service_name:
+            return "Error: 'namespace' and 'service_name' are required for list_dns_endpoints"
+        return await run_blocking(manager.list_dns_endpoints, namespace, service_name)
+    elif action == "test_dns_connectivity":
+        if not namespace or not target:
+            return (
+                "Error: 'namespace' and 'target' are required for test_dns_connectivity"
+            )
+        return await run_blocking(manager.test_dns_connectivity, namespace, target)
+    return _UNHANDLED
+
+
+async def _dispatch_native_service_action(
+    action,
+    manager,
+    ns,
+    name,
+    namespace,
+    service_ports,
+    service_selector,
+    service_spec,
+    service_type,
+):
+    if action == "list_k8s_services":
+        return await run_blocking(manager.list_native_services, namespace=namespace)
+    elif action == "get_k8s_service":
+        if not name:
+            return "Error: 'name' is required for get_k8s_service"
+        return await run_blocking(manager.get_native_service, name, namespace)
+    elif action == "create_k8s_service":
+        if not name:
+            return "Error: 'name' is required for create_k8s_service"
+        return await run_blocking(
+            manager.create_native_service,
+            name=name,
+            namespace=namespace,
+            spec=service_spec,
+            ports=service_ports,
+            selector=service_selector,
+            type=service_type,
+        )
+    elif action == "delete_k8s_service":
+        if not name:
+            return "Error: 'name' is required for delete_k8s_service"
+        return await run_blocking(manager.delete_native_service, name, namespace)
+    return _UNHANDLED
+
+
+_ACTION_GROUPS: dict[str, str] = {
+    "list_ingress": "ingress",
+    "create_ingress": "ingress",
+    "delete_ingress": "ingress",
+    "list_ingress_classes": "ingress_class",
+    "describe_ingress_class": "ingress_class",
+    "create_ingress_class": "ingress_class",
+    "set_default_ingress_class": "ingress_class",
+    "list_networkpolicies": "networkpolicy",
+    "create_networkpolicy": "networkpolicy",
+    "delete_networkpolicy": "networkpolicy",
+    "create_network_policy_with_cidr": "networkpolicy",
+    "update_network_policy_rules": "networkpolicy",
+    "test_network_policy_connectivity": "networkpolicy",
+    "list_endpoints": "endpoint",
+    "list_endpointslices": "endpoint",
+    "check_dns_resolution": "dns",
+    "list_dns_endpoints": "dns",
+    "test_dns_connectivity": "dns",
+    "list_k8s_services": "native_service",
+    "get_k8s_service": "native_service",
+    "create_k8s_service": "native_service",
+    "delete_k8s_service": "native_service",
+}
+
+_GROUP_FUNCS = {
+    "ingress": _dispatch_ingress_action,
+    "ingress_class": _dispatch_ingress_class_action,
+    "networkpolicy": _dispatch_networkpolicy_action,
+    "endpoint": _dispatch_endpoint_action,
+    "dns": _dispatch_dns_action,
+    "native_service": _dispatch_native_service_action,
+}
+
+_GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
+    "ingress": (
+        "ingress_name",
+        "ingress_spec",
+        "namespace",
+    ),
+    "ingress_class": (
+        "name",
+        "spec",
+    ),
+    "networkpolicy": (
+        "name",
+        "namespace",
+        "netpol_name",
+        "netpol_spec",
+        "rules",
+        "spec",
+    ),
+    "endpoint": ("namespace",),
+    "dns": (
+        "hostname",
+        "namespace",
+        "pod_name",
+        "service_name",
+        "target",
+    ),
+    "native_service": (
+        "name",
+        "namespace",
+        "service_ports",
+        "service_selector",
+        "service_spec",
+        "service_type",
+    ),
+}
+
 
 def register_k8snetworking_tools(mcp: FastMCP):
     @mcp.tool(
@@ -122,142 +345,29 @@ def register_k8snetworking_tools(mcp: FastMCP):
         try:
             ns = namespace or getattr(manager, "namespace", namespace)
 
-            # Ingress
-            if action == "list_ingress":
-                return await run_blocking(manager.list_ingress, namespace=namespace)
-            elif action == "create_ingress":
-                if not ingress_name:
-                    return "Error: 'ingress_name' is required for create_ingress"
-                ing_spec = json.loads(ingress_spec) if ingress_spec else None
-                return await run_blocking(
-                    manager.create_ingress,
-                    name=ingress_name,
-                    namespace=namespace,
-                    spec=ing_spec,
-                )
-            elif action == "delete_ingress":
-                if not ingress_name:
-                    return "Error: 'ingress_name' is required for delete_ingress"
-                return await run_blocking(
-                    manager.delete_ingress, name=ingress_name, namespace=namespace
-                )
-
-            # Ingress classes
-            elif action == "list_ingress_classes":
-                return await run_blocking(manager.list_ingress_classes)
-            elif action == "describe_ingress_class":
-                if not name:
-                    return "Error: 'name' is required for describe_ingress_class"
-                return await run_blocking(manager.describe_ingress_class, name)
-            elif action == "create_ingress_class":
-                if not name or not spec:
-                    return (
-                        "Error: 'name' and 'spec' are required for create_ingress_class"
-                    )
-                return await run_blocking(manager.create_ingress_class, name, spec)
-            elif action == "set_default_ingress_class":
-                if not name:
-                    return "Error: 'name' is required for set_default_ingress_class"
-                return await run_blocking(manager.set_default_ingress_class, name)
-
-            # Network policies
-            elif action == "list_networkpolicies":
-                return await run_blocking(
-                    manager.list_networkpolicies, namespace=namespace
-                )
-            elif action == "create_networkpolicy":
-                if not netpol_name:
-                    return "Error: 'netpol_name' is required for create_networkpolicy"
-                np_spec = json.loads(netpol_spec) if netpol_spec else None
-                return await run_blocking(
-                    manager.create_networkpolicy,
-                    name=netpol_name,
-                    namespace=namespace,
-                    spec=np_spec,
-                )
-            elif action == "delete_networkpolicy":
-                if not netpol_name:
-                    return "Error: 'netpol_name' is required for delete_networkpolicy"
-                return await run_blocking(
-                    manager.delete_networkpolicy, name=netpol_name, namespace=namespace
-                )
-            elif action == "create_network_policy_with_cidr":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
-                return await run_blocking(
-                    manager.create_network_policy_with_cidr, name, ns, spec
-                )
-            elif action == "update_network_policy_rules":
-                if not name or not rules:
-                    return "Error: 'name' and 'rules' are required for update_network_policy_rules"
-                return await run_blocking(
-                    manager.update_network_policy_rules, name, ns, rules
-                )
-            elif action == "test_network_policy_connectivity":
-                if not namespace or not name:
-                    return "Error: 'namespace' and 'name' (policy_name) are required for test_network_policy_connectivity"
-                return await run_blocking(
-                    manager.test_network_policy_connectivity, namespace, name
-                )
-
-            # Endpoints
-            elif action == "list_endpoints":
-                return await run_blocking(manager.list_endpoints, namespace=namespace)
-            elif action == "list_endpointslices":
-                return await run_blocking(
-                    manager.list_endpointslices, namespace=namespace
-                )
-
-            # DNS debugging
-            elif action == "check_dns_resolution":
-                if not namespace or not pod_name or not hostname:
-                    return "Error: 'namespace', 'pod_name', and 'hostname' are required for check_dns_resolution"
-                return await run_blocking(
-                    manager.check_dns_resolution, namespace, pod_name, hostname
-                )
-            elif action == "list_dns_endpoints":
-                if not namespace or not service_name:
-                    return "Error: 'namespace' and 'service_name' are required for list_dns_endpoints"
-                return await run_blocking(
-                    manager.list_dns_endpoints, namespace, service_name
-                )
-            elif action == "test_dns_connectivity":
-                if not namespace or not target:
-                    return "Error: 'namespace' and 'target' are required for test_dns_connectivity"
-                return await run_blocking(
-                    manager.test_dns_connectivity, namespace, target
-                )
-
-            # Native (core/v1) Services
-            elif action == "list_k8s_services":
-                return await run_blocking(
-                    manager.list_native_services, namespace=namespace
-                )
-            elif action == "get_k8s_service":
-                if not name:
-                    return "Error: 'name' is required for get_k8s_service"
-                return await run_blocking(manager.get_native_service, name, namespace)
-            elif action == "create_k8s_service":
-                if not name:
-                    return "Error: 'name' is required for create_k8s_service"
-                return await run_blocking(
-                    manager.create_native_service,
-                    name=name,
-                    namespace=namespace,
-                    spec=service_spec,
-                    ports=service_ports,
-                    selector=service_selector,
-                    type=service_type,
-                )
-            elif action == "delete_k8s_service":
-                if not name:
-                    return "Error: 'name' is required for delete_k8s_service"
-                return await run_blocking(
-                    manager.delete_native_service, name, namespace
-                )
-
-            else:
+            group = _ACTION_GROUPS.get(action)
+            if group is None:
                 return f"Error: Unknown action '{action}'"
+            all_values = {
+                "hostname": hostname,
+                "ingress_name": ingress_name,
+                "ingress_spec": ingress_spec,
+                "name": name,
+                "namespace": namespace,
+                "netpol_name": netpol_name,
+                "netpol_spec": netpol_spec,
+                "pod_name": pod_name,
+                "rules": rules,
+                "service_name": service_name,
+                "service_ports": service_ports,
+                "service_selector": service_selector,
+                "service_spec": service_spec,
+                "service_type": service_type,
+                "spec": spec,
+                "target": target,
+            }
+            group_kwargs = {n: all_values[n] for n in _GROUP_PARAM_NAMES[group]}
+            return await _GROUP_FUNCS[group](action, manager, ns, **group_kwargs)
         except Exception as e:
             if ctx:
                 ctx_log(
