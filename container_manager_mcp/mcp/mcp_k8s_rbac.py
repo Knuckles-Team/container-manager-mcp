@@ -16,6 +16,312 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+_UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
+
+
+async def _dispatch_role_action(action, manager, ns, namespace, role_name, role_rules):
+    if action == "list_roles":
+        return await run_blocking(manager.list_roles, namespace=namespace)
+    elif action == "create_role":
+        if not role_name:
+            return "Error: 'role_name' is required for create_role"
+        rules = json.loads(role_rules) if role_rules else None
+        return await run_blocking(
+            manager.create_role,
+            name=role_name,
+            namespace=namespace,
+            rules=rules,
+        )
+    elif action == "delete_role":
+        if not role_name:
+            return "Error: 'role_name' is required for delete_role"
+        return await run_blocking(
+            manager.delete_role, name=role_name, namespace=namespace
+        )
+    elif action == "list_cluster_roles":
+        return await run_blocking(manager.list_cluster_roles)
+    return _UNHANDLED
+
+
+async def _dispatch_rolebinding_action(
+    action, manager, ns, namespace, role_ref, rolebinding_name, subjects
+):
+    if action == "list_rolebindings":
+        return await run_blocking(manager.list_rolebindings, namespace=namespace)
+    elif action == "create_rolebinding":
+        if not rolebinding_name:
+            return "Error: 'rolebinding_name' is required for create_rolebinding"
+        role_ref_dict = json.loads(role_ref) if role_ref else None
+        subjects_list = json.loads(subjects) if subjects else None
+        return await run_blocking(
+            manager.create_rolebinding,
+            name=rolebinding_name,
+            namespace=namespace,
+            role_ref=role_ref_dict,
+            subjects=subjects_list,
+        )
+    elif action == "delete_rolebinding":
+        if not rolebinding_name:
+            return "Error: 'rolebinding_name' is required for delete_rolebinding"
+        return await run_blocking(
+            manager.delete_rolebinding,
+            name=rolebinding_name,
+            namespace=namespace,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_cluster_rolebinding_action(
+    action, manager, ns, role_ref, rolebinding_name, subjects
+):
+    if action == "list_cluster_rolebindings":
+        return await run_blocking(manager.list_cluster_rolebindings)
+    elif action == "create_cluster_rolebinding":
+        if not rolebinding_name:
+            return (
+                "Error: 'rolebinding_name' is required for create_cluster_rolebinding"
+            )
+        role_ref_dict = json.loads(role_ref) if role_ref else None
+        subjects_list = json.loads(subjects) if subjects else None
+        return await run_blocking(
+            manager.create_cluster_rolebinding,
+            name=rolebinding_name,
+            role_ref=role_ref_dict,
+            subjects=subjects_list,
+        )
+    elif action == "delete_cluster_rolebinding":
+        if not rolebinding_name:
+            return (
+                "Error: 'rolebinding_name' is required for delete_cluster_rolebinding"
+            )
+        return await run_blocking(
+            manager.delete_cluster_rolebinding, name=rolebinding_name
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_serviceaccount_action(
+    action, manager, ns, auth_resource, auth_verb, namespace, serviceaccount_name
+):
+    if action == "list_serviceaccounts":
+        return await run_blocking(manager.list_serviceaccounts, namespace=namespace)
+    elif action == "create_serviceaccount":
+        if not serviceaccount_name:
+            return "Error: 'serviceaccount_name' is required for create_serviceaccount"
+        return await run_blocking(
+            manager.create_serviceaccount,
+            name=serviceaccount_name,
+            namespace=namespace,
+        )
+    elif action == "delete_serviceaccount":
+        if not serviceaccount_name:
+            return "Error: 'serviceaccount_name' is required for delete_serviceaccount"
+        return await run_blocking(
+            manager.delete_serviceaccount,
+            name=serviceaccount_name,
+            namespace=namespace,
+        )
+    elif action == "auth_can_i":
+        if not auth_verb or not auth_resource:
+            return "Error: 'auth_verb' and 'auth_resource' are required for auth_can_i"
+        return await run_blocking(
+            manager.auth_can_i,
+            verb=auth_verb,
+            resource=auth_resource,
+            namespace=namespace,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_sa_token_action(action, manager, ns, name, spec, token_name):
+    if action == "create_service_account_token":
+        if not name or not spec:
+            return (
+                "Error: 'name' and 'spec' are required for create_service_account_token"
+            )
+        return await run_blocking(manager.create_service_account_token, name, ns, spec)
+    elif action == "list_service_account_tokens":
+        if not name:
+            return "Error: 'name' is required for list_service_account_tokens"
+        return await run_blocking(manager.list_service_account_tokens, name, ns)
+    elif action == "delete_service_account_token":
+        if not name or not token_name:
+            return "Error: 'name' and 'token_name' are required for delete_service_account_token"
+        return await run_blocking(
+            manager.delete_service_account_token, name, ns, token_name
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_sar_action(action, manager, ns, namespace, spec):
+    if action == "subject_access_review":
+        if not spec:
+            return "Error: 'spec' is required for subject_access_review"
+        return await run_blocking(manager.subject_access_review, spec)
+    elif action == "local_subject_access_review":
+        if not namespace or not spec:
+            return "Error: 'namespace' and 'spec' are required for local_subject_access_review"
+        return await run_blocking(manager.local_subject_access_review, namespace, spec)
+    return _UNHANDLED
+
+
+async def _dispatch_aggregated_role_action(action, manager, ns, aggregation_rule, name):
+    if action == "create_aggregated_cluster_role":
+        if not name or not aggregation_rule:
+            return "Error: 'name' and 'aggregation_rule' are required for create_aggregated_cluster_role"
+        return await run_blocking(
+            manager.create_aggregated_cluster_role, name, aggregation_rule
+        )
+    elif action == "update_aggregated_cluster_role":
+        if not name or not aggregation_rule:
+            return "Error: 'name' and 'aggregation_rule' are required for update_aggregated_cluster_role"
+        return await run_blocking(
+            manager.update_aggregated_cluster_role, name, aggregation_rule
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_pod_security_action(
+    action, manager, ns, name, namespace, pod_spec, spec
+):
+    if action == "list_pod_security_policies":
+        return await run_blocking(manager.list_pod_security_policies)
+    elif action == "describe_pod_security_policy":
+        if not name:
+            return "Error: 'name' is required for describe_pod_security_policy"
+        return await run_blocking(manager.describe_pod_security_policy, name)
+    elif action == "create_pod_security_policy":
+        if not name or not spec:
+            return (
+                "Error: 'name' and 'spec' are required for create_pod_security_policy"
+            )
+        return await run_blocking(manager.create_pod_security_policy, name, spec)
+    elif action == "delete_pod_security_policy":
+        if not name:
+            return "Error: 'name' is required for delete_pod_security_policy"
+        return await run_blocking(manager.delete_pod_security_policy, name)
+    elif action == "evaluate_pod_security":
+        if not namespace or not pod_spec:
+            return "Error: 'namespace' and 'pod_spec' are required for evaluate_pod_security"
+        return await run_blocking(manager.evaluate_pod_security, namespace, pod_spec)
+    return _UNHANDLED
+
+
+async def _dispatch_sa_secret_mapping_action(
+    action, manager, ns, name, sa_name, secret_name
+):
+    if action == "list_service_account_mapped_secrets":
+        if not name:
+            return "Error: 'name' is required for list_service_account_mapped_secrets"
+        return await run_blocking(manager.list_service_account_mapped_secrets, name, ns)
+    elif action == "map_secret_to_service_account":
+        if not secret_name or not sa_name:
+            return "Error: 'secret_name' and 'sa_name' are required for map_secret_to_service_account"
+        return await run_blocking(
+            manager.map_secret_to_service_account, secret_name, sa_name, ns
+        )
+    elif action == "unmap_secret_from_service_account":
+        if not secret_name or not sa_name:
+            return "Error: 'secret_name' and 'sa_name' are required for unmap_secret_from_service_account"
+        return await run_blocking(
+            manager.unmap_secret_from_service_account, secret_name, sa_name, ns
+        )
+    return _UNHANDLED
+
+
+_ACTION_GROUPS: dict[str, str] = {
+    "list_roles": "role",
+    "create_role": "role",
+    "delete_role": "role",
+    "list_cluster_roles": "role",
+    "list_rolebindings": "rolebinding",
+    "create_rolebinding": "rolebinding",
+    "delete_rolebinding": "rolebinding",
+    "list_cluster_rolebindings": "cluster_rolebinding",
+    "create_cluster_rolebinding": "cluster_rolebinding",
+    "delete_cluster_rolebinding": "cluster_rolebinding",
+    "list_serviceaccounts": "serviceaccount",
+    "create_serviceaccount": "serviceaccount",
+    "delete_serviceaccount": "serviceaccount",
+    "auth_can_i": "serviceaccount",
+    "create_service_account_token": "sa_token",
+    "list_service_account_tokens": "sa_token",
+    "delete_service_account_token": "sa_token",
+    "subject_access_review": "sar",
+    "local_subject_access_review": "sar",
+    "create_aggregated_cluster_role": "aggregated_role",
+    "update_aggregated_cluster_role": "aggregated_role",
+    "list_pod_security_policies": "pod_security",
+    "describe_pod_security_policy": "pod_security",
+    "create_pod_security_policy": "pod_security",
+    "delete_pod_security_policy": "pod_security",
+    "evaluate_pod_security": "pod_security",
+    "list_service_account_mapped_secrets": "sa_secret_mapping",
+    "map_secret_to_service_account": "sa_secret_mapping",
+    "unmap_secret_from_service_account": "sa_secret_mapping",
+}
+
+_GROUP_FUNCS = {
+    "role": _dispatch_role_action,
+    "rolebinding": _dispatch_rolebinding_action,
+    "cluster_rolebinding": _dispatch_cluster_rolebinding_action,
+    "serviceaccount": _dispatch_serviceaccount_action,
+    "sa_token": _dispatch_sa_token_action,
+    "sar": _dispatch_sar_action,
+    "aggregated_role": _dispatch_aggregated_role_action,
+    "pod_security": _dispatch_pod_security_action,
+    "sa_secret_mapping": _dispatch_sa_secret_mapping_action,
+}
+
+_GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
+    "role": (
+        "namespace",
+        "role_name",
+        "role_rules",
+    ),
+    "rolebinding": (
+        "namespace",
+        "role_ref",
+        "rolebinding_name",
+        "subjects",
+    ),
+    "cluster_rolebinding": (
+        "role_ref",
+        "rolebinding_name",
+        "subjects",
+    ),
+    "serviceaccount": (
+        "auth_resource",
+        "auth_verb",
+        "namespace",
+        "serviceaccount_name",
+    ),
+    "sa_token": (
+        "name",
+        "spec",
+        "token_name",
+    ),
+    "sar": (
+        "namespace",
+        "spec",
+    ),
+    "aggregated_role": (
+        "aggregation_rule",
+        "name",
+    ),
+    "pod_security": (
+        "name",
+        "namespace",
+        "pod_spec",
+        "spec",
+    ),
+    "sa_secret_mapping": (
+        "name",
+        "sa_name",
+        "secret_name",
+    ),
+}
+
 
 def register_k8srbac_tools(mcp: FastMCP):
     @mcp.tool(
@@ -126,194 +432,29 @@ def register_k8srbac_tools(mcp: FastMCP):
         try:
             ns = namespace or getattr(manager, "namespace", namespace)
 
-            # Roles / bindings / service accounts
-            if action == "list_roles":
-                return await run_blocking(manager.list_roles, namespace=namespace)
-            elif action == "create_role":
-                if not role_name:
-                    return "Error: 'role_name' is required for create_role"
-                rules = json.loads(role_rules) if role_rules else None
-                return await run_blocking(
-                    manager.create_role,
-                    name=role_name,
-                    namespace=namespace,
-                    rules=rules,
-                )
-            elif action == "delete_role":
-                if not role_name:
-                    return "Error: 'role_name' is required for delete_role"
-                return await run_blocking(
-                    manager.delete_role, name=role_name, namespace=namespace
-                )
-            elif action == "list_cluster_roles":
-                return await run_blocking(manager.list_cluster_roles)
-            elif action == "list_rolebindings":
-                return await run_blocking(
-                    manager.list_rolebindings, namespace=namespace
-                )
-            elif action == "create_rolebinding":
-                if not rolebinding_name:
-                    return (
-                        "Error: 'rolebinding_name' is required for create_rolebinding"
-                    )
-                role_ref_dict = json.loads(role_ref) if role_ref else None
-                subjects_list = json.loads(subjects) if subjects else None
-                return await run_blocking(
-                    manager.create_rolebinding,
-                    name=rolebinding_name,
-                    namespace=namespace,
-                    role_ref=role_ref_dict,
-                    subjects=subjects_list,
-                )
-            elif action == "delete_rolebinding":
-                if not rolebinding_name:
-                    return (
-                        "Error: 'rolebinding_name' is required for delete_rolebinding"
-                    )
-                return await run_blocking(
-                    manager.delete_rolebinding,
-                    name=rolebinding_name,
-                    namespace=namespace,
-                )
-            elif action == "list_cluster_rolebindings":
-                return await run_blocking(manager.list_cluster_rolebindings)
-            elif action == "create_cluster_rolebinding":
-                if not rolebinding_name:
-                    return "Error: 'rolebinding_name' is required for create_cluster_rolebinding"
-                role_ref_dict = json.loads(role_ref) if role_ref else None
-                subjects_list = json.loads(subjects) if subjects else None
-                return await run_blocking(
-                    manager.create_cluster_rolebinding,
-                    name=rolebinding_name,
-                    role_ref=role_ref_dict,
-                    subjects=subjects_list,
-                )
-            elif action == "delete_cluster_rolebinding":
-                if not rolebinding_name:
-                    return "Error: 'rolebinding_name' is required for delete_cluster_rolebinding"
-                return await run_blocking(
-                    manager.delete_cluster_rolebinding, name=rolebinding_name
-                )
-            elif action == "list_serviceaccounts":
-                return await run_blocking(
-                    manager.list_serviceaccounts, namespace=namespace
-                )
-            elif action == "create_serviceaccount":
-                if not serviceaccount_name:
-                    return "Error: 'serviceaccount_name' is required for create_serviceaccount"
-                return await run_blocking(
-                    manager.create_serviceaccount,
-                    name=serviceaccount_name,
-                    namespace=namespace,
-                )
-            elif action == "delete_serviceaccount":
-                if not serviceaccount_name:
-                    return "Error: 'serviceaccount_name' is required for delete_serviceaccount"
-                return await run_blocking(
-                    manager.delete_serviceaccount,
-                    name=serviceaccount_name,
-                    namespace=namespace,
-                )
-            elif action == "auth_can_i":
-                if not auth_verb or not auth_resource:
-                    return "Error: 'auth_verb' and 'auth_resource' are required for auth_can_i"
-                return await run_blocking(
-                    manager.auth_can_i,
-                    verb=auth_verb,
-                    resource=auth_resource,
-                    namespace=namespace,
-                )
-
-            # ServiceAccount token management
-            elif action == "create_service_account_token":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_service_account_token"
-                return await run_blocking(
-                    manager.create_service_account_token, name, ns, spec
-                )
-            elif action == "list_service_account_tokens":
-                if not name:
-                    return "Error: 'name' is required for list_service_account_tokens"
-                return await run_blocking(manager.list_service_account_tokens, name, ns)
-            elif action == "delete_service_account_token":
-                if not name or not token_name:
-                    return "Error: 'name' and 'token_name' are required for delete_service_account_token"
-                return await run_blocking(
-                    manager.delete_service_account_token, name, ns, token_name
-                )
-
-            # SubjectAccessReview
-            elif action == "subject_access_review":
-                if not spec:
-                    return "Error: 'spec' is required for subject_access_review"
-                return await run_blocking(manager.subject_access_review, spec)
-            elif action == "local_subject_access_review":
-                if not namespace or not spec:
-                    return "Error: 'namespace' and 'spec' are required for local_subject_access_review"
-                return await run_blocking(
-                    manager.local_subject_access_review, namespace, spec
-                )
-
-            # Aggregated cluster roles
-            elif action == "create_aggregated_cluster_role":
-                if not name or not aggregation_rule:
-                    return "Error: 'name' and 'aggregation_rule' are required for create_aggregated_cluster_role"
-                return await run_blocking(
-                    manager.create_aggregated_cluster_role, name, aggregation_rule
-                )
-            elif action == "update_aggregated_cluster_role":
-                if not name or not aggregation_rule:
-                    return "Error: 'name' and 'aggregation_rule' are required for update_aggregated_cluster_role"
-                return await run_blocking(
-                    manager.update_aggregated_cluster_role, name, aggregation_rule
-                )
-
-            # Pod security policies
-            elif action == "list_pod_security_policies":
-                return await run_blocking(manager.list_pod_security_policies)
-            elif action == "describe_pod_security_policy":
-                if not name:
-                    return "Error: 'name' is required for describe_pod_security_policy"
-                return await run_blocking(manager.describe_pod_security_policy, name)
-            elif action == "create_pod_security_policy":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_pod_security_policy"
-                return await run_blocking(
-                    manager.create_pod_security_policy, name, spec
-                )
-            elif action == "delete_pod_security_policy":
-                if not name:
-                    return "Error: 'name' is required for delete_pod_security_policy"
-                return await run_blocking(manager.delete_pod_security_policy, name)
-            elif action == "evaluate_pod_security":
-                if not namespace or not pod_spec:
-                    return "Error: 'namespace' and 'pod_spec' are required for evaluate_pod_security"
-                return await run_blocking(
-                    manager.evaluate_pod_security, namespace, pod_spec
-                )
-
-            # ServiceAccount-secret mapping
-            elif action == "list_service_account_mapped_secrets":
-                if not name:
-                    return "Error: 'name' is required for list_service_account_mapped_secrets"
-                return await run_blocking(
-                    manager.list_service_account_mapped_secrets, name, ns
-                )
-            elif action == "map_secret_to_service_account":
-                if not secret_name or not sa_name:
-                    return "Error: 'secret_name' and 'sa_name' are required for map_secret_to_service_account"
-                return await run_blocking(
-                    manager.map_secret_to_service_account, secret_name, sa_name, ns
-                )
-            elif action == "unmap_secret_from_service_account":
-                if not secret_name or not sa_name:
-                    return "Error: 'secret_name' and 'sa_name' are required for unmap_secret_from_service_account"
-                return await run_blocking(
-                    manager.unmap_secret_from_service_account, secret_name, sa_name, ns
-                )
-
-            else:
+            group = _ACTION_GROUPS.get(action)
+            if group is None:
                 return f"Error: Unknown action '{action}'"
+            all_values = {
+                "aggregation_rule": aggregation_rule,
+                "auth_resource": auth_resource,
+                "auth_verb": auth_verb,
+                "name": name,
+                "namespace": namespace,
+                "pod_spec": pod_spec,
+                "role_name": role_name,
+                "role_ref": role_ref,
+                "role_rules": role_rules,
+                "rolebinding_name": rolebinding_name,
+                "sa_name": sa_name,
+                "secret_name": secret_name,
+                "serviceaccount_name": serviceaccount_name,
+                "spec": spec,
+                "subjects": subjects,
+                "token_name": token_name,
+            }
+            group_kwargs = {n: all_values[n] for n in _GROUP_PARAM_NAMES[group]}
+            return await _GROUP_FUNCS[group](action, manager, ns, **group_kwargs)
         except Exception as e:
             if ctx:
                 ctx_log(
