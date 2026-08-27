@@ -15,6 +15,269 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+_UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
+
+
+async def _dispatch_configmap_action(
+    action, manager, configmap_data, configmap_from_file, configmap_name, namespace
+):
+    if action == "list_configmaps":
+        return await run_blocking(manager.list_configmaps, namespace=namespace)
+    elif action == "create_configmap":
+        if not configmap_name:
+            return "Error: 'configmap_name' is required for create_configmap"
+        cm_data = json.loads(configmap_data) if configmap_data else None
+        return await run_blocking(
+            manager.create_configmap,
+            name=configmap_name,
+            namespace=namespace,
+            data=cm_data,
+            from_file=configmap_from_file,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_secret_action(
+    action, manager, namespace, secret_data, secret_name, secret_type
+):
+    if action == "list_secrets":
+        return await run_blocking(manager.list_secrets, namespace=namespace)
+    elif action == "create_secret":
+        if not secret_name:
+            return "Error: 'secret_name' is required for create_secret"
+        secret_data_dict = json.loads(secret_data) if secret_data else None
+        return await run_blocking(
+            manager.create_secret,
+            name=secret_name,
+            namespace=namespace,
+            secret_type=secret_type,
+            data=secret_data_dict,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_namespace_action(action, manager, namespace_name):
+    if action == "list_namespaces":
+        return await run_blocking(manager.list_namespaces)
+    elif action == "create_namespace":
+        if not namespace_name:
+            return "Error: 'namespace_name' is required for create_namespace"
+        return await run_blocking(manager.create_namespace, name=namespace_name)
+    elif action == "delete_namespace":
+        if not namespace_name:
+            return "Error: 'namespace_name' is required for delete_namespace"
+        return await run_blocking(manager.delete_namespace, name=namespace_name)
+    return _UNHANDLED
+
+
+async def _dispatch_event_action(action, manager, field_selector, namespace):
+    if action == "list_events":
+        return await run_blocking(
+            manager.list_events,
+            namespace=namespace,
+            field_selector=field_selector,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_crd_action(
+    action, manager, crd_group, crd_name, crd_plural, crd_version, namespace
+):
+    if action == "list_crds":
+        return await run_blocking(manager.list_crds)
+    elif action == "describe_crd":
+        if not crd_name:
+            return "Error: 'crd_name' is required for describe_crd"
+        return await run_blocking(manager.describe_crd, crd_name=crd_name)
+    elif action == "list_custom_resources":
+        if not crd_group or not crd_version or not crd_plural:
+            return "Error: 'crd_group', 'crd_version', and 'crd_plural' are required for list_custom_resources"
+        return await run_blocking(
+            manager.list_custom_resources,
+            group=crd_group,
+            version=crd_version,
+            plural=crd_plural,
+            namespace=namespace,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_resource_meta_action(
+    action,
+    manager,
+    annotations,
+    labels,
+    name,
+    namespace,
+    patch_body,
+    patch_type,
+    resource_name,
+    resource_type,
+):
+    if action == "label_resource":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for label_resource"
+        labels_dict = json.loads(labels) if labels else None
+        return await run_blocking(
+            manager.label_resource,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+            labels=labels_dict,
+        )
+    elif action == "annotate_resource":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for annotate_resource"
+        annotations_dict = json.loads(annotations) if annotations else None
+        return await run_blocking(
+            manager.annotate_resource,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+            annotations=annotations_dict,
+        )
+    elif action == "patch_resource":
+        if not resource_type or not name:
+            return "Error: 'resource_type' and 'name' are required for patch_resource"
+        patch = json.loads(patch_body) if patch_body else None
+        return await run_blocking(
+            manager.patch_resource,
+            resource_type=resource_type,
+            name=name,
+            namespace=namespace,
+            patch_body=patch,
+            patch_type=patch_type,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_state_tracking_action(
+    action,
+    manager,
+    expected_data,
+    file_path,
+    name,
+    namespace,
+    resource_type,
+    target_version,
+    timeout,
+):
+    if action == "compare_configmap_state":
+        if not name or not namespace or not expected_data:
+            return "Error: 'name', 'namespace', and 'expected_data' are required for compare_configmap_state"
+        return await run_blocking(
+            manager.compare_configmap_state, name, namespace, expected_data
+        )
+    elif action == "sync_configmap_from_file":
+        if not name or not namespace or not file_path:
+            return "Error: 'name', 'namespace', and 'file_path' are required for sync_configmap_from_file"
+        return await run_blocking(
+            manager.sync_configmap_from_file, name, namespace, file_path
+        )
+    elif action == "get_secret_state_hash":
+        if not name or not namespace:
+            return (
+                "Error: 'name' and 'namespace' are required for get_secret_state_hash"
+            )
+        return await run_blocking(manager.get_secret_state_hash, name, namespace)
+    elif action == "track_resource_version":
+        if not resource_type or not name:
+            return "Error: 'resource_type' and 'name' are required for track_resource_version"
+        return await run_blocking(
+            manager.track_resource_version, resource_type, name, namespace
+        )
+    elif action == "wait_for_resource_version":
+        if not resource_type or not name or not namespace or not target_version:
+            return "Error: 'resource_type', 'name', 'namespace', and 'target_version' are required for wait_for_resource_version"
+        return await run_blocking(
+            manager.wait_for_resource_version,
+            resource_type,
+            name,
+            namespace,
+            target_version,
+            timeout or 60,
+        )
+    return _UNHANDLED
+
+
+_ACTION_GROUPS: dict[str, str] = {
+    "list_configmaps": "configmap",
+    "create_configmap": "configmap",
+    "list_secrets": "secret",
+    "create_secret": "secret",
+    "list_namespaces": "namespace",
+    "create_namespace": "namespace",
+    "delete_namespace": "namespace",
+    "list_events": "event",
+    "list_crds": "crd",
+    "describe_crd": "crd",
+    "list_custom_resources": "crd",
+    "label_resource": "resource_meta",
+    "annotate_resource": "resource_meta",
+    "patch_resource": "resource_meta",
+    "compare_configmap_state": "state_tracking",
+    "sync_configmap_from_file": "state_tracking",
+    "get_secret_state_hash": "state_tracking",
+    "track_resource_version": "state_tracking",
+    "wait_for_resource_version": "state_tracking",
+}
+
+_GROUP_FUNCS = {
+    "configmap": _dispatch_configmap_action,
+    "secret": _dispatch_secret_action,
+    "namespace": _dispatch_namespace_action,
+    "event": _dispatch_event_action,
+    "crd": _dispatch_crd_action,
+    "resource_meta": _dispatch_resource_meta_action,
+    "state_tracking": _dispatch_state_tracking_action,
+}
+
+_GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
+    "configmap": (
+        "configmap_data",
+        "configmap_from_file",
+        "configmap_name",
+        "namespace",
+    ),
+    "secret": (
+        "namespace",
+        "secret_data",
+        "secret_name",
+        "secret_type",
+    ),
+    "namespace": ("namespace_name",),
+    "event": (
+        "field_selector",
+        "namespace",
+    ),
+    "crd": (
+        "crd_group",
+        "crd_name",
+        "crd_plural",
+        "crd_version",
+        "namespace",
+    ),
+    "resource_meta": (
+        "annotations",
+        "labels",
+        "name",
+        "namespace",
+        "patch_body",
+        "patch_type",
+        "resource_name",
+        "resource_type",
+    ),
+    "state_tracking": (
+        "expected_data",
+        "file_path",
+        "name",
+        "namespace",
+        "resource_type",
+        "target_version",
+        "timeout",
+    ),
+}
+
 
 def register_k8sconfig_tools(mcp: FastMCP):
     @mcp.tool(
@@ -139,149 +402,37 @@ def register_k8sconfig_tools(mcp: FastMCP):
             ctx_log(ctx, logging.INFO, f"Executing cm_k8s_config: {action}")
 
         try:
-            # ConfigMaps
-            if action == "list_configmaps":
-                return await run_blocking(manager.list_configmaps, namespace=namespace)
-            elif action == "create_configmap":
-                if not configmap_name:
-                    return "Error: 'configmap_name' is required for create_configmap"
-                cm_data = json.loads(configmap_data) if configmap_data else None
-                return await run_blocking(
-                    manager.create_configmap,
-                    name=configmap_name,
-                    namespace=namespace,
-                    data=cm_data,
-                    from_file=configmap_from_file,
-                )
-
-            # Secrets
-            elif action == "list_secrets":
-                return await run_blocking(manager.list_secrets, namespace=namespace)
-            elif action == "create_secret":
-                if not secret_name:
-                    return "Error: 'secret_name' is required for create_secret"
-                secret_data_dict = json.loads(secret_data) if secret_data else None
-                return await run_blocking(
-                    manager.create_secret,
-                    name=secret_name,
-                    namespace=namespace,
-                    secret_type=secret_type,
-                    data=secret_data_dict,
-                )
-
-            # Namespaces
-            elif action == "list_namespaces":
-                return await run_blocking(manager.list_namespaces)
-            elif action == "create_namespace":
-                if not namespace_name:
-                    return "Error: 'namespace_name' is required for create_namespace"
-                return await run_blocking(manager.create_namespace, name=namespace_name)
-            elif action == "delete_namespace":
-                if not namespace_name:
-                    return "Error: 'namespace_name' is required for delete_namespace"
-                return await run_blocking(manager.delete_namespace, name=namespace_name)
-
-            # Events
-            elif action == "list_events":
-                return await run_blocking(
-                    manager.list_events,
-                    namespace=namespace,
-                    field_selector=field_selector,
-                )
-
-            # CRDs / custom resources
-            elif action == "list_crds":
-                return await run_blocking(manager.list_crds)
-            elif action == "describe_crd":
-                if not crd_name:
-                    return "Error: 'crd_name' is required for describe_crd"
-                return await run_blocking(manager.describe_crd, crd_name=crd_name)
-            elif action == "list_custom_resources":
-                if not crd_group or not crd_version or not crd_plural:
-                    return "Error: 'crd_group', 'crd_version', and 'crd_plural' are required for list_custom_resources"
-                return await run_blocking(
-                    manager.list_custom_resources,
-                    group=crd_group,
-                    version=crd_version,
-                    plural=crd_plural,
-                    namespace=namespace,
-                )
-
-            # Labels / annotations / patch
-            elif action == "label_resource":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for label_resource"
-                labels_dict = json.loads(labels) if labels else None
-                return await run_blocking(
-                    manager.label_resource,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                    labels=labels_dict,
-                )
-            elif action == "annotate_resource":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for annotate_resource"
-                annotations_dict = json.loads(annotations) if annotations else None
-                return await run_blocking(
-                    manager.annotate_resource,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                    annotations=annotations_dict,
-                )
-            elif action == "patch_resource":
-                if not resource_type or not name:
-                    return "Error: 'resource_type' and 'name' are required for patch_resource"
-                patch = json.loads(patch_body) if patch_body else None
-                return await run_blocking(
-                    manager.patch_resource,
-                    resource_type=resource_type,
-                    name=name,
-                    namespace=namespace,
-                    patch_body=patch,
-                    patch_type=patch_type,
-                )
-
-            # Config / secret state tracking
-            elif action == "compare_configmap_state":
-                if not name or not namespace or not expected_data:
-                    return "Error: 'name', 'namespace', and 'expected_data' are required for compare_configmap_state"
-                return await run_blocking(
-                    manager.compare_configmap_state, name, namespace, expected_data
-                )
-            elif action == "sync_configmap_from_file":
-                if not name or not namespace or not file_path:
-                    return "Error: 'name', 'namespace', and 'file_path' are required for sync_configmap_from_file"
-                return await run_blocking(
-                    manager.sync_configmap_from_file, name, namespace, file_path
-                )
-            elif action == "get_secret_state_hash":
-                if not name or not namespace:
-                    return "Error: 'name' and 'namespace' are required for get_secret_state_hash"
-                return await run_blocking(
-                    manager.get_secret_state_hash, name, namespace
-                )
-            elif action == "track_resource_version":
-                if not resource_type or not name:
-                    return "Error: 'resource_type' and 'name' are required for track_resource_version"
-                return await run_blocking(
-                    manager.track_resource_version, resource_type, name, namespace
-                )
-            elif action == "wait_for_resource_version":
-                if not resource_type or not name or not namespace or not target_version:
-                    return "Error: 'resource_type', 'name', 'namespace', and 'target_version' are required for wait_for_resource_version"
-                return await run_blocking(
-                    manager.wait_for_resource_version,
-                    resource_type,
-                    name,
-                    namespace,
-                    target_version,
-                    timeout or 60,
-                )
-
-            else:
+            group = _ACTION_GROUPS.get(action)
+            if group is None:
                 return f"Error: Unknown action '{action}'"
+            all_values = {
+                "annotations": annotations,
+                "configmap_data": configmap_data,
+                "configmap_from_file": configmap_from_file,
+                "configmap_name": configmap_name,
+                "crd_group": crd_group,
+                "crd_name": crd_name,
+                "crd_plural": crd_plural,
+                "crd_version": crd_version,
+                "expected_data": expected_data,
+                "field_selector": field_selector,
+                "file_path": file_path,
+                "labels": labels,
+                "name": name,
+                "namespace": namespace,
+                "namespace_name": namespace_name,
+                "patch_body": patch_body,
+                "patch_type": patch_type,
+                "resource_name": resource_name,
+                "resource_type": resource_type,
+                "secret_data": secret_data,
+                "secret_name": secret_name,
+                "secret_type": secret_type,
+                "target_version": target_version,
+                "timeout": timeout,
+            }
+            group_kwargs = {n: all_values[n] for n in _GROUP_PARAM_NAMES[group]}
+            return await _GROUP_FUNCS[group](action, manager, **group_kwargs)
         except Exception as e:
             if ctx:
                 ctx_log(
