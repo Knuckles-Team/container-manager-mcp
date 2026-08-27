@@ -15,6 +15,228 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+_UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
+
+
+async def _dispatch_node_basic_action(action, manager, node_name):
+    if action == "list_nodes":
+        return await run_blocking(manager.list_nodes)
+    elif action == "inspect_node":
+        if not node_name:
+            return "Error: 'node_name' is required for inspect_node"
+        return await run_blocking(manager.inspect_node, node_name)
+    elif action == "cordon_node":
+        if not node_name:
+            return "Error: 'node_name' is required for cordon_node"
+        return await run_blocking(manager.cordon_node, node_name)
+    elif action == "uncordon_node":
+        if not node_name:
+            return "Error: 'node_name' is required for uncordon_node"
+        return await run_blocking(manager.uncordon_node, node_name)
+    elif action == "get_node_conditions":
+        if not node_name:
+            return "Error: 'node_name' is required for get_node_conditions"
+        return await run_blocking(manager.get_node_conditions, node_name)
+    elif action == "list_node_taints":
+        return await run_blocking(manager.list_node_taints)
+    return _UNHANDLED
+
+
+async def _dispatch_node_taint_drain_action(
+    action, manager, grace_period_seconds, node_name, taint_key, taints
+):
+    if action == "drain_node":
+        if not node_name:
+            return "Error: 'node_name' is required for drain_node"
+        return await run_blocking(
+            manager.drain_node, node_name, grace_period_seconds or 120
+        )
+    elif action == "taint_node":
+        if not node_name or not taints:
+            return "Error: 'node_name' and 'taints' are required for taint_node"
+        return await run_blocking(manager.taint_node, node_name, taints)
+    elif action == "untaint_node":
+        if not node_name or not taint_key:
+            return "Error: 'node_name' and 'taint_key' are required for untaint_node"
+        return await run_blocking(manager.untaint_node, node_name, taint_key)
+    return _UNHANDLED
+
+
+async def _dispatch_node_affinity_action(
+    action, manager, affinity, anti_affinity, namespace, pod_name
+):
+    if action == "set_node_affinity":
+        if not pod_name or not namespace or not affinity:
+            return "Error: 'pod_name', 'namespace', and 'affinity' are required for set_node_affinity"
+        return await run_blocking(
+            manager.set_node_affinity, pod_name, namespace, affinity
+        )
+    elif action == "get_node_affinity":
+        if not pod_name or not namespace:
+            return (
+                "Error: 'pod_name' and 'namespace' are required for get_node_affinity"
+            )
+        return await run_blocking(manager.get_node_affinity, pod_name, namespace)
+    elif action == "set_pod_anti_affinity":
+        if not pod_name or not namespace or not anti_affinity:
+            return "Error: 'pod_name', 'namespace', and 'anti_affinity' are required for set_pod_anti_affinity"
+        return await run_blocking(
+            manager.set_pod_anti_affinity, pod_name, namespace, anti_affinity
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_context_action(action, manager, context_name, new_context_name):
+    if action == "list_contexts":
+        return await run_blocking(manager.list_contexts)
+    elif action == "use_context":
+        if not context_name:
+            return "Error: 'context_name' is required for use_context"
+        return await run_blocking(manager.use_context, context_name=context_name)
+    elif action == "get_config":
+        return await run_blocking(manager.get_config)
+    elif action == "rename_context":
+        if not context_name or not new_context_name:
+            return "Error: 'context_name' and 'new_context_name' are required for rename_context"
+        return await run_blocking(
+            manager.rename_context,
+            current_name=context_name,
+            new_name=new_context_name,
+        )
+    elif action == "validate_kubeconfig":
+        return await run_blocking(manager.validate_kubeconfig)
+    return _UNHANDLED
+
+
+async def _dispatch_csr_action(action, manager, csr_name, reason):
+    if action == "list_csr":
+        return await run_blocking(manager.list_certificate_signing_requests)
+    elif action == "approve_csr":
+        if not csr_name:
+            return "Error: 'csr_name' is required for approve_csr"
+        return await run_blocking(manager.approve_csr, csr_name)
+    elif action == "deny_csr":
+        if not csr_name:
+            return "Error: 'csr_name' is required for deny_csr"
+        if reason:
+            return await run_blocking(manager.deny_csr, csr_name, reason)
+        return await run_blocking(manager.deny_csr, csr_name)
+    return _UNHANDLED
+
+
+async def _dispatch_api_resource_action(action, manager, name):
+    if action == "list_api_resources":
+        return await run_blocking(manager.list_api_resources)
+    elif action == "describe_api_resource":
+        if not name:
+            return "Error: 'name' is required for describe_api_resource"
+        return await run_blocking(manager.describe_api_resource, name)
+    return _UNHANDLED
+
+
+async def _dispatch_cluster_info_action(action, manager, output_dir):
+    if action == "cluster_info_dump":
+        if not output_dir:
+            return "Error: 'output_dir' is required for cluster_info_dump"
+        return await run_blocking(manager.cluster_info_dump, output_dir)
+    elif action == "get_cluster_info":
+        return await run_blocking(manager.get_cluster_info)
+    elif action == "get_api_server_info":
+        return await run_blocking(manager.get_api_server_info)
+    return _UNHANDLED
+
+
+async def _dispatch_admission_plugin_action(
+    action, manager, name, plugin_type, test_resource
+):
+    if action == "list_cluster_plugins":
+        return await run_blocking(manager.list_cluster_plugins)
+    elif action == "describe_cluster_plugin":
+        if not name or not plugin_type:
+            return "Error: 'name' and 'plugin_type' are required for describe_cluster_plugin"
+        return await run_blocking(manager.describe_cluster_plugin, name, plugin_type)
+    elif action == "test_cluster_plugin":
+        if not name or not plugin_type or not test_resource:
+            return "Error: 'name', 'plugin_type', and 'test_resource' are required for test_cluster_plugin"
+        return await run_blocking(
+            manager.test_cluster_plugin, name, plugin_type, test_resource
+        )
+    return _UNHANDLED
+
+
+_ACTION_GROUPS: dict[str, str] = {
+    "list_nodes": "node_basic",
+    "inspect_node": "node_basic",
+    "cordon_node": "node_basic",
+    "uncordon_node": "node_basic",
+    "get_node_conditions": "node_basic",
+    "list_node_taints": "node_basic",
+    "drain_node": "node_taint_drain",
+    "taint_node": "node_taint_drain",
+    "untaint_node": "node_taint_drain",
+    "set_node_affinity": "node_affinity",
+    "get_node_affinity": "node_affinity",
+    "set_pod_anti_affinity": "node_affinity",
+    "list_contexts": "context",
+    "use_context": "context",
+    "get_config": "context",
+    "rename_context": "context",
+    "validate_kubeconfig": "context",
+    "list_csr": "csr",
+    "approve_csr": "csr",
+    "deny_csr": "csr",
+    "list_api_resources": "api_resource",
+    "describe_api_resource": "api_resource",
+    "cluster_info_dump": "cluster_info",
+    "get_cluster_info": "cluster_info",
+    "get_api_server_info": "cluster_info",
+    "list_cluster_plugins": "admission_plugin",
+    "describe_cluster_plugin": "admission_plugin",
+    "test_cluster_plugin": "admission_plugin",
+}
+
+_GROUP_FUNCS = {
+    "node_basic": _dispatch_node_basic_action,
+    "node_taint_drain": _dispatch_node_taint_drain_action,
+    "node_affinity": _dispatch_node_affinity_action,
+    "context": _dispatch_context_action,
+    "csr": _dispatch_csr_action,
+    "api_resource": _dispatch_api_resource_action,
+    "cluster_info": _dispatch_cluster_info_action,
+    "admission_plugin": _dispatch_admission_plugin_action,
+}
+
+_GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
+    "node_basic": ("node_name",),
+    "node_taint_drain": (
+        "grace_period_seconds",
+        "node_name",
+        "taint_key",
+        "taints",
+    ),
+    "node_affinity": (
+        "affinity",
+        "anti_affinity",
+        "namespace",
+        "pod_name",
+    ),
+    "context": (
+        "context_name",
+        "new_context_name",
+    ),
+    "csr": (
+        "csr_name",
+        "reason",
+    ),
+    "api_resource": ("name",),
+    "cluster_info": ("output_dir",),
+    "admission_plugin": (
+        "name",
+        "plugin_type",
+        "test_resource",
+    ),
+}
+
 
 def register_k8scluster_tools(mcp: FastMCP):
     @mcp.tool(
@@ -248,132 +470,29 @@ def register_k8scluster_tools(mcp: FastMCP):
         manager = create_manager(manager_type or "kubernetes")
 
         try:
-            # Nodes
-            if action == "list_nodes":
-                return await run_blocking(manager.list_nodes)
-            elif action == "inspect_node":
-                if not node_name:
-                    return "Error: 'node_name' is required for inspect_node"
-                return await run_blocking(manager.inspect_node, node_name)
-            elif action == "cordon_node":
-                if not node_name:
-                    return "Error: 'node_name' is required for cordon_node"
-                return await run_blocking(manager.cordon_node, node_name)
-            elif action == "uncordon_node":
-                if not node_name:
-                    return "Error: 'node_name' is required for uncordon_node"
-                return await run_blocking(manager.uncordon_node, node_name)
-            elif action == "drain_node":
-                if not node_name:
-                    return "Error: 'node_name' is required for drain_node"
-                return await run_blocking(
-                    manager.drain_node, node_name, grace_period_seconds or 120
-                )
-            elif action == "get_node_conditions":
-                if not node_name:
-                    return "Error: 'node_name' is required for get_node_conditions"
-                return await run_blocking(manager.get_node_conditions, node_name)
-            elif action == "taint_node":
-                if not node_name or not taints:
-                    return "Error: 'node_name' and 'taints' are required for taint_node"
-                return await run_blocking(manager.taint_node, node_name, taints)
-            elif action == "untaint_node":
-                if not node_name or not taint_key:
-                    return "Error: 'node_name' and 'taint_key' are required for untaint_node"
-                return await run_blocking(manager.untaint_node, node_name, taint_key)
-            elif action == "list_node_taints":
-                return await run_blocking(manager.list_node_taints)
-            elif action == "set_node_affinity":
-                if not pod_name or not namespace or not affinity:
-                    return "Error: 'pod_name', 'namespace', and 'affinity' are required for set_node_affinity"
-                return await run_blocking(
-                    manager.set_node_affinity, pod_name, namespace, affinity
-                )
-            elif action == "get_node_affinity":
-                if not pod_name or not namespace:
-                    return "Error: 'pod_name' and 'namespace' are required for get_node_affinity"
-                return await run_blocking(
-                    manager.get_node_affinity, pod_name, namespace
-                )
-            elif action == "set_pod_anti_affinity":
-                if not pod_name or not namespace or not anti_affinity:
-                    return "Error: 'pod_name', 'namespace', and 'anti_affinity' are required for set_pod_anti_affinity"
-                return await run_blocking(
-                    manager.set_pod_anti_affinity, pod_name, namespace, anti_affinity
-                )
-
-            # Contexts
-            elif action == "list_contexts":
-                return await run_blocking(manager.list_contexts)
-            elif action == "use_context":
-                if not context_name:
-                    return "Error: 'context_name' is required for use_context"
-                return await run_blocking(
-                    manager.use_context, context_name=context_name
-                )
-            elif action == "get_config":
-                return await run_blocking(manager.get_config)
-            elif action == "rename_context":
-                if not context_name or not new_context_name:
-                    return "Error: 'context_name' and 'new_context_name' are required for rename_context"
-                return await run_blocking(
-                    manager.rename_context,
-                    current_name=context_name,
-                    new_name=new_context_name,
-                )
-            elif action == "validate_kubeconfig":
-                return await run_blocking(manager.validate_kubeconfig)
-
-            # Certificate signing requests
-            elif action == "list_csr":
-                return await run_blocking(manager.list_certificate_signing_requests)
-            elif action == "approve_csr":
-                if not csr_name:
-                    return "Error: 'csr_name' is required for approve_csr"
-                return await run_blocking(manager.approve_csr, csr_name)
-            elif action == "deny_csr":
-                if not csr_name:
-                    return "Error: 'csr_name' is required for deny_csr"
-                if reason:
-                    return await run_blocking(manager.deny_csr, csr_name, reason)
-                return await run_blocking(manager.deny_csr, csr_name)
-
-            # API resources
-            elif action == "list_api_resources":
-                return await run_blocking(manager.list_api_resources)
-            elif action == "describe_api_resource":
-                if not name:
-                    return "Error: 'name' is required for describe_api_resource"
-                return await run_blocking(manager.describe_api_resource, name)
-
-            # Cluster info
-            elif action == "cluster_info_dump":
-                if not output_dir:
-                    return "Error: 'output_dir' is required for cluster_info_dump"
-                return await run_blocking(manager.cluster_info_dump, output_dir)
-            elif action == "get_cluster_info":
-                return await run_blocking(manager.get_cluster_info)
-            elif action == "get_api_server_info":
-                return await run_blocking(manager.get_api_server_info)
-
-            # Admission plugins
-            elif action == "list_cluster_plugins":
-                return await run_blocking(manager.list_cluster_plugins)
-            elif action == "describe_cluster_plugin":
-                if not name or not plugin_type:
-                    return "Error: 'name' and 'plugin_type' are required for describe_cluster_plugin"
-                return await run_blocking(
-                    manager.describe_cluster_plugin, name, plugin_type
-                )
-            elif action == "test_cluster_plugin":
-                if not name or not plugin_type or not test_resource:
-                    return "Error: 'name', 'plugin_type', and 'test_resource' are required for test_cluster_plugin"
-                return await run_blocking(
-                    manager.test_cluster_plugin, name, plugin_type, test_resource
-                )
-
-            else:
+            group = _ACTION_GROUPS.get(action)
+            if group is None:
                 return f"Error: Unknown action '{action}'"
+            all_values = {
+                "affinity": affinity,
+                "anti_affinity": anti_affinity,
+                "context_name": context_name,
+                "csr_name": csr_name,
+                "grace_period_seconds": grace_period_seconds,
+                "name": name,
+                "namespace": namespace,
+                "new_context_name": new_context_name,
+                "node_name": node_name,
+                "output_dir": output_dir,
+                "plugin_type": plugin_type,
+                "pod_name": pod_name,
+                "reason": reason,
+                "taint_key": taint_key,
+                "taints": taints,
+                "test_resource": test_resource,
+            }
+            group_kwargs = {n: all_values[n] for n in _GROUP_PARAM_NAMES[group]}
+            return await _GROUP_FUNCS[group](action, manager, **group_kwargs)
         except Exception as e:
             if ctx:
                 ctx_log(
