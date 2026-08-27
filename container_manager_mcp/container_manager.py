@@ -3192,6 +3192,307 @@ def create_manager(
         raise ValueError(f"Unsupported container manager type: {manager_type}")
 
 
+def _run_system_flags(
+    manager, force, get_info, get_version, prune_system, prune_system_all
+):
+    if get_version:
+        print(json.dumps(manager.get_version(), indent=2), file=sys.stderr)
+    if get_info:
+        print(json.dumps(manager.get_info(), indent=2), file=sys.stderr)
+    if prune_system:
+        print(
+            json.dumps(manager.prune_system(force, prune_system_all), indent=2),
+            file=sys.stderr,
+        )
+
+
+def _run_image_flags(
+    manager,
+    force,
+    list_images,
+    platform,
+    prune_images,
+    prune_images_all,
+    pull_image,
+    pull_image_str,
+    remove_image,
+    remove_image_str,
+    tag,
+):
+    if list_images:
+        print(json.dumps(manager.list_images(), indent=2), file=sys.stderr)
+    if pull_image:
+        if not pull_image_str:
+            raise ValueError("Image required for pull-image")
+        print(
+            json.dumps(manager.pull_image(pull_image_str, tag, platform), indent=2),
+            file=sys.stderr,
+        )
+    if remove_image:
+        if not remove_image_str:
+            raise ValueError("Image required for remove-image")
+        print(
+            json.dumps(manager.remove_image(remove_image_str, force), indent=2),
+            file=sys.stderr,
+        )
+    if prune_images:
+        print(
+            json.dumps(manager.prune_images(force, prune_images_all), indent=2),
+            file=sys.stderr,
+        )
+
+
+def _run_container_flags(
+    manager,
+    all_containers,
+    command,
+    container_logs_id,
+    detach,
+    environment_str,
+    exec_command,
+    exec_container_id,
+    exec_detach,
+    exec_in_container,
+    force,
+    get_container_logs,
+    list_containers,
+    name,
+    ports_str,
+    prune_containers,
+    remove_container,
+    remove_container_id,
+    run_container,
+    run_image,
+    stop_container,
+    stop_container_id,
+    tail,
+    timeout,
+    volumes_str,
+):
+    if list_containers:
+        print(
+            json.dumps(manager.list_containers(all_containers), indent=2),
+            file=sys.stderr,
+        )
+    if run_container:
+        if not run_image:
+            raise ValueError("Image required for run-container")
+        ports = None
+        if ports_str:
+            ports = {}
+            for p in ports_str.split(","):
+                host, cont = p.split(":")
+                ports[cont + "/tcp"] = host
+        volumes = None
+        if volumes_str:
+            volumes = {}
+            for v in volumes_str.split(","):
+                parts = v.split(":")
+                host = parts[0]
+                cont = parts[1]
+                mode = parts[2] if len(parts) > 2 else "rw"
+                volumes[host] = {"bind": cont, "mode": mode}
+        env = None
+        if environment_str:
+            env = dict(e.split("=") for e in environment_str.split(","))
+        print(
+            json.dumps(
+                manager.run_container(
+                    run_image, name, command, detach, ports, volumes, env
+                ),
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+    if stop_container:
+        if not stop_container_id:
+            raise ValueError("Container ID required for stop-container")
+        print(
+            json.dumps(manager.stop_container(stop_container_id, timeout), indent=2),
+            file=sys.stderr,
+        )
+    if remove_container:
+        if not remove_container_id:
+            raise ValueError("Container ID required for remove-container")
+        print(
+            json.dumps(manager.remove_container(remove_container_id, force), indent=2),
+            file=sys.stderr,
+        )
+    if prune_containers:
+        print(json.dumps(manager.prune_containers(), indent=2), file=sys.stderr)
+    if get_container_logs:
+        if not container_logs_id:
+            raise ValueError("Container ID required for get-container-logs")
+        print(manager.get_container_logs(container_logs_id, tail), file=sys.stderr)
+    if exec_in_container:
+        if not exec_container_id:
+            raise ValueError("Container ID required for exec-in-container")
+        cmd_list = exec_command.split() if exec_command else []
+        print(
+            json.dumps(
+                manager.exec_in_container(exec_container_id, cmd_list, exec_detach),
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+
+
+def _run_volume_flags(
+    manager,
+    create_volume,
+    create_volume_name,
+    force,
+    list_volumes,
+    prune_volumes,
+    prune_volumes_all,
+    remove_volume,
+    remove_volume_name,
+):
+    if list_volumes:
+        print(json.dumps(manager.list_volumes(), indent=2), file=sys.stderr)
+    if create_volume:
+        if not create_volume_name:
+            raise ValueError("Name required for create-volume")
+        print(
+            json.dumps(manager.create_volume(create_volume_name), indent=2),
+            file=sys.stderr,
+        )
+    if remove_volume:
+        if not remove_volume_name:
+            raise ValueError("Name required for remove-volume")
+        print(
+            json.dumps(manager.remove_volume(remove_volume_name, force), indent=2),
+            file=sys.stderr,
+        )
+    if prune_volumes:
+        print(
+            json.dumps(manager.prune_volumes(force, prune_volumes_all), indent=2),
+            file=sys.stderr,
+        )
+
+
+def _run_network_flags(
+    manager,
+    create_network,
+    create_network_name,
+    driver,
+    list_networks,
+    prune_networks,
+    remove_network,
+    remove_network_id,
+):
+    if list_networks:
+        print(json.dumps(manager.list_networks(), indent=2), file=sys.stderr)
+    if create_network:
+        if not create_network_name:
+            raise ValueError("Name required for create-network")
+        print(
+            json.dumps(manager.create_network(create_network_name, driver), indent=2),
+            file=sys.stderr,
+        )
+    if remove_network:
+        if not remove_network_id:
+            raise ValueError("ID required for remove-network")
+        print(
+            json.dumps(manager.remove_network(remove_network_id), indent=2),
+            file=sys.stderr,
+        )
+    if prune_networks:
+        print(json.dumps(manager.prune_networks(), indent=2), file=sys.stderr)
+
+
+def _run_compose_flags(
+    manager,
+    compose_build,
+    compose_detach,
+    compose_down,
+    compose_down_file,
+    compose_logs,
+    compose_logs_file,
+    compose_ps,
+    compose_ps_file,
+    compose_service,
+    compose_up,
+    compose_up_file,
+):
+    if compose_up:
+        if not compose_up_file:
+            raise ValueError("File required for compose-up")
+        print(
+            manager.compose_up(compose_up_file, compose_detach, compose_build),
+            file=sys.stderr,
+        )
+    if compose_down:
+        if not compose_down_file:
+            raise ValueError("File required for compose-down")
+        print(manager.compose_down(compose_down_file), file=sys.stderr)
+    if compose_ps:
+        if not compose_ps_file:
+            raise ValueError("File required for compose-ps")
+        print(manager.compose_ps(compose_ps_file), file=sys.stderr)
+    if compose_logs:
+        if not compose_logs_file:
+            raise ValueError("File required for compose-logs")
+        print(manager.compose_logs(compose_logs_file, compose_service), file=sys.stderr)
+
+
+def _run_swarm_flags(
+    manager,
+    advertise_addr,
+    create_service,
+    create_service_name,
+    force,
+    init_swarm,
+    leave_swarm,
+    list_nodes,
+    list_services,
+    mounts_str,
+    ports_str,
+    remove_service,
+    remove_service_id,
+    replicas,
+    service_image,
+):
+    if init_swarm:
+        print(json.dumps(manager.init_swarm(advertise_addr), indent=2), file=sys.stderr)
+    if leave_swarm:
+        print(json.dumps(manager.leave_swarm(force), indent=2), file=sys.stderr)
+    if list_nodes:
+        print(json.dumps(manager.list_nodes(), indent=2), file=sys.stderr)
+    if list_services:
+        print(json.dumps(manager.list_services(), indent=2), file=sys.stderr)
+    if create_service:
+        if not create_service_name:
+            raise ValueError("Name required for create-service")
+        if not service_image:
+            raise ValueError("Image required for create-service")
+        service_ports: dict[str, str] | None = None
+        if ports_str:
+            service_ports = {}
+            for p in ports_str.split(","):
+                host, cont = p.split(":")
+                service_ports[cont + "/tcp"] = host
+        mounts = None
+        if mounts_str:
+            mounts = mounts_str.split(",")
+        print(
+            json.dumps(
+                manager.create_service(
+                    create_service_name, service_image, replicas, service_ports, mounts
+                ),
+                indent=2,
+            ),
+            file=sys.stderr,
+        )
+    if remove_service:
+        if not remove_service_id:
+            raise ValueError("ID required for remove-service")
+        print(
+            json.dumps(manager.remove_service(remove_service_id), indent=2),
+            file=sys.stderr,
+        )
+
+
 def container_manager():
     print(f"container_manager v{__version__}", file=sys.stderr)
     parser = argparse.ArgumentParser(
@@ -3387,229 +3688,101 @@ def container_manager():
 
     manager = create_manager(manager_type, silent, log_file)
 
-    if get_version:
-        print(json.dumps(manager.get_version(), indent=2), file=sys.stderr)
-
-    if get_info:
-        print(json.dumps(manager.get_info(), indent=2), file=sys.stderr)
-
-    if list_images:
-        print(json.dumps(manager.list_images(), indent=2), file=sys.stderr)
-
-    if pull_image:
-        if not pull_image_str:
-            raise ValueError("Image required for pull-image")
-        print(
-            json.dumps(manager.pull_image(pull_image_str, tag, platform), indent=2),
-            file=sys.stderr,
-        )
-
-    if remove_image:
-        if not remove_image_str:
-            raise ValueError("Image required for remove-image")
-        print(
-            json.dumps(manager.remove_image(remove_image_str, force), indent=2),
-            file=sys.stderr,
-        )
-
-    if prune_images:
-        print(
-            json.dumps(manager.prune_images(force, prune_images_all), indent=2),
-            file=sys.stderr,
-        )
-
-    if list_containers:
-        print(
-            json.dumps(manager.list_containers(all_containers), indent=2),
-            file=sys.stderr,
-        )
-
-    if run_container:
-        if not run_image:
-            raise ValueError("Image required for run-container")
-        ports = None
-        if ports_str:
-            ports = {}
-            for p in ports_str.split(","):
-                host, cont = p.split(":")
-                ports[cont + "/tcp"] = host
-        volumes = None
-        if volumes_str:
-            volumes = {}
-            for v in volumes_str.split(","):
-                parts = v.split(":")
-                host = parts[0]
-                cont = parts[1]
-                mode = parts[2] if len(parts) > 2 else "rw"
-                volumes[host] = {"bind": cont, "mode": mode}
-        env = None
-        if environment_str:
-            env = dict(e.split("=") for e in environment_str.split(","))
-        print(
-            json.dumps(
-                manager.run_container(
-                    run_image, name, command, detach, ports, volumes, env
-                ),
-                indent=2,
-            ),
-            file=sys.stderr,
-        )
-
-    if stop_container:
-        if not stop_container_id:
-            raise ValueError("Container ID required for stop-container")
-        print(
-            json.dumps(manager.stop_container(stop_container_id, timeout), indent=2),
-            file=sys.stderr,
-        )
-
-    if remove_container:
-        if not remove_container_id:
-            raise ValueError("Container ID required for remove-container")
-        print(
-            json.dumps(manager.remove_container(remove_container_id, force), indent=2),
-            file=sys.stderr,
-        )
-
-    if prune_containers:
-        print(json.dumps(manager.prune_containers(), indent=2), file=sys.stderr)
-
-    if get_container_logs:
-        if not container_logs_id:
-            raise ValueError("Container ID required for get-container-logs")
-        print(manager.get_container_logs(container_logs_id, tail), file=sys.stderr)
-
-    if exec_in_container:
-        if not exec_container_id:
-            raise ValueError("Container ID required for exec-in-container")
-        cmd_list = exec_command.split() if exec_command else []
-        print(
-            json.dumps(
-                manager.exec_in_container(exec_container_id, cmd_list, exec_detach),
-                indent=2,
-            ),
-            file=sys.stderr,
-        )
-
-    if list_volumes:
-        print(json.dumps(manager.list_volumes(), indent=2), file=sys.stderr)
-
-    if create_volume:
-        if not create_volume_name:
-            raise ValueError("Name required for create-volume")
-        print(
-            json.dumps(manager.create_volume(create_volume_name), indent=2),
-            file=sys.stderr,
-        )
-
-    if remove_volume:
-        if not remove_volume_name:
-            raise ValueError("Name required for remove-volume")
-        print(
-            json.dumps(manager.remove_volume(remove_volume_name, force), indent=2),
-            file=sys.stderr,
-        )
-
-    if prune_volumes:
-        print(
-            json.dumps(manager.prune_volumes(force, prune_volumes_all), indent=2),
-            file=sys.stderr,
-        )
-
-    if list_networks:
-        print(json.dumps(manager.list_networks(), indent=2), file=sys.stderr)
-
-    if create_network:
-        if not create_network_name:
-            raise ValueError("Name required for create-network")
-        print(
-            json.dumps(manager.create_network(create_network_name, driver), indent=2),
-            file=sys.stderr,
-        )
-
-    if remove_network:
-        if not remove_network_id:
-            raise ValueError("ID required for remove-network")
-        print(
-            json.dumps(manager.remove_network(remove_network_id), indent=2),
-            file=sys.stderr,
-        )
-
-    if prune_networks:
-        print(json.dumps(manager.prune_networks(), indent=2), file=sys.stderr)
-
-    if prune_system:
-        print(
-            json.dumps(manager.prune_system(force, prune_system_all), indent=2),
-            file=sys.stderr,
-        )
-
-    if compose_up:
-        if not compose_up_file:
-            raise ValueError("File required for compose-up")
-        print(
-            manager.compose_up(compose_up_file, compose_detach, compose_build),
-            file=sys.stderr,
-        )
-
-    if compose_down:
-        if not compose_down_file:
-            raise ValueError("File required for compose-down")
-        print(manager.compose_down(compose_down_file), file=sys.stderr)
-
-    if compose_ps:
-        if not compose_ps_file:
-            raise ValueError("File required for compose-ps")
-        print(manager.compose_ps(compose_ps_file), file=sys.stderr)
-
-    if compose_logs:
-        if not compose_logs_file:
-            raise ValueError("File required for compose-logs")
-        print(manager.compose_logs(compose_logs_file, compose_service), file=sys.stderr)
-
-    if init_swarm:
-        print(json.dumps(manager.init_swarm(advertise_addr), indent=2), file=sys.stderr)
-
-    if leave_swarm:
-        print(json.dumps(manager.leave_swarm(force), indent=2), file=sys.stderr)
-
-    if list_nodes:
-        print(json.dumps(manager.list_nodes(), indent=2), file=sys.stderr)
-
-    if list_services:
-        print(json.dumps(manager.list_services(), indent=2), file=sys.stderr)
-
-    if create_service:
-        if not create_service_name:
-            raise ValueError("Name required for create-service")
-        if not service_image:
-            raise ValueError("Image required for create-service")
-        service_ports: dict[str, str] | None = None
-        if ports_str:
-            service_ports = {}
-            for p in ports_str.split(","):
-                host, cont = p.split(":")
-                service_ports[cont + "/tcp"] = host
-        mounts = None
-        if mounts_str:
-            mounts = mounts_str.split(",")
-        print(
-            json.dumps(
-                manager.create_service(
-                    create_service_name, service_image, replicas, service_ports, mounts
-                ),
-                indent=2,
-            ),
-            file=sys.stderr,
-        )
-
-    if remove_service:
-        if not remove_service_id:
-            raise ValueError("ID required for remove-service")
-        print(
-            json.dumps(manager.remove_service(remove_service_id), indent=2),
-            file=sys.stderr,
-        )
+    _run_system_flags(
+        manager, force, get_info, get_version, prune_system, prune_system_all
+    )
+    _run_image_flags(
+        manager,
+        force,
+        list_images,
+        platform,
+        prune_images,
+        prune_images_all,
+        pull_image,
+        pull_image_str,
+        remove_image,
+        remove_image_str,
+        tag,
+    )
+    _run_container_flags(
+        manager,
+        all_containers,
+        command,
+        container_logs_id,
+        detach,
+        environment_str,
+        exec_command,
+        exec_container_id,
+        exec_detach,
+        exec_in_container,
+        force,
+        get_container_logs,
+        list_containers,
+        name,
+        ports_str,
+        prune_containers,
+        remove_container,
+        remove_container_id,
+        run_container,
+        run_image,
+        stop_container,
+        stop_container_id,
+        tail,
+        timeout,
+        volumes_str,
+    )
+    _run_volume_flags(
+        manager,
+        create_volume,
+        create_volume_name,
+        force,
+        list_volumes,
+        prune_volumes,
+        prune_volumes_all,
+        remove_volume,
+        remove_volume_name,
+    )
+    _run_network_flags(
+        manager,
+        create_network,
+        create_network_name,
+        driver,
+        list_networks,
+        prune_networks,
+        remove_network,
+        remove_network_id,
+    )
+    _run_compose_flags(
+        manager,
+        compose_build,
+        compose_detach,
+        compose_down,
+        compose_down_file,
+        compose_logs,
+        compose_logs_file,
+        compose_ps,
+        compose_ps_file,
+        compose_service,
+        compose_up,
+        compose_up_file,
+    )
+    _run_swarm_flags(
+        manager,
+        advertise_addr,
+        create_service,
+        create_service_name,
+        force,
+        init_swarm,
+        leave_swarm,
+        list_nodes,
+        list_services,
+        mounts_str,
+        ports_str,
+        remove_service,
+        remove_service_id,
+        replicas,
+        service_image,
+    )
 
     print("Done!", file=sys.stderr)
 
