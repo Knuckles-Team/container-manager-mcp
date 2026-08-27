@@ -14,6 +14,357 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+_UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
+
+
+async def _dispatch_pod_action(
+    action,
+    manager,
+    ns,
+    attach_container,
+    command,
+    destination,
+    exec_command,
+    exec_container,
+    label_selector,
+    local_port,
+    namespace,
+    pod_name,
+    remote_port,
+    source,
+):
+    if action == "list_pods":
+        return await run_blocking(
+            manager.list_pods,
+            namespace=namespace,
+            label_selector=label_selector,
+        )
+    elif action == "describe_pod":
+        if not pod_name:
+            return "Error: 'pod_name' is required for describe_pod"
+        return await run_blocking(
+            manager.describe_pod, pod_name=pod_name, namespace=namespace
+        )
+    elif action == "exec_pod":
+        if not pod_name:
+            return "Error: 'pod_name' is required for exec_pod"
+        cmd = command if command else (exec_command.split() if exec_command else None)
+        return await run_blocking(
+            manager.exec_pod,
+            pod_name=pod_name,
+            namespace=namespace,
+            command=cmd,
+            container=exec_container,
+        )
+    elif action == "port_forward_pod":
+        if not pod_name or not local_port or not remote_port:
+            return "Error: 'pod_name', 'local_port', and 'remote_port' are required for port_forward_pod"
+        return await run_blocking(
+            manager.port_forward_pod,
+            pod_name=pod_name,
+            namespace=namespace,
+            local_port=local_port,
+            remote_port=remote_port,
+        )
+    elif action == "attach_pod":
+        if not pod_name:
+            return "Error: 'pod_name' is required for attach_pod"
+        return await run_blocking(
+            manager.attach_pod,
+            pod_name=pod_name,
+            namespace=namespace,
+            container=attach_container,
+        )
+    elif action == "copy_to_pod":
+        if not pod_name or not source or not destination:
+            return "Error: 'pod_name', 'source', and 'destination' are required for copy_to_pod"
+        return await run_blocking(
+            manager.copy_to_pod, pod_name, ns, source, destination
+        )
+    elif action == "copy_from_pod":
+        if not pod_name or not source or not destination:
+            return "Error: 'pod_name', 'source', and 'destination' are required for copy_from_pod"
+        return await run_blocking(
+            manager.copy_from_pod, pod_name, ns, source, destination
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_rollout_action(
+    action, manager, ns, namespace, resource_name, resource_type, rollout_revision
+):
+    if action == "rollout_status":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for rollout_status"
+        return await run_blocking(
+            manager.rollout_status,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+        )
+    elif action == "rollout_history":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for rollout_history"
+        return await run_blocking(
+            manager.rollout_history,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+        )
+    elif action == "rollout_restart":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for rollout_restart"
+        return await run_blocking(
+            manager.rollout_restart,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+        )
+    elif action == "rollout_undo":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for rollout_undo"
+        return await run_blocking(
+            manager.rollout_undo,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+            revision=rollout_revision,
+        )
+    elif action == "rollout_pause":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for rollout_pause"
+        return await run_blocking(
+            manager.rollout_pause,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+        )
+    elif action == "rollout_resume":
+        if not resource_type or not resource_name:
+            return "Error: 'resource_type' and 'resource_name' are required for rollout_resume"
+        return await run_blocking(
+            manager.rollout_resume,
+            resource_type=resource_type,
+            name=resource_name,
+            namespace=namespace,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_strategy_action(action, manager, ns, name, spec):
+    if action == "set_deployment_strategy":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for set_deployment_strategy"
+        return await run_blocking(manager.set_deployment_strategy, name, ns, spec)
+    elif action == "get_deployment_strategy":
+        if not name:
+            return "Error: 'name' is required for get_deployment_strategy"
+        return await run_blocking(manager.get_deployment_strategy, name, ns)
+    elif action == "set_daemonset_update_strategy":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for set_daemonset_update_strategy"
+        return await run_blocking(manager.set_daemonset_update_strategy, name, ns, spec)
+    elif action == "get_daemonset_update_strategy":
+        if not name:
+            return "Error: 'name' is required for get_daemonset_update_strategy"
+        return await run_blocking(manager.get_daemonset_update_strategy, name, ns)
+    elif action == "set_statefulset_update_strategy":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for set_statefulset_update_strategy"
+        return await run_blocking(
+            manager.set_statefulset_update_strategy, name, ns, spec
+        )
+    elif action == "get_statefulset_update_strategy":
+        if not name:
+            return "Error: 'name' is required for get_statefulset_update_strategy"
+        return await run_blocking(manager.get_statefulset_update_strategy, name, ns)
+    return _UNHANDLED
+
+
+async def _dispatch_statefulset_action(
+    action, manager, ns, name, namespace, replicas, spec
+):
+    if action == "list_statefulsets":
+        return await run_blocking(manager.list_statefulsets, namespace=namespace)
+    elif action == "create_stateful_set":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_stateful_set"
+        return await run_blocking(manager.create_stateful_set, name, ns, spec)
+    elif action == "scale_statefulset":
+        if not name:
+            return "Error: 'name' is required for scale_statefulset"
+        return await run_blocking(
+            manager.scale_statefulset,
+            name=name,
+            namespace=namespace,
+            replicas=1 if replicas is None else replicas,
+        )
+    return _UNHANDLED
+
+
+async def _dispatch_daemonset_action(action, manager, ns, name, namespace, spec):
+    if action == "list_daemonsets":
+        return await run_blocking(manager.list_daemonsets, namespace=namespace)
+    elif action == "create_daemon_set":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_daemon_set"
+        return await run_blocking(manager.create_daemon_set, name, ns, spec)
+    return _UNHANDLED
+
+
+async def _dispatch_replicaset_action(action, manager, ns, name, namespace, replicas):
+    if action == "list_replicasets":
+        return await run_blocking(manager.list_replica_sets, namespace=namespace)
+    elif action == "describe_replicaset":
+        if not name:
+            return "Error: 'name' is required for describe_replicaset"
+        return await run_blocking(manager.describe_replica_set, name, ns)
+    elif action == "scale_replicaset":
+        if not name or replicas is None:
+            return "Error: 'name' and 'replicas' are required for scale_replicaset"
+        return await run_blocking(manager.scale_replica_set, name, ns, replicas)
+    return _UNHANDLED
+
+
+async def _dispatch_job_action(action, manager, ns, name, namespace, spec):
+    if action == "list_jobs":
+        return await run_blocking(manager.list_jobs, namespace=namespace)
+    elif action == "describe_job":
+        if not name:
+            return "Error: 'name' is required for describe_job"
+        return await run_blocking(manager.describe_job, name, ns)
+    elif action == "create_job":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_job"
+        return await run_blocking(manager.create_job, name, ns, spec)
+    elif action == "delete_job":
+        if not name:
+            return "Error: 'name' is required for delete_job"
+        return await run_blocking(manager.delete_job, name, ns)
+    return _UNHANDLED
+
+
+async def _dispatch_cronjob_action(action, manager, ns, name, namespace, spec):
+    if action == "list_cron_jobs":
+        return await run_blocking(manager.list_cron_jobs, namespace=namespace)
+    elif action == "describe_cron_job":
+        if not name:
+            return "Error: 'name' is required for describe_cron_job"
+        return await run_blocking(manager.describe_cron_job, name, ns)
+    elif action == "create_cron_job":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_cron_job"
+        return await run_blocking(manager.create_cron_job, name, ns, spec)
+    elif action == "delete_cron_job":
+        if not name:
+            return "Error: 'name' is required for delete_cron_job"
+        return await run_blocking(manager.delete_cron_job, name, ns)
+    return _UNHANDLED
+
+
+_ACTION_GROUPS: dict[str, str] = {
+    "list_pods": "pod",
+    "describe_pod": "pod",
+    "exec_pod": "pod",
+    "port_forward_pod": "pod",
+    "attach_pod": "pod",
+    "copy_to_pod": "pod",
+    "copy_from_pod": "pod",
+    "rollout_status": "rollout",
+    "rollout_history": "rollout",
+    "rollout_restart": "rollout",
+    "rollout_undo": "rollout",
+    "rollout_pause": "rollout",
+    "rollout_resume": "rollout",
+    "set_deployment_strategy": "strategy",
+    "get_deployment_strategy": "strategy",
+    "set_daemonset_update_strategy": "strategy",
+    "get_daemonset_update_strategy": "strategy",
+    "set_statefulset_update_strategy": "strategy",
+    "get_statefulset_update_strategy": "strategy",
+    "list_statefulsets": "statefulset",
+    "create_stateful_set": "statefulset",
+    "scale_statefulset": "statefulset",
+    "list_daemonsets": "daemonset",
+    "create_daemon_set": "daemonset",
+    "list_replicasets": "replicaset",
+    "describe_replicaset": "replicaset",
+    "scale_replicaset": "replicaset",
+    "list_jobs": "job",
+    "describe_job": "job",
+    "create_job": "job",
+    "delete_job": "job",
+    "list_cron_jobs": "cronjob",
+    "describe_cron_job": "cronjob",
+    "create_cron_job": "cronjob",
+    "delete_cron_job": "cronjob",
+}
+
+
+_GROUP_FUNCS = {
+    "pod": _dispatch_pod_action,
+    "rollout": _dispatch_rollout_action,
+    "strategy": _dispatch_strategy_action,
+    "statefulset": _dispatch_statefulset_action,
+    "daemonset": _dispatch_daemonset_action,
+    "replicaset": _dispatch_replicaset_action,
+    "job": _dispatch_job_action,
+    "cronjob": _dispatch_cronjob_action,
+}
+
+
+_GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
+    "pod": (
+        "attach_container",
+        "command",
+        "destination",
+        "exec_command",
+        "exec_container",
+        "label_selector",
+        "local_port",
+        "namespace",
+        "pod_name",
+        "remote_port",
+        "source",
+    ),
+    "rollout": (
+        "namespace",
+        "resource_name",
+        "resource_type",
+        "rollout_revision",
+    ),
+    "strategy": (
+        "name",
+        "spec",
+    ),
+    "statefulset": (
+        "name",
+        "namespace",
+        "replicas",
+        "spec",
+    ),
+    "daemonset": (
+        "name",
+        "namespace",
+        "spec",
+    ),
+    "replicaset": (
+        "name",
+        "namespace",
+        "replicas",
+    ),
+    "job": (
+        "name",
+        "namespace",
+        "spec",
+    ),
+    "cronjob": (
+        "name",
+        "namespace",
+        "spec",
+    ),
+}
+
 
 def register_k8sworkloads_tools(mcp: FastMCP):
     @mcp.tool(
@@ -141,240 +492,30 @@ def register_k8sworkloads_tools(mcp: FastMCP):
         try:
             ns = namespace or getattr(manager, "namespace", namespace)
 
-            # Pods
-            if action == "list_pods":
-                return await run_blocking(
-                    manager.list_pods,
-                    namespace=namespace,
-                    label_selector=label_selector,
-                )
-            elif action == "describe_pod":
-                if not pod_name:
-                    return "Error: 'pod_name' is required for describe_pod"
-                return await run_blocking(
-                    manager.describe_pod, pod_name=pod_name, namespace=namespace
-                )
-            elif action == "exec_pod":
-                if not pod_name:
-                    return "Error: 'pod_name' is required for exec_pod"
-                cmd = (
-                    command
-                    if command
-                    else (exec_command.split() if exec_command else None)
-                )
-                return await run_blocking(
-                    manager.exec_pod,
-                    pod_name=pod_name,
-                    namespace=namespace,
-                    command=cmd,
-                    container=exec_container,
-                )
-            elif action == "port_forward_pod":
-                if not pod_name or not local_port or not remote_port:
-                    return "Error: 'pod_name', 'local_port', and 'remote_port' are required for port_forward_pod"
-                return await run_blocking(
-                    manager.port_forward_pod,
-                    pod_name=pod_name,
-                    namespace=namespace,
-                    local_port=local_port,
-                    remote_port=remote_port,
-                )
-            elif action == "attach_pod":
-                if not pod_name:
-                    return "Error: 'pod_name' is required for attach_pod"
-                return await run_blocking(
-                    manager.attach_pod,
-                    pod_name=pod_name,
-                    namespace=namespace,
-                    container=attach_container,
-                )
-            elif action == "copy_to_pod":
-                if not pod_name or not source or not destination:
-                    return "Error: 'pod_name', 'source', and 'destination' are required for copy_to_pod"
-                return await run_blocking(
-                    manager.copy_to_pod, pod_name, ns, source, destination
-                )
-            elif action == "copy_from_pod":
-                if not pod_name or not source or not destination:
-                    return "Error: 'pod_name', 'source', and 'destination' are required for copy_from_pod"
-                return await run_blocking(
-                    manager.copy_from_pod, pod_name, ns, source, destination
-                )
-
-            # Rollouts
-            elif action == "rollout_status":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for rollout_status"
-                return await run_blocking(
-                    manager.rollout_status,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                )
-            elif action == "rollout_history":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for rollout_history"
-                return await run_blocking(
-                    manager.rollout_history,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                )
-            elif action == "rollout_restart":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for rollout_restart"
-                return await run_blocking(
-                    manager.rollout_restart,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                )
-            elif action == "rollout_undo":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for rollout_undo"
-                return await run_blocking(
-                    manager.rollout_undo,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                    revision=rollout_revision,
-                )
-            elif action == "rollout_pause":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for rollout_pause"
-                return await run_blocking(
-                    manager.rollout_pause,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                )
-            elif action == "rollout_resume":
-                if not resource_type or not resource_name:
-                    return "Error: 'resource_type' and 'resource_name' are required for rollout_resume"
-                return await run_blocking(
-                    manager.rollout_resume,
-                    resource_type=resource_type,
-                    name=resource_name,
-                    namespace=namespace,
-                )
-
-            # Deployment / update strategies
-            elif action == "set_deployment_strategy":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for set_deployment_strategy"
-                return await run_blocking(
-                    manager.set_deployment_strategy, name, ns, spec
-                )
-            elif action == "get_deployment_strategy":
-                if not name:
-                    return "Error: 'name' is required for get_deployment_strategy"
-                return await run_blocking(manager.get_deployment_strategy, name, ns)
-            elif action == "set_daemonset_update_strategy":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for set_daemonset_update_strategy"
-                return await run_blocking(
-                    manager.set_daemonset_update_strategy, name, ns, spec
-                )
-            elif action == "get_daemonset_update_strategy":
-                if not name:
-                    return "Error: 'name' is required for get_daemonset_update_strategy"
-                return await run_blocking(
-                    manager.get_daemonset_update_strategy, name, ns
-                )
-            elif action == "set_statefulset_update_strategy":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for set_statefulset_update_strategy"
-                return await run_blocking(
-                    manager.set_statefulset_update_strategy, name, ns, spec
-                )
-            elif action == "get_statefulset_update_strategy":
-                if not name:
-                    return (
-                        "Error: 'name' is required for get_statefulset_update_strategy"
-                    )
-                return await run_blocking(
-                    manager.get_statefulset_update_strategy, name, ns
-                )
-
-            # StatefulSets
-            elif action == "list_statefulsets":
-                return await run_blocking(
-                    manager.list_statefulsets, namespace=namespace
-                )
-            elif action == "create_stateful_set":
-                if not name or not spec:
-                    return (
-                        "Error: 'name' and 'spec' are required for create_stateful_set"
-                    )
-                return await run_blocking(manager.create_stateful_set, name, ns, spec)
-            elif action == "scale_statefulset":
-                if not name:
-                    return "Error: 'name' is required for scale_statefulset"
-                return await run_blocking(
-                    manager.scale_statefulset,
-                    name=name,
-                    namespace=namespace,
-                    replicas=1 if replicas is None else replicas,
-                )
-
-            # DaemonSets
-            elif action == "list_daemonsets":
-                return await run_blocking(manager.list_daemonsets, namespace=namespace)
-            elif action == "create_daemon_set":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_daemon_set"
-                return await run_blocking(manager.create_daemon_set, name, ns, spec)
-
-            # ReplicaSets
-            elif action == "list_replicasets":
-                return await run_blocking(
-                    manager.list_replica_sets, namespace=namespace
-                )
-            elif action == "describe_replicaset":
-                if not name:
-                    return "Error: 'name' is required for describe_replicaset"
-                return await run_blocking(manager.describe_replica_set, name, ns)
-            elif action == "scale_replicaset":
-                if not name or replicas is None:
-                    return (
-                        "Error: 'name' and 'replicas' are required for scale_replicaset"
-                    )
-                return await run_blocking(manager.scale_replica_set, name, ns, replicas)
-
-            # Jobs
-            elif action == "list_jobs":
-                return await run_blocking(manager.list_jobs, namespace=namespace)
-            elif action == "describe_job":
-                if not name:
-                    return "Error: 'name' is required for describe_job"
-                return await run_blocking(manager.describe_job, name, ns)
-            elif action == "create_job":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_job"
-                return await run_blocking(manager.create_job, name, ns, spec)
-            elif action == "delete_job":
-                if not name:
-                    return "Error: 'name' is required for delete_job"
-                return await run_blocking(manager.delete_job, name, ns)
-
-            # CronJobs
-            elif action == "list_cron_jobs":
-                return await run_blocking(manager.list_cron_jobs, namespace=namespace)
-            elif action == "describe_cron_job":
-                if not name:
-                    return "Error: 'name' is required for describe_cron_job"
-                return await run_blocking(manager.describe_cron_job, name, ns)
-            elif action == "create_cron_job":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_cron_job"
-                return await run_blocking(manager.create_cron_job, name, ns, spec)
-            elif action == "delete_cron_job":
-                if not name:
-                    return "Error: 'name' is required for delete_cron_job"
-                return await run_blocking(manager.delete_cron_job, name, ns)
-
-            else:
+            group = _ACTION_GROUPS.get(action)
+            if group is None:
                 return f"Error: Unknown action '{action}'"
+            all_values = {
+                "attach_container": attach_container,
+                "command": command,
+                "destination": destination,
+                "exec_command": exec_command,
+                "exec_container": exec_container,
+                "label_selector": label_selector,
+                "local_port": local_port,
+                "name": name,
+                "namespace": namespace,
+                "pod_name": pod_name,
+                "remote_port": remote_port,
+                "replicas": replicas,
+                "resource_name": resource_name,
+                "resource_type": resource_type,
+                "rollout_revision": rollout_revision,
+                "source": source,
+                "spec": spec,
+            }
+            group_kwargs = {n: all_values[n] for n in _GROUP_PARAM_NAMES[group]}
+            return await _GROUP_FUNCS[group](action, manager, ns, **group_kwargs)
         except Exception as e:
             if ctx:
                 ctx_log(
