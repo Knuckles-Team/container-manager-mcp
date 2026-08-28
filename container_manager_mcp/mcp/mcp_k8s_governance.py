@@ -17,25 +17,27 @@ from container_manager_mcp.mcp_server import ctx_log
 _UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
 
 
+_RESOURCE_QUOTA_LIST = "list_resource_quotas"
+_RESOURCE_QUOTA_NAME_ONLY = frozenset(
+    {"describe_resource_quota", "delete_resource_quota"}
+)
+_RESOURCE_QUOTA_NAME_SPEC = frozenset(
+    {"create_resource_quota", "update_resource_quota"}
+)
+
+
 async def _dispatch_resource_quota_action(action, manager, ns, name, namespace, spec):
-    if action == "list_resource_quotas":
+    """Dispatch a ResourceQuota CRUD action; manager method name == action."""
+    if action == _RESOURCE_QUOTA_LIST:
         return await run_blocking(manager.list_resource_quotas, namespace=namespace)
-    elif action == "describe_resource_quota":
+    if action in _RESOURCE_QUOTA_NAME_ONLY:
         if not name:
-            return "Error: 'name' is required for describe_resource_quota"
-        return await run_blocking(manager.describe_resource_quota, name, ns)
-    elif action == "create_resource_quota":
+            return f"Error: 'name' is required for {action}"
+        return await run_blocking(getattr(manager, action), name, ns)
+    if action in _RESOURCE_QUOTA_NAME_SPEC:
         if not name or not spec:
-            return "Error: 'name' and 'spec' are required for create_resource_quota"
-        return await run_blocking(manager.create_resource_quota, name, ns, spec)
-    elif action == "update_resource_quota":
-        if not name or not spec:
-            return "Error: 'name' and 'spec' are required for update_resource_quota"
-        return await run_blocking(manager.update_resource_quota, name, ns, spec)
-    elif action == "delete_resource_quota":
-        if not name:
-            return "Error: 'name' is required for delete_resource_quota"
-        return await run_blocking(manager.delete_resource_quota, name, ns)
+            return f"Error: 'name' and 'spec' are required for {action}"
+        return await run_blocking(getattr(manager, action), name, ns, spec)
     return _UNHANDLED
 
 
@@ -99,33 +101,31 @@ async def _dispatch_pod_disruption_budget_action(
     return _UNHANDLED
 
 
+_HPA_LIST = "list_horizontal_pod_autoscalers"
+_HPA_NAME_ONLY = frozenset(
+    {"describe_horizontal_pod_autoscaler", "delete_horizontal_pod_autoscaler"}
+)
+_HPA_NAME_SPEC = frozenset(
+    {"create_horizontal_pod_autoscaler", "update_horizontal_pod_autoscaler"}
+)
+
+
 async def _dispatch_horizontal_pod_autoscaler_action(
     action, manager, ns, name, namespace, spec
 ):
-    if action == "list_horizontal_pod_autoscalers":
+    """Dispatch a HorizontalPodAutoscaler CRUD action; manager method name == action."""
+    if action == _HPA_LIST:
         return await run_blocking(
             manager.list_horizontal_pod_autoscalers, namespace=namespace
         )
-    elif action == "describe_horizontal_pod_autoscaler":
+    if action in _HPA_NAME_ONLY:
         if not name:
-            return "Error: 'name' is required for describe_horizontal_pod_autoscaler"
-        return await run_blocking(manager.describe_horizontal_pod_autoscaler, name, ns)
-    elif action == "create_horizontal_pod_autoscaler":
+            return f"Error: 'name' is required for {action}"
+        return await run_blocking(getattr(manager, action), name, ns)
+    if action in _HPA_NAME_SPEC:
         if not name or not spec:
-            return "Error: 'name' and 'spec' are required for create_horizontal_pod_autoscaler"
-        return await run_blocking(
-            manager.create_horizontal_pod_autoscaler, name, ns, spec
-        )
-    elif action == "update_horizontal_pod_autoscaler":
-        if not name or not spec:
-            return "Error: 'name' and 'spec' are required for update_horizontal_pod_autoscaler"
-        return await run_blocking(
-            manager.update_horizontal_pod_autoscaler, name, ns, spec
-        )
-    elif action == "delete_horizontal_pod_autoscaler":
-        if not name:
-            return "Error: 'name' is required for delete_horizontal_pod_autoscaler"
-        return await run_blocking(manager.delete_horizontal_pod_autoscaler, name, ns)
+            return f"Error: 'name' and 'spec' are required for {action}"
+        return await run_blocking(getattr(manager, action), name, ns, spec)
     return _UNHANDLED
 
 
