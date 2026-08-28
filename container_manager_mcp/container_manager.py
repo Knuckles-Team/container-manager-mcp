@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -470,6 +471,46 @@ def resolve_host_from_inventory(host: str) -> dict:
     }
 
 
+def _docker_prune_containers_removed(items: list | None) -> list[str]:
+    return [
+        (c.get("Id", "")[:12] if isinstance(c, dict) else str(c)[:12])
+        for c in (items or [])
+    ]
+
+
+def _docker_prune_volumes_removed(items: list | None) -> list[str]:
+    return [
+        (v.get("Name", "") if isinstance(v, dict) else str(v)) for v in (items or [])
+    ]
+
+
+def _docker_prune_networks_removed(items: list | None) -> list[str]:
+    return [
+        (n.get("Id", "")[:12] if isinstance(n, dict) else str(n)[:12])
+        for n in (items or [])
+    ]
+
+
+def _docker_container_port_mappings(
+    attrs: dict, ports: dict[str, str] | None
+) -> list[str]:
+    """Format a docker-py container's ``NetworkSettings.Ports`` for display."""
+    port_mappings: list[str] = []
+    if not ports:
+        return port_mappings
+    network_settings = attrs.get("NetworkSettings", {})
+    container_ports = network_settings.get("Ports", {})
+    if not container_ports:
+        return port_mappings
+    for container_port, host_ports in container_ports.items():
+        if host_ports:
+            for hp in host_ports:
+                port_mappings.append(
+                    f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"  # nosec B104
+                )
+    return port_mappings
+
+
 class DockerManager(ContainerManagerBase):
     def __init__(
         self, host: str | None = None, silent: bool = False, log_file: str | None = None
@@ -515,35 +556,29 @@ class DockerManager(ContainerManagerBase):
                 "Container prune result received: shape=%s",
                 _privacy_safe_shape(result),
             )
-            pruned = {
-                "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
-                "images_removed": (
-                    [img["Id"][7:19] for img in result.get("ImagesDeleted", [])]
-                ),
-                "containers_removed": (
-                    [
-                        (c.get("Id", "")[:12] if isinstance(c, dict) else str(c)[:12])
-                        for c in (result.get("ContainersDeleted") or [])
-                    ]
-                ),
-                "volumes_removed": (
-                    [
-                        (v.get("Name", "") if isinstance(v, dict) else str(v))
-                        for v in (result.get("VolumesDeleted") or [])
-                    ]
-                ),
-                "networks_removed": (
-                    [
-                        (n.get("Id", "")[:12] if isinstance(n, dict) else str(n)[:12])
-                        for n in (result.get("NetworksDeleted") or [])
-                    ]
-                ),
-            }
+            pruned = self._shape_prune_system_result(result)
             self.log_action("prune_system", params, pruned)
             return pruned
         except Exception as e:
             self.log_action("prune_system", params, error=e)
             raise RuntimeError("Failed to prune system") from e
+
+    def _shape_prune_system_result(self, result: dict) -> dict:
+        return {
+            "space_reclaimed": self._format_size(result.get("SpaceReclaimed", 0)),
+            "images_removed": (
+                [img["Id"][7:19] for img in result.get("ImagesDeleted", [])]
+            ),
+            "containers_removed": _docker_prune_containers_removed(
+                result.get("ContainersDeleted")
+            ),
+            "volumes_removed": _docker_prune_volumes_removed(
+                result.get("VolumesDeleted")
+            ),
+            "networks_removed": _docker_prune_networks_removed(
+                result.get("NetworksDeleted")
+            ),
+        }
 
     def get_version(self) -> dict:
         params: dict[str, Any] = {}
@@ -668,57 +703,59 @@ class DockerManager(ContainerManagerBase):
         params = {"force": force, "all": all}
         try:
             if all:
-                images = self.client.images.list(all=True)
-                removed = []
-                for img in images:
-                    try:
-                        for tag in img.attrs.get("RepoTags", []):
-                            self.client.images.remove(tag, force=force)
-                            removed.append(img.attrs["Id"][7:19])
-                    except Exception as e:
-                        self.logger.info(
-                            "Image removal failed: error_type=%s", type(e).__name__
-                        )
-                        continue
-                result = {
-                    "images_removed": removed,
-                    "space_reclaimed": "N/A (all images)",
-                }
+                result = self._prune_all_images(force)
             else:
-                filters = {"dangling": True} if not all else {}
-                result = self.client.images.prune(filters=filters)
-                if result is None:
-                    result = {"SpaceReclaimed": 0, "ImagesDeleted": []}  # type: ignore
-                self.logger.debug(
-                    "Image prune result received: shape=%s",
-                    _privacy_safe_shape(result),
-                )
-                space_reclaimed = result.get("SpaceReclaimed", 0)
-                if not isinstance(space_reclaimed, (int, float)):
-                    space_reclaimed = 0
-                pruned = {
-                    "space_reclaimed": self._format_size(space_reclaimed),
-                    "images_removed": (
-                        [
-                            (
-                                (
-                                    img.get("Deleted")
-                                    or img.get("Untagged")
-                                    or img.get("Id", "")
-                                )[-12:]
-                                if isinstance(img, dict)
-                                else str(img)[-12:]
-                            )
-                            for img in (result.get("ImagesDeleted") or [])
-                        ]
-                    ),
-                }
-                result = pruned
+                result = self._prune_dangling_images(all)
             self.log_action("prune_images", params, result)
             return result
         except Exception as e:
             self.log_action("prune_images", params, error=e)
             raise RuntimeError("Failed to prune images") from e
+
+    def _prune_all_images(self, force: bool) -> dict:
+        images = self.client.images.list(all=True)
+        removed = []
+        for img in images:
+            try:
+                for tag in img.attrs.get("RepoTags", []):
+                    self.client.images.remove(tag, force=force)
+                    removed.append(img.attrs["Id"][7:19])
+            except Exception as e:
+                self.logger.info(
+                    "Image removal failed: error_type=%s", type(e).__name__
+                )
+                continue
+        return {"images_removed": removed, "space_reclaimed": "N/A (all images)"}
+
+    def _prune_dangling_images(self, all: bool) -> dict:
+        filters = {"dangling": True} if not all else {}
+        result = self.client.images.prune(filters=filters)
+        if result is None:
+            result = {"SpaceReclaimed": 0, "ImagesDeleted": []}  # type: ignore
+        self.logger.debug(
+            "Image prune result received: shape=%s",
+            _privacy_safe_shape(result),
+        )
+        space_reclaimed = result.get("SpaceReclaimed", 0)
+        if not isinstance(space_reclaimed, (int, float)):
+            space_reclaimed = 0
+        return {
+            "space_reclaimed": self._format_size(space_reclaimed),
+            "images_removed": (
+                [
+                    (
+                        (
+                            img.get("Deleted")
+                            or img.get("Untagged")
+                            or img.get("Id", "")
+                        )[-12:]
+                        if isinstance(img, dict)
+                        else str(img)[-12:]
+                    )
+                    for img in (result.get("ImagesDeleted") or [])
+                ]
+            ),
+        }
 
     def list_containers(self, all: bool = False) -> list[ContainerInfo]:
         params = {"all": all}
@@ -789,17 +826,7 @@ class DockerManager(ContainerManagerBase):
                 self.log_action("run_container", params, result)
                 return result
             attrs = container.attrs
-            port_mappings = []
-            if ports:
-                network_settings = attrs.get("NetworkSettings", {})
-                container_ports = network_settings.get("Ports", {})
-                if container_ports:
-                    for container_port, host_ports in container_ports.items():
-                        if host_ports:
-                            for hp in host_ports:
-                                port_mappings.append(
-                                    f"{hp.get('HostIp', '0.0.0.0')}:{hp.get('HostPort')}->{container_port}"  # nosec B104
-                                )
+            port_mappings = _docker_container_port_mappings(attrs, ports)
             created = attrs.get("Created", None)
             created_str = self._parse_timestamp(created)
             result = {
@@ -974,47 +1001,49 @@ class DockerManager(ContainerManagerBase):
         params = {"force": force, "all": all}
         try:
             if all:
-                volumes = self.client.volumes.list(all=True)
-                removed = []
-                for v in volumes:
-                    try:
-                        v.remove(force=force)
-                        removed.append(v.attrs["Name"])
-                    except Exception as e:
-                        self.logger.info(
-                            "Volume removal failed: error_type=%s", type(e).__name__
-                        )
-                        continue
-                result = {
-                    "volumes_removed": removed,
-                    "space_reclaimed": "N/A (all volumes)",
-                }
+                result = self._prune_all_volumes(force)
             else:
-                result = self.client.volumes.prune()
-                if result is None:
-                    result = {"SpaceReclaimed": 0, "VolumesDeleted": []}  # type: ignore
-                self.logger.debug(
-                    "Volume prune result received: shape=%s",
-                    _privacy_safe_shape(result),
-                )
-                space_reclaimed = result.get("SpaceReclaimed", 0)
-                if not isinstance(space_reclaimed, (int, float)):
-                    space_reclaimed = 0
-                pruned = {
-                    "space_reclaimed": self._format_size(space_reclaimed),
-                    "volumes_removed": (
-                        [
-                            (v.get("Name", "") if isinstance(v, dict) else str(v))
-                            for v in (result.get("VolumesDeleted") or [])
-                        ]
-                    ),
-                }
-                result = pruned
+                result = self._prune_unused_volumes()
             self.log_action("prune_volumes", params, result)
             return result
         except Exception as e:
             self.log_action("prune_volumes", params, error=e)
             raise RuntimeError("Failed to prune volumes") from e
+
+    def _prune_all_volumes(self, force: bool) -> dict:
+        volumes = self.client.volumes.list(all=True)
+        removed = []
+        for v in volumes:
+            try:
+                v.remove(force=force)
+                removed.append(v.attrs["Name"])
+            except Exception as e:
+                self.logger.info(
+                    "Volume removal failed: error_type=%s", type(e).__name__
+                )
+                continue
+        return {"volumes_removed": removed, "space_reclaimed": "N/A (all volumes)"}
+
+    def _prune_unused_volumes(self) -> dict:
+        result = self.client.volumes.prune()
+        if result is None:
+            result = {"SpaceReclaimed": 0, "VolumesDeleted": []}  # type: ignore
+        self.logger.debug(
+            "Volume prune result received: shape=%s",
+            _privacy_safe_shape(result),
+        )
+        space_reclaimed = result.get("SpaceReclaimed", 0)
+        if not isinstance(space_reclaimed, (int, float)):
+            space_reclaimed = 0
+        return {
+            "space_reclaimed": self._format_size(space_reclaimed),
+            "volumes_removed": (
+                [
+                    (v.get("Name", "") if isinstance(v, dict) else str(v))
+                    for v in (result.get("VolumesDeleted") or [])
+                ]
+            ),
+        }
 
     def list_networks(self) -> list[NetworkInfo]:
         params: dict[str, Any] = {}
@@ -1483,27 +1512,11 @@ class DockerManager(ContainerManagerBase):
             attrs = service.attrs
             spec = dict(attrs.get("Spec", {}) or {})
             version = attrs.get("Version", {}).get("Index")
-            task_template = dict(spec.get("TaskTemplate", {}) or {})
-            container_spec = dict(task_template.get("ContainerSpec", {}) or {})
-            if image:
-                container_spec["Image"] = image
-            if env is not None:
-                container_spec["Env"] = env
-            task_template["ContainerSpec"] = container_spec
-            if constraints is not None:
-                placement = dict(task_template.get("Placement", {}) or {})
-                placement["Constraints"] = constraints
-                task_template["Placement"] = placement
-            if force:
-                task_template["ForceUpdate"] = (
-                    int(task_template.get("ForceUpdate", 0) or 0) + 1
-                )
-            mode = spec.get("Mode")
-            if replicas is not None and isinstance(mode, dict) and "Replicated" in mode:
-                mode = {"Replicated": {"Replicas": replicas}}
-            new_labels = spec.get("Labels")
-            if labels is not None:
-                new_labels = {**(spec.get("Labels") or {}), **labels}
+            task_template = self._build_service_task_template(
+                dict(spec.get("TaskTemplate", {}) or {}), image, env, constraints, force
+            )
+            mode = self._resolve_service_mode(spec, replicas)
+            new_labels = self._resolve_service_labels(spec, labels)
             self.client.api.update_service(
                 service.id,
                 version,
@@ -1516,13 +1529,51 @@ class DockerManager(ContainerManagerBase):
             result = {
                 "service": service.id,
                 "updated": True,
-                "image": container_spec.get("Image"),
+                "image": task_template.get("ContainerSpec", {}).get("Image"),
             }
             self.log_action("update_service", params, result)
             return result
         except Exception as e:
             self.log_action("update_service", params, error=e)
             raise RuntimeError("Failed to update service") from e
+
+    def _build_service_task_template(
+        self,
+        task_template: dict,
+        image: str | None,
+        env: list[str] | None,
+        constraints: list[str] | None,
+        force: bool,
+    ) -> dict:
+        container_spec = dict(task_template.get("ContainerSpec", {}) or {})
+        if image:
+            container_spec["Image"] = image
+        if env is not None:
+            container_spec["Env"] = env
+        task_template["ContainerSpec"] = container_spec
+        if constraints is not None:
+            placement = dict(task_template.get("Placement", {}) or {})
+            placement["Constraints"] = constraints
+            task_template["Placement"] = placement
+        if force:
+            task_template["ForceUpdate"] = (
+                int(task_template.get("ForceUpdate", 0) or 0) + 1
+            )
+        return task_template
+
+    def _resolve_service_mode(self, spec: dict, replicas: int | None) -> Any:
+        mode = spec.get("Mode")
+        if replicas is not None and isinstance(mode, dict) and "Replicated" in mode:
+            mode = {"Replicated": {"Replicas": replicas}}
+        return mode
+
+    def _resolve_service_labels(
+        self, spec: dict, labels: dict[str, str] | None
+    ) -> dict:
+        new_labels = spec.get("Labels")
+        if labels is not None:
+            new_labels = {**(spec.get("Labels") or {}), **labels}
+        return new_labels
 
     def service_ps(self, service_id: str) -> list[dict]:
         params = {"service_id": service_id}
@@ -1863,6 +1914,48 @@ class DockerManager(ContainerManagerBase):
         return self.inspect_node(node_id)
 
 
+def _build_podman_run_kwargs(
+    detach: bool,
+    name: str | None,
+    command: str | None,
+    ports: dict[str, str] | None,
+    volumes: dict[str, dict] | None,
+    environment: dict[str, str] | list[str] | None,
+    labels: dict[str, str] | None,
+) -> dict[str, Any]:
+    """Build kwargs, filtering out None values for podman-py compatibility."""
+    run_kwargs: dict[str, Any] = {"detach": detach}
+    if name is not None:
+        run_kwargs["name"] = name
+    if command is not None:
+        run_kwargs["command"] = command
+    if ports is not None:
+        run_kwargs["ports"] = ports
+    if volumes is not None:
+        run_kwargs["volumes"] = volumes
+    if environment is not None:
+        run_kwargs["environment"] = environment
+    if labels is not None:
+        run_kwargs["labels"] = labels
+    return run_kwargs
+
+
+def _podman_container_port_mappings(
+    attrs: dict, ports: dict[str, str] | None
+) -> list[str]:
+    """Format a podman-py container's ``Ports`` attribute for display."""
+    if not ports:
+        return []
+    container_ports = attrs.get("Ports", [])
+    if not container_ports:
+        return []
+    return [
+        f"{p.get('host_ip', '0.0.0.0')}:{p.get('host_port')}->{p.get('container_port')}/{p.get('protocol', 'tcp')}"  # nosec
+        for p in container_ports
+        if p.get("host_port")
+    ]
+
+
 class PodmanManager(ContainerManagerBase):
     def __init__(self, silent: bool = False, log_file: str | None = None):
         super().__init__(silent, log_file)
@@ -1954,6 +2047,10 @@ class PodmanManager(ContainerManagerBase):
             )
             return base_url
 
+        return self._first_reachable_podman_url(self._podman_socket_candidates())
+
+    def _podman_socket_candidates(self) -> list[str]:
+        """Build the ordered list of Podman socket URLs to try, by platform."""
         socket_candidates = []
 
         cli_sockets = self._get_podman_cli_sockets()
@@ -1997,7 +2094,10 @@ class PodmanManager(ContainerManagerBase):
                 ]
             )
 
-        for url in socket_candidates:
+        return socket_candidates
+
+    def _first_reachable_podman_url(self, candidates: list[str]) -> str | None:
+        for url in candidates:
             if url.startswith("/") and not url.startswith("unix://"):
                 url = f"unix://{url}"
 
@@ -2012,47 +2112,49 @@ class PodmanManager(ContainerManagerBase):
         params = {"force": force, "all": all}
         try:
             if all:
-                images = self.client.images.list(all=True)
-                removed = []
-                for img in images:
-                    try:
-                        for tag in img.attrs.get("Names", []):
-                            self.client.images.remove(tag, force=force)
-                            removed.append(img.attrs["Id"][7:19])
-                    except Exception as e:
-                        self.logger.info(
-                            "Image removal failed: error_type=%s", type(e).__name__
-                        )
-                        continue
-                result = {
-                    "images_removed": removed,
-                    "space_reclaimed": "N/A (all images)",
-                }
+                result = self._prune_all_images(force)
             else:
-                filters = {"dangling": True} if not all else {}
-                result = self.client.images.prune(filters=filters)
-                if result is None:
-                    result = {"SpaceReclaimed": 0, "ImagesRemoved": []}  # type: ignore
-                self.logger.debug(
-                    "Image prune result received: shape=%s",
-                    _privacy_safe_shape(result),
-                )
-                space_reclaimed = result.get("SpaceReclaimed", 0)
-                if not isinstance(space_reclaimed, (int, float)):
-                    space_reclaimed = 0
-                pruned = {
-                    "space_reclaimed": self._format_size(space_reclaimed),
-                    "images_removed": (
-                        [img["Id"][7:19] for img in result.get("ImagesRemoved", [])]
-                        or [img["Id"][7:19] for img in result.get("ImagesDeleted", [])]
-                    ),
-                }
-                result = pruned
+                result = self._prune_dangling_images(all)
             self.log_action("prune_images", params, result)
             return result
         except Exception as e:
             self.log_action("prune_images", params, error=e)
             raise RuntimeError("Failed to prune images") from e
+
+    def _prune_all_images(self, force: bool) -> dict:
+        images = self.client.images.list(all=True)
+        removed = []
+        for img in images:
+            try:
+                for tag in img.attrs.get("Names", []):
+                    self.client.images.remove(tag, force=force)
+                    removed.append(img.attrs["Id"][7:19])
+            except Exception as e:
+                self.logger.info(
+                    "Image removal failed: error_type=%s", type(e).__name__
+                )
+                continue
+        return {"images_removed": removed, "space_reclaimed": "N/A (all images)"}
+
+    def _prune_dangling_images(self, all: bool) -> dict:
+        filters = {"dangling": True} if not all else {}
+        result = self.client.images.prune(filters=filters)
+        if result is None:
+            result = {"SpaceReclaimed": 0, "ImagesRemoved": []}  # type: ignore
+        self.logger.debug(
+            "Image prune result received: shape=%s",
+            _privacy_safe_shape(result),
+        )
+        space_reclaimed = result.get("SpaceReclaimed", 0)
+        if not isinstance(space_reclaimed, (int, float)):
+            space_reclaimed = 0
+        return {
+            "space_reclaimed": self._format_size(space_reclaimed),
+            "images_removed": (
+                [img["Id"][7:19] for img in result.get("ImagesRemoved", [])]
+                or [img["Id"][7:19] for img in result.get("ImagesDeleted", [])]
+            ),
+        }
 
     def prune_containers(self) -> dict:
         params: dict[str, Any] = {}
@@ -2089,54 +2191,56 @@ class PodmanManager(ContainerManagerBase):
         params = {"force": force, "all": all}
         try:
             if all:
-                volumes = self.client.volumes.list(all=True)
-                removed = []
-                for v in volumes:
-                    try:
-                        v.remove(force=force)
-                        removed.append(v.attrs["Name"])
-                    except Exception as e:
-                        self.logger.info(
-                            "Volume removal failed: error_type=%s", type(e).__name__
-                        )
-                        continue
-                result = {
-                    "volumes_removed": removed,
-                    "space_reclaimed": "N/A (all volumes)",
-                }
+                result = self._prune_all_volumes(force)
             else:
-                result = self.client.volumes.prune()
-                if result is None:
-                    result = {"SpaceReclaimed": 0, "VolumesRemoved": []}  # type: ignore
-                self.logger.debug(
-                    "Volume prune result received: shape=%s",
-                    _privacy_safe_shape(result),
-                )
-                space_reclaimed = result.get("SpaceReclaimed", 0)
-                if not isinstance(space_reclaimed, (int, float)):
-                    space_reclaimed = 0
-
-                # Handle different API response formats
-                volumes_removed_data = result.get("VolumesRemoved", []) or result.get(
-                    "VolumesDeleted", []
-                )
-                volumes_removed = []
-                for v in volumes_removed_data:
-                    if isinstance(v, dict):
-                        volumes_removed.append(v.get("Name", "unknown"))
-                    elif isinstance(v, str):
-                        volumes_removed.append(v)
-
-                pruned = {
-                    "space_reclaimed": self._format_size(space_reclaimed),
-                    "volumes_removed": volumes_removed,
-                }
-                result = pruned
+                result = self._prune_unused_volumes()
             self.log_action("prune_volumes", params, result)
             return result
         except Exception as e:
             self.log_action("prune_volumes", params, error=e)
             raise RuntimeError("Failed to prune volumes") from e
+
+    def _prune_all_volumes(self, force: bool) -> dict:
+        volumes = self.client.volumes.list(all=True)
+        removed = []
+        for v in volumes:
+            try:
+                v.remove(force=force)
+                removed.append(v.attrs["Name"])
+            except Exception as e:
+                self.logger.info(
+                    "Volume removal failed: error_type=%s", type(e).__name__
+                )
+                continue
+        return {"volumes_removed": removed, "space_reclaimed": "N/A (all volumes)"}
+
+    def _prune_unused_volumes(self) -> dict:
+        result = self.client.volumes.prune()
+        if result is None:
+            result = {"SpaceReclaimed": 0, "VolumesRemoved": []}  # type: ignore
+        self.logger.debug(
+            "Volume prune result received: shape=%s",
+            _privacy_safe_shape(result),
+        )
+        space_reclaimed = result.get("SpaceReclaimed", 0)
+        if not isinstance(space_reclaimed, (int, float)):
+            space_reclaimed = 0
+
+        # Handle different API response formats
+        volumes_removed_data = result.get("VolumesRemoved", []) or result.get(
+            "VolumesDeleted", []
+        )
+        volumes_removed = []
+        for v in volumes_removed_data:
+            if isinstance(v, dict):
+                volumes_removed.append(v.get("Name", "unknown"))
+            elif isinstance(v, str):
+                volumes_removed.append(v)
+
+        return {
+            "space_reclaimed": self._format_size(space_reclaimed),
+            "volumes_removed": volumes_removed,
+        }
 
     def prune_networks(self) -> dict:
         params: dict[str, Any] = {}
@@ -2368,21 +2472,9 @@ class PodmanManager(ContainerManagerBase):
             "labels": labels,
         }
         try:
-            # Build kwargs, filtering out None values for podman-py compatibility
-            run_kwargs: dict[str, Any] = {}
-            run_kwargs["detach"] = detach
-            if name is not None:
-                run_kwargs["name"] = name
-            if command is not None:
-                run_kwargs["command"] = command
-            if ports is not None:
-                run_kwargs["ports"] = ports
-            if volumes is not None:
-                run_kwargs["volumes"] = volumes
-            if environment is not None:
-                run_kwargs["environment"] = environment
-            if labels is not None:
-                run_kwargs["labels"] = labels
+            run_kwargs = _build_podman_run_kwargs(
+                detach, name, command, ports, volumes, environment, labels
+            )
 
             container = self.client.containers.run(image, **run_kwargs)
             if not detach:
@@ -2390,15 +2482,7 @@ class PodmanManager(ContainerManagerBase):
                 self.log_action("run_container", params, result)
                 return result
             attrs = container.attrs
-            port_mappings = []
-            if ports:
-                container_ports = attrs.get("Ports", [])
-                if container_ports:
-                    port_mappings = [
-                        f"{p.get('host_ip', '0.0.0.0')}:{p.get('host_port')}->{p.get('container_port')}/{p.get('protocol', 'tcp')}"  # nosec
-                        for p in container_ports
-                        if p.get("host_port")
-                    ]
+            port_mappings = _podman_container_port_mappings(attrs, ports)
             created = attrs.get("Created", None)
             created_str = self._parse_timestamp(created)
             result = {
@@ -3137,36 +3221,50 @@ def create_manager(
     if host is None:
         host = os.environ.get("CONTAINER_MANAGER_HOST", None)
 
-    # Multi-context mode
-    if (
+    if _is_multi_context_mode(manager_type, multi_context):
+        return _resolve_multi_context_manager(manager_type, silent, log_file)
+
+    if manager_type is None:
+        manager_type = _autodetect_manager_type()
+
+    return _build_manager(manager_type, host, silent, log_file)
+
+
+def _is_multi_context_mode(manager_type: str | None, multi_context: bool) -> bool:
+    return (
         multi_context
         or manager_type == "multi"
         or os.environ.get("MULTI_CONTEXT_MODE", "false").lower() in ("true", "1", "yes")
-    ):
-        from container_manager_mcp.multi_context_manager import MultiContextManager
+    )
 
-        multi_manager = MultiContextManager(silent=silent, log_file=log_file)
 
-        if manager_type is None or manager_type == "multi":
-            return multi_manager
+def _resolve_multi_context_manager(
+    manager_type: str | None, silent: bool, log_file: str | None
+) -> ContainerManagerBase:
+    from container_manager_mcp.multi_context_manager import MultiContextManager
 
-        # A specific backend was requested while multi-context mode is
-        # active (e.g. the themed cm_k8s_*/cm_docker_swarm/cm_podman tools
-        # call create_manager("kubernetes"/"docker"/"podman")). Resolve to
-        # that backend's default-context manager so callers get the real
-        # ~40-verb interface instead of the pooling MultiContextManager,
-        # which only exposes pool-management plus a handful of generic
-        # delegated methods and would otherwise raise
-        # AttributeError for any backend-specific verb (e.g. get_cluster_info,
-        # list_nodes). Mirrors the get_manager(backend, context) resolution
-        # already used by the cm_multi_context tool.
-        backend = manager_type.lower()
-        if backend in ("rke2", "k3s"):
-            backend = "kubernetes"
-        return multi_manager.get_manager(backend)
+    multi_manager = MultiContextManager(silent=silent, log_file=log_file)
 
-    if manager_type is None:
-        manager_type = os.environ.get("CONTAINER_MANAGER_TYPE", None)
+    if manager_type is None or manager_type == "multi":
+        return multi_manager
+
+    # A specific backend was requested while multi-context mode is active
+    # (e.g. the themed cm_k8s_*/cm_docker_swarm/cm_podman tools call
+    # create_manager("kubernetes"/"docker"/"podman")). Resolve to that
+    # backend's default-context manager so callers get the real ~40-verb
+    # interface instead of the pooling MultiContextManager, which only
+    # exposes pool-management plus a handful of generic delegated methods
+    # and would otherwise raise AttributeError for any backend-specific verb
+    # (e.g. get_cluster_info, list_nodes). Mirrors the get_manager(backend,
+    # context) resolution already used by the cm_multi_context tool.
+    backend = manager_type.lower()
+    if backend in ("rke2", "k3s"):
+        backend = "kubernetes"
+    return multi_manager.get_manager(backend)
+
+
+def _autodetect_manager_type() -> str:
+    manager_type = os.environ.get("CONTAINER_MANAGER_TYPE", None)
     if manager_type is None:
         if is_app_installed("podman"):
             manager_type = "podman"
@@ -3176,6 +3274,12 @@ def create_manager(
         raise ValueError(
             "No supported container manager detected. Set CONTAINER_MANAGER_TYPE or install Docker/Podman."
         )
+    return manager_type
+
+
+def _build_manager(
+    manager_type: str, host: str | None, silent: bool, log_file: str | None
+) -> ContainerManagerBase:
     if manager_type.lower() in ["docker", "swarm"]:
         return DockerManager(host=host, silent=silent, log_file=log_file)
     elif manager_type.lower() == "podman":
@@ -3242,6 +3346,103 @@ def _run_image_flags(
         )
 
 
+def _parse_ports_arg(ports_str: str | None) -> dict[str, str] | None:
+    if not ports_str:
+        return None
+    ports: dict[str, str] = {}
+    for p in ports_str.split(","):
+        host, cont = p.split(":")
+        ports[cont + "/tcp"] = host
+    return ports
+
+
+def _parse_volumes_arg(volumes_str: str | None) -> dict[str, dict] | None:
+    if not volumes_str:
+        return None
+    volumes: dict[str, dict] = {}
+    for v in volumes_str.split(","):
+        parts = v.split(":")
+        host = parts[0]
+        cont = parts[1]
+        mode = parts[2] if len(parts) > 2 else "rw"
+        volumes[host] = {"bind": cont, "mode": mode}
+    return volumes
+
+
+def _parse_environment_arg(environment_str: str | None) -> dict[str, str] | None:
+    if not environment_str:
+        return None
+    return dict(e.split("=") for e in environment_str.split(","))
+
+
+@dataclass
+class RunContainerOpts:
+    name: str | None
+    command: str | None
+    detach: bool
+    ports_str: str | None
+    volumes_str: str | None
+    environment_str: str | None
+
+
+def _run_container_flag_run(
+    manager, run_image: str | None, opts: RunContainerOpts
+) -> None:
+    if not run_image:
+        raise ValueError("Image required for run-container")
+    ports = _parse_ports_arg(opts.ports_str)
+    volumes = _parse_volumes_arg(opts.volumes_str)
+    env = _parse_environment_arg(opts.environment_str)
+    print(
+        json.dumps(
+            manager.run_container(
+                run_image, opts.name, opts.command, opts.detach, ports, volumes, env
+            ),
+            indent=2,
+        ),
+        file=sys.stderr,
+    )
+
+
+def _run_container_flag_stop(manager, stop_container_id: str | None, timeout) -> None:
+    if not stop_container_id:
+        raise ValueError("Container ID required for stop-container")
+    print(
+        json.dumps(manager.stop_container(stop_container_id, timeout), indent=2),
+        file=sys.stderr,
+    )
+
+
+def _run_container_flag_remove(manager, remove_container_id: str | None, force) -> None:
+    if not remove_container_id:
+        raise ValueError("Container ID required for remove-container")
+    print(
+        json.dumps(manager.remove_container(remove_container_id, force), indent=2),
+        file=sys.stderr,
+    )
+
+
+def _run_container_flag_logs(manager, container_logs_id: str | None, tail) -> None:
+    if not container_logs_id:
+        raise ValueError("Container ID required for get-container-logs")
+    print(manager.get_container_logs(container_logs_id, tail), file=sys.stderr)
+
+
+def _run_container_flag_exec(
+    manager, exec_container_id: str | None, exec_command, exec_detach
+) -> None:
+    if not exec_container_id:
+        raise ValueError("Container ID required for exec-in-container")
+    cmd_list = exec_command.split() if exec_command else []
+    print(
+        json.dumps(
+            manager.exec_in_container(exec_container_id, cmd_list, exec_detach),
+            indent=2,
+        ),
+        file=sys.stderr,
+    )
+
+
 def _run_container_flags(
     manager,
     all_containers,
@@ -3275,66 +3476,23 @@ def _run_container_flags(
             file=sys.stderr,
         )
     if run_container:
-        if not run_image:
-            raise ValueError("Image required for run-container")
-        ports = None
-        if ports_str:
-            ports = {}
-            for p in ports_str.split(","):
-                host, cont = p.split(":")
-                ports[cont + "/tcp"] = host
-        volumes = None
-        if volumes_str:
-            volumes = {}
-            for v in volumes_str.split(","):
-                parts = v.split(":")
-                host = parts[0]
-                cont = parts[1]
-                mode = parts[2] if len(parts) > 2 else "rw"
-                volumes[host] = {"bind": cont, "mode": mode}
-        env = None
-        if environment_str:
-            env = dict(e.split("=") for e in environment_str.split(","))
-        print(
-            json.dumps(
-                manager.run_container(
-                    run_image, name, command, detach, ports, volumes, env
-                ),
-                indent=2,
+        _run_container_flag_run(
+            manager,
+            run_image,
+            RunContainerOpts(
+                name, command, detach, ports_str, volumes_str, environment_str
             ),
-            file=sys.stderr,
         )
     if stop_container:
-        if not stop_container_id:
-            raise ValueError("Container ID required for stop-container")
-        print(
-            json.dumps(manager.stop_container(stop_container_id, timeout), indent=2),
-            file=sys.stderr,
-        )
+        _run_container_flag_stop(manager, stop_container_id, timeout)
     if remove_container:
-        if not remove_container_id:
-            raise ValueError("Container ID required for remove-container")
-        print(
-            json.dumps(manager.remove_container(remove_container_id, force), indent=2),
-            file=sys.stderr,
-        )
+        _run_container_flag_remove(manager, remove_container_id, force)
     if prune_containers:
         print(json.dumps(manager.prune_containers(), indent=2), file=sys.stderr)
     if get_container_logs:
-        if not container_logs_id:
-            raise ValueError("Container ID required for get-container-logs")
-        print(manager.get_container_logs(container_logs_id, tail), file=sys.stderr)
+        _run_container_flag_logs(manager, container_logs_id, tail)
     if exec_in_container:
-        if not exec_container_id:
-            raise ValueError("Container ID required for exec-in-container")
-        cmd_list = exec_command.split() if exec_command else []
-        print(
-            json.dumps(
-                manager.exec_in_container(exec_container_id, cmd_list, exec_detach),
-                indent=2,
-            ),
-            file=sys.stderr,
-        )
+        _run_container_flag_exec(manager, exec_container_id, exec_command, exec_detach)
 
 
 def _run_volume_flags(
@@ -3436,6 +3594,40 @@ def _run_compose_flags(
         print(manager.compose_logs(compose_logs_file, compose_service), file=sys.stderr)
 
 
+def _run_swarm_flag_create_service(
+    manager,
+    create_service_name: str | None,
+    service_image: str | None,
+    replicas,
+    ports_str: str | None,
+    mounts_str: str | None,
+) -> None:
+    if not create_service_name:
+        raise ValueError("Name required for create-service")
+    if not service_image:
+        raise ValueError("Image required for create-service")
+    service_ports = _parse_ports_arg(ports_str)
+    mounts = mounts_str.split(",") if mounts_str else None
+    print(
+        json.dumps(
+            manager.create_service(
+                create_service_name, service_image, replicas, service_ports, mounts
+            ),
+            indent=2,
+        ),
+        file=sys.stderr,
+    )
+
+
+def _run_swarm_flag_remove_service(manager, remove_service_id: str | None) -> None:
+    if not remove_service_id:
+        raise ValueError("ID required for remove-service")
+    print(
+        json.dumps(manager.remove_service(remove_service_id), indent=2),
+        file=sys.stderr,
+    )
+
+
 def _run_swarm_flags(
     manager,
     advertise_addr,
@@ -3462,35 +3654,16 @@ def _run_swarm_flags(
     if list_services:
         print(json.dumps(manager.list_services(), indent=2), file=sys.stderr)
     if create_service:
-        if not create_service_name:
-            raise ValueError("Name required for create-service")
-        if not service_image:
-            raise ValueError("Image required for create-service")
-        service_ports: dict[str, str] | None = None
-        if ports_str:
-            service_ports = {}
-            for p in ports_str.split(","):
-                host, cont = p.split(":")
-                service_ports[cont + "/tcp"] = host
-        mounts = None
-        if mounts_str:
-            mounts = mounts_str.split(",")
-        print(
-            json.dumps(
-                manager.create_service(
-                    create_service_name, service_image, replicas, service_ports, mounts
-                ),
-                indent=2,
-            ),
-            file=sys.stderr,
+        _run_swarm_flag_create_service(
+            manager,
+            create_service_name,
+            service_image,
+            replicas,
+            ports_str,
+            mounts_str,
         )
     if remove_service:
-        if not remove_service_id:
-            raise ValueError("ID required for remove-service")
-        print(
-            json.dumps(manager.remove_service(remove_service_id), indent=2),
-            file=sys.stderr,
-        )
+        _run_swarm_flag_remove_service(manager, remove_service_id)
 
 
 def container_manager():
@@ -3570,7 +3743,10 @@ def container_manager():
     parser.add_argument("--compose-up", type=str, default=None, help="Compose file up")
     parser.add_argument("--build", action="store_true", help="Build images")
     parser.add_argument(
-        "--compose-detach", action="store_true", default=True, help="Detach compose"
+        "--compose-detach",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Detach compose (use --no-compose-detach to run in the foreground)",
     )
     parser.add_argument(
         "--compose-down", type=str, default=None, help="Compose file down"
