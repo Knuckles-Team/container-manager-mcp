@@ -37,93 +37,123 @@ async def _dispatch_metrics_action(action, manager, name, namespace):
     return _UNHANDLED
 
 
+_AUTOSCALER_ACTIONS = {
+    "get_autoscaler_metrics": (
+        lambda v: not v["name"] or not v["namespace"],
+        "'name' and 'namespace' are required for get_autoscaler_metrics",
+        lambda v: (v["name"], v["namespace"]),
+    ),
+    "set_autoscaler_metrics": (
+        lambda v: not v["name"] or not v["namespace"] or not v["metrics"],
+        "'name', 'namespace', and 'metrics' are required for set_autoscaler_metrics",
+        lambda v: (v["name"], v["namespace"], v["metrics"]),
+    ),
+    "scale_deployment_autoscaler": (
+        lambda v: (
+            not v["name"]
+            or not v["namespace"]
+            or v["min_replicas"] is None
+            or v["max_replicas"] is None
+        ),
+        "'name', 'namespace', 'min_replicas', and 'max_replicas' are required for scale_deployment_autoscaler",
+        lambda v: (v["name"], v["namespace"], v["min_replicas"], v["max_replicas"]),
+    ),
+    "get_autoscaler_history": (
+        lambda v: not v["name"] or not v["namespace"],
+        "'name' and 'namespace' are required for get_autoscaler_history",
+        lambda v: (v["name"], v["namespace"]),
+    ),
+}
+
+
 async def _dispatch_autoscaler_action(
     action, manager, max_replicas, metrics, min_replicas, name, namespace
 ):
-    if action == "get_autoscaler_metrics":
-        if not name or not namespace:
-            return (
-                "Error: 'name' and 'namespace' are required for get_autoscaler_metrics"
-            )
-        return await run_blocking(manager.get_autoscaler_metrics, name, namespace)
-    elif action == "set_autoscaler_metrics":
-        if not name or not namespace or not metrics:
-            return "Error: 'name', 'namespace', and 'metrics' are required for set_autoscaler_metrics"
-        return await run_blocking(
-            manager.set_autoscaler_metrics, name, namespace, metrics
-        )
-    elif action == "scale_deployment_autoscaler":
-        if not name or not namespace or min_replicas is None or max_replicas is None:
-            return "Error: 'name', 'namespace', 'min_replicas', and 'max_replicas' are required for scale_deployment_autoscaler"
-        return await run_blocking(
-            manager.scale_deployment_autoscaler,
-            name,
-            namespace,
-            min_replicas,
-            max_replicas,
-        )
-    elif action == "get_autoscaler_history":
-        if not name or not namespace:
-            return (
-                "Error: 'name' and 'namespace' are required for get_autoscaler_history"
-            )
-        return await run_blocking(manager.get_autoscaler_history, name, namespace)
-    return _UNHANDLED
+    """Dispatch an autoscaler-metrics action via `_AUTOSCALER_ACTIONS`."""
+    spec = _AUTOSCALER_ACTIONS.get(action)
+    if spec is None:
+        return _UNHANDLED
+    is_missing, error_message, build_args = spec
+    values = {
+        "max_replicas": max_replicas,
+        "metrics": metrics,
+        "min_replicas": min_replicas,
+        "name": name,
+        "namespace": namespace,
+    }
+    if is_missing(values):
+        return f"Error: {error_message}"
+    return await run_blocking(getattr(manager, action), *build_args(values))
+
+
+_WATCH_STREAM_ACTIONS = {
+    "watch_resource": (
+        ("resource_type", "name"),
+        "'resource_type' and 'name' are required for watch_resource",
+        lambda v: (v["resource_type"], v["name"], v["namespace"]),
+    ),
+    "stream_pod_logs": (
+        ("name", "namespace"),
+        "'name' and 'namespace' are required for stream_pod_logs",
+        lambda v: (v["name"], v["namespace"], v["tail_lines"] or 100),
+    ),
+    "get_resource_events": (
+        ("resource_type", "name"),
+        "'resource_type' and 'name' are required for get_resource_events",
+        lambda v: (v["resource_type"], v["name"], v["namespace"]),
+    ),
+    "list_field_selector": (
+        ("resource_type", "field_selector"),
+        "'resource_type' and 'field_selector' are required for list_field_selector",
+        lambda v: (v["resource_type"], v["field_selector"], v["namespace"]),
+    ),
+}
 
 
 async def _dispatch_watch_stream_action(
     action, manager, field_selector, name, namespace, resource_type, tail_lines
 ):
-    if action == "watch_resource":
-        if not resource_type or not name:
-            return "Error: 'resource_type' and 'name' are required for watch_resource"
-        return await run_blocking(
-            manager.watch_resource, resource_type, name, namespace
-        )
-    elif action == "stream_pod_logs":
-        if not name or not namespace:
-            return "Error: 'name' and 'namespace' are required for stream_pod_logs"
-        return await run_blocking(
-            manager.stream_pod_logs, name, namespace, tail_lines or 100
-        )
-    elif action == "get_resource_events":
-        if not resource_type or not name:
-            return (
-                "Error: 'resource_type' and 'name' are required for get_resource_events"
-            )
-        return await run_blocking(
-            manager.get_resource_events, resource_type, name, namespace
-        )
-    elif action == "list_field_selector":
-        if not resource_type or not field_selector:
-            return "Error: 'resource_type' and 'field_selector' are required for list_field_selector"
-        return await run_blocking(
-            manager.list_field_selector,
-            resource_type,
-            field_selector,
-            namespace,
-        )
-    return _UNHANDLED
+    """Dispatch a watch/stream/events action via `_WATCH_STREAM_ACTIONS`."""
+    spec = _WATCH_STREAM_ACTIONS.get(action)
+    if spec is None:
+        return _UNHANDLED
+    required, error_message, build_args = spec
+    values = {
+        "field_selector": field_selector,
+        "name": name,
+        "namespace": namespace,
+        "resource_type": resource_type,
+        "tail_lines": tail_lines,
+    }
+    if not all(values[name_] for name_ in required):
+        return f"Error: {error_message}"
+    return await run_blocking(getattr(manager, action), *build_args(values))
+
+
+_DEBUG_ACTIONS = {
+    "debug_pod": (("name", "namespace"), "'name' and 'namespace' are required for debug_pod"),
+    "debug_node": (("name",), "'name' is required for debug_node"),
+    "debug_service": (
+        ("name", "namespace"),
+        "'name' and 'namespace' are required for debug_service",
+    ),
+    "debug_deployment": (
+        ("name", "namespace"),
+        "'name' and 'namespace' are required for debug_deployment",
+    ),
+}
 
 
 async def _dispatch_debug_action(action, manager, name, namespace):
-    if action == "debug_pod":
-        if not name or not namespace:
-            return "Error: 'name' and 'namespace' are required for debug_pod"
-        return await run_blocking(manager.debug_pod, name, namespace)
-    elif action == "debug_node":
-        if not name:
-            return "Error: 'name' is required for debug_node"
-        return await run_blocking(manager.debug_node, name)
-    elif action == "debug_service":
-        if not name or not namespace:
-            return "Error: 'name' and 'namespace' are required for debug_service"
-        return await run_blocking(manager.debug_service, name, namespace)
-    elif action == "debug_deployment":
-        if not name or not namespace:
-            return "Error: 'name' and 'namespace' are required for debug_deployment"
-        return await run_blocking(manager.debug_deployment, name, namespace)
-    return _UNHANDLED
+    """Dispatch a debug action via `_DEBUG_ACTIONS`; manager method name == action."""
+    spec = _DEBUG_ACTIONS.get(action)
+    if spec is None:
+        return _UNHANDLED
+    required, error_message = spec
+    values = {"name": name, "namespace": namespace}
+    if not all(values[field] for field in required):
+        return f"Error: {error_message}"
+    return await run_blocking(getattr(manager, action), *(values[field] for field in required))
 
 
 _ACTION_GROUPS: dict[str, str] = {
