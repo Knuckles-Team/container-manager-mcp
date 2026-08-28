@@ -3570,7 +3570,10 @@ def container_manager():
     parser.add_argument("--compose-up", type=str, default=None, help="Compose file up")
     parser.add_argument("--build", action="store_true", help="Build images")
     parser.add_argument(
-        "--compose-detach", action="store_true", default=True, help="Detach compose"
+        "--compose-detach",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Detach compose (use --no-compose-detach to run in the foreground)",
     )
     parser.add_argument(
         "--compose-down", type=str, default=None, help="Compose file down"
