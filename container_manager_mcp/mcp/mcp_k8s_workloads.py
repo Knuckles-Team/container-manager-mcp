@@ -17,6 +17,56 @@ from container_manager_mcp.mcp_server import ctx_log
 _UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
 
 
+async def _describe_pod_action(manager, pod_name, namespace):
+    if not pod_name:
+        return "Error: 'pod_name' is required for describe_pod"
+    return await run_blocking(
+        manager.describe_pod, pod_name=pod_name, namespace=namespace
+    )
+
+
+async def _exec_pod_action(manager, pod_name, namespace, command, exec_command, exec_container):
+    if not pod_name:
+        return "Error: 'pod_name' is required for exec_pod"
+    cmd = command if command else (exec_command.split() if exec_command else None)
+    return await run_blocking(
+        manager.exec_pod,
+        pod_name=pod_name,
+        namespace=namespace,
+        command=cmd,
+        container=exec_container,
+    )
+
+
+async def _port_forward_pod_action(manager, pod_name, namespace, local_port, remote_port):
+    if not pod_name or not local_port or not remote_port:
+        return "Error: 'pod_name', 'local_port', and 'remote_port' are required for port_forward_pod"
+    return await run_blocking(
+        manager.port_forward_pod,
+        pod_name=pod_name,
+        namespace=namespace,
+        local_port=local_port,
+        remote_port=remote_port,
+    )
+
+
+async def _attach_pod_action(manager, pod_name, namespace, attach_container):
+    if not pod_name:
+        return "Error: 'pod_name' is required for attach_pod"
+    return await run_blocking(
+        manager.attach_pod,
+        pod_name=pod_name,
+        namespace=namespace,
+        container=attach_container,
+    )
+
+
+async def _copy_pod_action(manager, action, pod_name, ns, source, destination):
+    if not pod_name or not source or not destination:
+        return f"Error: 'pod_name', 'source', and 'destination' are required for {action}"
+    return await run_blocking(getattr(manager, action), pod_name, ns, source, destination)
+
+
 async def _dispatch_pod_action(
     action,
     manager,
@@ -39,145 +89,76 @@ async def _dispatch_pod_action(
             namespace=namespace,
             label_selector=label_selector,
         )
-    elif action == "describe_pod":
-        if not pod_name:
-            return "Error: 'pod_name' is required for describe_pod"
-        return await run_blocking(
-            manager.describe_pod, pod_name=pod_name, namespace=namespace
+    if action == "describe_pod":
+        return await _describe_pod_action(manager, pod_name, namespace)
+    if action == "exec_pod":
+        return await _exec_pod_action(
+            manager, pod_name, namespace, command, exec_command, exec_container
         )
-    elif action == "exec_pod":
-        if not pod_name:
-            return "Error: 'pod_name' is required for exec_pod"
-        cmd = command if command else (exec_command.split() if exec_command else None)
-        return await run_blocking(
-            manager.exec_pod,
-            pod_name=pod_name,
-            namespace=namespace,
-            command=cmd,
-            container=exec_container,
-        )
-    elif action == "port_forward_pod":
-        if not pod_name or not local_port or not remote_port:
-            return "Error: 'pod_name', 'local_port', and 'remote_port' are required for port_forward_pod"
-        return await run_blocking(
-            manager.port_forward_pod,
-            pod_name=pod_name,
-            namespace=namespace,
-            local_port=local_port,
-            remote_port=remote_port,
-        )
-    elif action == "attach_pod":
-        if not pod_name:
-            return "Error: 'pod_name' is required for attach_pod"
-        return await run_blocking(
-            manager.attach_pod,
-            pod_name=pod_name,
-            namespace=namespace,
-            container=attach_container,
-        )
-    elif action == "copy_to_pod":
-        if not pod_name or not source or not destination:
-            return "Error: 'pod_name', 'source', and 'destination' are required for copy_to_pod"
-        return await run_blocking(
-            manager.copy_to_pod, pod_name, ns, source, destination
-        )
-    elif action == "copy_from_pod":
-        if not pod_name or not source or not destination:
-            return "Error: 'pod_name', 'source', and 'destination' are required for copy_from_pod"
-        return await run_blocking(
-            manager.copy_from_pod, pod_name, ns, source, destination
-        )
+    if action == "port_forward_pod":
+        return await _port_forward_pod_action(manager, pod_name, namespace, local_port, remote_port)
+    if action == "attach_pod":
+        return await _attach_pod_action(manager, pod_name, namespace, attach_container)
+    if action in ("copy_to_pod", "copy_from_pod"):
+        return await _copy_pod_action(manager, action, pod_name, ns, source, destination)
     return _UNHANDLED
+
+
+_ROLLOUT_ACTIONS = {
+    "rollout_status": False,
+    "rollout_history": False,
+    "rollout_restart": False,
+    "rollout_undo": True,
+    "rollout_pause": False,
+    "rollout_resume": False,
+}
 
 
 async def _dispatch_rollout_action(
     action, manager, ns, namespace, resource_name, resource_type, rollout_revision
 ):
-    if action == "rollout_status":
-        if not resource_type or not resource_name:
-            return "Error: 'resource_type' and 'resource_name' are required for rollout_status"
-        return await run_blocking(
-            manager.rollout_status,
-            resource_type=resource_type,
-            name=resource_name,
-            namespace=namespace,
-        )
-    elif action == "rollout_history":
-        if not resource_type or not resource_name:
-            return "Error: 'resource_type' and 'resource_name' are required for rollout_history"
-        return await run_blocking(
-            manager.rollout_history,
-            resource_type=resource_type,
-            name=resource_name,
-            namespace=namespace,
-        )
-    elif action == "rollout_restart":
-        if not resource_type or not resource_name:
-            return "Error: 'resource_type' and 'resource_name' are required for rollout_restart"
-        return await run_blocking(
-            manager.rollout_restart,
-            resource_type=resource_type,
-            name=resource_name,
-            namespace=namespace,
-        )
-    elif action == "rollout_undo":
-        if not resource_type or not resource_name:
-            return "Error: 'resource_type' and 'resource_name' are required for rollout_undo"
-        return await run_blocking(
-            manager.rollout_undo,
-            resource_type=resource_type,
-            name=resource_name,
-            namespace=namespace,
-            revision=rollout_revision,
-        )
-    elif action == "rollout_pause":
-        if not resource_type or not resource_name:
-            return "Error: 'resource_type' and 'resource_name' are required for rollout_pause"
-        return await run_blocking(
-            manager.rollout_pause,
-            resource_type=resource_type,
-            name=resource_name,
-            namespace=namespace,
-        )
-    elif action == "rollout_resume":
-        if not resource_type or not resource_name:
-            return "Error: 'resource_type' and 'resource_name' are required for rollout_resume"
-        return await run_blocking(
-            manager.rollout_resume,
-            resource_type=resource_type,
-            name=resource_name,
-            namespace=namespace,
-        )
-    return _UNHANDLED
+    """Dispatch a rollout action via `_ROLLOUT_ACTIONS`; manager method name == action."""
+    takes_revision = _ROLLOUT_ACTIONS.get(action)
+    if takes_revision is None:
+        return _UNHANDLED
+    if not resource_type or not resource_name:
+        return f"Error: 'resource_type' and 'resource_name' are required for {action}"
+    kwargs = {
+        "resource_type": resource_type,
+        "name": resource_name,
+        "namespace": namespace,
+    }
+    if takes_revision:
+        kwargs["revision"] = rollout_revision
+    return await run_blocking(getattr(manager, action), **kwargs)
+
+
+_STRATEGY_SET_ACTIONS = frozenset(
+    {
+        "set_deployment_strategy",
+        "set_daemonset_update_strategy",
+        "set_statefulset_update_strategy",
+    }
+)
+_STRATEGY_GET_ACTIONS = frozenset(
+    {
+        "get_deployment_strategy",
+        "get_daemonset_update_strategy",
+        "get_statefulset_update_strategy",
+    }
+)
 
 
 async def _dispatch_strategy_action(action, manager, ns, name, spec):
-    if action == "set_deployment_strategy":
+    """Dispatch a strategy get/set action; manager method name == action."""
+    if action in _STRATEGY_SET_ACTIONS:
         if not name or not spec:
-            return "Error: 'name' and 'spec' are required for set_deployment_strategy"
-        return await run_blocking(manager.set_deployment_strategy, name, ns, spec)
-    elif action == "get_deployment_strategy":
+            return f"Error: 'name' and 'spec' are required for {action}"
+        return await run_blocking(getattr(manager, action), name, ns, spec)
+    if action in _STRATEGY_GET_ACTIONS:
         if not name:
-            return "Error: 'name' is required for get_deployment_strategy"
-        return await run_blocking(manager.get_deployment_strategy, name, ns)
-    elif action == "set_daemonset_update_strategy":
-        if not name or not spec:
-            return "Error: 'name' and 'spec' are required for set_daemonset_update_strategy"
-        return await run_blocking(manager.set_daemonset_update_strategy, name, ns, spec)
-    elif action == "get_daemonset_update_strategy":
-        if not name:
-            return "Error: 'name' is required for get_daemonset_update_strategy"
-        return await run_blocking(manager.get_daemonset_update_strategy, name, ns)
-    elif action == "set_statefulset_update_strategy":
-        if not name or not spec:
-            return "Error: 'name' and 'spec' are required for set_statefulset_update_strategy"
-        return await run_blocking(
-            manager.set_statefulset_update_strategy, name, ns, spec
-        )
-    elif action == "get_statefulset_update_strategy":
-        if not name:
-            return "Error: 'name' is required for get_statefulset_update_strategy"
-        return await run_blocking(manager.get_statefulset_update_strategy, name, ns)
+            return f"Error: 'name' is required for {action}"
+        return await run_blocking(getattr(manager, action), name, ns)
     return _UNHANDLED
 
 
