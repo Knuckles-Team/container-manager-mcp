@@ -18,27 +18,25 @@ from container_manager_mcp.mcp_server import ctx_log
 _UNHANDLED = object()  # sentinel: this action doesn't belong to this dispatch group
 
 
+_NODE_BASIC_ACTIONS_NO_NAME = frozenset({"list_nodes", "list_node_taints"})
+_NODE_BASIC_ACTIONS_WITH_NAME = frozenset(
+    {"inspect_node", "cordon_node", "uncordon_node", "get_node_conditions"}
+)
+
+
 async def _dispatch_node_basic_action(action, manager, node_name):
-    if action == "list_nodes":
-        return await run_blocking(manager.list_nodes)
-    elif action == "inspect_node":
+    """Dispatch a node action whose manager method name equals `action`.
+
+    Every action here is either a no-argument node listing, or a lookup/
+    mutation keyed by `node_name` -- so the manager method to call and the
+    required-parameter guard are both derivable directly from `action`.
+    """
+    if action in _NODE_BASIC_ACTIONS_NO_NAME:
+        return await run_blocking(getattr(manager, action))
+    if action in _NODE_BASIC_ACTIONS_WITH_NAME:
         if not node_name:
-            return "Error: 'node_name' is required for inspect_node"
-        return await run_blocking(manager.inspect_node, node_name)
-    elif action == "cordon_node":
-        if not node_name:
-            return "Error: 'node_name' is required for cordon_node"
-        return await run_blocking(manager.cordon_node, node_name)
-    elif action == "uncordon_node":
-        if not node_name:
-            return "Error: 'node_name' is required for uncordon_node"
-        return await run_blocking(manager.uncordon_node, node_name)
-    elif action == "get_node_conditions":
-        if not node_name:
-            return "Error: 'node_name' is required for get_node_conditions"
-        return await run_blocking(manager.get_node_conditions, node_name)
-    elif action == "list_node_taints":
-        return await run_blocking(manager.list_node_taints)
+            return f"Error: 'node_name' is required for {action}"
+        return await run_blocking(getattr(manager, action), node_name)
     return _UNHANDLED
 
 
@@ -62,28 +60,45 @@ async def _dispatch_node_taint_drain_action(
     return _UNHANDLED
 
 
+_NODE_AFFINITY_ACTIONS = {
+    "set_node_affinity": (
+        ("pod_name", "namespace", "affinity"),
+        "'pod_name', 'namespace', and 'affinity' are required for set_node_affinity",
+    ),
+    "get_node_affinity": (
+        ("pod_name", "namespace"),
+        "'pod_name' and 'namespace' are required for get_node_affinity",
+    ),
+    "set_pod_anti_affinity": (
+        ("pod_name", "namespace", "anti_affinity"),
+        "'pod_name', 'namespace', and 'anti_affinity' are required for set_pod_anti_affinity",
+    ),
+}
+
+
 async def _dispatch_node_affinity_action(
     action, manager, affinity, anti_affinity, namespace, pod_name
 ):
-    if action == "set_node_affinity":
-        if not pod_name or not namespace or not affinity:
-            return "Error: 'pod_name', 'namespace', and 'affinity' are required for set_node_affinity"
-        return await run_blocking(
-            manager.set_node_affinity, pod_name, namespace, affinity
-        )
-    elif action == "get_node_affinity":
-        if not pod_name or not namespace:
-            return (
-                "Error: 'pod_name' and 'namespace' are required for get_node_affinity"
-            )
-        return await run_blocking(manager.get_node_affinity, pod_name, namespace)
-    elif action == "set_pod_anti_affinity":
-        if not pod_name or not namespace or not anti_affinity:
-            return "Error: 'pod_name', 'namespace', and 'anti_affinity' are required for set_pod_anti_affinity"
-        return await run_blocking(
-            manager.set_pod_anti_affinity, pod_name, namespace, anti_affinity
-        )
-    return _UNHANDLED
+    """Dispatch a node/pod affinity action via `_NODE_AFFINITY_ACTIONS`.
+
+    Each entry's manager method name equals `action`; only the required
+    fields and their pinned error message differ per action.
+    """
+    spec = _NODE_AFFINITY_ACTIONS.get(action)
+    if spec is None:
+        return _UNHANDLED
+    required, error_message = spec
+    values = {
+        "pod_name": pod_name,
+        "namespace": namespace,
+        "affinity": affinity,
+        "anti_affinity": anti_affinity,
+    }
+    if not all(values[name] for name in required):
+        return f"Error: {error_message}"
+    return await run_blocking(
+        getattr(manager, action), *(values[name] for name in required)
+    )
 
 
 async def _dispatch_context_action(action, manager, context_name, new_context_name):
