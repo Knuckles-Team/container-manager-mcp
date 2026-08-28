@@ -61,45 +61,59 @@ async def _dispatch_ingress_class_action(action, manager, ns, name, spec):
     return _UNHANDLED
 
 
+async def _create_networkpolicy_action(manager, netpol_name, namespace, netpol_spec):
+    if not netpol_name:
+        return "Error: 'netpol_name' is required for create_networkpolicy"
+    np_spec = json.loads(netpol_spec) if netpol_spec else None
+    return await run_blocking(
+        manager.create_networkpolicy,
+        name=netpol_name,
+        namespace=namespace,
+        spec=np_spec,
+    )
+
+
+async def _delete_networkpolicy_action(manager, netpol_name, namespace):
+    if not netpol_name:
+        return "Error: 'netpol_name' is required for delete_networkpolicy"
+    return await run_blocking(
+        manager.delete_networkpolicy, name=netpol_name, namespace=namespace
+    )
+
+
+async def _create_network_policy_with_cidr_action(manager, name, ns, spec):
+    if not name or not spec:
+        return "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
+    return await run_blocking(manager.create_network_policy_with_cidr, name, ns, spec)
+
+
+async def _update_network_policy_rules_action(manager, name, ns, rules):
+    if not name or not rules:
+        return "Error: 'name' and 'rules' are required for update_network_policy_rules"
+    return await run_blocking(manager.update_network_policy_rules, name, ns, rules)
+
+
+async def _test_network_policy_connectivity_action(manager, namespace, name):
+    if not namespace or not name:
+        return "Error: 'namespace' and 'name' (policy_name) are required for test_network_policy_connectivity"
+    return await run_blocking(manager.test_network_policy_connectivity, namespace, name)
+
+
 async def _dispatch_networkpolicy_action(
     action, manager, ns, name, namespace, netpol_name, netpol_spec, rules, spec
 ):
     if action == "list_networkpolicies":
         return await run_blocking(manager.list_networkpolicies, namespace=namespace)
-    elif action == "create_networkpolicy":
-        if not netpol_name:
-            return "Error: 'netpol_name' is required for create_networkpolicy"
-        np_spec = json.loads(netpol_spec) if netpol_spec else None
-        return await run_blocking(
-            manager.create_networkpolicy,
-            name=netpol_name,
-            namespace=namespace,
-            spec=np_spec,
-        )
-    elif action == "delete_networkpolicy":
-        if not netpol_name:
-            return "Error: 'netpol_name' is required for delete_networkpolicy"
-        return await run_blocking(
-            manager.delete_networkpolicy, name=netpol_name, namespace=namespace
-        )
-    elif action == "create_network_policy_with_cidr":
-        if not name or not spec:
-            return "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
-        return await run_blocking(
-            manager.create_network_policy_with_cidr, name, ns, spec
-        )
-    elif action == "update_network_policy_rules":
-        if not name or not rules:
-            return (
-                "Error: 'name' and 'rules' are required for update_network_policy_rules"
-            )
-        return await run_blocking(manager.update_network_policy_rules, name, ns, rules)
-    elif action == "test_network_policy_connectivity":
-        if not namespace or not name:
-            return "Error: 'namespace' and 'name' (policy_name) are required for test_network_policy_connectivity"
-        return await run_blocking(
-            manager.test_network_policy_connectivity, namespace, name
-        )
+    if action == "create_networkpolicy":
+        return await _create_networkpolicy_action(manager, netpol_name, namespace, netpol_spec)
+    if action == "delete_networkpolicy":
+        return await _delete_networkpolicy_action(manager, netpol_name, namespace)
+    if action == "create_network_policy_with_cidr":
+        return await _create_network_policy_with_cidr_action(manager, name, ns, spec)
+    if action == "update_network_policy_rules":
+        return await _update_network_policy_rules_action(manager, name, ns, rules)
+    if action == "test_network_policy_connectivity":
+        return await _test_network_policy_connectivity_action(manager, namespace, name)
     return _UNHANDLED
 
 
@@ -111,26 +125,42 @@ async def _dispatch_endpoint_action(action, manager, ns, namespace):
     return _UNHANDLED
 
 
+_DNS_ACTIONS = {
+    "check_dns_resolution": (
+        ("namespace", "pod_name", "hostname"),
+        "'namespace', 'pod_name', and 'hostname' are required for check_dns_resolution",
+    ),
+    "list_dns_endpoints": (
+        ("namespace", "service_name"),
+        "'namespace' and 'service_name' are required for list_dns_endpoints",
+    ),
+    "test_dns_connectivity": (
+        ("namespace", "target"),
+        "'namespace' and 'target' are required for test_dns_connectivity",
+    ),
+}
+
+
 async def _dispatch_dns_action(
     action, manager, ns, hostname, namespace, pod_name, service_name, target
 ):
-    if action == "check_dns_resolution":
-        if not namespace or not pod_name or not hostname:
-            return "Error: 'namespace', 'pod_name', and 'hostname' are required for check_dns_resolution"
-        return await run_blocking(
-            manager.check_dns_resolution, namespace, pod_name, hostname
-        )
-    elif action == "list_dns_endpoints":
-        if not namespace or not service_name:
-            return "Error: 'namespace' and 'service_name' are required for list_dns_endpoints"
-        return await run_blocking(manager.list_dns_endpoints, namespace, service_name)
-    elif action == "test_dns_connectivity":
-        if not namespace or not target:
-            return (
-                "Error: 'namespace' and 'target' are required for test_dns_connectivity"
-            )
-        return await run_blocking(manager.test_dns_connectivity, namespace, target)
-    return _UNHANDLED
+    """Dispatch a DNS-debug action via `_DNS_ACTIONS`; method name == action."""
+    spec = _DNS_ACTIONS.get(action)
+    if spec is None:
+        return _UNHANDLED
+    required, error_message = spec
+    values = {
+        "namespace": namespace,
+        "pod_name": pod_name,
+        "hostname": hostname,
+        "service_name": service_name,
+        "target": target,
+    }
+    if not all(values[name] for name in required):
+        return f"Error: {error_message}"
+    return await run_blocking(
+        getattr(manager, action), *(values[name] for name in required)
+    )
 
 
 async def _dispatch_native_service_action(
