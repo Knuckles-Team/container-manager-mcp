@@ -181,30 +181,43 @@ async def _dispatch_aggregated_role_action(action, manager, ns, aggregation_rule
     return _UNHANDLED
 
 
+_POD_SECURITY_ACTIONS = {
+    "list_pod_security_policies": ((), None, lambda v: ()),
+    "describe_pod_security_policy": (
+        ("name",),
+        "'name' is required for describe_pod_security_policy",
+        lambda v: (v["name"],),
+    ),
+    "create_pod_security_policy": (
+        ("name", "spec"),
+        "'name' and 'spec' are required for create_pod_security_policy",
+        lambda v: (v["name"], v["spec"]),
+    ),
+    "delete_pod_security_policy": (
+        ("name",),
+        "'name' is required for delete_pod_security_policy",
+        lambda v: (v["name"],),
+    ),
+    "evaluate_pod_security": (
+        ("namespace", "pod_spec"),
+        "'namespace' and 'pod_spec' are required for evaluate_pod_security",
+        lambda v: (v["namespace"], v["pod_spec"]),
+    ),
+}
+
+
 async def _dispatch_pod_security_action(
     action, manager, ns, name, namespace, pod_spec, spec
 ):
-    if action == "list_pod_security_policies":
-        return await run_blocking(manager.list_pod_security_policies)
-    elif action == "describe_pod_security_policy":
-        if not name:
-            return "Error: 'name' is required for describe_pod_security_policy"
-        return await run_blocking(manager.describe_pod_security_policy, name)
-    elif action == "create_pod_security_policy":
-        if not name or not spec:
-            return (
-                "Error: 'name' and 'spec' are required for create_pod_security_policy"
-            )
-        return await run_blocking(manager.create_pod_security_policy, name, spec)
-    elif action == "delete_pod_security_policy":
-        if not name:
-            return "Error: 'name' is required for delete_pod_security_policy"
-        return await run_blocking(manager.delete_pod_security_policy, name)
-    elif action == "evaluate_pod_security":
-        if not namespace or not pod_spec:
-            return "Error: 'namespace' and 'pod_spec' are required for evaluate_pod_security"
-        return await run_blocking(manager.evaluate_pod_security, namespace, pod_spec)
-    return _UNHANDLED
+    """Dispatch a pod-security action via `_POD_SECURITY_ACTIONS`; method name == action."""
+    spec_entry = _POD_SECURITY_ACTIONS.get(action)
+    if spec_entry is None:
+        return _UNHANDLED
+    required, error_message, build_args = spec_entry
+    values = {"name": name, "namespace": namespace, "pod_spec": pod_spec, "spec": spec}
+    if required and not all(values[field] for field in required):
+        return f"Error: {error_message}"
+    return await run_blocking(getattr(manager, action), *build_args(values))
 
 
 async def _dispatch_sa_secret_mapping_action(
