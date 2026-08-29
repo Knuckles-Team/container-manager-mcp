@@ -36,6 +36,46 @@ except ImportError:
     )
 
 
+def _parse_specialist_container_config(
+    ports: str, env: str, labels: str
+) -> tuple[dict, dict, dict]:
+    """Parse the JSON port/env/label params; raises json.JSONDecodeError on bad input."""
+    port_map = json.loads(ports) if isinstance(ports, str) else ports
+    env_map = json.loads(env) if isinstance(env, str) else env
+    label_map = json.loads(labels) if isinstance(labels, str) else labels
+    return port_map, env_map, label_map
+
+
+async def _run_specialist_container(
+    manager, image: str, name: str, port_map: dict, env_map: dict, label_map: dict
+) -> dict:
+    await run_blocking(manager.pull_image, image)
+
+    container_name = name or f"specialist-{image.split('/')[-1].split(':')[0]}"
+    env_list = [f"{k}={v}" for k, v in env_map.items()]
+    port_bindings = {v: k for k, v in port_map.items()}
+
+    result = await run_blocking(
+        manager.run_container,
+        image=image,
+        name=container_name,
+        detach=True,
+        ports=port_bindings if port_bindings else None,
+        environment=env_list if env_list else None,
+        labels=label_map,
+    )
+
+    return {
+        "success": True,
+        "container_id": result.get("id", result.get("Id", "")),
+        "name": container_name,
+        "image": image,
+        "ports": port_map,
+        "labels": label_map,
+        "status": "running",
+    }
+
+
 def register_specialist_deployment_tools(mcp: Any) -> None:
     """Register specialist container lifecycle tools."""
 
@@ -84,9 +124,9 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
         _ = health_check  # Silence vulture
         try:
-            port_map = json.loads(ports) if isinstance(ports, str) else ports
-            env_map = json.loads(env) if isinstance(env, str) else env
-            label_map = json.loads(labels) if isinstance(labels, str) else labels
+            port_map, env_map, label_map = _parse_specialist_container_config(
+                ports, env, labels
+            )
         except json.JSONDecodeError as e:
             return {
                 "success": False,
@@ -95,35 +135,9 @@ def register_specialist_deployment_tools(mcp: Any) -> None:
 
         try:
             manager = create_manager(manager_type, silent=False, log_file=None)
-
-            # Pull image
-            await run_blocking(manager.pull_image, image)
-
-            # Build run arguments
-            container_name = name or f"specialist-{image.split('/')[-1].split(':')[0]}"
-            env_list = [f"{k}={v}" for k, v in env_map.items()]
-            port_bindings = {v: k for k, v in port_map.items()}
-
-            # Run container
-            result = await run_blocking(
-                manager.run_container,
-                image=image,
-                name=container_name,
-                detach=True,
-                ports=port_bindings if port_bindings else None,
-                environment=env_list if env_list else None,
-                labels=label_map,
+            return await _run_specialist_container(
+                manager, image, name, port_map, env_map, label_map
             )
-
-            return {
-                "success": True,
-                "container_id": result.get("id", result.get("Id", "")),
-                "name": container_name,
-                "image": image,
-                "ports": port_map,
-                "labels": label_map,
-                "status": "running",
-            }
         except Exception as e:
             logger.error("Operation failed: error_type=%s", type(e).__name__)
             return {"success": False, "error": "Operation failed"}
