@@ -85,11 +85,7 @@ class MultiContextManager:
         self.logger = logging.getLogger(__name__)
         self.logger.info("Multi-context manager logging initialized")
 
-    def _initialize_managers(self):
-        """Initialize all configured managers from environment variables."""
-        self.logger.info("Initializing multi-context managers...")
-
-        # Initialize Kubernetes contexts
+    def _initialize_k8s_managers(self):
         k8s_contexts = self._parse_context_config(os.environ.get("K8S_CONTEXTS", ""))
         if k8s_contexts:
             for context_name, context_value in k8s_contexts.items():
@@ -116,7 +112,6 @@ class MultiContextManager:
             except Exception as e:
                 self.logger.error(f"Failed to initialize in-cluster K8S context: {e}")
 
-        # Set default K8S context
         self.default_k8s_context = os.environ.get("DEFAULT_K8S_CONTEXT")
         if self.default_k8s_context and self.default_k8s_context in self.k8s_managers:
             self.logger.info("Default Kubernetes context configured")
@@ -126,7 +121,7 @@ class MultiContextManager:
                 f"Default K8S context auto-selected: {self.default_k8s_context}"
             )
 
-        # Initialize Docker contexts
+    def _initialize_docker_managers(self):
         docker_contexts = self._parse_context_config(
             os.environ.get("DOCKER_CONTEXTS", "")
         )
@@ -140,7 +135,6 @@ class MultiContextManager:
                         type(e).__name__,
                     )
 
-        # Set default Docker context
         self.default_docker_context = os.environ.get("DEFAULT_DOCKER_CONTEXT")
         if (
             self.default_docker_context
@@ -155,7 +149,7 @@ class MultiContextManager:
                 f"Default Docker context auto-selected: {self.default_docker_context}"
             )
 
-        # Initialize Swarm contexts
+    def _initialize_swarm_managers(self):
         swarm_contexts = self._parse_context_config(
             os.environ.get("SWARM_CONTEXTS", "")
         )
@@ -169,7 +163,6 @@ class MultiContextManager:
                         type(e).__name__,
                     )
 
-        # Set default Swarm context
         self.default_swarm_context = os.environ.get("DEFAULT_SWARM_CONTEXT")
         if (
             self.default_swarm_context
@@ -184,7 +177,7 @@ class MultiContextManager:
                 f"Default Swarm context auto-selected: {self.default_swarm_context}"
             )
 
-        # Initialize Podman (local only)
+    def _initialize_podman_manager(self):
         podman_enabled = os.environ.get("PODMAN_ENABLED", "true").lower() in (
             "true",
             "1",
@@ -195,6 +188,15 @@ class MultiContextManager:
                 self._add_podman_manager()
             except Exception as e:
                 self.logger.error("Operation failed: error_type=%s", type(e).__name__)
+
+    def _initialize_managers(self):
+        """Initialize all configured managers from environment variables."""
+        self.logger.info("Initializing multi-context managers...")
+
+        self._initialize_k8s_managers()
+        self._initialize_docker_managers()
+        self._initialize_swarm_managers()
+        self._initialize_podman_manager()
 
         self.logger.info(
             f"Multi-Context Manager initialized: "
