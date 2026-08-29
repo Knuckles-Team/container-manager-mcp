@@ -49,15 +49,17 @@ def _import_module_safely(module_name: str):
         return None
 
 
-def __getattr__(name: str) -> Any:
-    # Availability flags resolved without eager imports.
-    if name == "_MCP_AVAILABLE":
-        mcp_key = next((k for k in OPTIONAL_MODULES if "mcp_server" in k), None)
-        return bool(mcp_key and _import_module_safely(mcp_key) is not None)
-    if name == "_AGENT_AVAILABLE":
-        agent_key = next((k for k in OPTIONAL_MODULES if "agent_server" in k), None)
-        return bool(agent_key and _import_module_safely(agent_key) is not None)
+def _mcp_available() -> bool:
+    mcp_key = next((k for k in OPTIONAL_MODULES if "mcp_server" in k), None)
+    return bool(mcp_key and _import_module_safely(mcp_key) is not None)
 
+
+def _agent_available() -> bool:
+    agent_key = next((k for k in OPTIONAL_MODULES if "agent_server" in k), None)
+    return bool(agent_key and _import_module_safely(agent_key) is not None)
+
+
+def _lookup_in_optional_modules(name: str) -> Any:
     for module_name in OPTIONAL_MODULES:
         if module_name not in _loaded_optional_modules:
             module = _import_module_safely(module_name)
@@ -70,6 +72,15 @@ def __getattr__(name: str) -> Any:
             return getattr(module, name)
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __getattr__(name: str) -> Any:
+    # Availability flags resolved without eager imports.
+    if name == "_MCP_AVAILABLE":
+        return _mcp_available()
+    if name == "_AGENT_AVAILABLE":
+        return _agent_available()
+    return _lookup_in_optional_modules(name)
 
 
 def __dir__() -> list[str]:
