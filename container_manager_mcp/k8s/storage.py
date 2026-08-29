@@ -34,34 +34,32 @@ class StorageMixin:
             self.log_action("list_persistent_volumes", params, error=e)
             raise RuntimeError("Failed to list persistent volumes") from e
 
+    def _pvc_capacity(self, pvc) -> dict:
+        requests = pvc.spec.resources.requests
+        if hasattr(requests, "dict"):
+            return requests.dict()
+        if pvc.spec and pvc.spec.resources and pvc.spec.resources.requests:
+            return requests
+        return {}
+
+    def _pvc_summary(self, pvc) -> dict:
+        return {
+            "name": pvc.metadata.name,
+            "namespace": pvc.metadata.namespace,
+            "capacity": self._pvc_capacity(pvc),
+            "access_modes": pvc.spec.access_modes or [],
+            "status": pvc.status.phase if pvc.status else "unknown",
+            "volume_name": pvc.spec.volume_name if pvc.spec else "",
+            "created": self._ts(pvc.metadata.creation_timestamp),
+        }
+
     def list_persistent_volume_claims(self, namespace: str | None = None) -> list[dict]:
         """List PersistentVolumeClaims in a namespace."""
         params = {"namespace": namespace}
         try:
             ns = namespace or self.namespace
             pvcs = self.core.list_namespaced_persistent_volume_claim(ns).items
-            result = [
-                {
-                    "name": pvc.metadata.name,
-                    "namespace": pvc.metadata.namespace,
-                    "capacity": (
-                        pvc.spec.resources.requests.dict()
-                        if hasattr(pvc.spec.resources.requests, "dict")
-                        else (
-                            pvc.spec.resources.requests
-                            if pvc.spec
-                            and pvc.spec.resources
-                            and pvc.spec.resources.requests
-                            else {}
-                        )
-                    ),
-                    "access_modes": pvc.spec.access_modes or [],
-                    "status": pvc.status.phase if pvc.status else "unknown",
-                    "volume_name": pvc.spec.volume_name if pvc.spec else "",
-                    "created": self._ts(pvc.metadata.creation_timestamp),
-                }
-                for pvc in pvcs
-            ]
+            result = [self._pvc_summary(pvc) for pvc in pvcs]
             self.log_action(
                 "list_persistent_volume_claims", params, {"count": len(result)}
             )
