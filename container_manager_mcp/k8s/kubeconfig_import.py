@@ -43,6 +43,7 @@ import base64
 import json
 import os
 import sys
+from dataclasses import dataclass
 from typing import Any
 
 try:
@@ -124,6 +125,29 @@ def _to_cert_data(value: str) -> str:
     return value
 
 
+def _explicit_kubeconfig_cluster(
+    server: str, insecure_skip_tls_verify: bool, ca_cert: str | None
+) -> dict:
+    cluster: dict[str, Any] = {"server": server}
+    if insecure_skip_tls_verify:
+        cluster["insecure-skip-tls-verify"] = True
+    elif ca_cert:
+        cluster["certificate-authority-data"] = _to_cert_data(ca_cert)
+    return cluster
+
+
+def _explicit_kubeconfig_user(
+    token: str | None, client_cert: str | None, client_key: str | None
+) -> dict:
+    user: dict[str, Any] = {}
+    if token:
+        user["token"] = token
+    if client_cert and client_key:
+        user["client-certificate-data"] = _to_cert_data(client_cert)
+        user["client-key-data"] = _to_cert_data(client_key)
+    return user
+
+
 def _build_explicit_kubeconfig(
     name: str,
     server: str,
@@ -143,18 +167,8 @@ def _build_explicit_kubeconfig(
             "'client_cert' and 'client_key'"
         )
 
-    cluster: dict[str, Any] = {"server": server}
-    if insecure_skip_tls_verify:
-        cluster["insecure-skip-tls-verify"] = True
-    elif ca_cert:
-        cluster["certificate-authority-data"] = _to_cert_data(ca_cert)
-
-    user: dict[str, Any] = {}
-    if token:
-        user["token"] = token
-    if client_cert and client_key:
-        user["client-certificate-data"] = _to_cert_data(client_cert)
-        user["client-key-data"] = _to_cert_data(client_key)
+    cluster = _explicit_kubeconfig_cluster(server, insecure_skip_tls_verify, ca_cert)
+    user = _explicit_kubeconfig_user(token, client_cert, client_key)
 
     context: dict[str, Any] = {"cluster": name, "user": name}
     if namespace:
@@ -303,6 +317,32 @@ def _embed_file_refs(entry: dict, mapping: dict[str, str]) -> dict:
     return out
 
 
+def _resolve_kubeconfig_context(
+    src: dict, kubeconfig_path: str, source_context: str | None
+) -> dict:
+    ctx_name = source_context or src.get("current-context")
+    if not ctx_name:
+        raise RuntimeError(
+            "no current-context set in kubeconfig; pass source_context to pick one"
+        )
+    ctx = next((c for c in src.get("contexts", []) if c.get("name") == ctx_name), None)
+    if ctx is None:
+        raise RuntimeError(f"context '{ctx_name}' not found in {kubeconfig_path}")
+    return ctx
+
+
+def _resolve_kubeconfig_cluster_and_user(src: dict, ctx_body: dict) -> tuple[dict, dict | None]:
+    cluster_ref = ctx_body.get("cluster")
+    user_ref = ctx_body.get("user")
+    cluster = next(
+        (c for c in src.get("clusters", []) if c.get("name") == cluster_ref), None
+    )
+    user = next((u for u in src.get("users", []) if u.get("name") == user_ref), None)
+    if cluster is None:
+        raise RuntimeError(f"cluster '{cluster_ref}' referenced by context not found")
+    return cluster, user
+
+
 def _capture_from_current_kubeconfig(
     name: str,
     kubeconfig_path: str,
@@ -315,24 +355,9 @@ def _capture_from_current_kubeconfig(
         raise RuntimeError(
             f"no kubeconfig at {kubeconfig_path} to capture the current cluster from"
         )
-    ctx_name = source_context or src.get("current-context")
-    if not ctx_name:
-        raise RuntimeError(
-            "no current-context set in kubeconfig; pass source_context to pick one"
-        )
-    ctx = next((c for c in src.get("contexts", []) if c.get("name") == ctx_name), None)
-    if ctx is None:
-        raise RuntimeError(f"context '{ctx_name}' not found in {kubeconfig_path}")
+    ctx = _resolve_kubeconfig_context(src, kubeconfig_path, source_context)
     ctx_body = dict(ctx.get("context", {}) or {})
-    cluster_ref = ctx_body.get("cluster")
-    user_ref = ctx_body.get("user")
-
-    cluster = next(
-        (c for c in src.get("clusters", []) if c.get("name") == cluster_ref), None
-    )
-    user = next((u for u in src.get("users", []) if u.get("name") == user_ref), None)
-    if cluster is None:
-        raise RuntimeError(f"cluster '{cluster_ref}' referenced by context not found")
+    cluster, user = _resolve_kubeconfig_cluster_and_user(src, ctx_body)
 
     cluster_body = _embed_file_refs(
         dict(cluster.get("cluster", {}) or {}),
@@ -442,6 +467,162 @@ def _validate_context(context_name: str) -> dict:
         return {"status": "unreachable", "context": context_name, "error": str(e)}
 
 
+@dataclass
+class _SaveKubeContextRequest:
+    """Bundles save_kube_context's mode-selection params so its four mode
+    resolvers (below) don't each need a >7-param signature."""
+
+    name: str | None
+    source_file: str | None
+    source_yaml: str | None
+    server: str | None
+    token: str | None
+    client_cert: str | None
+    client_key: str | None
+    ca_cert: str | None
+    insecure_skip_tls_verify: bool
+    namespace: str | None
+    username: str | None
+    password: str | None
+    oidc_issuer: str | None
+    oidc_client_id: str | None
+    oidc_client_secret: str | None
+    oidc_scope: str
+    capture_current: bool
+    source_context: str | None
+
+
+def _resolve_import_mode(req: _SaveKubeContextRequest) -> dict:
+    if req.source_file:
+        incoming = _load_kubeconfig_file(os.path.expanduser(req.source_file))
+        if not os.path.exists(os.path.expanduser(req.source_file)):
+            raise FileNotFoundError(f"source kubeconfig not found: {req.source_file}")
+    else:
+        loaded = yaml.safe_load(req.source_yaml) or {}
+        if not isinstance(loaded, dict):
+            raise ValueError("source_yaml is not a valid kubeconfig YAML mapping")
+        for key in ("clusters", "users", "contexts"):
+            loaded.setdefault(key, [])
+        incoming = loaded
+    if not incoming.get("contexts"):
+        raise ValueError("the source kubeconfig defines no contexts to import")
+    return incoming
+
+
+def _resolve_capture_mode(req: _SaveKubeContextRequest, path: str) -> dict:
+    if not req.name:
+        raise ValueError("capture_current mode requires 'name' to save under")
+    if os.environ.get("KUBERNETES_SERVICE_HOST"):
+        return _capture_incluster_kubeconfig(req.name, req.namespace)
+    return _capture_from_current_kubeconfig(
+        req.name, path, req.source_context, req.namespace
+    )
+
+
+def _resolve_oidc_mode(req: _SaveKubeContextRequest) -> dict:
+    if not req.name:
+        raise ValueError("oidc mode requires 'name'")
+    if not req.server:
+        raise ValueError("oidc mode requires 'server' (the API server URL)")
+    if not req.username or not req.password:
+        raise ValueError("oidc mode requires both 'username' and 'password'")
+    if not req.oidc_issuer or not req.oidc_client_id:
+        raise ValueError(
+            "username/password can only authenticate to an OIDC-backed cluster: "
+            "the Kubernetes API server does not accept basic auth. Provide "
+            "'oidc_issuer' and 'oidc_client_id' to drive the OIDC login, or use "
+            "the token / client-cert mode instead."
+        )
+    id_token = _oidc_password_grant(
+        issuer=req.oidc_issuer,
+        client_id=req.oidc_client_id,
+        username=req.username,
+        password=req.password,
+        client_secret=req.oidc_client_secret,
+        scope=req.oidc_scope,
+        ca_cert=req.ca_cert,
+        insecure=req.insecure_skip_tls_verify,
+    )
+    return _build_explicit_kubeconfig(
+        name=req.name,
+        server=req.server,
+        token=id_token,
+        ca_cert=req.ca_cert,
+        insecure_skip_tls_verify=req.insecure_skip_tls_verify,
+        namespace=req.namespace,
+    )
+
+
+def _resolve_explicit_mode(req: _SaveKubeContextRequest) -> dict:
+    if not req.name:
+        raise ValueError("explicit mode requires 'name'")
+    return _build_explicit_kubeconfig(
+        name=req.name,
+        server=req.server or "",
+        token=req.token,
+        client_cert=req.client_cert,
+        client_key=req.client_key,
+        ca_cert=req.ca_cert,
+        insecure_skip_tls_verify=req.insecure_skip_tls_verify,
+        namespace=req.namespace,
+    )
+
+
+def _resolve_incoming_kubeconfig(
+    req: _SaveKubeContextRequest, path: str
+) -> tuple[str, dict]:
+    """Pick the mode (import/capture/oidc/explicit) and resolve its kubeconfig dict."""
+    if req.source_file or req.source_yaml:
+        return "import", _resolve_import_mode(req)
+    if req.capture_current:
+        return "capture", _resolve_capture_mode(req, path)
+    if req.username or req.password:
+        return "oidc", _resolve_oidc_mode(req)
+    return "explicit", _resolve_explicit_mode(req)
+
+
+def _finalize_saved_kubeconfig(
+    path: str,
+    mode: str,
+    incoming: dict,
+    name: str | None,
+    overwrite: bool,
+    use: bool,
+    validate: bool,
+) -> dict:
+    """Merge `incoming` into the target kubeconfig, write it, and assemble the result."""
+    incoming_contexts = [
+        c.get("name") for c in incoming.get("contexts", []) if c.get("name")
+    ]
+
+    target = _load_kubeconfig_file(path)
+    summary = merge_kubeconfig(target, incoming, overwrite=overwrite)
+
+    chosen = (
+        name
+        if name in incoming_contexts
+        else (incoming_contexts[0] if incoming_contexts else None)
+    )
+    if use and chosen:
+        target["current-context"] = chosen
+
+    _write_kubeconfig(path, target)
+
+    result: dict[str, Any] = {
+        "path": path,
+        "mode": mode,
+        "contexts": incoming_contexts,
+        "merged": summary,
+        "current_context": target.get("current-context", ""),
+        "used": bool(use and chosen),
+    }
+
+    if validate and chosen:
+        result["validation"] = _validate_context(chosen)
+
+    return result
+
+
 def save_kube_context(
     name: str | None = None,
     kubeconfig_path: str | None = None,
@@ -491,113 +672,28 @@ def save_kube_context(
         else default_kubeconfig_path()
     )
 
-    # --- resolve the incoming kubeconfig dict from the selected mode ---------
-    if source_file or source_yaml:
-        mode = "import"
-        if source_file:
-            incoming = _load_kubeconfig_file(os.path.expanduser(source_file))
-            if not os.path.exists(os.path.expanduser(source_file)):
-                raise FileNotFoundError(f"source kubeconfig not found: {source_file}")
-        else:
-            loaded = yaml.safe_load(source_yaml) or {}
-            if not isinstance(loaded, dict):
-                raise ValueError("source_yaml is not a valid kubeconfig YAML mapping")
-            for key in ("clusters", "users", "contexts"):
-                loaded.setdefault(key, [])
-            incoming = loaded
-        if not incoming.get("contexts"):
-            raise ValueError("the source kubeconfig defines no contexts to import")
-    elif capture_current:
-        mode = "capture"
-        if not name:
-            raise ValueError("capture_current mode requires 'name' to save under")
-        if os.environ.get("KUBERNETES_SERVICE_HOST"):
-            incoming = _capture_incluster_kubeconfig(name, namespace)
-        else:
-            incoming = _capture_from_current_kubeconfig(
-                name, path, source_context, namespace
-            )
-    elif username or password:
-        mode = "oidc"
-        if not name:
-            raise ValueError("oidc mode requires 'name'")
-        if not server:
-            raise ValueError("oidc mode requires 'server' (the API server URL)")
-        if not username or not password:
-            raise ValueError("oidc mode requires both 'username' and 'password'")
-        if not oidc_issuer or not oidc_client_id:
-            raise ValueError(
-                "username/password can only authenticate to an OIDC-backed cluster: "
-                "the Kubernetes API server does not accept basic auth. Provide "
-                "'oidc_issuer' and 'oidc_client_id' to drive the OIDC login, or use "
-                "the token / client-cert mode instead."
-            )
-        id_token = _oidc_password_grant(
-            issuer=oidc_issuer,
-            client_id=oidc_client_id,
-            username=username,
-            password=password,
-            client_secret=oidc_client_secret,
-            scope=oidc_scope,
-            ca_cert=ca_cert,
-            insecure=insecure_skip_tls_verify,
-        )
-        incoming = _build_explicit_kubeconfig(
-            name=name,
-            server=server,
-            token=id_token,
-            ca_cert=ca_cert,
-            insecure_skip_tls_verify=insecure_skip_tls_verify,
-            namespace=namespace,
-        )
-    else:
-        mode = "explicit"
-        if not name:
-            raise ValueError("explicit mode requires 'name'")
-        incoming = _build_explicit_kubeconfig(
-            name=name,
-            server=server or "",
-            token=token,
-            client_cert=client_cert,
-            client_key=client_key,
-            ca_cert=ca_cert,
-            insecure_skip_tls_verify=insecure_skip_tls_verify,
-            namespace=namespace,
-        )
-
-    incoming_contexts = [
-        c.get("name") for c in incoming.get("contexts", []) if c.get("name")
-    ]
-
-    # --- merge into the target file -----------------------------------------
-    target = _load_kubeconfig_file(path)
-    summary = merge_kubeconfig(target, incoming, overwrite=overwrite)
-
-    # --- optionally set current-context -------------------------------------
-    chosen = (
-        name
-        if name in incoming_contexts
-        else (incoming_contexts[0] if incoming_contexts else None)
+    req = _SaveKubeContextRequest(
+        name=name,
+        source_file=source_file,
+        source_yaml=source_yaml,
+        server=server,
+        token=token,
+        client_cert=client_cert,
+        client_key=client_key,
+        ca_cert=ca_cert,
+        insecure_skip_tls_verify=insecure_skip_tls_verify,
+        namespace=namespace,
+        username=username,
+        password=password,
+        oidc_issuer=oidc_issuer,
+        oidc_client_id=oidc_client_id,
+        oidc_client_secret=oidc_client_secret,
+        oidc_scope=oidc_scope,
+        capture_current=capture_current,
+        source_context=source_context,
     )
-    if use and chosen:
-        target["current-context"] = chosen
-
-    _write_kubeconfig(path, target)
-
-    result: dict[str, Any] = {
-        "path": path,
-        "mode": mode,
-        "contexts": incoming_contexts,
-        "merged": summary,
-        "current_context": target.get("current-context", ""),
-        "used": bool(use and chosen),
-    }
-
-    # --- validate-after-save ------------------------------------------------
-    if validate and chosen:
-        result["validation"] = _validate_context(chosen)
-
-    return result
+    mode, incoming = _resolve_incoming_kubeconfig(req, path)
+    return _finalize_saved_kubeconfig(path, mode, incoming, name, overwrite, use, validate)
 
 
 # ---------------------------------------------------------------------------
