@@ -22,6 +22,7 @@ warnings.filterwarnings("ignore", message=".*urllib3.*or charset_normalizer.*")
 # Filter AuthlibDeprecationWarning
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="authlib.*")
 
+import json
 import logging
 import os
 import sys
@@ -257,6 +258,34 @@ def register_info_tools(mcp: FastMCP):
             return f"Error executing {action}: {type(e).__name__}"
 
 
+async def _list_images_action(manager):
+    return await run_blocking(manager.list_images)
+
+
+async def _pull_image_action(manager, ctx, image, tag, platform):
+    if not image:
+        return "Error: 'image' is required for pull_image"
+    if ctx:
+        await ctx_progress(ctx, 0, 100)
+    return await run_blocking(manager.pull_image, image, tag=tag, platform=platform)
+
+
+async def _remove_image_action(manager, ctx, image, force):
+    if not image:
+        return "Error: 'image' is required for remove_image"
+    if ctx and not await ctx_confirm_destructive(ctx, "remove image"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    return await run_blocking(manager.remove_image, image, force=force)
+
+
+async def _prune_images_action(manager, ctx):
+    if ctx and not await ctx_confirm_destructive(ctx, "prune images"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    if ctx:
+        await ctx_progress(ctx, 0, 100)
+    return await run_blocking(manager.prune_images)
+
+
 def register_image_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -313,41 +342,62 @@ def register_image_tools(mcp: FastMCP):
 
         try:
             if action == "list_images":
-                return await run_blocking(manager.list_images)
-            elif action == "pull_image":
-                if not image:
-                    return "Error: 'image' is required for pull_image"
-                if ctx:
-                    await ctx_progress(ctx, 0, 100)
-                return await run_blocking(
-                    manager.pull_image, image, tag=tag, platform=platform
-                )
-            elif action == "remove_image":
-                if not image:
-                    return "Error: 'image' is required for remove_image"
-                if ctx and not await ctx_confirm_destructive(ctx, "remove image"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                return await run_blocking(manager.remove_image, image, force=force)
-            elif action == "prune_images":
-                if ctx and not await ctx_confirm_destructive(ctx, "prune images"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                if ctx:
-                    await ctx_progress(ctx, 0, 100)
-                return await run_blocking(manager.prune_images)
-            else:
-                return f"Error: Unknown action '{action}'"
+                return await _list_images_action(manager)
+            if action == "pull_image":
+                return await _pull_image_action(manager, ctx, image, tag, platform)
+            if action == "remove_image":
+                return await _remove_image_action(manager, ctx, image, force)
+            if action == "prune_images":
+                return await _prune_images_action(manager, ctx)
+            return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
                 ctx_log(
                     ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
                 )
             return f"Error executing {action}: {type(e).__name__}"
+
+
+async def _list_containers_action(manager, all_containers):
+    return await run_blocking(manager.list_containers, all=all_containers)
+
+
+async def _get_container_logs_action(manager, container_id, tail):
+    if not container_id:
+        return "Error: 'container_id' is required"
+    return await run_blocking(manager.get_container_logs, container_id, tail=tail)
+
+
+async def _stop_container_action(manager, container_id):
+    if not container_id:
+        return "Error: 'container_id' is required"
+    return await run_blocking(manager.stop_container, container_id)
+
+
+async def _remove_container_action(manager, ctx, container_id, force):
+    if not container_id:
+        return "Error: 'container_id' is required"
+    if ctx and not await ctx_confirm_destructive(ctx, "remove container"):
+        return {"status": "cancelled"}
+    return await run_blocking(manager.remove_container, container_id, force=force)
+
+
+async def _prune_containers_action(manager, ctx):
+    if ctx and not await ctx_confirm_destructive(ctx, "prune containers"):
+        return {"status": "cancelled"}
+    if ctx:
+        await ctx_progress(ctx, 0, 100)
+    return await run_blocking(manager.prune_containers)
+
+
+async def _exec_in_container_action(manager, container_id, command, binary):
+    if not container_id or not command:
+        return "Error: 'container_id' and 'command' required"
+    import shlex
+
+    return await run_blocking(
+        manager.exec_in_container, container_id, shlex.split(command), binary=binary
+    )
 
 
 def register_container_tools(mcp: FastMCP):
@@ -406,8 +456,6 @@ def register_container_tools(mcp: FastMCP):
         """
         Manage container operations.
         """
-        import shlex
-
         resolved = resolve_action(
             action,
             [
@@ -428,49 +476,58 @@ def register_container_tools(mcp: FastMCP):
             ctx_log(ctx, logging.INFO, f"Executing cm_container_operations: {action}")
 
         try:
-            if action == "list_containers":
-                return await run_blocking(manager.list_containers, all=all_containers)
-            elif action == "get_container_logs":
-                if not container_id:
-                    return "Error: 'container_id' is required"
-                return await run_blocking(
-                    manager.get_container_logs, container_id, tail=tail
-                )
-            elif action == "stop_container":
-                if not container_id:
-                    return "Error: 'container_id' is required"
-                return await run_blocking(manager.stop_container, container_id)
-            elif action == "remove_container":
-                if not container_id:
-                    return "Error: 'container_id' is required"
-                if ctx and not await ctx_confirm_destructive(ctx, "remove container"):
-                    return {"status": "cancelled"}
-                return await run_blocking(
-                    manager.remove_container, container_id, force=force
-                )
-            elif action == "prune_containers":
-                if ctx and not await ctx_confirm_destructive(ctx, "prune containers"):
-                    return {"status": "cancelled"}
-                if ctx:
-                    await ctx_progress(ctx, 0, 100)
-                return await run_blocking(manager.prune_containers)
-            elif action == "exec_in_container":
-                if not container_id or not command:
-                    return "Error: 'container_id' and 'command' required"
-                return await run_blocking(
-                    manager.exec_in_container,
-                    container_id,
-                    shlex.split(command),
-                    binary=binary,
-                )
-            else:
+            dispatch = {
+                "list_containers": lambda: _list_containers_action(
+                    manager, all_containers
+                ),
+                "get_container_logs": lambda: _get_container_logs_action(
+                    manager, container_id, tail
+                ),
+                "stop_container": lambda: _stop_container_action(manager, container_id),
+                "remove_container": lambda: _remove_container_action(
+                    manager, ctx, container_id, force
+                ),
+                "prune_containers": lambda: _prune_containers_action(manager, ctx),
+                "exec_in_container": lambda: _exec_in_container_action(
+                    manager, container_id, command, binary
+                ),
+            }
+            handler = dispatch.get(action)
+            if handler is None:
                 return f"Error: Unknown action '{action}'"
+            return await handler()
         except Exception as e:
             if ctx:
                 ctx_log(
                     ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
                 )
             return f"Error executing {action}: {type(e).__name__}"
+
+
+async def _list_volumes_action(manager):
+    return await run_blocking(manager.list_volumes)
+
+
+async def _create_volume_action(manager, name):
+    if not name:
+        return "Error: 'name' is required for create_volume"
+    return await run_blocking(manager.create_volume, name)
+
+
+async def _remove_volume_action(manager, ctx, name, force):
+    if not name:
+        return "Error: 'name' is required"
+    if ctx and not await ctx_confirm_destructive(ctx, "remove volume"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    return await run_blocking(manager.remove_volume, name, force=force)
+
+
+async def _prune_volumes_action(manager, ctx):
+    if ctx and not await ctx_confirm_destructive(ctx, "prune volumes"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    if ctx:
+        await ctx_progress(ctx, 0, 100)
+    return await run_blocking(manager.prune_volumes)
 
 
 def register_volume_tools(mcp: FastMCP):
@@ -525,37 +582,46 @@ def register_volume_tools(mcp: FastMCP):
 
         try:
             if action == "list_volumes":
-                return await run_blocking(manager.list_volumes)
-            elif action == "create_volume":
-                if not name:
-                    return "Error: 'name' is required for create_volume"
-                return await run_blocking(manager.create_volume, name)
-            elif action == "remove_volume":
-                if not name:
-                    return "Error: 'name' is required"
-                if ctx and not await ctx_confirm_destructive(ctx, "remove volume"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                return await run_blocking(manager.remove_volume, name, force=force)
-            elif action == "prune_volumes":
-                if ctx and not await ctx_confirm_destructive(ctx, "prune volumes"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                if ctx:
-                    await ctx_progress(ctx, 0, 100)
-                return await run_blocking(manager.prune_volumes)
-            else:
-                return f"Error: Unknown action '{action}'"
+                return await _list_volumes_action(manager)
+            if action == "create_volume":
+                return await _create_volume_action(manager, name)
+            if action == "remove_volume":
+                return await _remove_volume_action(manager, ctx, name, force)
+            if action == "prune_volumes":
+                return await _prune_volumes_action(manager, ctx)
+            return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
                 ctx_log(
                     ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
                 )
             return f"Error executing {action}: {type(e).__name__}"
+
+
+async def _list_networks_action(manager):
+    return await run_blocking(manager.list_networks)
+
+
+async def _create_network_action(manager, network_id, driver):
+    if not network_id:
+        return "Error: 'network_id' is required for create_network"
+    return await run_blocking(manager.create_network, network_id, driver=driver)
+
+
+async def _remove_network_action(manager, ctx, network_id):
+    if not network_id:
+        return "Error: 'network_id' is required"
+    if ctx and not await ctx_confirm_destructive(ctx, "remove network"):
+        return {"status": "cancelled"}
+    return await run_blocking(manager.remove_network, network_id)
+
+
+async def _prune_networks_action(manager, ctx):
+    if ctx and not await ctx_confirm_destructive(ctx, "prune networks"):
+        return {"status": "cancelled"}
+    if ctx:
+        await ctx_progress(ctx, 0, 100)
+    return await run_blocking(manager.prune_networks)
 
 
 def register_network_tools(mcp: FastMCP):
@@ -610,33 +676,139 @@ def register_network_tools(mcp: FastMCP):
 
         try:
             if action == "list_networks":
-                return await run_blocking(manager.list_networks)
-            elif action == "create_network":
-                if not network_id:
-                    return "Error: 'network_id' is required for create_network"
-                return await run_blocking(
-                    manager.create_network, network_id, driver=driver
-                )
-            elif action == "remove_network":
-                if not network_id:
-                    return "Error: 'network_id' is required"
-                if ctx and not await ctx_confirm_destructive(ctx, "remove network"):
-                    return {"status": "cancelled"}
-                return await run_blocking(manager.remove_network, network_id)
-            elif action == "prune_networks":
-                if ctx and not await ctx_confirm_destructive(ctx, "prune networks"):
-                    return {"status": "cancelled"}
-                if ctx:
-                    await ctx_progress(ctx, 0, 100)
-                return await run_blocking(manager.prune_networks)
-            else:
-                return f"Error: Unknown action '{action}'"
+                return await _list_networks_action(manager)
+            if action == "create_network":
+                return await _create_network_action(manager, network_id, driver)
+            if action == "remove_network":
+                return await _remove_network_action(manager, ctx, network_id)
+            if action == "prune_networks":
+                return await _prune_networks_action(manager, ctx)
+            return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
                 ctx_log(
                     ctx, logging.ERROR, f"Error executing {action}: {type(e).__name__}"
                 )
             return f"Error executing {action}: {type(e).__name__}"
+
+
+async def _init_swarm_action(manager, ctx, advertise_addr):
+    if ctx and not await ctx_confirm_destructive(ctx, "init swarm"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    return await run_blocking(manager.init_swarm, advertise_addr)
+
+
+async def _leave_swarm_action(manager, ctx, force):
+    if ctx and not await ctx_confirm_destructive(ctx, "leave swarm"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    return await run_blocking(manager.leave_swarm, force=force)
+
+
+async def _list_swarm_nodes_action(manager):
+    return await run_blocking(manager.list_nodes)
+
+
+async def _list_swarm_services_action(manager):
+    return await run_blocking(manager.list_services)
+
+
+async def _create_swarm_service_action(manager, name, image, ports, mounts, replicas):
+    if not name or not image:
+        return "Error: 'name' and 'image' are required for create_service"
+    p_ports = json.loads(ports) if ports else None
+    p_mounts = json.loads(mounts) if mounts else None
+    return await run_blocking(
+        manager.create_service,
+        name=name,
+        image=image,
+        ports=p_ports,
+        mounts=p_mounts,
+        replicas=replicas,
+    )
+
+
+async def _remove_swarm_service_action(manager, ctx, service_id):
+    if not service_id:
+        return "Error: 'service_id' is required"
+    if ctx and not await ctx_confirm_destructive(ctx, "remove service"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    return await run_blocking(manager.remove_service, service_id)
+
+
+async def _inspect_swarm_node_action(manager, node_id):
+    if not node_id:
+        return "Error: 'node_id' is required"
+    return await run_blocking(manager.inspect_node, node_id)
+
+
+async def _update_swarm_node_action(
+    manager, node_id, labels, role, availability, replace_labels
+):
+    if not node_id:
+        return "Error: 'node_id' is required"
+    p_labels = json.loads(labels) if labels else None
+    if not any([p_labels, role, availability]):
+        return "Error: provide at least one of 'labels', 'role', or 'availability'"
+    return await run_blocking(
+        manager.update_node,
+        node_id,
+        labels=p_labels,
+        role=role,
+        availability=availability,
+        replace_labels=replace_labels,
+    )
+
+
+async def _remove_swarm_node_action(manager, ctx, node_id, force):
+    if not node_id:
+        return "Error: 'node_id' is required"
+    if ctx and not await ctx_confirm_destructive(ctx, "remove node"):
+        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    return await run_blocking(manager.remove_node, node_id, force=force)
+
+
+async def _inspect_swarm_service_action(manager, service_id):
+    if not service_id:
+        return "Error: 'service_id' is required"
+    return await run_blocking(manager.inspect_service, service_id)
+
+
+async def _scale_swarm_service_action(manager, service_id, replicas):
+    if not service_id:
+        return "Error: 'service_id' is required"
+    return await run_blocking(manager.scale_service, service_id, replicas)
+
+
+async def _update_swarm_service_action(manager, service_id, replicas, updates):
+    """`updates` bundles image/env/constraints/labels/force -- keeps this
+    helper's own signature at 4 params instead of 8."""
+    if not service_id:
+        return "Error: 'service_id' is required"
+    p_env = json.loads(updates["env"]) if updates["env"] else None
+    p_constraints = json.loads(updates["constraints"]) if updates["constraints"] else None
+    p_labels = json.loads(updates["labels"]) if updates["labels"] else None
+    return await run_blocking(
+        manager.update_service,
+        service_id,
+        image=updates["image"],
+        replicas=replicas if replicas != 1 else None,
+        env=p_env,
+        constraints=p_constraints,
+        labels=p_labels,
+        force=updates["force"],
+    )
+
+
+async def _swarm_service_ps_action(manager, service_id):
+    if not service_id:
+        return "Error: 'service_id' is required"
+    return await run_blocking(manager.service_ps, service_id)
+
+
+async def _swarm_service_logs_action(manager, service_id, tail):
+    if not service_id:
+        return "Error: 'service_id' is required"
+    return await run_blocking(manager.service_logs, service_id, tail=tail)
 
 
 def register_swarm_tools(mcp: FastMCP):
@@ -743,8 +915,6 @@ def register_swarm_tools(mcp: FastMCP):
         """
         Manage swarm operations.
         """
-        import json
-
         resolved = resolve_action(
             action,
             [
@@ -773,110 +943,51 @@ def register_swarm_tools(mcp: FastMCP):
             ctx_log(ctx, logging.INFO, f"Executing cm_swarm_operations: {action}")
 
         try:
-            if action == "init_swarm":
-                if ctx and not await ctx_confirm_destructive(ctx, "init swarm"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                return await run_blocking(manager.init_swarm, advertise_addr)
-            elif action == "leave_swarm":
-                if ctx and not await ctx_confirm_destructive(ctx, "leave swarm"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                return await run_blocking(manager.leave_swarm, force=force)
-            elif action == "list_nodes":
-                return await run_blocking(manager.list_nodes)
-            elif action == "list_services":
-                return await run_blocking(manager.list_services)
-            elif action == "create_service":
-                if not name or not image:
-                    return "Error: 'name' and 'image' are required for create_service"
-                p_ports = json.loads(ports) if ports else None
-                p_mounts = json.loads(mounts) if mounts else None
-                return await run_blocking(
-                    manager.create_service,
-                    name=name,
-                    image=image,
-                    ports=p_ports,
-                    mounts=p_mounts,
-                    replicas=replicas,
-                )
-            elif action == "remove_service":
-                if not service_id:
-                    return "Error: 'service_id' is required"
-                if ctx and not await ctx_confirm_destructive(ctx, "remove service"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                return await run_blocking(manager.remove_service, service_id)
-            elif action == "inspect_node":
-                if not node_id:
-                    return "Error: 'node_id' is required"
-                return await run_blocking(manager.inspect_node, node_id)
-            elif action == "update_node":
-                if not node_id:
-                    return "Error: 'node_id' is required"
-                p_labels = json.loads(labels) if labels else None
-                if not any([p_labels, role, availability]):
-                    return (
-                        "Error: provide at least one of 'labels', 'role', "
-                        "or 'availability'"
-                    )
-                return await run_blocking(
-                    manager.update_node,
-                    node_id,
-                    labels=p_labels,
-                    role=role,
-                    availability=availability,
-                    replace_labels=replace_labels,
-                )
-            elif action == "remove_node":
-                if not node_id:
-                    return "Error: 'node_id' is required"
-                if ctx and not await ctx_confirm_destructive(ctx, "remove node"):
-                    return {
-                        "status": "cancelled",
-                        "message": "Operation cancelled by user",
-                    }
-                return await run_blocking(manager.remove_node, node_id, force=force)
-            elif action == "inspect_service":
-                if not service_id:
-                    return "Error: 'service_id' is required"
-                return await run_blocking(manager.inspect_service, service_id)
-            elif action == "scale_service":
-                if not service_id:
-                    return "Error: 'service_id' is required"
-                return await run_blocking(manager.scale_service, service_id, replicas)
-            elif action == "update_service":
-                if not service_id:
-                    return "Error: 'service_id' is required"
-                p_env = json.loads(env) if env else None
-                p_constraints = json.loads(constraints) if constraints else None
-                p_labels = json.loads(labels) if labels else None
-                return await run_blocking(
-                    manager.update_service,
+            dispatch = {
+                "init_swarm": lambda: _init_swarm_action(manager, ctx, advertise_addr),
+                "leave_swarm": lambda: _leave_swarm_action(manager, ctx, force),
+                "list_nodes": lambda: _list_swarm_nodes_action(manager),
+                "list_services": lambda: _list_swarm_services_action(manager),
+                "create_service": lambda: _create_swarm_service_action(
+                    manager, name, image, ports, mounts, replicas
+                ),
+                "remove_service": lambda: _remove_swarm_service_action(
+                    manager, ctx, service_id
+                ),
+                "inspect_node": lambda: _inspect_swarm_node_action(manager, node_id),
+                "update_node": lambda: _update_swarm_node_action(
+                    manager, node_id, labels, role, availability, replace_labels
+                ),
+                "remove_node": lambda: _remove_swarm_node_action(
+                    manager, ctx, node_id, force
+                ),
+                "inspect_service": lambda: _inspect_swarm_service_action(
+                    manager, service_id
+                ),
+                "scale_service": lambda: _scale_swarm_service_action(
+                    manager, service_id, replicas
+                ),
+                "update_service": lambda: _update_swarm_service_action(
+                    manager,
                     service_id,
-                    image=image,
-                    replicas=replicas if replicas != 1 else None,
-                    env=p_env,
-                    constraints=p_constraints,
-                    labels=p_labels,
-                    force=force,
-                )
-            elif action == "service_ps":
-                if not service_id:
-                    return "Error: 'service_id' is required"
-                return await run_blocking(manager.service_ps, service_id)
-            elif action == "service_logs":
-                if not service_id:
-                    return "Error: 'service_id' is required"
-                return await run_blocking(manager.service_logs, service_id, tail=tail)
-            else:
+                    replicas,
+                    {
+                        "image": image,
+                        "env": env,
+                        "constraints": constraints,
+                        "labels": labels,
+                        "force": force,
+                    },
+                ),
+                "service_ps": lambda: _swarm_service_ps_action(manager, service_id),
+                "service_logs": lambda: _swarm_service_logs_action(
+                    manager, service_id, tail
+                ),
+            }
+            handler = dispatch.get(action)
+            if handler is None:
                 return f"Error: Unknown action '{action}'"
+            return await handler()
         except Exception as e:
             if ctx:
                 ctx_log(
@@ -1203,6 +1314,41 @@ def register_doctor_tools(mcp: FastMCP):
         pass
 
 
+def _container_port_matches(c, port: int) -> bool:
+    """True if `c`'s port mappings expose the host-side `port`."""
+    if not c.ports or c.ports == "none":
+        return False
+    for mapping in (m.strip() for m in c.ports.split(",")):
+        if "->" not in mapping:
+            continue
+        host_part, _container_part = mapping.split("->", 1)
+        if ":" not in host_part:
+            continue
+        _ip, host_port = host_part.rsplit(":", 1)
+        if host_port == str(port):
+            return True
+    return False
+
+
+async def _ingest_modality_sweep(name: str, lister, mapper, kwargs: dict) -> dict:
+    """List one resource modality and push it through its kg_ingest mapper."""
+    from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
+
+    try:
+        records = await run_blocking(lister)
+        data = [
+            r.model_dump() if hasattr(r, "model_dump") else r
+            for r in records
+            if r is not None
+        ]
+        ingested = mapper(data, **kwargs)
+        return {"listed": len(data), "ingested": ingested}
+    except NativeIngestError:
+        raise
+    except Exception:  # noqa: BLE001 — isolate source API failures
+        return {"error": "Operation failed"}
+
+
 def register_misc_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -1241,20 +1387,9 @@ def register_misc_tools(mcp: FastMCP):
         try:
             manager = create_manager(manager_type, host=host)
             containers = await run_blocking(manager.list_containers, all=True)
-            matching_containers = []
-            for c in containers:
-                if not c.ports or c.ports == "none":
-                    continue
-                mappings = [m.strip() for m in c.ports.split(",")]
-                for m in mappings:
-                    if "->" in m:
-                        host_part, container_part = m.split("->", 1)
-                        if ":" in host_part:
-                            ip, host_port = host_part.rsplit(":", 1)
-                            if host_port == str(port):
-                                matching_containers.append(c.model_dump())
-                                break
-            return matching_containers
+            return [
+                c.model_dump() for c in containers if _container_port_matches(c, port)
+            ]
         except Exception as e:
             if ctx:
                 ctx_log(
@@ -1316,10 +1451,6 @@ def register_misc_tools(mcp: FastMCP):
         ``:runsOn`` links) through the authoritative native-ingest transaction.
         CONCEPT:AU-KG.ingest.enterprise-source-extractor.
         """
-        from agent_utilities.knowledge_graph.memory.native_ingest import (
-            NativeIngestError,
-        )
-
         from container_manager_mcp import kg_ingest
 
         if ctx:
@@ -1341,58 +1472,34 @@ def register_misc_tools(mcp: FastMCP):
             want = {modality}
         result: dict[str, Any] = {"host": host, "modalities": {}}
 
-        async def _sweep(name: str, lister, mapper, **kw) -> None:
-            try:
-                records = await run_blocking(lister)
-                data = [
-                    r.model_dump() if hasattr(r, "model_dump") else r
-                    for r in records
-                    if r is not None
-                ]
-                ingested = mapper(data, **kw)
-                result["modalities"][name] = {
-                    "listed": len(data),
-                    "ingested": ingested,
-                }
-            except NativeIngestError:
-                raise
-            except Exception:  # noqa: BLE001 — isolate source API failures
-                result["modalities"][name] = {"error": "Operation failed"}
-
-        if "containers" in want:
-            await _sweep(
+        sweeps = [
+            (
                 "containers",
                 lambda: manager.list_containers(all=all_containers),
                 kg_ingest.ingest_containers,
-                host=host,
-            )
-        if "images" in want:
-            await _sweep("images", manager.list_images, kg_ingest.ingest_images)
-        if "volumes" in want:
-            await _sweep("volumes", manager.list_volumes, kg_ingest.ingest_volumes)
-        if "networks" in want:
-            await _sweep("networks", manager.list_networks, kg_ingest.ingest_networks)
-        if "services" in want:
-            await _sweep("services", manager.list_services, kg_ingest.ingest_services)
-        if "nodes" in want:
-            await _sweep("nodes", manager.list_nodes, kg_ingest.ingest_nodes)
-        if "pods" in want:
-            await _sweep("pods", manager.list_pods, kg_ingest.ingest_pods)
-        if "deployments" in want:
+                {"host": host},
+            ),
+            ("images", manager.list_images, kg_ingest.ingest_images, {}),
+            ("volumes", manager.list_volumes, kg_ingest.ingest_volumes, {}),
+            ("networks", manager.list_networks, kg_ingest.ingest_networks, {}),
+            ("services", manager.list_services, kg_ingest.ingest_services, {}),
+            ("nodes", manager.list_nodes, kg_ingest.ingest_nodes, {}),
+            ("pods", manager.list_pods, kg_ingest.ingest_pods, {}),
             # Deployment-shaped list_services on the Kubernetes manager.
-            await _sweep(
-                "deployments", manager.list_services, kg_ingest.ingest_deployments
-            )
-        if "namespaces" in want:
-            await _sweep(
-                "namespaces", manager.list_namespaces, kg_ingest.ingest_namespaces
-            )
-        if "k8s_services" in want:
-            await _sweep(
+            ("deployments", manager.list_services, kg_ingest.ingest_deployments, {}),
+            ("namespaces", manager.list_namespaces, kg_ingest.ingest_namespaces, {}),
+            (
                 "k8s_services",
                 manager.list_native_services,
                 kg_ingest.ingest_k8s_services,
-            )
+                {},
+            ),
+        ]
+        for name, lister, mapper, kwargs in sweeps:
+            if name in want:
+                result["modalities"][name] = await _ingest_modality_sweep(
+                    name, lister, mapper, kwargs
+                )
 
         return result
 
