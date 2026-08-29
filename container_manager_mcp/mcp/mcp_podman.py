@@ -16,6 +16,106 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+# Every action's manager method name equals the action name; only the
+# required fields, guard message, and positional call args differ.
+_PODMAN_ACTIONS: dict[str, tuple[tuple[str, ...], str | None, "callable"]] = {
+    "podman_generate_kube_yaml": (
+        ("pod_name",),
+        "pod_name is required for podman_generate_kube_yaml",
+        lambda v: (v["pod_name"], v["namespace"] or "default"),
+    ),
+    "podman_play_kube_yaml": (
+        ("yaml_path",),
+        "yaml_path is required for podman_play_kube_yaml",
+        lambda v: (v["yaml_path"],),
+    ),
+    "podman_checkpoint": (
+        ("container_id", "checkpoint_dir"),
+        "container_id and checkpoint_dir are required for podman_checkpoint",
+        lambda v: (v["container_id"], v["checkpoint_dir"]),
+    ),
+    "podman_restore": (
+        ("container_id", "checkpoint_dir"),
+        "container_id and checkpoint_dir are required for podman_restore",
+        lambda v: (v["container_id"], v["checkpoint_dir"]),
+    ),
+    "podman_pod_create": (
+        ("pod_name", "image"),
+        "pod_name and image are required for podman_pod_create",
+        lambda v: (v["pod_name"], v["image"], v["command"]),
+    ),
+    "podman_pod_list": ((), None, lambda v: ()),
+    "podman_pod_stats": (
+        ("pod_name",),
+        "pod_name is required for podman_pod_stats",
+        lambda v: (v["pod_name"],),
+    ),
+    "podman_pod_top": (
+        ("pod_name",),
+        "pod_name is required for podman_pod_top",
+        lambda v: (v["pod_name"],),
+    ),
+    "podman_pod_inspect": (
+        ("pod_name",),
+        "pod_name is required for podman_pod_inspect",
+        lambda v: (v["pod_name"],),
+    ),
+    "podman_pod_logs": (
+        ("pod_name",),
+        "pod_name is required for podman_pod_logs",
+        lambda v: (v["pod_name"], v["tail_lines"] or 100),
+    ),
+    "podman_pod_stop": (
+        ("pod_name",),
+        "pod_name is required for podman_pod_stop",
+        lambda v: (v["pod_name"],),
+    ),
+    "podman_pod_rm": (
+        ("pod_name",),
+        "pod_name is required for podman_pod_rm",
+        lambda v: (v["pod_name"],),
+    ),
+    "podman_network_create": (
+        ("network_name",),
+        "network_name is required for podman_network_create",
+        lambda v: (v["network_name"], v["driver"] or "bridge", v["subnet"]),
+    ),
+    "podman_network_list": ((), None, lambda v: ()),
+    "podman_network_inspect": (
+        ("network_name",),
+        "network_name is required for podman_network_inspect",
+        lambda v: (v["network_name"],),
+    ),
+    "podman_volume_create": (
+        ("volume_name",),
+        "volume_name is required for podman_volume_create",
+        lambda v: (v["volume_name"], v["driver"] or "local"),
+    ),
+    "podman_volume_list": ((), None, lambda v: ()),
+    "podman_volume_inspect": (
+        ("volume_name",),
+        "volume_name is required for podman_volume_inspect",
+        lambda v: (v["volume_name"],),
+    ),
+    "podman_system_prune": ((), None, lambda v: ()),
+    "podman_health_check": (
+        ("container_id", "config"),
+        "container_id and config are required for podman_health_check",
+        lambda v: (v["container_id"], v["config"]),
+    ),
+}
+
+
+def _dispatch_podman_action(action, manager, values):
+    """Look up and invoke the manager method for `action` via `_PODMAN_ACTIONS`."""
+    spec = _PODMAN_ACTIONS.get(action)
+    if spec is None:
+        raise ValueError(f"Unknown action: {action}")
+    required, error_message, build_args = spec
+    if required and not all(values[field] for field in required):
+        raise ValueError(error_message)
+    return getattr(manager, action)(*build_args(values))
+
 
 def register_podman_tools(mcp: FastMCP):
     @mcp.tool(
@@ -88,112 +188,21 @@ def register_podman_tools(mcp: FastMCP):
 
         def execute_operation():
             manager = create_manager("podman")
-
-            # Kubernetes Integration
-            if action == "podman_generate_kube_yaml":
-                if not pod_name:
-                    raise ValueError(
-                        "pod_name is required for podman_generate_kube_yaml"
-                    )
-                return manager.podman_generate_kube_yaml(
-                    pod_name, namespace or "default"
-                )
-            elif action == "podman_play_kube_yaml":
-                if not yaml_path:
-                    raise ValueError("yaml_path is required for podman_play_kube_yaml")
-                return manager.podman_play_kube_yaml(yaml_path)
-
-            # Checkpoint/Restore
-            elif action == "podman_checkpoint":
-                if not container_id or not checkpoint_dir:
-                    raise ValueError(
-                        "container_id and checkpoint_dir are required for podman_checkpoint"
-                    )
-                return manager.podman_checkpoint(container_id, checkpoint_dir)
-            elif action == "podman_restore":
-                if not container_id or not checkpoint_dir:
-                    raise ValueError(
-                        "container_id and checkpoint_dir are required for podman_restore"
-                    )
-                return manager.podman_restore(container_id, checkpoint_dir)
-
-            # Pod Management
-            elif action == "podman_pod_create":
-                if not pod_name or not image:
-                    raise ValueError(
-                        "pod_name and image are required for podman_pod_create"
-                    )
-                return manager.podman_pod_create(pod_name, image, command)
-            elif action == "podman_pod_list":
-                return manager.podman_pod_list()
-            elif action == "podman_pod_stats":
-                if not pod_name:
-                    raise ValueError("pod_name is required for podman_pod_stats")
-                return manager.podman_pod_stats(pod_name)
-            elif action == "podman_pod_top":
-                if not pod_name:
-                    raise ValueError("pod_name is required for podman_pod_top")
-                return manager.podman_pod_top(pod_name)
-            elif action == "podman_pod_inspect":
-                if not pod_name:
-                    raise ValueError("pod_name is required for podman_pod_inspect")
-                return manager.podman_pod_inspect(pod_name)
-            elif action == "podman_pod_logs":
-                if not pod_name:
-                    raise ValueError("pod_name is required for podman_pod_logs")
-                return manager.podman_pod_logs(pod_name, tail_lines or 100)
-            elif action == "podman_pod_stop":
-                if not pod_name:
-                    raise ValueError("pod_name is required for podman_pod_stop")
-                return manager.podman_pod_stop(pod_name)
-            elif action == "podman_pod_rm":
-                if not pod_name:
-                    raise ValueError("pod_name is required for podman_pod_rm")
-                return manager.podman_pod_rm(pod_name)
-
-            # Network Management
-            elif action == "podman_network_create":
-                if not network_name:
-                    raise ValueError(
-                        "network_name is required for podman_network_create"
-                    )
-                return manager.podman_network_create(
-                    network_name, driver or "bridge", subnet
-                )
-            elif action == "podman_network_list":
-                return manager.podman_network_list()
-            elif action == "podman_network_inspect":
-                if not network_name:
-                    raise ValueError(
-                        "network_name is required for podman_network_inspect"
-                    )
-                return manager.podman_network_inspect(network_name)
-
-            # Volume Management
-            elif action == "podman_volume_create":
-                if not volume_name:
-                    raise ValueError("volume_name is required for podman_volume_create")
-                return manager.podman_volume_create(volume_name, driver or "local")
-            elif action == "podman_volume_list":
-                return manager.podman_volume_list()
-            elif action == "podman_volume_inspect":
-                if not volume_name:
-                    raise ValueError(
-                        "volume_name is required for podman_volume_inspect"
-                    )
-                return manager.podman_volume_inspect(volume_name)
-
-            # System Operations
-            elif action == "podman_system_prune":
-                return manager.podman_system_prune()
-            elif action == "podman_health_check":
-                if not container_id or not config:
-                    raise ValueError(
-                        "container_id and config are required for podman_health_check"
-                    )
-                return manager.podman_health_check(container_id, config)
-
-            else:
-                raise ValueError(f"Unknown action: {action}")
+            values = {
+                "pod_name": pod_name,
+                "namespace": namespace,
+                "yaml_path": yaml_path,
+                "container_id": container_id,
+                "checkpoint_dir": checkpoint_dir,
+                "image": image,
+                "command": command,
+                "tail_lines": tail_lines,
+                "network_name": network_name,
+                "driver": driver,
+                "subnet": subnet,
+                "volume_name": volume_name,
+                "config": config,
+            }
+            return _dispatch_podman_action(action, manager, values)
 
         return await run_blocking(execute_operation)
