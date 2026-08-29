@@ -128,6 +128,51 @@ class WorkloadsMixin:
             self.log_action("scale_service", params, error=e)
             raise RuntimeError("Failed to scale service") from e
 
+    def _update_service_container(
+        self, service_id: str, image: str | None, env: list[str] | None
+    ) -> dict:
+        container: dict[str, Any] = {"name": service_id}
+        if image:
+            container["image"] = image
+        if env is not None:
+            container["env"] = [
+                {"name": k, "value": v} for k, _, v in (e.partition("=") for e in env)
+            ]
+        return container
+
+    def _update_service_pod_spec(
+        self, container: dict, constraints: list[str] | None
+    ) -> dict:
+        pod_spec: dict[str, Any] = {"containers": [container]}
+        if constraints is not None:
+            pod_spec["nodeSelector"] = self._constraints_to_node_selector(constraints)
+        return pod_spec
+
+    def _update_service_body(
+        self,
+        service_id: str,
+        image: str | None,
+        replicas: int | None,
+        env: list[str] | None,
+        constraints: list[str] | None,
+        labels: dict[str, str] | None,
+        force: bool,
+    ) -> dict:
+        container = self._update_service_container(service_id, image, env)
+        pod_spec = self._update_service_pod_spec(container, constraints)
+        template_meta: dict[str, Any] = {}
+        if force:
+            template_meta["annotations"] = {"container-manager/restartedAt": "force"}
+        spec: dict[str, Any] = {"template": {"spec": pod_spec}}
+        if template_meta:
+            spec["template"]["metadata"] = template_meta
+        if replicas is not None:
+            spec["replicas"] = replicas
+        body: dict[str, Any] = {"spec": spec}
+        if labels is not None:
+            body["metadata"] = {"labels": labels}
+        return body
+
     def update_service(
         self,
         service_id: str,
@@ -149,32 +194,9 @@ class WorkloadsMixin:
             "force": force,
         }
         try:
-            container: dict[str, Any] = {"name": service_id}
-            if image:
-                container["image"] = image
-            if env is not None:
-                container["env"] = [
-                    {"name": k, "value": v}
-                    for k, _, v in (e.partition("=") for e in env)
-                ]
-            pod_spec: dict[str, Any] = {"containers": [container]}
-            if constraints is not None:
-                pod_spec["nodeSelector"] = self._constraints_to_node_selector(
-                    constraints
-                )
-            template_meta: dict[str, Any] = {}
-            if force:
-                template_meta["annotations"] = {
-                    "container-manager/restartedAt": "force"
-                }
-            spec: dict[str, Any] = {"template": {"spec": pod_spec}}
-            if template_meta:
-                spec["template"]["metadata"] = template_meta
-            if replicas is not None:
-                spec["replicas"] = replicas
-            body: dict[str, Any] = {"spec": spec}
-            if labels is not None:
-                body["metadata"] = {"labels": labels}
+            body = self._update_service_body(
+                service_id, image, replicas, env, constraints, labels, force
+            )
             self.apps.patch_namespaced_deployment(service_id, self.namespace, body)
             result = {"service": service_id, "updated": True, "image": image}
             self.log_action("update_service", params, result)
@@ -183,90 +205,97 @@ class WorkloadsMixin:
             self.log_action("update_service", params, error=e)
             raise RuntimeError("Failed to update service") from e
 
+    def _service_ps_pod_error(self, status) -> str:
+        for cs in (status.container_statuses or []) if status else []:
+            waiting = cs.state.waiting if cs.state else None
+            if waiting and waiting.reason:
+                return waiting.reason
+        return ""
+
+    def _service_ps_summary(self, pod) -> dict:
+        status = pod.status
+        state = status.phase if status else "unknown"
+        return {
+            "id": pod.metadata.name,
+            "node": pod.spec.node_name or "",
+            "desired_state": "Running",
+            "state": state,
+            "error": self._service_ps_pod_error(status),
+            "timestamp": self._ts(pod.metadata.creation_timestamp),
+        }
+
     def service_ps(self, service_id: str) -> list[dict]:
         params = {"service_id": service_id}
         try:
             pods = self.core.list_namespaced_pod(
                 self.namespace, label_selector=f"app={service_id}"
             ).items
-            result = []
-            for pod in pods:
-                status = pod.status
-                state = status.phase if status else "unknown"
-                error = ""
-                for cs in (status.container_statuses or []) if status else []:
-                    waiting = cs.state.waiting if cs.state else None
-                    if waiting and waiting.reason:
-                        error = waiting.reason
-                        break
-                result.append(
-                    {
-                        "id": pod.metadata.name,
-                        "node": pod.spec.node_name or "",
-                        "desired_state": "Running",
-                        "state": state,
-                        "error": error,
-                        "timestamp": self._ts(pod.metadata.creation_timestamp),
-                    }
-                )
+            result = [self._service_ps_summary(pod) for pod in pods]
             self.log_action("service_ps", params, {"count": len(result)})
             return result
         except _km.ApiException as e:
             self.log_action("service_ps", params, error=e)
             raise RuntimeError("Failed to list service tasks") from e
 
+    def _service_logs_pods(self, service_id: str):
+        return self.core.list_namespaced_pod(
+            self.namespace, label_selector=f"app={service_id}"
+        ).items
+
+    def _service_streaming_logs(self, pods, tail: int) -> str:
+        from kubernetes.stream import stream
+
+        chunks = []
+        for pod in pods:
+            try:
+                logs = stream(
+                    self.core.read_namespaced_pod_log,
+                    pod.metadata.name,
+                    self.namespace,
+                    tail_lines=tail,
+                    follow=True,
+                    timestamps=True,
+                )
+                chunks.append(
+                    f"=== {pod.metadata.name} (streaming) ===\n{logs if isinstance(logs, str) else str(logs)}"
+                )
+            except _km.ApiException:
+                chunks.append(f"=== {pod.metadata.name} ===\nNo logs available")
+        return "\n".join(chunks)
+
+    def _service_regular_logs(self, pods, tail: int) -> str:
+        chunks = []
+        for pod in pods:
+            try:
+                log = self.core.read_namespaced_pod_log(
+                    pod.metadata.name,
+                    self.namespace,
+                    tail_lines=tail,
+                    timestamps=True,
+                )
+            except _km.ApiException:
+                log = ""
+            chunks.append(f"=== {pod.metadata.name} ===\n{log}")
+        return "\n".join(chunks)
+
     def service_logs(
         self, service_id: str, tail: int = 100, follow: bool = False
     ) -> dict:
         params = {"service_id": service_id, "tail": tail, "follow": follow}
         try:
-            pods = self.core.list_namespaced_pod(
-                self.namespace, label_selector=f"app={service_id}"
-            ).items
+            pods = self._service_logs_pods(service_id)
 
             if follow:
-                # Streaming logs implementation
-                from kubernetes.stream import stream
-
-                chunks = []
-                for pod in pods:
-                    try:
-                        logs = stream(
-                            self.core.read_namespaced_pod_log,
-                            pod.metadata.name,
-                            self.namespace,
-                            tail_lines=tail,
-                            follow=True,
-                            timestamps=True,
-                        )
-                        chunks.append(
-                            f"=== {pod.metadata.name} (streaming) ===\n{logs if isinstance(logs, str) else str(logs)}"
-                        )
-                    except _km.ApiException:
-                        chunks.append(f"=== {pod.metadata.name} ===\nNo logs available")
                 result = {
                     "service": service_id,
-                    "logs": "\n".join(chunks),
+                    "logs": self._service_streaming_logs(pods, tail),
                     "streaming": True,
                     "tail": tail,
                 }
             else:
-                # Regular logs
-                chunks = []
-                for pod in pods:
-                    try:
-                        log = self.core.read_namespaced_pod_log(
-                            pod.metadata.name,
-                            self.namespace,
-                            tail_lines=tail,
-                            timestamps=True,
-                        )
-                    except _km.ApiException:
-                        log = ""
-                    chunks.append(f"=== {pod.metadata.name} ===\n{log}")
                 result = {
                     "service": service_id,
-                    "logs": "\n".join(chunks),
+                    "logs": self._service_regular_logs(pods, tail),
                     "streaming": False,
                     "tail": tail,
                 }
@@ -275,24 +304,10 @@ class WorkloadsMixin:
             return result
         except ImportError:
             # Fallback to regular logs if stream not available
-            pods = self.core.list_namespaced_pod(
-                self.namespace, label_selector=f"app={service_id}"
-            ).items
-            chunks = []
-            for pod in pods:
-                try:
-                    log = self.core.read_namespaced_pod_log(
-                        pod.metadata.name,
-                        self.namespace,
-                        tail_lines=tail,
-                        timestamps=True,
-                    )
-                except _km.ApiException:
-                    log = ""
-                chunks.append(f"=== {pod.metadata.name} ===\n{log}")
+            pods = self._service_logs_pods(service_id)
             result = {
                 "service": service_id,
-                "logs": "\n".join(chunks),
+                "logs": self._service_regular_logs(pods, tail),
                 "streaming": False,
                 "tail": tail,
                 "note": "Streaming not available",
@@ -569,6 +584,25 @@ class WorkloadsMixin:
             self.log_action("list_daemonsets", params, error=e)
             raise RuntimeError("Failed to list daemonsets") from e
 
+    def _rollout_status_deployment(self, resource, name: str, resource_type: str) -> dict:
+        conditions = resource.status.conditions or []
+        available = any(
+            c.type == "Available" and c.status == "True" for c in conditions
+        )
+        updated = any(
+            c.type == "Progressing" and c.status == "True" for c in conditions
+        )
+        return {
+            "name": name,
+            "resource_type": resource_type,
+            "available": available,
+            "updated": updated,
+            "replicas": resource.spec.replicas if resource.spec else 0,
+            "ready_replicas": (
+                resource.status.ready_replicas if resource.status else 0
+            ),
+        }
+
     def rollout_status(
         self, resource_type: str, name: str, namespace: str | None = None
     ) -> dict:
@@ -579,23 +613,7 @@ class WorkloadsMixin:
             # Get the resource and check conditions
             if resource_type == "deployment":
                 resource = self.apps.read_namespaced_deployment(name, ns)
-                conditions = resource.status.conditions or []
-                available = any(
-                    c.type == "Available" and c.status == "True" for c in conditions
-                )
-                updated = any(
-                    c.type == "Progressing" and c.status == "True" for c in conditions
-                )
-                result = {
-                    "name": name,
-                    "resource_type": resource_type,
-                    "available": available,
-                    "updated": updated,
-                    "replicas": resource.spec.replicas if resource.spec else 0,
-                    "ready_replicas": (
-                        resource.status.ready_replicas if resource.status else 0
-                    ),
-                }
+                result = self._rollout_status_deployment(resource, name, resource_type)
             else:
                 result = {
                     "name": name,
