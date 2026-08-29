@@ -6,6 +6,41 @@ import container_manager_mcp.k8s_manager as _km
 
 
 class ObservabilityMixin:
+    def _metrics_server_pod_summary(self, metric, ns) -> dict:
+        containers = metric.get("containers") or []
+        return {
+            "name": metric["metadata"]["name"],
+            "namespace": metric["metadata"].get("namespace", ns),
+            "cpu": containers[0]["usage"]["cpu"] if metric.get("containers") else "N/A",
+            "memory": (
+                containers[0]["usage"]["memory"] if metric.get("containers") else "N/A"
+            ),
+            "containers": [
+                {
+                    "name": container["name"],
+                    "cpu": container.get("usage", {}).get("cpu", "N/A"),
+                    "memory": container.get("usage", {}).get("memory", "N/A"),
+                }
+                for container in containers
+            ],
+        }
+
+    def _fallback_pod_metrics(self, namespace, reason: str) -> list[dict]:
+        """Basic pod info (no CPU/memory usage) when the metrics server is unreachable."""
+        ns = namespace or self.namespace
+        pods = self.core.list_namespaced_pod(ns).items
+        placeholder = f"N/A ({reason})"
+        return [
+            {
+                "name": pod.metadata.name,
+                "namespace": pod.metadata.namespace,
+                "cpu": placeholder,
+                "memory": placeholder,
+                "containers": [],
+            }
+            for pod in pods
+        ]
+
     def top_pods(self, namespace: str | None = None) -> list[dict]:
         """Get resource usage for pods using metrics server."""
         params = {"namespace": namespace}
@@ -18,29 +53,7 @@ class ObservabilityMixin:
             )
             pod_metrics = metrics.get("items", [])
             result = [
-                {
-                    "name": metric["metadata"]["name"],
-                    "namespace": metric["metadata"].get("namespace", ns),
-                    "cpu": (
-                        metric["containers"][0]["usage"]["cpu"]
-                        if metric.get("containers")
-                        else "N/A"
-                    ),
-                    "memory": (
-                        metric["containers"][0]["usage"]["memory"]
-                        if metric.get("containers")
-                        else "N/A"
-                    ),
-                    "containers": [
-                        {
-                            "name": container["name"],
-                            "cpu": container.get("usage", {}).get("cpu", "N/A"),
-                            "memory": container.get("usage", {}).get("memory", "N/A"),
-                        }
-                        for container in (metric.get("containers") or [])
-                    ],
-                }
-                for metric in pod_metrics
+                self._metrics_server_pod_summary(metric, ns) for metric in pod_metrics
             ]
             self.log_action(
                 "top_pods", params, {"count": len(result), "source": "metrics_server"}
@@ -48,18 +61,7 @@ class ObservabilityMixin:
             return result
         except (ImportError, AttributeError):
             # Fallback to basic pod info if metrics API not available
-            ns = namespace or self.namespace
-            pods = self.core.list_namespaced_pod(ns).items
-            result = [
-                {
-                    "name": pod.metadata.name,
-                    "namespace": pod.metadata.namespace,
-                    "cpu": "N/A (metrics server required)",
-                    "memory": "N/A (metrics server required)",
-                    "containers": [],
-                }
-                for pod in pods
-            ]
+            result = self._fallback_pod_metrics(namespace, "metrics server required")
             self.log_action(
                 "top_pods",
                 params,
@@ -72,18 +74,9 @@ class ObservabilityMixin:
                 "NotFound" in type(e).__name__
                 or "ServiceUnavailable" in type(e).__name__
             ):
-                ns = namespace or self.namespace
-                pods = self.core.list_namespaced_pod(ns).items
-                result = [
-                    {
-                        "name": pod.metadata.name,
-                        "namespace": pod.metadata.namespace,
-                        "cpu": "N/A (metrics server not installed)",
-                        "memory": "N/A (metrics server not installed)",
-                        "containers": [],
-                    }
-                    for pod in pods
-                ]
+                result = self._fallback_pod_metrics(
+                    namespace, "metrics server not installed"
+                )
                 self.log_action(
                     "top_pods",
                     params,
@@ -92,6 +85,35 @@ class ObservabilityMixin:
                 return result
             self.log_action("top_pods", params, error=e)
             raise RuntimeError("Failed to get pod metrics") from e
+
+    def _node_allocatable(self, node) -> dict:
+        allocatable = node.status.allocatable
+        if hasattr(allocatable, "dict"):
+            return allocatable.dict()
+        if node.status and node.status.allocatable:
+            return allocatable
+        return {}
+
+    def _metrics_server_node_summary(self, metric) -> dict:
+        return {
+            "name": metric["metadata"]["name"],
+            "cpu": metric.get("usage", {}).get("cpu", "N/A"),
+            "memory": metric.get("usage", {}).get("memory", "N/A"),
+        }
+
+    def _fallback_node_metrics(self, reason: str) -> list[dict]:
+        """Basic node info (no CPU/memory usage) when the metrics server is unreachable."""
+        nodes = self.core.list_node().items
+        placeholder = f"N/A ({reason})"
+        return [
+            {
+                "name": node.metadata.name,
+                "cpu": placeholder,
+                "memory": placeholder,
+                "capacity": self._node_allocatable(node),
+            }
+            for node in nodes
+        ]
 
     def top_nodes(self) -> list[dict]:
         """Get resource usage for nodes using metrics server."""
@@ -104,12 +126,7 @@ class ObservabilityMixin:
             )
             node_metrics = metrics.get("items", [])
             result = [
-                {
-                    "name": metric["metadata"]["name"],
-                    "cpu": metric.get("usage", {}).get("cpu", "N/A"),
-                    "memory": metric.get("usage", {}).get("memory", "N/A"),
-                }
-                for metric in node_metrics
+                self._metrics_server_node_summary(metric) for metric in node_metrics
             ]
             self.log_action(
                 "top_nodes", params, {"count": len(result), "source": "metrics_server"}
@@ -117,24 +134,7 @@ class ObservabilityMixin:
             return result
         except (ImportError, AttributeError):
             # Fallback to basic node info if metrics API not available
-            nodes = self.core.list_node().items
-            result = [
-                {
-                    "name": node.metadata.name,
-                    "cpu": "N/A (metrics server required)",
-                    "memory": "N/A (metrics server required)",
-                    "capacity": (
-                        node.status.allocatable.dict()
-                        if hasattr(node.status.allocatable, "dict")
-                        else (
-                            node.status.allocatable
-                            if node.status and node.status.allocatable
-                            else {}
-                        )
-                    ),
-                }
-                for node in nodes
-            ]
+            result = self._fallback_node_metrics("metrics server required")
             self.log_action(
                 "top_nodes",
                 params,
@@ -147,24 +147,7 @@ class ObservabilityMixin:
                 "NotFound" in type(e).__name__
                 or "ServiceUnavailable" in type(e).__name__
             ):
-                nodes = self.core.list_node().items
-                result = [
-                    {
-                        "name": node.metadata.name,
-                        "cpu": "N/A (metrics server not installed)",
-                        "memory": "N/A (metrics server not installed)",
-                        "capacity": (
-                            node.status.allocatable.dict()
-                            if hasattr(node.status.allocatable, "dict")
-                            else (
-                                node.status.allocatable
-                                if node.status and node.status.allocatable
-                                else {}
-                            )
-                        ),
-                    }
-                    for node in nodes
-                ]
+                result = self._fallback_node_metrics("metrics server not installed")
                 self.log_action(
                     "top_nodes",
                     params,
