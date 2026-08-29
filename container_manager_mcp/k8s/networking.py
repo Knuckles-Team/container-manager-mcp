@@ -482,6 +482,18 @@ class NetworkingMixin:
             self.log_action("update_network_policy_rules", params, error=e)
             raise RuntimeError("Failed to update NetworkPolicy rules") from e
 
+    def _network_policy_ingress_rules(self, policy) -> list[str]:
+        """Flatten a NetworkPolicy's ingress rules into "from"/"port" strings."""
+        ingress_rules: list[str] = []
+        if not policy.spec.ingress:
+            return ingress_rules
+        for rule in policy.spec.ingress:
+            for peer in rule.from_ or []:
+                ingress_rules.append(f"from: {peer}")
+            for port in rule.ports or []:
+                ingress_rules.append(f"port: {port.port}")
+        return ingress_rules
+
     def test_network_policy_connectivity(
         self, namespace: str, policy_name: str
     ) -> dict:
@@ -494,14 +506,7 @@ class NetworkingMixin:
                 policy_name, namespace
             )
 
-            # Analyze policy rules
-            ingress_rules = []
-            if policy.spec.ingress:
-                for rule in policy.spec.ingress:
-                    for peer in rule.from_ or []:
-                        ingress_rules.append(f"from: {peer}")
-                    for port in rule.ports or []:
-                        ingress_rules.append(f"port: {port.port}")
+            ingress_rules = self._network_policy_ingress_rules(policy)
 
             result = {
                 "namespace": namespace,
