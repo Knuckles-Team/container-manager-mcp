@@ -181,28 +181,34 @@ class _K8sBase:
         self.log_action("leave_swarm", {"force": force}, result)
         return result
 
+    def _node_addr(self, node) -> str:
+        addresses = (node.status.addresses or []) if node.status else []
+        return next(
+            (a.address for a in addresses if a.type == "InternalIP"), "unknown"
+        )
+
+    def _node_platform(self, info) -> dict:
+        return {
+            "os": getattr(info, "os_image", "unknown"),
+            "arch": getattr(info, "architecture", "unknown"),
+        }
+
     def _node_summary(self, node) -> dict:
         meta = node.metadata
         info = node.status.node_info if node.status else None
-        addresses = (node.status.addresses or []) if node.status else []
-        addr = next(
-            (a.address for a in addresses if a.type == "InternalIP"),
-            "unknown",
-        )
+        labels = meta.labels or {}
+        role = self._node_role(labels)
         return {
             "id": meta.uid or "unknown",
             "hostname": meta.name,
-            "role": self._node_role(meta.labels or {}),
+            "role": role,
             "availability": "drain" if node.spec.unschedulable else "active",
             "state": "ready",
-            "addr": addr,
-            "labels": meta.labels or {},
+            "addr": self._node_addr(node),
+            "labels": labels,
             "engine_version": getattr(info, "kubelet_version", "unknown"),
-            "platform": {
-                "os": getattr(info, "os_image", "unknown"),
-                "arch": getattr(info, "architecture", "unknown"),
-            },
-            "manager": self._node_role(meta.labels or {}) == "manager",
+            "platform": self._node_platform(info),
+            "manager": role == "manager",
         }
 
     def _drain_node(self, node_id: str) -> None:
