@@ -10,30 +10,28 @@ import container_manager_mcp.k8s_manager as _km
 
 
 class ClusterNodesMixin:
+    def _summarize_node_for_list(self, node) -> dict:
+        meta = node.metadata
+        labels = meta.labels or {}
+        conditions = (node.status.conditions or []) if node.status else []
+        ready = next((c.status for c in conditions if c.type == "Ready"), "Unknown")
+        return {
+            "id": (meta.uid or "unknown")[:12],
+            "hostname": meta.name,
+            "role": self._node_role(labels),
+            "status": "ready" if ready == "True" else "not ready",
+            "availability": "drain" if node.spec.unschedulable else "active",
+            "created": self._ts(meta.creation_timestamp),
+            "updated": "unknown",
+        }
+
     def list_nodes(self) -> list[dict]:
         params: dict[str, Any] = {}
         try:
-            result = []
-            for node in self.core.list_node().items:
-                meta = node.metadata
-                labels = meta.labels or {}
-                conditions = (node.status.conditions or []) if node.status else []
-                ready = next(
-                    (c.status for c in conditions if c.type == "Ready"), "Unknown"
-                )
-                result.append(
-                    {
-                        "id": (meta.uid or "unknown")[:12],
-                        "hostname": meta.name,
-                        "role": self._node_role(labels),
-                        "status": "ready" if ready == "True" else "not ready",
-                        "availability": (
-                            "drain" if node.spec.unschedulable else "active"
-                        ),
-                        "created": self._ts(meta.creation_timestamp),
-                        "updated": "unknown",
-                    }
-                )
+            result = [
+                self._summarize_node_for_list(node)
+                for node in self.core.list_node().items
+            ]
             self.log_action("list_nodes", params, {"count": len(result)})
             return result
         except _km.ApiException as e:
