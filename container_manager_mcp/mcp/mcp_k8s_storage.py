@@ -17,6 +17,150 @@ from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
 
+async def _dispatch_pv_action(action, manager, name, spec):
+    if action == "list_persistent_volumes":
+        return await run_blocking(manager.list_persistent_volumes)
+    elif action == "create_persistent_volume":
+        if not name or not spec:
+            return "Error: 'name' and 'spec' are required for create_persistent_volume"
+        return await run_blocking(manager.create_persistent_volume, name, spec)
+    return None
+
+
+async def _create_persistent_volume_claim_action(manager, pvc_name, namespace, pvc_spec):
+    if not pvc_name:
+        return "Error: 'pvc_name' is required for create_persistent_volume_claim"
+    claim_spec = json.loads(pvc_spec) if pvc_spec else None
+    return await run_blocking(
+        manager.create_persistent_volume_claim,
+        name=pvc_name,
+        namespace=namespace,
+        spec=claim_spec,
+    )
+
+
+async def _delete_persistent_volume_claim_action(manager, pvc_name, namespace):
+    if not pvc_name:
+        return "Error: 'pvc_name' is required for delete_persistent_volume_claim"
+    return await run_blocking(
+        manager.delete_persistent_volume_claim, name=pvc_name, namespace=namespace
+    )
+
+
+async def _expand_pvc_action(manager, pvc_name, namespace, pvc_size):
+    if not pvc_name or not pvc_size:
+        return "Error: 'pvc_name' and 'pvc_size' are required for expand_pvc"
+    return await run_blocking(
+        manager.expand_pvc, name=pvc_name, namespace=namespace, size=pvc_size
+    )
+
+
+async def _expand_persistent_volume_action(manager, name, namespace, size):
+    if not name or not namespace or not size:
+        return "Error: 'name', 'namespace', and 'size' are required for expand_persistent_volume"
+    return await run_blocking(manager.expand_persistent_volume, name, namespace, size)
+
+
+async def _dispatch_pvc_action(
+    action, manager, name, namespace, pvc_name, pvc_size, pvc_spec, size
+):
+    if action == "list_persistent_volume_claims":
+        return await run_blocking(
+            manager.list_persistent_volume_claims, namespace=namespace
+        )
+    if action == "create_persistent_volume_claim":
+        return await _create_persistent_volume_claim_action(manager, pvc_name, namespace, pvc_spec)
+    if action == "delete_persistent_volume_claim":
+        return await _delete_persistent_volume_claim_action(manager, pvc_name, namespace)
+    if action == "expand_pvc":
+        return await _expand_pvc_action(manager, pvc_name, namespace, pvc_size)
+    if action == "expand_persistent_volume":
+        return await _expand_persistent_volume_action(manager, name, namespace, size)
+    return None
+
+
+async def _dispatch_storage_class_action(action, manager, name, parameters, provisioner):
+    if action == "list_storage_classes":
+        return await run_blocking(manager.list_storage_classes)
+    elif action == "create_storage_class":
+        if not name or not provisioner:
+            return "Error: 'name' and 'provisioner' are required for create_storage_class"
+        return await run_blocking(
+            manager.create_storage_class, name, provisioner, parameters
+        )
+    elif action == "set_default_storage_class":
+        if not name:
+            return "Error: 'name' is required for set_default_storage_class"
+        return await run_blocking(manager.set_default_storage_class, name)
+    elif action == "get_storage_class_provisioner":
+        if not name:
+            return "Error: 'name' is required for get_storage_class_provisioner"
+        return await run_blocking(manager.get_storage_class_provisioner, name)
+    return None
+
+
+async def _dispatch_volume_snapshot_action(action, manager, name, namespace, spec):
+    if action == "list_volume_snapshots":
+        return await run_blocking(manager.list_volume_snapshots, namespace=namespace)
+    elif action == "create_volume_snapshot":
+        if not name or not namespace or not spec:
+            return "Error: 'name', 'namespace', and 'spec' are required for create_volume_snapshot"
+        return await run_blocking(
+            manager.create_volume_snapshot, name, namespace, spec
+        )
+    return None
+
+
+async def _dispatch_csi_driver_action(action, manager, driver_name, name):
+    if action == "list_csi_drivers":
+        return await run_blocking(manager.list_csi_drivers)
+    elif action == "describe_csi_driver":
+        if not name:
+            return "Error: 'name' is required for describe_csi_driver"
+        return await run_blocking(manager.describe_csi_driver, name)
+    elif action == "get_csi_driver_capacity":
+        if not driver_name:
+            return "Error: 'driver_name' is required for get_csi_driver_capacity"
+        return await run_blocking(manager.get_csi_driver_capacity, driver_name)
+    return None
+
+
+_ACTION_GROUPS: dict[str, str] = {
+    "list_persistent_volumes": "pv",
+    "create_persistent_volume": "pv",
+    "list_persistent_volume_claims": "pvc",
+    "create_persistent_volume_claim": "pvc",
+    "delete_persistent_volume_claim": "pvc",
+    "expand_pvc": "pvc",
+    "expand_persistent_volume": "pvc",
+    "list_storage_classes": "storage_class",
+    "create_storage_class": "storage_class",
+    "set_default_storage_class": "storage_class",
+    "get_storage_class_provisioner": "storage_class",
+    "list_volume_snapshots": "volume_snapshot",
+    "create_volume_snapshot": "volume_snapshot",
+    "list_csi_drivers": "csi_driver",
+    "describe_csi_driver": "csi_driver",
+    "get_csi_driver_capacity": "csi_driver",
+}
+
+_GROUP_FUNCS = {
+    "pv": _dispatch_pv_action,
+    "pvc": _dispatch_pvc_action,
+    "storage_class": _dispatch_storage_class_action,
+    "volume_snapshot": _dispatch_volume_snapshot_action,
+    "csi_driver": _dispatch_csi_driver_action,
+}
+
+_GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
+    "pv": ("name", "spec"),
+    "pvc": ("name", "namespace", "pvc_name", "pvc_size", "pvc_spec", "size"),
+    "storage_class": ("name", "parameters", "provisioner"),
+    "volume_snapshot": ("name", "namespace", "spec"),
+    "csi_driver": ("driver_name", "name"),
+}
+
+
 def register_k8sstorage_tools(mcp: FastMCP):
     @mcp.tool(
         annotations={
@@ -95,101 +239,23 @@ def register_k8sstorage_tools(mcp: FastMCP):
             ctx_log(ctx, logging.INFO, f"Executing cm_k8s_storage: {action}")
 
         try:
-            # Persistent Volumes
-            if action == "list_persistent_volumes":
-                return await run_blocking(manager.list_persistent_volumes)
-            elif action == "create_persistent_volume":
-                if not name or not spec:
-                    return "Error: 'name' and 'spec' are required for create_persistent_volume"
-                return await run_blocking(manager.create_persistent_volume, name, spec)
-
-            # Persistent Volume Claims
-            elif action == "list_persistent_volume_claims":
-                return await run_blocking(
-                    manager.list_persistent_volume_claims, namespace=namespace
-                )
-            elif action == "create_persistent_volume_claim":
-                if not pvc_name:
-                    return "Error: 'pvc_name' is required for create_persistent_volume_claim"
-                claim_spec = json.loads(pvc_spec) if pvc_spec else None
-                return await run_blocking(
-                    manager.create_persistent_volume_claim,
-                    name=pvc_name,
-                    namespace=namespace,
-                    spec=claim_spec,
-                )
-            elif action == "delete_persistent_volume_claim":
-                if not pvc_name:
-                    return "Error: 'pvc_name' is required for delete_persistent_volume_claim"
-                return await run_blocking(
-                    manager.delete_persistent_volume_claim,
-                    name=pvc_name,
-                    namespace=namespace,
-                )
-            elif action == "expand_pvc":
-                if not pvc_name or not pvc_size:
-                    return (
-                        "Error: 'pvc_name' and 'pvc_size' are required for expand_pvc"
-                    )
-                return await run_blocking(
-                    manager.expand_pvc,
-                    name=pvc_name,
-                    namespace=namespace,
-                    size=pvc_size,
-                )
-            elif action == "expand_persistent_volume":
-                if not name or not namespace or not size:
-                    return "Error: 'name', 'namespace', and 'size' are required for expand_persistent_volume"
-                return await run_blocking(
-                    manager.expand_persistent_volume, name, namespace, size
-                )
-
-            # Storage Classes
-            elif action == "list_storage_classes":
-                return await run_blocking(manager.list_storage_classes)
-            elif action == "create_storage_class":
-                if not name or not provisioner:
-                    return "Error: 'name' and 'provisioner' are required for create_storage_class"
-                return await run_blocking(
-                    manager.create_storage_class, name, provisioner, parameters
-                )
-            elif action == "set_default_storage_class":
-                if not name:
-                    return "Error: 'name' is required for set_default_storage_class"
-                return await run_blocking(manager.set_default_storage_class, name)
-            elif action == "get_storage_class_provisioner":
-                if not name:
-                    return "Error: 'name' is required for get_storage_class_provisioner"
-                return await run_blocking(manager.get_storage_class_provisioner, name)
-
-            # Volume Snapshots
-            elif action == "list_volume_snapshots":
-                return await run_blocking(
-                    manager.list_volume_snapshots, namespace=namespace
-                )
-            elif action == "create_volume_snapshot":
-                if not name or not namespace or not spec:
-                    return "Error: 'name', 'namespace', and 'spec' are required for create_volume_snapshot"
-                return await run_blocking(
-                    manager.create_volume_snapshot, name, namespace, spec
-                )
-
-            # CSI Drivers
-            elif action == "list_csi_drivers":
-                return await run_blocking(manager.list_csi_drivers)
-            elif action == "describe_csi_driver":
-                if not name:
-                    return "Error: 'name' is required for describe_csi_driver"
-                return await run_blocking(manager.describe_csi_driver, name)
-            elif action == "get_csi_driver_capacity":
-                if not driver_name:
-                    return (
-                        "Error: 'driver_name' is required for get_csi_driver_capacity"
-                    )
-                return await run_blocking(manager.get_csi_driver_capacity, driver_name)
-
-            else:
+            group = _ACTION_GROUPS.get(action)
+            if group is None:
                 return f"Error: Unknown action '{action}'"
+            all_values = {
+                "driver_name": driver_name,
+                "name": name,
+                "namespace": namespace,
+                "parameters": parameters,
+                "provisioner": provisioner,
+                "pvc_name": pvc_name,
+                "pvc_size": pvc_size,
+                "pvc_spec": pvc_spec,
+                "size": size,
+                "spec": spec,
+            }
+            group_kwargs = {n: all_values[n] for n in _GROUP_PARAM_NAMES[group]}
+            return await _GROUP_FUNCS[group](action, manager, **group_kwargs)
         except Exception as e:
             if ctx:
                 ctx_log(
