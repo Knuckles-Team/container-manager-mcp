@@ -157,42 +157,33 @@ def _check_backends() -> list[dict]:
     return checks
 
 
-def _check_config() -> list[dict]:
-    """CONTAINER_MANAGER_TYPE resolution, tool toggles, and K8S_CONTEXTS parse."""
-    checks: list[dict] = []
-
+def _check_container_manager_type() -> dict:
     cmt = os.environ.get("CONTAINER_MANAGER_TYPE")
     if cmt:
-        checks.append(
-            _check("CONTAINER_MANAGER_TYPE", "config", "ok", f"set to '{cmt}'")
+        return _check("CONTAINER_MANAGER_TYPE", "config", "ok", f"set to '{cmt}'")
+    detected = (
+        "podman"
+        if is_app_installed("podman")
+        else ("docker" if is_app_installed("docker") else None)
+    )
+    if detected:
+        return _check(
+            "CONTAINER_MANAGER_TYPE",
+            "config",
+            "warn",
+            f"unset; will auto-detect '{detected}'",
+            "Set CONTAINER_MANAGER_TYPE=docker|podman|kubernetes|multi to make the backend explicit",
         )
-    else:
-        detected = (
-            "podman"
-            if is_app_installed("podman")
-            else ("docker" if is_app_installed("docker") else None)
-        )
-        if detected:
-            checks.append(
-                _check(
-                    "CONTAINER_MANAGER_TYPE",
-                    "config",
-                    "warn",
-                    f"unset; will auto-detect '{detected}'",
-                    "Set CONTAINER_MANAGER_TYPE=docker|podman|kubernetes|multi to make the backend explicit",
-                )
-            )
-        else:
-            checks.append(
-                _check(
-                    "CONTAINER_MANAGER_TYPE",
-                    "config",
-                    "fail",
-                    "unset and neither the docker nor podman CLI is installed",
-                    "Install Docker or Podman, or set CONTAINER_MANAGER_TYPE explicitly (e.g. kubernetes)",
-                )
-            )
+    return _check(
+        "CONTAINER_MANAGER_TYPE",
+        "config",
+        "fail",
+        "unset and neither the docker nor podman CLI is installed",
+        "Install Docker or Podman, or set CONTAINER_MANAGER_TYPE explicitly (e.g. kubernetes)",
+    )
 
+
+def _check_tool_toggles() -> dict:
     toggles = {k: v for k, v in os.environ.items() if k.endswith("TOOL")}
     disabled = sorted(
         k for k, v in toggles.items() if str(v).lower() not in ("true", "1", "yes")
@@ -204,54 +195,87 @@ def _check_config() -> list[dict]:
     )
     if disabled:
         detail += f"; disabled: {', '.join(disabled)}"
-    checks.append(_check("tool toggles", "config", "ok", detail))
+    return _check("tool toggles", "config", "ok", detail)
 
+
+def _check_k8s_contexts_env() -> dict:
     raw = os.environ.get("K8S_CONTEXTS", "")
     default_ctx = os.environ.get("DEFAULT_K8S_CONTEXT")
     if not raw:
-        checks.append(
-            _check(
-                "K8S_CONTEXTS",
-                "config",
-                "ok",
-                "not set (single-context / non-kubernetes mode)",
-            )
+        return _check(
+            "K8S_CONTEXTS",
+            "config",
+            "ok",
+            "not set (single-context / non-kubernetes mode)",
         )
-    else:
-        parsed = _parse_context_config(raw)
-        if not parsed:
-            checks.append(
-                _check(
-                    "K8S_CONTEXTS",
-                    "config",
-                    "fail",
-                    f"could not parse K8S_CONTEXTS={raw!r}",
-                    'Use the "name=kubecontext;name2=kubecontext2" format',
-                )
-            )
-        else:
-            names = ", ".join(parsed)
-            if default_ctx and default_ctx not in parsed:
-                checks.append(
-                    _check(
-                        "K8S_CONTEXTS",
-                        "config",
-                        "warn",
-                        f"parsed {len(parsed)} context(s): {names}; "
-                        f"DEFAULT_K8S_CONTEXT='{default_ctx}' is not among them",
-                        f"Set DEFAULT_K8S_CONTEXT to one of: {names}",
-                    )
-                )
-            else:
-                checks.append(
-                    _check(
-                        "K8S_CONTEXTS",
-                        "config",
-                        "ok",
-                        f"parsed {len(parsed)} context(s): {names}",
-                    )
-                )
-    return checks
+    parsed = _parse_context_config(raw)
+    if not parsed:
+        return _check(
+            "K8S_CONTEXTS",
+            "config",
+            "fail",
+            f"could not parse K8S_CONTEXTS={raw!r}",
+            'Use the "name=kubecontext;name2=kubecontext2" format',
+        )
+    names = ", ".join(parsed)
+    if default_ctx and default_ctx not in parsed:
+        return _check(
+            "K8S_CONTEXTS",
+            "config",
+            "warn",
+            f"parsed {len(parsed)} context(s): {names}; "
+            f"DEFAULT_K8S_CONTEXT='{default_ctx}' is not among them",
+            f"Set DEFAULT_K8S_CONTEXT to one of: {names}",
+        )
+    return _check(
+        "K8S_CONTEXTS", "config", "ok", f"parsed {len(parsed)} context(s): {names}"
+    )
+
+
+def _check_config() -> list[dict]:
+    """CONTAINER_MANAGER_TYPE resolution, tool toggles, and K8S_CONTEXTS parse."""
+    return [
+        _check_container_manager_type(),
+        _check_tool_toggles(),
+        _check_k8s_contexts_env(),
+    ]
+
+
+def _resolve_inventory_targets(hosts, host: str | None, guided: bool) -> list[str]:
+    if host:
+        return [host]
+    if guided:
+        return sorted(hosts)
+    return []
+
+
+def _probe_inventory_alias(hm, alias: str, hosts, path: str) -> dict:
+    try:
+        hc = hm.get_host(alias)
+    except Exception:
+        hc = None
+    if hc is None:
+        return _check(
+            f"host '{alias}'",
+            "inventory",
+            "fail",
+            f"alias '{alias}' not found in inventory",
+            f"Add '{alias}' to {path} or pass a known alias "
+            f"(available: {', '.join(sorted(hosts))})",
+        )
+    hostname = getattr(hc, "hostname", None) or alias
+    port = getattr(hc, "port", 22) or 22
+    ok, detail = _probe_tcp(hostname, port)
+    if ok:
+        return _check(f"host '{alias}'", "inventory", "ok", detail)
+    return _check(
+        f"host '{alias}'",
+        "inventory",
+        "fail",
+        detail,
+        f"Host offline or SSH port closed. Confirm the box is up and reachable, "
+        f"then run the ssh-bootstrap skill to establish key-based auth for '{alias}'",
+    )
 
 
 def _check_inventory(
@@ -322,46 +346,8 @@ def _check_inventory(
         )
     )
 
-    if host:
-        targets = [host]
-    elif guided:
-        targets = sorted(hosts)
-    else:
-        targets = []
-
-    for alias in targets:
-        try:
-            hc = hm.get_host(alias)
-        except Exception:
-            hc = None
-        if hc is None:
-            checks.append(
-                _check(
-                    f"host '{alias}'",
-                    "inventory",
-                    "fail",
-                    f"alias '{alias}' not found in inventory",
-                    f"Add '{alias}' to {path} or pass a known alias "
-                    f"(available: {', '.join(sorted(hosts))})",
-                )
-            )
-            continue
-        hostname = getattr(hc, "hostname", None) or alias
-        port = getattr(hc, "port", 22) or 22
-        ok, detail = _probe_tcp(hostname, port)
-        if ok:
-            checks.append(_check(f"host '{alias}'", "inventory", "ok", detail))
-        else:
-            checks.append(
-                _check(
-                    f"host '{alias}'",
-                    "inventory",
-                    "fail",
-                    detail,
-                    f"Host offline or SSH port closed. Confirm the box is up and reachable, "
-                    f"then run the ssh-bootstrap skill to establish key-based auth for '{alias}'",
-                )
-            )
+    for alias in _resolve_inventory_targets(hosts, host, guided):
+        checks.append(_probe_inventory_alias(hm, alias, hosts, path))
     return checks
 
 
@@ -442,6 +428,83 @@ def _check_podman(focused: bool = False) -> list[dict]:
         ]
 
 
+def _resolve_kubernetes_targets(
+    context: str | None, parsed: dict
+) -> list[tuple[str, str | None]]:
+    if context:
+        return [(context, parsed.get(context, context))]
+    if parsed:
+        return list(parsed.items())
+    return [("(current-context)", None)]
+
+
+def _probe_kubernetes_context(ctx_value: str | None) -> list[dict]:
+    checks: list[dict] = []
+    try:
+        manager = create_manager("kubernetes", host=ctx_value)
+    except Exception as e:
+        checks.append(
+            _check(
+                "kubernetes context",
+                "kubernetes",
+                "fail",
+                f"cannot construct a client: {type(e).__name__}",
+                "Install the kubernetes client and ensure the context exists in kubeconfig "
+                "(`kubectl config get-contexts`)",
+            )
+        )
+        return checks
+
+    try:
+        validation = manager.validate_kubeconfig()
+        if (
+            isinstance(validation, dict)
+            and validation.get("status")
+            and validation["status"] != "valid"
+        ):
+            checks.append(
+                _check(
+                    "kubeconfig valid",
+                    "kubernetes",
+                    "fail",
+                    "validate_kubeconfig reported an invalid configuration",
+                    "Fix the kubeconfig for this context (`kubectl config view`)",
+                )
+            )
+    except Exception:
+        # Non-fatal: the reachability probe below is the authoritative signal.
+        pass
+
+    try:
+        version = manager.get_version()
+        v = version.get("version") if isinstance(version, dict) else version
+        try:
+            nodes = manager.list_nodes()
+            node_detail = f", {len(nodes)} node(s)"
+        except Exception as ne:
+            node_detail = f" (node list failed: {type(ne).__name__})"
+        checks.append(
+            _check(
+                "kubernetes context",
+                "kubernetes",
+                "ok",
+                f"API reachable, server {v}{node_detail}",
+            )
+        )
+    except Exception as e:
+        checks.append(
+            _check(
+                "kubernetes context",
+                "kubernetes",
+                "fail",
+                f"cluster unreachable: {type(e).__name__}",
+                "Verify the cluster is up and the configured context points at a reachable API server; use the kubernetes-mesh-provisioner "
+                "skill to (re)provision RKE2",
+            )
+        )
+    return checks
+
+
 def _check_kubernetes(context: str | None = None, focused: bool = False) -> list[dict]:
     """kubeconfig present + validate + list contexts + probe each target context."""
     checks: list[dict] = []
@@ -486,78 +549,11 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
         return checks
 
     parsed = _parse_context_config(os.environ.get("K8S_CONTEXTS", ""))
-    if context:
-        targets: list[tuple[str, str | None]] = [
-            (context, parsed.get(context, context))
-        ]
-    elif parsed:
-        targets = list(parsed.items())
-    else:
-        targets = [("(current-context)", None)]
+    targets = _resolve_kubernetes_targets(context, parsed)
 
-    for label, ctx_value in targets:
-        try:
-            manager = create_manager("kubernetes", host=ctx_value)
-        except Exception as e:
-            checks.append(
-                _check(
-                    "kubernetes context",
-                    "kubernetes",
-                    "fail",
-                    f"cannot construct a client: {type(e).__name__}",
-                    "Install the kubernetes client and ensure the context exists in kubeconfig "
-                    "(`kubectl config get-contexts`)",
-                )
-            )
-            continue
-
-        try:
-            validation = manager.validate_kubeconfig()
-            if (
-                isinstance(validation, dict)
-                and validation.get("status")
-                and validation["status"] != "valid"
-            ):
-                checks.append(
-                    _check(
-                        "kubeconfig valid",
-                        "kubernetes",
-                        "fail",
-                        "validate_kubeconfig reported an invalid configuration",
-                        "Fix the kubeconfig for this context (`kubectl config view`)",
-                    )
-                )
-        except Exception:
-            # Non-fatal: the reachability probe below is the authoritative signal.
-            pass
-
-        try:
-            version = manager.get_version()
-            v = version.get("version") if isinstance(version, dict) else version
-            try:
-                nodes = manager.list_nodes()
-                node_detail = f", {len(nodes)} node(s)"
-            except Exception as ne:
-                node_detail = f" (node list failed: {type(ne).__name__})"
-            checks.append(
-                _check(
-                    "kubernetes context",
-                    "kubernetes",
-                    "ok",
-                    f"API reachable, server {v}{node_detail}",
-                )
-            )
-        except Exception as e:
-            checks.append(
-                _check(
-                    "kubernetes context",
-                    "kubernetes",
-                    "fail",
-                    f"cluster unreachable: {type(e).__name__}",
-                    "Verify the cluster is up and the configured context points at a reachable API server; use the kubernetes-mesh-provisioner "
-                    "skill to (re)provision RKE2",
-                )
-            )
+    for _label, ctx_value in targets:
+        checks.extend(_probe_kubernetes_context(ctx_value))
+    return checks
     return checks
 
 
