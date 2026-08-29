@@ -83,75 +83,77 @@ except ImportError:
             return True
 
 
-def ctx_log(ctx: Any, *args, **kwargs) -> None:
+_CTX_LOG_LEVEL_NAMES = {
+    logging.DEBUG: "debug",
+    logging.INFO: "info",
+    logging.WARNING: "warning",
+    logging.ERROR: "error",
+    logging.CRITICAL: "error",
+}
+
+
+def _ctx_log_notify_client(ctx: Any, level_str: str, message: Any) -> None:
+    """Best-effort mirror of a log line onto the MCP client's ctx, if present."""
+    if not ctx:
+        return
+    client_fn = getattr(ctx, level_str, None) or getattr(ctx, "info", None)
+    if not client_fn:
+        return
+    try:
+        import asyncio
+        import inspect
+
+        res = client_fn(message)
+        if inspect.iscoroutine(res):
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(res)
+            except RuntimeError:
+                pass
+    except Exception:
+        pass
+
+
+def _ctx_log_two_arg(ctx: Any, level: Any, message: Any) -> None:
+    if isinstance(level, int):
+        level_str = _CTX_LOG_LEVEL_NAMES.get(level, "info")
+    else:
+        level_str = str(level).lower()
+
+    log_fn = getattr(logger, level_str, None) or getattr(logger, "info", None)
+    if log_fn:
+        log_fn(message)
+    _ctx_log_notify_client(ctx, level_str, message)
+
+
+def _ctx_log_three_arg(ctx: Any, server_logger: Any, level: Any, message: Any) -> None:
+    level_str = str(level).lower()
+    log_fn = getattr(server_logger, level_str, None) or getattr(
+        server_logger, "info", None
+    )
+    if log_fn:
+        log_fn(message)
+    _ctx_log_notify_client(ctx, level_str, message)
+
+
+def _ctx_log_fallback(ctx: Any, args: tuple, kwargs: dict) -> None:
     try:
         from agent_utilities.mcp.context_helpers import ctx_log as _real_ctx_log
     except ImportError:
-        _real_ctx_log = None  # type: ignore[assignment]
+        return
+    try:
+        _real_ctx_log(ctx, *args, **kwargs)
+    except Exception:
+        pass
 
+
+def ctx_log(ctx: Any, *args, **kwargs) -> None:
     if len(args) == 2:
-        level, message = args
-        if isinstance(level, int):
-            level_map = {
-                logging.DEBUG: "debug",
-                logging.INFO: "info",
-                logging.WARNING: "warning",
-                logging.ERROR: "error",
-                logging.CRITICAL: "error",
-            }
-            level_str = level_map.get(level, "info")
-        else:
-            level_str = str(level).lower()
-
-        log_fn = getattr(logger, level_str, None) or getattr(logger, "info", None)
-        if log_fn:
-            log_fn(message)
-        if ctx:
-            client_fn = getattr(ctx, level_str, None) or getattr(ctx, "info", None)
-            if client_fn:
-                try:
-                    import asyncio
-                    import inspect
-
-                    res = client_fn(message)
-                    if inspect.iscoroutine(res):
-                        try:
-                            loop = asyncio.get_running_loop()
-                            loop.create_task(res)
-                        except RuntimeError:
-                            pass
-                except Exception:
-                    pass
+        _ctx_log_two_arg(ctx, *args)
     elif len(args) == 3:
-        server_logger, level, message = args
-        level_str = str(level).lower()
-        log_fn = getattr(server_logger, level_str, None) or getattr(
-            server_logger, "info", None
-        )
-        if log_fn:
-            log_fn(message)
-        if ctx:
-            client_fn = getattr(ctx, level_str, None) or getattr(ctx, "info", None)
-            if client_fn:
-                try:
-                    import asyncio
-                    import inspect
-
-                    res = client_fn(message)
-                    if inspect.iscoroutine(res):
-                        try:
-                            loop = asyncio.get_running_loop()
-                            loop.create_task(res)
-                        except RuntimeError:
-                            pass
-                except Exception:
-                    pass
+        _ctx_log_three_arg(ctx, *args)
     else:
-        if _real_ctx_log is not None:
-            try:
-                _real_ctx_log(ctx, *args, **kwargs)
-            except Exception:
-                pass
+        _ctx_log_fallback(ctx, args, kwargs)
 
 
 from container_manager_mcp.container_manager import (
