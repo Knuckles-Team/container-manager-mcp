@@ -148,42 +148,50 @@ class KubernetesClusterClient:
             )
         return result
 
-    def list_pods(self) -> list[dict[str, Any]]:
-        mgr = self._mgr()
-        result: list[dict[str, Any]] = []
-        for pod in mgr.core.list_pod_for_all_namespaces().items:
-            containers: list[dict[str, Any]] = []
-            for cs in (pod.status.container_statuses or []) if pod.status else []:
-                waiting_reason = None
-                if cs.state and cs.state.waiting:
-                    waiting_reason = cs.state.waiting.reason
-                containers.append(
-                    {
-                        "restart_count": cs.restart_count or 0,
-                        "waiting_reason": waiting_reason,
-                    }
-                )
-            requests_cpu = 0.0
-            requests_mem = 0.0
-            for container in (pod.spec.containers or []) if pod.spec else []:
-                requests = (
-                    (container.resources.requests or {}) if container.resources else {}
-                )
-                requests_cpu += _parse_cpu(requests.get("cpu"))
-                requests_mem += _parse_mem(requests.get("memory"))
-            result.append(
+    def _pod_container_summaries(self, pod) -> list[dict[str, Any]]:
+        containers: list[dict[str, Any]] = []
+        for cs in (pod.status.container_statuses or []) if pod.status else []:
+            waiting_reason = None
+            if cs.state and cs.state.waiting:
+                waiting_reason = cs.state.waiting.reason
+            containers.append(
                 {
-                    "name": pod.metadata.name,
-                    "namespace": pod.metadata.namespace,
-                    "node": (pod.spec.node_name or "") if pod.spec else "",
-                    "phase": pod.status.phase if pod.status else "Unknown",
-                    "reason": pod.status.reason if pod.status else None,
-                    "containers": containers,
-                    "requests_cpu": requests_cpu,
-                    "requests_mem": requests_mem,
+                    "restart_count": cs.restart_count or 0,
+                    "waiting_reason": waiting_reason,
                 }
             )
-        return result
+        return containers
+
+    def _pod_resource_requests(self, pod) -> tuple[float, float]:
+        requests_cpu = 0.0
+        requests_mem = 0.0
+        for container in (pod.spec.containers or []) if pod.spec else []:
+            requests = (
+                (container.resources.requests or {}) if container.resources else {}
+            )
+            requests_cpu += _parse_cpu(requests.get("cpu"))
+            requests_mem += _parse_mem(requests.get("memory"))
+        return requests_cpu, requests_mem
+
+    def _summarize_pod_for_health(self, pod) -> dict[str, Any]:
+        requests_cpu, requests_mem = self._pod_resource_requests(pod)
+        return {
+            "name": pod.metadata.name,
+            "namespace": pod.metadata.namespace,
+            "node": (pod.spec.node_name or "") if pod.spec else "",
+            "phase": pod.status.phase if pod.status else "Unknown",
+            "reason": pod.status.reason if pod.status else None,
+            "containers": self._pod_container_summaries(pod),
+            "requests_cpu": requests_cpu,
+            "requests_mem": requests_mem,
+        }
+
+    def list_pods(self) -> list[dict[str, Any]]:
+        mgr = self._mgr()
+        return [
+            self._summarize_pod_for_health(pod)
+            for pod in mgr.core.list_pod_for_all_namespaces().items
+        ]
 
 
 def _default_client() -> ClusterClient:
@@ -269,6 +277,16 @@ def collect_orchestration_signals(
         logger.debug("collect_orchestration_signals: list_pods failed: %s", e)
         pods = []
 
+    by_node, allocatable_by_node = _init_node_signals(nodes)
+    requested_by_node = _accumulate_pod_signals(pods, by_node)
+    _finalize_alloc_pct(by_node, allocatable_by_node, requested_by_node)
+    return by_node
+
+
+def _init_node_signals(
+    nodes,
+) -> tuple[dict[str, dict[str, float]], dict[str, tuple[float, float]]]:
+    """Seed each node's zeroed signal dict from its conditions, plus its allocatable."""
     by_node: dict[str, dict[str, float]] = {}
     allocatable_by_node: dict[str, tuple[float, float]] = {}
     for node in nodes:
@@ -293,7 +311,31 @@ def collect_orchestration_signals(
             _parse_cpu(allocatable.get("cpu")),
             _parse_mem(allocatable.get("memory")),
         )
+    return by_node, allocatable_by_node
 
+
+def _apply_pod_container_signals(pod, signals: dict[str, float]) -> None:
+    for container in pod.get("containers") or []:
+        signals["pod_restart_rate"] += float(container.get("restart_count") or 0)
+        if (container.get("waiting_reason") or "") in _IMAGE_PULL_ERROR_REASONS:
+            signals["image_pull_errors"] += 1.0
+
+
+def _apply_pod_to_node_signals(pod, signals: dict[str, float]) -> tuple[float, float]:
+    """Fold one pod's phase/restarts/image-pull-errors into its node's `signals`
+    (mutated in place); returns the pod's (requests_cpu, requests_mem)."""
+    if pod.get("phase") == "Pending":
+        signals["pods_pending"] += 1.0
+    if pod.get("phase") == "Failed" and (pod.get("reason") or "") == "Evicted":
+        signals["pods_evicted"] += 1.0
+    _apply_pod_container_signals(pod, signals)
+    return float(pod.get("requests_cpu") or 0.0), float(pod.get("requests_mem") or 0.0)
+
+
+def _accumulate_pod_signals(
+    pods, by_node: dict[str, dict[str, float]]
+) -> dict[str, tuple[float, float]]:
+    """Fold each pod's phase/restarts/image-pull-errors/requests into its node's signals."""
     requested_by_node: dict[str, tuple[float, float]] = dict.fromkeys(
         by_node, (0.0, 0.0)
     )
@@ -302,20 +344,17 @@ def collect_orchestration_signals(
         signals = by_node.get(node_name)
         if not node_name or signals is None:
             continue
-        if pod.get("phase") == "Pending":
-            signals["pods_pending"] += 1.0
-        if pod.get("phase") == "Failed" and (pod.get("reason") or "") == "Evicted":
-            signals["pods_evicted"] += 1.0
-        for container in pod.get("containers") or []:
-            signals["pod_restart_rate"] += float(container.get("restart_count") or 0)
-            if (container.get("waiting_reason") or "") in _IMAGE_PULL_ERROR_REASONS:
-                signals["image_pull_errors"] += 1.0
+        pod_req_cpu, pod_req_mem = _apply_pod_to_node_signals(pod, signals)
         req_cpu, req_mem = requested_by_node[node_name]
-        requested_by_node[node_name] = (
-            req_cpu + float(pod.get("requests_cpu") or 0.0),
-            req_mem + float(pod.get("requests_mem") or 0.0),
-        )
+        requested_by_node[node_name] = (req_cpu + pod_req_cpu, req_mem + pod_req_mem)
+    return requested_by_node
 
+
+def _finalize_alloc_pct(
+    by_node: dict[str, dict[str, float]],
+    allocatable_by_node: dict[str, tuple[float, float]],
+    requested_by_node: dict[str, tuple[float, float]],
+) -> None:
     for name, signals in by_node.items():
         alloc_cpu, alloc_mem = allocatable_by_node.get(name, (0.0, 0.0))
         req_cpu, req_mem = requested_by_node.get(name, (0.0, 0.0))
@@ -325,8 +364,6 @@ def collect_orchestration_signals(
         signals["mem_alloc_pct"] = (
             round(100.0 * req_mem / alloc_mem, 3) if alloc_mem else 0.0
         )
-
-    return by_node
 
 
 # --------------------------------------------------------------------------- #
@@ -484,11 +521,35 @@ def run_orch_derivation(
     if not nodes:
         return {"nodes": 0, "results": {}}
 
+    results, anomalies_by_signal = _learn_node_signal_baselines(nodes, days)
+    _correlate_systemic_anomalies(anomalies_by_signal, len(nodes))
+
+    for node in nodes:
+        seen_signals, anomaly_count = _ingest_node_baselines_and_anomalies(
+            node, results, anomalies_by_signal
+        )
+        logger.info(
+            "%s: %d/%d signals with history, %d anomal%s",
+            node,
+            seen_signals,
+            len(ORCH_SIGNALS),
+            anomaly_count,
+            "y" if anomaly_count == 1 else "ies",
+        )
+
+    return {"nodes": len(nodes), "results": results}
+
+
+def _learn_node_signal_baselines(
+    nodes: list[str], days: int
+) -> tuple[
+    dict[str, dict[str, Any]], dict[str, dict[str, dict[str, Any] | None]]
+]:
+    """Phase 1: per node x signal, read trend history and compute baseline+anomaly."""
     results: dict[str, dict[str, Any]] = {node: {} for node in nodes}
     anomalies_by_signal: dict[str, dict[str, dict[str, Any] | None]] = {
         signal: {} for signal in ORCH_SIGNALS
     }
-
     for node in nodes:
         entity_id = f"container:k8snode:{node}"
         for signal in ORCH_SIGNALS:
@@ -501,45 +562,46 @@ def run_orch_derivation(
                 "baseline": baseline,
                 "anomaly": anomaly,
             }
+    return results, anomalies_by_signal
 
+
+def _correlate_systemic_anomalies(
+    anomalies_by_signal: dict[str, dict[str, dict[str, Any] | None]], node_count: int
+) -> None:
+    """Phase 2: collapse same-signal anomalies across a majority of nodes into `systemic`."""
     for _signal, anomalies in anomalies_by_signal.items():
         correlate(
-            anomalies, len(nodes), kind="above-baseline", systemic_kind="systemic"
+            anomalies, node_count, kind="above-baseline", systemic_kind="systemic"
         )
 
-    for node in nodes:
-        entity_id = f"container:k8snode:{node}"
-        seen_signals = 0
-        for signal in ORCH_SIGNALS:
-            data = results[node][signal]
-            baseline = data["baseline"]
-            if baseline:
-                ingest_health_baseline(entity_id, signal, baseline, entity_type="Node")
-            anomaly = anomalies_by_signal[signal][node]
-            data["anomaly"] = anomaly
-            if data["trends"]:
-                seen_signals += 1
-            if anomaly:
-                ingest_health_anomaly(entity_id, signal, anomaly, entity_type="Node")
-                _notify(
-                    f"[container-manager-health] {node}: {signal} {anomaly['kind']} — "
-                    f"observed={anomaly['observed']} expected={anomaly['expected']} "
-                    f"(z={anomaly['zscore']})"
-                )
-        logger.info(
-            "%s: %d/%d signals with history, %d anomal%s",
-            node,
-            seen_signals,
-            len(ORCH_SIGNALS),
-            sum(1 for s in ORCH_SIGNALS if anomalies_by_signal[s][node]),
-            (
-                "y"
-                if sum(1 for s in ORCH_SIGNALS if anomalies_by_signal[s][node]) == 1
-                else "ies"
-            ),
-        )
 
-    return {"nodes": len(nodes), "results": results}
+def _ingest_node_baselines_and_anomalies(
+    node: str,
+    results: dict[str, dict[str, Any]],
+    anomalies_by_signal: dict[str, dict[str, dict[str, Any] | None]],
+) -> tuple[int, int]:
+    """Phase 3, one node: write baselines/anomalies + notify. Returns (seen, anomalies)."""
+    entity_id = f"container:k8snode:{node}"
+    seen_signals = 0
+    anomaly_count = 0
+    for signal in ORCH_SIGNALS:
+        data = results[node][signal]
+        baseline = data["baseline"]
+        if baseline:
+            ingest_health_baseline(entity_id, signal, baseline, entity_type="Node")
+        anomaly = anomalies_by_signal[signal][node]
+        data["anomaly"] = anomaly
+        if data["trends"]:
+            seen_signals += 1
+        if anomaly:
+            anomaly_count += 1
+            ingest_health_anomaly(entity_id, signal, anomaly, entity_type="Node")
+            _notify(
+                f"[container-manager-health] {node}: {signal} {anomaly['kind']} — "
+                f"observed={anomaly['observed']} expected={anomaly['expected']} "
+                f"(z={anomaly['zscore']})"
+            )
+    return seen_signals, anomaly_count
 
 
 # --------------------------------------------------------------------------- #
