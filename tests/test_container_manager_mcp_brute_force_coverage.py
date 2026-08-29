@@ -56,6 +56,35 @@ def mock_container_deps():
         yield mock_docker.from_env, mock_podman.PodmanClient
 
 
+def _build_manager_method_call_kwargs(method, common_kwargs: dict) -> dict:
+    """Synthesize kwargs for `method` from `common_kwargs`, filling any other
+    required (no-default) params with a plain 'test' string or 1."""
+    sig = inspect.signature(method)
+    has_kwargs = any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+    )
+    if has_kwargs:
+        return common_kwargs.copy()
+    kwargs = {k: v for k, v in common_kwargs.items() if k in sig.parameters}
+    for p_name, p in sig.parameters.items():
+        if p.default == inspect.Parameter.empty and p_name not in kwargs:
+            kwargs[p_name] = "test" if p.annotation is str else 1
+    return kwargs
+
+
+def _brute_force_call_manager_method(manager, name, method, common_kwargs: dict) -> None:
+    """Call one manager method with synthesized kwargs; this is a smoke sweep
+    (does the call not blow up in an unexpected way), so any exception is
+    swallowed rather than asserted on."""
+    manager_name = manager.__class__.__name__
+    print(f"Calling {manager_name}.{name}...")
+    kwargs = _build_manager_method_call_kwargs(method, common_kwargs)
+    try:
+        method(**kwargs)
+    except Exception:
+        pass
+
+
 def test_container_manager_brute_force(mock_container_deps):
     from container_manager_mcp.container_manager import DockerManager, PodmanManager
 
@@ -89,26 +118,54 @@ def test_container_manager_brute_force(mock_container_deps):
     }
 
     for manager in managers:
-        manager_name = manager.__class__.__name__
         for name, method in inspect.getmembers(manager, predicate=inspect.ismethod):
             if name.startswith("_") or name == "setup_logging":
                 continue
-            print(f"Calling {manager_name}.{name}...")
-            sig = inspect.signature(method)
-            has_kwargs = any(
-                p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
-            )
-            if has_kwargs:
-                kwargs = common_kwargs.copy()
-            else:
-                kwargs = {k: v for k, v in common_kwargs.items() if k in sig.parameters}
-                for p_name, p in sig.parameters.items():
-                    if p.default == inspect.Parameter.empty and p_name not in kwargs:
-                        kwargs[p_name] = "test" if p.annotation is str else 1
-            try:
-                method(**kwargs)
-            except Exception:
-                pass
+            _brute_force_call_manager_method(manager, name, method, common_kwargs)
+
+
+def _fill_missing_required_tool_params(target_params: dict, sig) -> None:
+    for p_name, p in sig.parameters.items():
+        if p.default != inspect.Parameter.empty or p_name in ("_client", "context"):
+            continue
+        if p_name not in target_params:
+            target_params[p_name] = "test" if p.annotation is str else 1
+
+
+def _build_tool_call_params(tool) -> dict:
+    """Synthesize call params for a registered MCP `tool` from its signature,
+    filling any other required (no-default) param with a plain 'test' string
+    or 1, and trimming to declared params when the tool takes no **kwargs."""
+    target_params: dict[str, Any] = {
+        "container_id": "test_id",
+        "image": "nginx",
+        "tag": "latest",
+        "command": ["ls"],
+        "manager_type": "docker",
+        "network_id": "test_net",
+        "volume_name": "test_vol",
+    }
+    sig = inspect.signature(tool.fn)
+    _fill_missing_required_tool_params(target_params, sig)
+
+    has_kwargs = any(
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+    )
+    if not has_kwargs:
+        target_params = {
+            k: v for k, v in target_params.items() if k in sig.parameters
+        }
+    return target_params
+
+
+async def _call_registered_tool_smoke(mcp, tool) -> None:
+    """Call one registered tool through the real MCP dispatch path; this is a
+    smoke sweep, so any exception is swallowed rather than asserted on."""
+    try:
+        target_params = _build_tool_call_params(tool)
+        await mcp.call_tool(tool.name, target_params)
+    except Exception:
+        pass
 
 
 def test_mcp_server_coverage(mock_container_deps):
@@ -137,41 +194,7 @@ def test_mcp_server_coverage(mock_container_deps):
                     else mcp.list_tools()
                 )
                 for tool in tool_objs:
-                    try:
-                        target_params: dict[str, Any] = {
-                            "container_id": "test_id",
-                            "image": "nginx",
-                            "tag": "latest",
-                            "command": ["ls"],
-                            "manager_type": "docker",
-                            "network_id": "test_net",
-                            "volume_name": "test_vol",
-                        }
-                        sig = inspect.signature(tool.fn)
-                        for p_name, p in sig.parameters.items():
-                            if p.default == inspect.Parameter.empty and p_name not in [
-                                "_client",
-                                "context",
-                            ]:
-                                if p_name not in target_params:
-                                    target_params[p_name] = (
-                                        "test" if p.annotation is str else 1
-                                    )
-
-                        has_kwargs = any(
-                            p.kind == inspect.Parameter.VAR_KEYWORD
-                            for p in sig.parameters.values()
-                        )
-                        if not has_kwargs:
-                            target_params = {
-                                k: v
-                                for k, v in target_params.items()
-                                if k in sig.parameters
-                            }
-
-                        await mcp.call_tool(tool.name, target_params)
-                    except Exception:
-                        pass
+                    await _call_registered_tool_smoke(mcp, tool)
 
             asyncio.run(run_tools())
 
