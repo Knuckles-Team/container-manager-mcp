@@ -54,6 +54,54 @@ def _s(value: Any) -> str | None:
     return text or None
 
 
+def _ingest_container_record(
+    rec: dict[str, Any],
+    host: str | None,
+    host_id: str | None,
+    seen_images: set[str],
+    entities: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+) -> None:
+    cid = _s(rec.get("id"))
+    if not cid:
+        return
+    node_id = f"container:container:{cid}"
+    image_ref = _s(rec.get("image"))
+    entities.append(
+        {
+            "id": node_id,
+            "node_type": "Container",
+            "name": _s(rec.get("name")),
+            "image": image_ref,
+            "containerStatus": _s(rec.get("status")),
+            "portMappings": _s(rec.get("ports")),
+            "created_at": _s(rec.get("created")),
+            "runtime": _s(rec.get("runtime")) or "docker",
+            "host": host,
+            "externalToolId": cid,
+        }
+    )
+    if image_ref and image_ref not in ("unknown", "none"):
+        img_id = f"container:image:{image_ref}"
+        if image_ref not in seen_images:
+            seen_images.add(image_ref)
+            entities.append(
+                {
+                    "id": img_id,
+                    "node_type": "ContainerImage",
+                    "name": image_ref,
+                    "externalToolId": image_ref,
+                }
+            )
+        relationships.append(
+            {"source": node_id, "target": img_id, "relationship": "usesImage"}
+        )
+    if host_id:
+        relationships.append(
+            {"source": node_id, "target": host_id, "relationship": "runsOn"}
+        )
+
+
 def ingest_containers(
     containers: list[dict[str, Any]],
     *,
@@ -72,47 +120,25 @@ def ingest_containers(
     host_id = f"container:host:{host}" if host else None
     seen_images: set[str] = set()
     for rec in containers or []:
-        cid = _s(rec.get("id"))
-        if not cid:
-            continue
-        node_id = f"container:container:{cid}"
-        image_ref = _s(rec.get("image"))
-        entities.append(
-            {
-                "id": node_id,
-                "node_type": "Container",
-                "name": _s(rec.get("name")),
-                "image": image_ref,
-                "containerStatus": _s(rec.get("status")),
-                "portMappings": _s(rec.get("ports")),
-                "created_at": _s(rec.get("created")),
-                "runtime": _s(rec.get("runtime")) or "docker",
-                "host": host,
-                "externalToolId": cid,
-            }
+        _ingest_container_record(
+            rec, host, host_id, seen_images, entities, relationships
         )
-        if image_ref and image_ref not in ("unknown", "none"):
-            img_id = f"container:image:{image_ref}"
-            if image_ref not in seen_images:
-                seen_images.add(image_ref)
-                entities.append(
-                    {
-                        "id": img_id,
-                        "node_type": "ContainerImage",
-                        "name": image_ref,
-                        "externalToolId": image_ref,
-                    }
-                )
-            relationships.append(
-                {"source": node_id, "target": img_id, "relationship": "usesImage"}
-            )
-        if host_id:
-            relationships.append(
-                {"source": node_id, "target": host_id, "relationship": "runsOn"}
-            )
     if host_id and entities:
         entities.append({"id": host_id, "node_type": "Host", "name": host})
     return ingest_entities(entities, relationships, client=client, graph=graph)
+
+
+def _parse_source_url_host_path(raw: str) -> tuple[str, str] | None:
+    """Split a URL/SCP-style remote into ``(host, path)``, lowercasing the host."""
+    if "://" in raw:
+        parts = urlsplit(raw)
+        return (parts.hostname or "").lower(), (parts.path or "")
+    if "@" in raw and ":" in raw:
+        # SCP-style remote, e.g. git@github.com:owner/name.git
+        _, _, rest = raw.partition("@")
+        host, _, path = rest.partition(":")
+        return host.lower(), path
+    return None
 
 
 def _normalize_source_url(url: Any) -> tuple[str, str] | None:
@@ -134,17 +160,10 @@ def _normalize_source_url(url: Any) -> tuple[str, str] | None:
     raw = url.strip()
     if not raw:
         return None
-    if "://" in raw:
-        parts = urlsplit(raw)
-        host = (parts.hostname or "").lower()
-        path = parts.path or ""
-    elif "@" in raw and ":" in raw:
-        # SCP-style remote, e.g. git@github.com:owner/name.git
-        _, _, rest = raw.partition("@")
-        host, _, path = rest.partition(":")
-        host = host.lower()
-    else:
+    parsed = _parse_source_url_host_path(raw)
+    if parsed is None:
         return None
+    host, path = parsed
     host = re.sub(r"^www\.", "", host)
     path = path.strip("/")
     if path.endswith(".git"):
@@ -153,6 +172,55 @@ def _normalize_source_url(url: Any) -> tuple[str, str] | None:
     if not host or not path:
         return None
     return f"https://{host}/{path}", f"git:repo:{host}/{path}"
+
+
+def _link_image_source_repo(
+    rec: dict[str, Any],
+    img_id: str,
+    seen_repos: set[str],
+    entities: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+) -> None:
+    labels = rec.get("labels") or {}
+    source_url = _s(labels.get(_SOURCE_LABEL)) or _s(labels.get(_VCS_URL_LABEL))
+    normalized = _normalize_source_url(source_url) if source_url else None
+    if not normalized:
+        return
+    clean_url, repo_node = normalized
+    if repo_node not in seen_repos:
+        seen_repos.add(repo_node)
+        entities.append({"id": repo_node, "node_type": "Repository", "url": clean_url})
+    relationships.append(
+        {"source": img_id, "target": repo_node, "relationship": "builtFrom"}
+    )
+
+
+def _ingest_image_record(
+    rec: dict[str, Any],
+    seen_repos: set[str],
+    entities: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+) -> None:
+    iid = _s(rec.get("id"))
+    repo = _s(rec.get("repository"))
+    tag = _s(rec.get("tag"))
+    ext = iid or (f"{repo}:{tag}" if repo else None)
+    if not ext:
+        return
+    img_id = f"container:image:{ext}"
+    entities.append(
+        {
+            "id": img_id,
+            "node_type": "ContainerImage",
+            "name": f"{repo}:{tag}" if repo and tag else (repo or ext),
+            "imageRepository": repo,
+            "imageTag": tag,
+            "imageSize": _s(rec.get("size")),
+            "created_at": _s(rec.get("created")),
+            "externalToolId": ext,
+        }
+    )
+    _link_image_source_repo(rec, img_id, seen_repos, entities, relationships)
 
 
 def ingest_images(
@@ -174,46 +242,7 @@ def ingest_images(
     relationships: list[dict[str, Any]] = []
     seen_repos: set[str] = set()
     for rec in images or []:
-        iid = _s(rec.get("id"))
-        repo = _s(rec.get("repository"))
-        tag = _s(rec.get("tag"))
-        ext = iid or (f"{repo}:{tag}" if repo else None)
-        if not ext:
-            continue
-        img_id = f"container:image:{ext}"
-        entities.append(
-            {
-                "id": img_id,
-                "node_type": "ContainerImage",
-                "name": f"{repo}:{tag}" if repo and tag else (repo or ext),
-                "imageRepository": repo,
-                "imageTag": tag,
-                "imageSize": _s(rec.get("size")),
-                "created_at": _s(rec.get("created")),
-                "externalToolId": ext,
-            }
-        )
-        labels = rec.get("labels") or {}
-        source_url = _s(labels.get(_SOURCE_LABEL)) or _s(labels.get(_VCS_URL_LABEL))
-        normalized = _normalize_source_url(source_url) if source_url else None
-        if normalized:
-            clean_url, repo_node = normalized
-            if repo_node not in seen_repos:
-                seen_repos.add(repo_node)
-                entities.append(
-                    {
-                        "id": repo_node,
-                        "node_type": "Repository",
-                        "url": clean_url,
-                    }
-                )
-            relationships.append(
-                {
-                    "source": img_id,
-                    "target": repo_node,
-                    "relationship": "builtFrom",
-                }
-            )
+        _ingest_image_record(rec, seen_repos, entities, relationships)
     return ingest_entities(entities, relationships or None, client=client, graph=graph)
 
 
@@ -409,6 +438,62 @@ def ingest_pods(
     return ingest_entities(entities, relationships, client=client, graph=graph)
 
 
+def _digit_str_to_int(value: Any) -> int | None:
+    return int(value) if isinstance(value, (int, str)) and str(value).isdigit() else None
+
+
+def _ingest_deployment_record(
+    rec: dict[str, Any],
+    seen_images: set[str],
+    entities: list[dict[str, Any]],
+    relationships: list[dict[str, Any]],
+) -> None:
+    did = _s(rec.get("id")) or _s(rec.get("name"))
+    if not did:
+        return
+    node_id = f"container:deployment:{did}"
+    ns = _s(rec.get("namespace"))
+    image_ref = _s(rec.get("image"))
+    entities.append(
+        {
+            "id": node_id,
+            "node_type": "Deployment",
+            "name": _s(rec.get("name")),
+            "namespace": ns,
+            "image": image_ref,
+            "deploymentReplicas": _digit_str_to_int(rec.get("replicas")),
+            "deploymentReadyReplicas": _digit_str_to_int(rec.get("ready_replicas")),
+            "portMappings": _s(rec.get("ports")),
+            "created_at": _s(rec.get("created")),
+            "updated_at": _s(rec.get("updated")),
+            "externalToolId": did,
+        }
+    )
+    if image_ref and image_ref not in ("unknown", "none"):
+        img_id = f"container:image:{image_ref}"
+        if image_ref not in seen_images:
+            seen_images.add(image_ref)
+            entities.append(
+                {
+                    "id": img_id,
+                    "node_type": "ContainerImage",
+                    "name": image_ref,
+                    "externalToolId": image_ref,
+                }
+            )
+        relationships.append(
+            {"source": node_id, "target": img_id, "relationship": "usesImage"}
+        )
+    if ns:
+        relationships.append(
+            {
+                "source": node_id,
+                "target": f"container:namespace:{ns}",
+                "relationship": "runsInNamespace",
+            }
+        )
+
+
 def ingest_deployments(
     records: list[dict[str, Any]],
     *,
@@ -426,60 +511,7 @@ def ingest_deployments(
     relationships: list[dict[str, Any]] = []
     seen_images: set[str] = set()
     for rec in records or []:
-        did = _s(rec.get("id")) or _s(rec.get("name"))
-        if not did:
-            continue
-        node_id = f"container:deployment:{did}"
-        ns = _s(rec.get("namespace"))
-        image_ref = _s(rec.get("image"))
-        replicas = rec.get("replicas")
-        ready = rec.get("ready_replicas")
-        entities.append(
-            {
-                "id": node_id,
-                "node_type": "Deployment",
-                "name": _s(rec.get("name")),
-                "namespace": ns,
-                "image": image_ref,
-                "deploymentReplicas": (
-                    int(replicas)
-                    if isinstance(replicas, (int, str)) and str(replicas).isdigit()
-                    else None
-                ),
-                "deploymentReadyReplicas": (
-                    int(ready)
-                    if isinstance(ready, (int, str)) and str(ready).isdigit()
-                    else None
-                ),
-                "portMappings": _s(rec.get("ports")),
-                "created_at": _s(rec.get("created")),
-                "updated_at": _s(rec.get("updated")),
-                "externalToolId": did,
-            }
-        )
-        if image_ref and image_ref not in ("unknown", "none"):
-            img_id = f"container:image:{image_ref}"
-            if image_ref not in seen_images:
-                seen_images.add(image_ref)
-                entities.append(
-                    {
-                        "id": img_id,
-                        "node_type": "ContainerImage",
-                        "name": image_ref,
-                        "externalToolId": image_ref,
-                    }
-                )
-            relationships.append(
-                {"source": node_id, "target": img_id, "relationship": "usesImage"}
-            )
-        if ns:
-            relationships.append(
-                {
-                    "source": node_id,
-                    "target": f"container:namespace:{ns}",
-                    "relationship": "runsInNamespace",
-                }
-            )
+        _ingest_deployment_record(rec, seen_images, entities, relationships)
     return ingest_entities(entities, relationships, client=client, graph=graph)
 
 
