@@ -24,7 +24,7 @@ import os
 import socket
 import sys
 
-__version__ = "2.0.1"
+__version__ = "3.1.0"
 
 # --- Guarded reuse of the server's own managers/inventory --------------------
 # These are the real code paths the MCP server uses; importing them here means
