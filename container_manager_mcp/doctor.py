@@ -554,7 +554,6 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
     for _label, ctx_value in targets:
         checks.extend(_probe_kubernetes_context(ctx_value))
     return checks
-    return checks
 
 
 # ---------------------------------------------------------------------------
