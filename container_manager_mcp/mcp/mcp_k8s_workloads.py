@@ -25,7 +25,9 @@ async def _describe_pod_action(manager, pod_name, namespace):
     )
 
 
-async def _exec_pod_action(manager, pod_name, namespace, command, exec_command, exec_container):
+async def _exec_pod_action(
+    manager, pod_name, namespace, command, exec_command, exec_container
+):
     if not pod_name:
         return "Error: 'pod_name' is required for exec_pod"
     cmd = command if command else (exec_command.split() if exec_command else None)
@@ -38,7 +40,9 @@ async def _exec_pod_action(manager, pod_name, namespace, command, exec_command, 
     )
 
 
-async def _port_forward_pod_action(manager, pod_name, namespace, local_port, remote_port):
+async def _port_forward_pod_action(
+    manager, pod_name, namespace, local_port, remote_port
+):
     if not pod_name or not local_port or not remote_port:
         return "Error: 'pod_name', 'local_port', and 'remote_port' are required for port_forward_pod"
     return await run_blocking(
@@ -63,8 +67,12 @@ async def _attach_pod_action(manager, pod_name, namespace, attach_container):
 
 async def _copy_pod_action(manager, action, pod_name, ns, source, destination):
     if not pod_name or not source or not destination:
-        return f"Error: 'pod_name', 'source', and 'destination' are required for {action}"
-    return await run_blocking(getattr(manager, action), pod_name, ns, source, destination)
+        return (
+            f"Error: 'pod_name', 'source', and 'destination' are required for {action}"
+        )
+    return await run_blocking(
+        getattr(manager, action), pod_name, ns, source, destination
+    )
 
 
 async def _dispatch_pod_action(
@@ -96,11 +104,15 @@ async def _dispatch_pod_action(
             manager, pod_name, namespace, command, exec_command, exec_container
         )
     if action == "port_forward_pod":
-        return await _port_forward_pod_action(manager, pod_name, namespace, local_port, remote_port)
+        return await _port_forward_pod_action(
+            manager, pod_name, namespace, local_port, remote_port
+        )
     if action == "attach_pod":
         return await _attach_pod_action(manager, pod_name, namespace, attach_container)
     if action in ("copy_to_pod", "copy_from_pod"):
-        return await _copy_pod_action(manager, action, pod_name, ns, source, destination)
+        return await _copy_pod_action(
+            manager, action, pod_name, ns, source, destination
+        )
     return _UNHANDLED
 
 
@@ -360,49 +372,41 @@ def register_k8sworkloads_tools(mcp: FastMCP):
     )
     async def cm_k8s_workloads(
         action: Literal[
-            # Pods
-            "list_pods",
-            "describe_pod",
-            "exec_pod",
-            "port_forward_pod",
             "attach_pod",
-            "copy_to_pod",
             "copy_from_pod",
-            # Rollouts
-            "rollout_status",
-            "rollout_history",
-            "rollout_restart",
-            "rollout_undo",
-            "rollout_pause",
-            "rollout_resume",
-            # Deployment / update strategies
-            "set_deployment_strategy",
-            "get_deployment_strategy",
-            "set_daemonset_update_strategy",
-            "get_daemonset_update_strategy",
-            "set_statefulset_update_strategy",
-            "get_statefulset_update_strategy",
-            # StatefulSets
-            "list_statefulsets",
-            "create_stateful_set",
-            "scale_statefulset",
-            # DaemonSets
-            "list_daemonsets",
-            "create_daemon_set",
-            # ReplicaSets
-            "list_replicasets",
-            "describe_replicaset",
-            "scale_replicaset",
-            # Jobs
-            "list_jobs",
-            "describe_job",
-            "create_job",
-            "delete_job",
-            # CronJobs
-            "list_cron_jobs",
-            "describe_cron_job",
+            "copy_to_pod",
             "create_cron_job",
+            "create_daemon_set",
+            "create_job",
+            "create_stateful_set",
             "delete_cron_job",
+            "delete_job",
+            "describe_cron_job",
+            "describe_job",
+            "describe_pod",
+            "describe_replicaset",
+            "exec_pod",
+            "get_daemonset_update_strategy",
+            "get_deployment_strategy",
+            "get_statefulset_update_strategy",
+            "list_cron_jobs",
+            "list_daemonsets",
+            "list_jobs",
+            "list_pods",
+            "list_replicasets",
+            "list_statefulsets",
+            "port_forward_pod",
+            "rollout_history",
+            "rollout_pause",
+            "rollout_restart",
+            "rollout_resume",
+            "rollout_status",
+            "rollout_undo",
+            "scale_replicaset",
+            "scale_statefulset",
+            "set_daemonset_update_strategy",
+            "set_deployment_strategy",
+            "set_statefulset_update_strategy",
         ] = Field(
             description="Workload action to perform (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs)."
         ),
