@@ -384,6 +384,9 @@ def register_k8sworkloads_tools(mcp: FastMCP):
             "openWorldHint": True,
         },
         tags={"kubernetes", "workloads"},
+        meta={
+            "eg.annotations": {"modalities_in": ["text"], "modalities_out": ["text"]}
+        },
     )
     async def cm_k8s_workloads(
         action: Literal[

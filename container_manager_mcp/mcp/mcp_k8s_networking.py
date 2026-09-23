@@ -83,7 +83,9 @@ async def _delete_networkpolicy_action(manager, netpol_name, namespace):
 
 async def _create_network_policy_with_cidr_action(manager, name, ns, spec):
     if not name or not spec:
-        return "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
+        return (
+            "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
+        )
     return await run_blocking(manager.create_network_policy_with_cidr, name, ns, spec)
 
 
@@ -105,7 +107,9 @@ async def _dispatch_networkpolicy_action(
     if action == "list_networkpolicies":
         return await run_blocking(manager.list_networkpolicies, namespace=namespace)
     if action == "create_networkpolicy":
-        return await _create_networkpolicy_action(manager, netpol_name, namespace, netpol_spec)
+        return await _create_networkpolicy_action(
+            manager, netpol_name, namespace, netpol_spec
+        )
     if action == "delete_networkpolicy":
         return await _delete_networkpolicy_action(manager, netpol_name, namespace)
     if action == "create_network_policy_with_cidr":
@@ -280,6 +284,9 @@ def register_k8snetworking_tools(mcp: FastMCP):
             "openWorldHint": True,
         },
         tags={"kubernetes", "networking"},
+        meta={
+            "eg.annotations": {"modalities_in": ["text"], "modalities_out": ["text"]}
+        },
     )
     async def cm_k8s_networking(
         action: Literal[

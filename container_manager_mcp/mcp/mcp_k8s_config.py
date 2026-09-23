@@ -102,9 +102,13 @@ async def _dispatch_crd_action(
     return _UNHANDLED
 
 
-async def _label_resource_action(manager, resource_type, resource_name, namespace, labels):
+async def _label_resource_action(
+    manager, resource_type, resource_name, namespace, labels
+):
     if not resource_type or not resource_name:
-        return "Error: 'resource_type' and 'resource_name' are required for label_resource"
+        return (
+            "Error: 'resource_type' and 'resource_name' are required for label_resource"
+        )
     labels_dict = json.loads(labels) if labels else None
     return await run_blocking(
         manager.label_resource,
@@ -130,7 +134,9 @@ async def _annotate_resource_action(
     )
 
 
-async def _patch_resource_action(manager, resource_type, name, namespace, patch_body, patch_type):
+async def _patch_resource_action(
+    manager, resource_type, name, namespace, patch_body, patch_type
+):
     if not resource_type or not name:
         return "Error: 'resource_type' and 'name' are required for patch_resource"
     patch = json.loads(patch_body) if patch_body else None
@@ -195,7 +201,9 @@ async def _get_secret_state_hash_action(manager, name, namespace):
 
 async def _track_resource_version_action(manager, resource_type, name, namespace):
     if not resource_type or not name:
-        return "Error: 'resource_type' and 'name' are required for track_resource_version"
+        return (
+            "Error: 'resource_type' and 'name' are required for track_resource_version"
+        )
     return await run_blocking(
         manager.track_resource_version, resource_type, name, namespace
     )
@@ -238,7 +246,9 @@ async def _dispatch_state_tracking_action(
     if action == "get_secret_state_hash":
         return await _get_secret_state_hash_action(manager, name, namespace)
     if action == "track_resource_version":
-        return await _track_resource_version_action(manager, resource_type, name, namespace)
+        return await _track_resource_version_action(
+            manager, resource_type, name, namespace
+        )
     if action == "wait_for_resource_version":
         return await _wait_for_resource_version_action(
             manager, resource_type, name, namespace, target_version, timeout
@@ -335,6 +345,9 @@ def register_k8sconfig_tools(mcp: FastMCP):
             "openWorldHint": True,
         },
         tags={"kubernetes", "config"},
+        meta={
+            "eg.annotations": {"modalities_in": ["text"], "modalities_out": ["text"]}
+        },
     )
     async def cm_k8s_config(
         action: Literal[
