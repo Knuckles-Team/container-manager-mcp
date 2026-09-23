@@ -205,6 +205,18 @@ async def _dispatch_daemonset_action(action, manager, ns, name, namespace, spec)
     return _UNHANDLED
 
 
+async def _dispatch_deployment_action(action, manager, ns):
+    # KubernetesManager.list_services() is the cross-backend "service"
+    # abstraction realized as Kubernetes Deployments (it calls
+    # apps.list_deployment_for_all_namespaces() and returns
+    # _deployment_summary() rows, matching the swarm/compose "service" ==
+    # "deployment" naming this manager base class uses elsewhere) -- it
+    # takes no namespace argument.
+    if action == "list_services":
+        return await run_blocking(manager.list_services)
+    return _UNHANDLED
+
+
 async def _dispatch_replicaset_action(action, manager, ns, name, namespace, replicas):
     if action == "list_replicasets":
         return await run_blocking(manager.list_replica_sets, namespace=namespace)
@@ -278,6 +290,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "list_statefulsets": "statefulset",
     "create_stateful_set": "statefulset",
     "scale_statefulset": "statefulset",
+    "list_services": "deployment",
     "list_daemonsets": "daemonset",
     "create_daemon_set": "daemonset",
     "list_replicasets": "replicaset",
@@ -299,6 +312,7 @@ _GROUP_FUNCS = {
     "rollout": _dispatch_rollout_action,
     "strategy": _dispatch_strategy_action,
     "statefulset": _dispatch_statefulset_action,
+    "deployment": _dispatch_deployment_action,
     "daemonset": _dispatch_daemonset_action,
     "replicaset": _dispatch_replicaset_action,
     "job": _dispatch_job_action,
@@ -336,6 +350,7 @@ _GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
         "replicas",
         "spec",
     ),
+    "deployment": (),
     "daemonset": (
         "name",
         "namespace",
@@ -391,6 +406,7 @@ def register_k8sworkloads_tools(mcp: FastMCP):
             "get_statefulset_update_strategy",
             "list_cron_jobs",
             "list_daemonsets",
+            "list_services",
             "list_jobs",
             "list_pods",
             "list_replicasets",
@@ -408,7 +424,7 @@ def register_k8sworkloads_tools(mcp: FastMCP):
             "set_deployment_strategy",
             "set_statefulset_update_strategy",
         ] = Field(
-            description="Workload action to perform (pods, rollouts, strategies, statefulsets, daemonsets, replicasets, jobs, cronjobs)."
+            description="Workload action to perform (pods, rollouts, strategies, deployments, statefulsets, daemonsets, replicasets, jobs, cronjobs)."
         ),
         pod_name: str | None = Field(
             default=None, description="Pod name for pod operations"

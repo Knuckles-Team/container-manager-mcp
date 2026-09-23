@@ -1,12 +1,12 @@
 {
-  "algorithm": "agent-utilities:mcp-tool-schema-compat:v1",
+  "algorithm": "agent-connector-sdk:mcp-tool-contract-compat:v2",
   "connector": "container-manager-mcp",
   "schema_version": "1",
   "tools": {
-    "cm_container_operations": "a977a24486bb17afc52241d14551d486a382b1d18dd8ae68c8079eb14f5bbeeb",
-    "cm_image_operations": "42724d6685092e1bd1ac36dc8b460182fac87d70a8e171608efb8ca490f925b0",
-    "cm_k8s_config": "7e58e8c86ac219c4d31f3e89af16360bf5f92075fec0735f2df8626ccb070a3b",
-    "cm_k8s_networking": "5f80b42a40bf2da0def9c9a8749778fb65e9292dab4d319ae3244c4f59c61bf9",
-    "cm_k8s_workloads": "1869d52a5bfbecc70965e51cfcd9c896b161d714d9d2b76bfb3f57077caf95ef"
+    "cm_container_operations": "38452a599188f5992ac1371497e55016c473c8185c548bf4f017d047d416307a",
+    "cm_image_operations": "8c3562d973117a1039a1f5f87e02384654f497dc82968edffb546c9e20e92359",
+    "cm_k8s_config": "6dabcffe3ccac3ca8f6ae9f15a4208e0b5d88b0c2804d5ab8ef7ff78292e255b",
+    "cm_k8s_networking": "2ab9a8996ff54dff403c43d622e3c6be030c10e26548cf2504a8843db8370c06",
+    "cm_k8s_workloads": "a76255b07c291af2653262ddd115ca673200ce36a5b6e061afeb063568ea4a30"
   }
 }
