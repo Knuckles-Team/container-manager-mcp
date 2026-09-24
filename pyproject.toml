@@ -9,7 +9,7 @@ description = "Container Manager - manage Docker, Docker Swarm, and Podman conta
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-utilities[mcp]>=2.0.0,<3.0.0", "docker[ssh]>=7.2.0", "tunnel-manager>=2.0.0",]
+dependencies = [ "agent-connector-sdk>=0.1.0,<1.0.0", "agent-utilities[mcp]>=2.0.0,<3.0.0", "docker[ssh]>=7.2.0", "tunnel-manager>=2.0.0",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -22,14 +22,12 @@ podman = [ "podman>=5.8.0",]
 docker = [ "docker[ssh]>=7.2.0",]
 kubernetes = [ "kubernetes>=36.0.3",]
 mcp = [ "agent-utilities[mcp]>=2.0.0,<3.0.0", "docker[ssh]>=7.2.0", "podman>=5.8.0", "kubernetes>=36.0.3",]
-agent = [ "agent-utilities[agent-runtime,logfire]>=2.0.0,<3.0.0", "container-manager-mcp[mcp]>=2.0.0",]
-all = [ "container-manager-mcp[docker,podman,kubernetes,mcp,agent]>=2.0.0",]
+all = [ "container-manager-mcp[docker,podman,kubernetes,mcp]>=2.0.0",]
 test = [
     "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
 container-manager-mcp = "container_manager_mcp.mcp_server:mcp_server"
-container-manager-agent = "container_manager_mcp.agent_server:agent_server"
 container-manager-doctor = "container_manager_mcp.doctor:doctor"
 container-manager-health = "container_manager_mcp.orch_health:main_sample"
 container-manager-health-derive = "container_manager_mcp.orch_health:main_derive"
@@ -88,4 +86,5 @@ override-dependencies = [
 ]
 
 [tool.uv.sources]
+agent-connector-sdk = { path = ".uv-workspace-siblings/agent-connector-sdk", editable = true }
 agent-utilities = { path = ".uv-workspace-siblings/agent-utilities", editable = true }

@@ -7,7 +7,7 @@ metrics/history, watch/stream/events, field-selector listing, and debug helpers.
 import logging
 from typing import Literal
 
-from agent_utilities.mcp.concurrency import run_blocking
+from agent_connector_sdk.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 

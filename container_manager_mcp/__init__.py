@@ -16,7 +16,6 @@ CORE_MODULES: list[str] = [
 # runtime (`pydantic-ai`). Each maps to the pip extra that provides its dependencies.
 OPTIONAL_MODULES = {
     "container_manager_mcp.mcp_server": "mcp",
-    "container_manager_mcp.agent_server": "agent",
 }
 
 

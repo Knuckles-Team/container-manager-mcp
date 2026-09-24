@@ -199,50 +199,6 @@ def test_mcp_server_coverage(mock_container_deps):
             asyncio.run(run_tools())
 
 
-@patch("container_manager_mcp.agent_server.create_agent_server")
-@patch("container_manager_mcp.agent_server.create_agent_parser")
-@patch("container_manager_mcp.agent_server.load_identity")
-@patch("container_manager_mcp.agent_server.initialize_workspace")
-def test_agent_server_coverage(
-    _mock_init_workspace,
-    mock_load_identity,
-    mock_create_parser,
-    mock_create_server,
-):
-    from container_manager_mcp.agent_server import agent_server
-
-    mock_load_identity.return_value = {
-        "name": "Test Agent",
-        "description": "Test Description",
-        "content": "Test system prompt",
-    }
-    mock_parser = MagicMock()
-    mock_args = MagicMock()
-    mock_args.debug = False
-    mock_args.mcp_url = "http://localhost:8000/mcp"
-    mock_args.mcp_config = None
-    mock_args.host = "0.0.0.0"
-    mock_args.port = 9000
-    mock_args.provider = "openai"
-    mock_args.model_id = "gpt-4"
-    mock_args.base_url = None
-    mock_args.api_key = None
-    mock_args.custom_skills_directory = None
-    mock_args.web = False
-    mock_args.otel = False
-    mock_args.otel_endpoint = None
-    mock_args.otel_headers = None
-    mock_args.otel_public_key = None
-    mock_args.otel_secret_key = None
-    mock_args.otel_protocol = None
-    mock_parser.parse_args.return_value = mock_args
-    mock_create_parser.return_value = mock_parser
-
-    with patch("sys.argv", ["agent_server.py"]):
-        agent_server()
-        assert mock_create_server.called
-
-
 def test_main_coverage():
     from container_manager_mcp.container_manager import container_manager
 
