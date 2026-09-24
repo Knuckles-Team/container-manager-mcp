@@ -54,6 +54,21 @@ def _s(value: Any) -> str | None:
     return text or None
 
 
+def _resolution_keys(**attributes: str | None) -> dict[str, str] | None:
+    """EH-410: the telemetry attributes this entity's signals carry.
+
+    epistemic-graph's ``TelemetryDerive`` binds OTLP resource attributes and
+    Prometheus labels to the individual whose ``resolution_keys`` declare the
+    same values (OpenTelemetry semantic-convention names; dots are written as
+    ``__`` in the keyword and restored here). Absent values are left out, and
+    an entity with none declares nothing rather than an empty key set.
+    """
+    keys = {
+        name.replace("__", "."): value for name, value in attributes.items() if value
+    }
+    return keys or None
+
+
 def _ingest_container_record(
     rec: dict[str, Any],
     host: str | None,
@@ -124,7 +139,14 @@ def ingest_containers(
             rec, host, host_id, seen_images, entities, relationships
         )
     if host_id and entities:
-        entities.append({"id": host_id, "node_type": "Host", "name": host})
+        entities.append(
+            {
+                "id": host_id,
+                "node_type": "Host",
+                "name": host,
+                "resolution_keys": _resolution_keys(host__name=host),
+            }
+        )
     return ingest_entities(entities, relationships, client=client, graph=graph)
 
 
@@ -319,6 +341,7 @@ def ingest_services(
                 "id": node_id,
                 "node_type": "SwarmService",
                 "name": _s(rec.get("name")),
+                "resolution_keys": _resolution_keys(service__name=_s(rec.get("name"))),
                 "image": image_ref,
                 "serviceReplicas": (
                     int(replicas)
@@ -404,6 +427,9 @@ def ingest_pods(
                 "node_type": "Pod",
                 "name": name,
                 "namespace": ns,
+                "resolution_keys": _resolution_keys(
+                    k8s__pod__name=name, k8s__namespace__name=ns
+                ),
                 "podPhase": _s(rec.get("status")),
                 "created_at": _s(rec.get("created")),
                 "externalToolId": name,
@@ -460,6 +486,9 @@ def _ingest_deployment_record(
             "node_type": "Deployment",
             "name": _s(rec.get("name")),
             "namespace": ns,
+            "resolution_keys": _resolution_keys(
+                k8s__deployment__name=_s(rec.get("name")), k8s__namespace__name=ns
+            ),
             "image": image_ref,
             "deploymentReplicas": _digit_str_to_int(rec.get("replicas")),
             "deploymentReadyReplicas": _digit_str_to_int(rec.get("ready_replicas")),
@@ -570,6 +599,9 @@ def ingest_k8s_services(
                 "node_type": "K8sService",
                 "name": name,
                 "namespace": ns,
+                "resolution_keys": _resolution_keys(
+                    service__name=name, k8s__namespace__name=ns
+                ),
                 "serviceType": _s(rec.get("type")),
                 "created_at": _s(rec.get("created")),
                 "externalToolId": name,

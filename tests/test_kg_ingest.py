@@ -459,3 +459,40 @@ def test_retired_node_type_alias_is_rejected():
 def test_empty_native_ingest_is_rejected():
     with pytest.raises(NativeIngestError, match="at least one entity"):
         ingest_entities([], client=_FakeClient())
+
+
+def test_inventory_entities_declare_their_telemetry_resolution_keys(monkeypatch):
+    """EH-410: every inventory entity telemetry can be about declares the
+    OpenTelemetry resource attributes its signals carry, so epistemic-graph's
+    TelemetryDerive binds a span/sample to it by exact value (never a guess)."""
+    import container_manager_mcp.kg_ingest as kg
+
+    written: dict[str, dict[str, Any]] = {}
+
+    def capture(entities, relationships=None, **_kwargs):
+        written.update({entity["id"]: entity for entity in entities})
+        return {"nodes": len(entities), "edges": len(relationships or [])}
+
+    monkeypatch.setattr(kg, "ingest_entities", capture)
+    kg.ingest_containers([{"id": "abc123", "name": "web"}], host="node-7")
+    kg.ingest_pods([{"name": "web-1", "namespace": "shop"}])
+    kg.ingest_deployments([{"name": "web", "namespace": "shop"}])
+    kg.ingest_k8s_services([{"name": "checkout", "namespace": "shop"}])
+    kg.ingest_services([{"id": "s1", "name": "proxy"}])
+    keys = {node_id: node.get("resolution_keys") for node_id, node in written.items()}
+    assert keys["container:host:node-7"] == {"host.name": "node-7"}
+    assert keys["container:pod:shop/web-1"] == {
+        "k8s.pod.name": "web-1",
+        "k8s.namespace.name": "shop",
+    }
+    assert keys["container:deployment:web"] == {
+        "k8s.deployment.name": "web",
+        "k8s.namespace.name": "shop",
+    }
+    assert keys["container:k8sservice:shop/checkout"] == {
+        "service.name": "checkout",
+        "k8s.namespace.name": "shop",
+    }
+    assert keys["container:service:s1"] == {"service.name": "proxy"}
+    # an entity with no resolvable attribute declares nothing
+    assert keys["container:container:abc123"] is None
