@@ -296,6 +296,9 @@ def register_image_tools(mcp: FastMCP):
             "openWorldHint": True,
         },
         tags={"image"},
+        meta={
+            "eg.annotations": {"modalities_in": ["text"], "modalities_out": ["text"]}
+        },
     )
     async def cm_image_operations(
         action: Literal[
@@ -410,6 +413,13 @@ def register_container_tools(mcp: FastMCP):
             "openWorldHint": True,
         },
         tags={"container"},
+        meta={
+            "eg.annotations": {
+                "modalities_in": ["text"],
+                "modalities_out": ["text"],
+                "provides": ["eg:capability/action/process-exec"],
+            }
+        },
     )
     async def cm_container_operations(
         action: Literal[
@@ -785,7 +795,9 @@ async def _update_swarm_service_action(manager, service_id, replicas, updates):
     if not service_id:
         return "Error: 'service_id' is required"
     p_env = json.loads(updates["env"]) if updates["env"] else None
-    p_constraints = json.loads(updates["constraints"]) if updates["constraints"] else None
+    p_constraints = (
+        json.loads(updates["constraints"]) if updates["constraints"] else None
+    )
     p_labels = json.loads(updates["labels"]) if updates["labels"] else None
     return await run_blocking(
         manager.update_service,
