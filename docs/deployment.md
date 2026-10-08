@@ -119,7 +119,7 @@ Tool modules are individually togglable (each defaults to `True`):
 `SYSTEMTOOL`, `COMPOSETOOL`, `MISCTOOL`. The complete variable set, grouped by area,
 is documented in
 [`.env.example`](https://github.com/Knuckles-Team/container-manager-mcp/blob/main/.env.example).
-Copy it to `.env` and adjust only what you use.
+Copy it to `.env` and adjust only what the operator use.
 
 ## Docker Compose
 
@@ -203,7 +203,7 @@ docker compose -f docker/agent.compose.yml up -d
 
 ## Behind a Caddy reverse proxy
 
-Expose the HTTP server on a hostname with automatic TLS. Add to your `Caddyfile`:
+Expose the HTTP server on a hostname with automatic TLS. Add to the operator's `Caddyfile`:
 
 ```caddy
 # Internal (self-signed) — homelab .example.invalid zone
@@ -247,7 +247,7 @@ this as a tool.
 
 ## Register with an MCP client
 
-Add to your client's `mcp_config.json` (multiplexer nickname `cnt`):
+Add to the operator's client's `mcp_config.json` (multiplexer nickname `cnt`):
 
 ```json
 {

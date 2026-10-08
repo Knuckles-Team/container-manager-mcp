@@ -52,7 +52,7 @@ Linking properties include `:runsInNamespace` (Pod/Deployment/K8sService → Nam
 
 `cm_ingest_inventory` accepts a `modality` of `all`, `containers`, `images`, `volumes`, `networks`,
 `services`, `nodes`, and — when the active manager is Kubernetes — `pods`, `deployments`, `namespaces`, and
-`k8s_services`. `modality="all"` always sweeps the Docker/Swarm-shaped modalities and additionally sweeps the
+`k8s_services`. `modality="all"` always sweeps the Docker/Swarm-shaped modalities and also sweeps the
 four Kubernetes modalities when `CONTAINER_MANAGER_TYPE=kubernetes` (or the resolved manager is a
 `KubernetesManager`). See [Kubernetes](kubernetes.md) for the tool surface these modalities are sourced from.
 

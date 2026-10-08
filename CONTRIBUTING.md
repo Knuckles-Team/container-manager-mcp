@@ -39,7 +39,7 @@ For feature requests, describe:
   execution.
 - Any security or policy implications, especially for Eunomia, OIDC delegation,
   SSH, Kubernetes RBAC, and destructive operations.
-- Documentation that would need to change.
+- Documentation that will must change.
 
 ## Development Setup
 
@@ -53,7 +53,7 @@ uv run container-manager-agent --help
 uv run container-manager-doctor --help
 ```
 
-If you use `pip`, install the project extras you need:
+If the operator use `pip`, install the project extras the operator need:
 
 ```bash
 python -m pip install -e ".[all,test]"
@@ -122,7 +122,7 @@ Update docs in the same pull request when behavior changes:
 - Agent skills: `container_manager_mcp/skills/*/SKILL.md`
 
 The README has generated sections for MCP tools, environment variables, and MCP
-config examples. Do not hand-edit generated blocks unless you are also running
+config examples. Do not hand-edit generated blocks unless the operator are also running
 the corresponding sync hook.
 
 ## Pull Request Process

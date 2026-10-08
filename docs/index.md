@@ -29,7 +29,7 @@ agent for conversational orchestration. It provides:
   and 8 themed Kubernetes tool modules) that minimize LLM context overhead.
   See [Kubernetes](kubernetes.md) for the full k8s tool breakdown.
 - **Multi-context parallel operation** — `cm_multi_context` fans a single call out
-  across several Docker, Podman, Swarm, and/or Kubernetes contexts at once.
+  across multiple Docker, Podman, Swarm, and/or Kubernetes contexts at once.
 - **Zero-script multi-host control** — route any Docker/Podman operation to a remote
   host over a standard SSH channel, with no Docker TCP socket exposed, driven from a
   unified `inventory.yml` (`.yaml` legacy fallback); remote Kubernetes clusters are
@@ -41,7 +41,7 @@ agent for conversational orchestration. It provides:
 
 <div class="grid cards" markdown>
 
-- :material-rocket-launch: **[Installation](installation.md)** — pip, source, extras, and the prebuilt Docker image.
+- :material-rocket-start: **[Installation](installation.md)** — pip, source, extras, and the prebuilt Docker image.
 - :material-server-network: **[Deployment](deployment.md)** — run the MCP and agent servers, Docker Compose, Caddy + Technitium.
 - :material-console: **[Usage](usage.md)** — the MCP tools, the `DockerManager` Python API, and the CLI.
 - :material-sitemap: **[Overview](overview.md)** — ecosystem role, enterprise readiness, and architecture.
