@@ -5,7 +5,8 @@ simultaneously with context selection.
 """
 
 import logging
-from typing import Literal
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -14,9 +15,21 @@ from pydantic import Field
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
+if TYPE_CHECKING:
+    from container_manager_mcp.multi_context_manager import MultiContextManager
+
 
 def _dispatch_container_action(
-    action, target_manager, all_, command, environment, force, image, name, ports, volumes
+    action,
+    target_manager,
+    all_,
+    command,
+    environment,
+    force,
+    image,
+    name,
+    ports,
+    volumes,
 ):
     if action == "list_containers":
         return target_manager.list_containers(all=all_)
@@ -105,11 +118,15 @@ def _describe_pod_kubernetes_action(target_manager, name, namespace, ns):
 
 def _scale_deployment_kubernetes_action(target_manager, name, namespace, replicas, ns):
     if not name or not namespace or replicas is None:
-        raise ValueError("name, namespace, and replicas are required for scale_deployment")
+        raise ValueError(
+            "name, namespace, and replicas are required for scale_deployment"
+        )
     return target_manager.scale_service(name, replicas, namespace=ns)
 
 
-def _dispatch_kubernetes_only_action(action, target_manager, backend, name, namespace, replicas):
+def _dispatch_kubernetes_only_action(
+    action, target_manager, backend, name, namespace, replicas
+):
     if backend != "kubernetes":
         raise ValueError(f"{action} is only available for Kubernetes, not {backend}")
     ns = namespace or "default"
@@ -120,7 +137,9 @@ def _dispatch_kubernetes_only_action(action, target_manager, backend, name, name
     if action == "list_deployments":
         return target_manager.list_deployments(namespace=ns)
     # action == "scale_deployment"
-    return _scale_deployment_kubernetes_action(target_manager, name, namespace, replicas, ns)
+    return _scale_deployment_kubernetes_action(
+        target_manager, name, namespace, replicas, ns
+    )
 
 
 _ACTION_GROUPS: dict[str, str] = {
@@ -147,7 +166,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "scale_deployment": "kubernetes_only",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Any]] = {
     "container": _dispatch_container_action,
     "image": _dispatch_image_action,
     "volume": _dispatch_volume_action,
@@ -157,7 +176,16 @@ _GROUP_FUNCS = {
 }
 
 _GROUP_PARAM_NAMES: dict[str, tuple[str, ...]] = {
-    "container": ("all_", "command", "environment", "force", "image", "name", "ports", "volumes"),
+    "container": (
+        "all_",
+        "command",
+        "environment",
+        "force",
+        "image",
+        "name",
+        "ports",
+        "volumes",
+    ),
     "image": ("force", "image", "name"),
     "volume": ("driver", "force", "name"),
     "network": ("driver", "force", "name"),
@@ -240,7 +268,12 @@ def register_multicontext_tools(mcp: FastMCP):
             ctx_log(ctx, logging.INFO, f"Executing cm_multi_context: {action}")
 
         def execute_operation():
-            manager = create_manager(manager_type="multi")
+            # `manager_type="multi"` always resolves to a real
+            # ``MultiContextManager`` pool (see `create_manager`'s
+            # docstring); the cast narrows past its general
+            # ``ContainerManagerBase`` return type for the pool-level
+            # `list_available_contexts()` / `get_manager()` calls below.
+            manager = cast("MultiContextManager", create_manager(manager_type="multi"))
 
             # Context Management
             if action == "list_contexts":

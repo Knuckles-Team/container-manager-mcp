@@ -40,9 +40,9 @@ class MultiContextManager:
         self.k8s_managers: dict[str, Any] = {}  # context_name -> KubernetesManager
         self.docker_managers: dict[str, Any] = {}  # context_name -> DockerManager
         self.podman_manager: Any = None  # Single Podman manager (local only)
-        self.swarm_managers: dict[str, Any] = (
-            {}
-        )  # context_name -> DockerManager (Swarm mode)
+        self.swarm_managers: dict[
+            str, Any
+        ] = {}  # context_name -> DockerManager (Swarm mode)
 
         # Default contexts
         self.default_k8s_context: str | None = None
@@ -564,7 +564,7 @@ class MultiContextManager:
         pool = self._managers_for_backend(backend)
         target_contexts = contexts if contexts is not None else list(pool.keys())
 
-        futures: dict[str, Future] = {}
+        futures: dict[str, Future | None] = {}
         for context_name in target_contexts:
             manager = pool.get(context_name)
             if manager is None:

@@ -1,11 +1,54 @@
 """ObservabilityMixin for KubernetesManager (split from k8s_manager.py)."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    from typing import Protocol
 
-class ObservabilityMixin:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+
+    class _DebugHost(Protocol):
+        """Self-type for ``debug_pod``/``debug_node``: the composed surface
+        those two methods actually call, spanning ``ConfigMixin``
+        (``get_resource_events``/``stream_pod_logs``) and
+        ``ClusterNodesMixin`` (``get_node_conditions``) rather than just
+        ``_K8sBase``. A real (non-``TYPE_CHECKING``) multiple-inheritance
+        ancestor here would put ``ConfigMixin``/``ClusterNodesMixin`` ahead of
+        ``ObservabilityMixin``, which conflicts with their order in
+        :class:`KubernetesManager`'s own base list and breaks MRO
+        linearization; a structural ``Protocol`` used only as a per-method
+        ``self`` annotation avoids that without touching the class bases.
+        """
+
+        core: Any
+
+        def log_action(
+            self,
+            action: str,
+            params: dict | None = None,
+            result: Any | None = None,
+            error: Exception | None = None,
+        ) -> None: ...
+
+        def get_resource_events(
+            self, resource_type: str, name: str, namespace: str | None = None
+        ) -> list[dict]: ...
+
+        def stream_pod_logs(
+            self, pod_name: str, namespace: str, tail_lines: int = 100
+        ) -> dict: ...
+
+        def get_node_conditions(self, node_name: str) -> dict: ...
+
+else:
+    _Base = object
+
+
+class ObservabilityMixin(_Base):
     def _metrics_server_pod_summary(self, metric, ns) -> dict:
         containers = metric.get("containers") or []
         return {
@@ -465,7 +508,7 @@ class ObservabilityMixin:
             self.log_action("get_autoscaler_history", params, error=e)
             raise RuntimeError("Failed to get autoscaler history") from e
 
-    def debug_pod(self, pod_name: str, namespace: str) -> dict:
+    def debug_pod(self: "_DebugHost", pod_name: str, namespace: str) -> dict:
         """Debug a pod by gathering diagnostic information."""
         params = {"pod_name": pod_name, "namespace": namespace}
         try:
@@ -492,7 +535,7 @@ class ObservabilityMixin:
             self.log_action("debug_pod", params, error=e)
             raise RuntimeError("Failed to debug pod") from e
 
-    def debug_node(self, node_name: str) -> dict:
+    def debug_node(self: "_DebugHost", node_name: str) -> dict:
         """Debug a node by gathering diagnostic information."""
         params = {"node_name": node_name}
         try:

@@ -1,11 +1,18 @@
 """RbacMixin for KubernetesManager (split from k8s_manager.py)."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class RbacMixin:
+
+class RbacMixin(_Base):
     def list_roles(self, namespace: str | None = None) -> list[dict]:
         """List Roles in a namespace."""
         params = {"namespace": namespace}

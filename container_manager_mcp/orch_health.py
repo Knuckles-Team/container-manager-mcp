@@ -483,9 +483,7 @@ def _notify(message: str) -> None:
             ).encode(),
             headers={"Content-Type": "application/json"},
         )
-        urllib.request.urlopen(
-            req, timeout=5
-        )  # noqa: S310  # nosec B310 — operator-configured URL
+        urllib.request.urlopen(req, timeout=5)  # noqa: S310  # nosec B310 — operator-configured URL
     except Exception as e:  # noqa: BLE001 — notification is best-effort
         logger.debug("notify skipped: %s", e)
 
@@ -542,9 +540,7 @@ def run_orch_derivation(
 
 def _learn_node_signal_baselines(
     nodes: list[str], days: int
-) -> tuple[
-    dict[str, dict[str, Any]], dict[str, dict[str, dict[str, Any] | None]]
-]:
+) -> tuple[dict[str, dict[str, Any]], dict[str, dict[str, dict[str, Any] | None]]]:
     """Phase 1: per node x signal, read trend history and compute baseline+anomaly."""
     results: dict[str, dict[str, Any]] = {node: {} for node in nodes}
     anomalies_by_signal: dict[str, dict[str, dict[str, Any] | None]] = {

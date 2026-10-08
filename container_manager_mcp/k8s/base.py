@@ -1,12 +1,28 @@
 """Base class for :class:`KubernetesManager`: __init__ + shared helpers."""
 
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # Type-checking-only ancestor: at runtime ``KubernetesManager`` composes
+    # ``_K8sBase`` and ``ContainerManagerBase`` explicitly as siblings (see
+    # k8s/manager.py), so ``_K8sBase`` never actually inherits from it -- the
+    # cooperative ``super().__init__(silent, log_file)`` call below and the
+    # ``self.logger`` / ``self.log_action`` uses across the k8s mixins are
+    # resolved dynamically at composition time. Declaring the inheritance here,
+    # gated on ``TYPE_CHECKING``, gives mypy the same view without adding
+    # ``ContainerManagerBase`` (or its ``ABC``/abstract-method machinery) to the
+    # real MRO. See k8s/manager.py for the before/after MRO proof.
+    from container_manager_mcp.container_manager import ContainerManagerBase
 
-class _K8sBase:
+    _Base = ContainerManagerBase
+else:
+    _Base = object
+
+
+class _K8sBase(_Base):
     def __init__(
         self,
         context: str | None = None,
@@ -183,9 +199,7 @@ class _K8sBase:
 
     def _node_addr(self, node) -> str:
         addresses = (node.status.addresses or []) if node.status else []
-        return next(
-            (a.address for a in addresses if a.type == "InternalIP"), "unknown"
-        )
+        return next((a.address for a in addresses if a.type == "InternalIP"), "unknown")
 
     def _node_platform(self, info) -> dict:
         return {

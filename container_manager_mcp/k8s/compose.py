@@ -3,9 +3,17 @@
 import os
 import subprocess
 import tempfile
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
 
-class ComposeMixin:
+class ComposeMixin(_Base):
     def compose_up(
         self, compose_file: str, detach: bool = True, build: bool = False
     ) -> str:

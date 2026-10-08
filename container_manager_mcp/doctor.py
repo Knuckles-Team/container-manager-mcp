@@ -23,6 +23,10 @@ import json
 import os
 import socket
 import sys
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    from container_manager_mcp.k8s.manager import KubernetesManager
 
 __version__ = "2.0.1"
 
@@ -441,7 +445,13 @@ def _resolve_kubernetes_targets(
 def _probe_kubernetes_context(ctx_value: str | None) -> list[dict]:
     checks: list[dict] = []
     try:
-        manager = create_manager("kubernetes", host=ctx_value)
+        # `manager_type="kubernetes"` always resolves to a concrete
+        # KubernetesManager (see `create_manager`'s `_build_manager` path);
+        # the cast narrows past its `ContainerManagerBase` return type so the
+        # k8s-only `validate_kubeconfig()` call below type-checks.
+        manager = cast(
+            "KubernetesManager", create_manager("kubernetes", host=ctx_value)
+        )
     except Exception as e:
         checks.append(
             _check(

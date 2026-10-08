@@ -1,11 +1,18 @@
 """NetworkingMixin for KubernetesManager (split from k8s_manager.py)."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class NetworkingMixin:
+
+class NetworkingMixin(_Base):
     def list_ingress(self, namespace: str | None = None) -> list[dict]:
         """List Ingress resources in a namespace."""
         params = {"namespace": namespace}
@@ -27,11 +34,9 @@ class NetworkingMixin:
             ]
             self.log_action("list_ingress", params, {"count": len(result)})
             return result
-        except ImportError:
+        except ImportError as e:
             # Networking API not available, return empty
-            self.log_action(
-                "list_ingress", params, error="Networking API not available"
-            )
+            self.log_action("list_ingress", params, error=e)
             return []
         except _km.ApiException as e:
             self.log_action("list_ingress", params, error=e)
@@ -99,10 +104,8 @@ class NetworkingMixin:
             ]
             self.log_action("list_networkpolicies", params, {"count": len(result)})
             return result
-        except ImportError:
-            self.log_action(
-                "list_networkpolicies", params, error="Networking API not available"
-            )
+        except ImportError as e:
+            self.log_action("list_networkpolicies", params, error=e)
             return []
         except _km.ApiException as e:
             self.log_action("list_networkpolicies", params, error=e)

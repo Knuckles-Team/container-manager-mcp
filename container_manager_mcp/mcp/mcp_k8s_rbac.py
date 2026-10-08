@@ -7,7 +7,8 @@ pod security policies, and ServiceAccount-secret mapping.
 
 import json
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -274,7 +275,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "unmap_secret_from_service_account": "sa_secret_mapping",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "role": _dispatch_role_action,
     "rolebinding": _dispatch_rolebinding_action,
     "cluster_rolebinding": _dispatch_cluster_rolebinding_action,

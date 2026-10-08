@@ -26,7 +26,10 @@ import json
 import logging
 import os
 import sys
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal, cast
+
+if TYPE_CHECKING:
+    from container_manager_mcp.k8s.manager import KubernetesManager
 
 from agent_utilities.core.config import load_config
 from agent_utilities.mcp.action_dispatch import resolve_action
@@ -785,7 +788,9 @@ async def _update_swarm_service_action(manager, service_id, replicas, updates):
     if not service_id:
         return "Error: 'service_id' is required"
     p_env = json.loads(updates["env"]) if updates["env"] else None
-    p_constraints = json.loads(updates["constraints"]) if updates["constraints"] else None
+    p_constraints = (
+        json.loads(updates["constraints"]) if updates["constraints"] else None
+    )
     p_labels = json.loads(updates["labels"]) if updates["labels"] else None
     return await run_blocking(
         manager.update_service,
@@ -1330,6 +1335,18 @@ def _container_port_matches(c, port: int) -> bool:
     return False
 
 
+# Modalities that only exist on a Kubernetes backend. Requesting one of these
+# against a Docker/Podman/Swarm manager is a caller error, not an empty result:
+# `cm_ingest_inventory` fails loudly rather than returning `{"modalities": {}}`,
+# which would be indistinguishable from "swept successfully, found nothing".
+_K8S_ONLY_MODALITIES = frozenset({"pods", "deployments", "namespaces", "k8s_services"})
+
+# Modalities available on every backend (services/nodes no-op off-swarm).
+_UNIVERSAL_MODALITIES = frozenset(
+    {"containers", "images", "volumes", "networks", "services", "nodes"}
+)
+
+
 async def _ingest_modality_sweep(name: str, lister, mapper, kwargs: dict) -> dict:
     """List one resource modality and push it through its kg_ingest mapper."""
     from agent_utilities.knowledge_graph.memory.native_ingest import NativeIngestError
@@ -1469,10 +1486,21 @@ def register_misc_tools(mcp: FastMCP):
             if is_k8s:
                 want |= {"pods", "deployments", "namespaces", "k8s_services"}
         else:
+            if modality in _K8S_ONLY_MODALITIES and not is_k8s:
+                raise ValueError(
+                    f"cm_ingest_inventory: modality {modality!r} requires a Kubernetes "
+                    f"backend, but the active manager is "
+                    f"{type(manager).__name__!r} (host={host!r}). "
+                    f"Kubernetes-only modalities are: "
+                    f"{', '.join(sorted(_K8S_ONLY_MODALITIES))}. "
+                    f"Modalities available on this backend are: "
+                    f"{', '.join(sorted(_UNIVERSAL_MODALITIES))}. "
+                    f"Use modality='all' to sweep every modality this backend supports."
+                )
             want = {modality}
         result: dict[str, Any] = {"host": host, "modalities": {}}
 
-        sweeps = [
+        sweeps: list[tuple[str, Any, Any, dict]] = [
             (
                 "containers",
                 lambda: manager.list_containers(all=all_containers),
@@ -1484,22 +1512,61 @@ def register_misc_tools(mcp: FastMCP):
             ("networks", manager.list_networks, kg_ingest.ingest_networks, {}),
             ("services", manager.list_services, kg_ingest.ingest_services, {}),
             ("nodes", manager.list_nodes, kg_ingest.ingest_nodes, {}),
-            ("pods", manager.list_pods, kg_ingest.ingest_pods, {}),
-            # Deployment-shaped list_services on the Kubernetes manager.
-            ("deployments", manager.list_services, kg_ingest.ingest_deployments, {}),
-            ("namespaces", manager.list_namespaces, kg_ingest.ingest_namespaces, {}),
-            (
-                "k8s_services",
-                manager.list_native_services,
-                kg_ingest.ingest_k8s_services,
-                {},
-            ),
         ]
+        if is_k8s:
+            # `manager.list_pods` / `list_namespaces` / `list_native_services`
+            # only exist on `KubernetesManager` (guaranteed here by `is_k8s`);
+            # the cast narrows past `create_manager`'s `ContainerManagerBase`
+            # return type. Building these sweep entries only when `is_k8s` is
+            # also a real bug fix: they used to be unconditional entries in
+            # the list above, so `manager.list_pods` etc. were bound (and
+            # AttributeError'd) immediately for a Docker/Podman/Swarm
+            # `manager` even when "pods"/"namespaces"/"k8s_services" were
+            # never in `want`.
+            k8s_manager = cast("KubernetesManager", manager)
+            sweeps.extend(
+                [
+                    ("pods", k8s_manager.list_pods, kg_ingest.ingest_pods, {}),
+                    # Deployment-shaped list_services on the Kubernetes manager.
+                    (
+                        "deployments",
+                        k8s_manager.list_services,
+                        kg_ingest.ingest_deployments,
+                        {},
+                    ),
+                    (
+                        "namespaces",
+                        k8s_manager.list_namespaces,
+                        kg_ingest.ingest_namespaces,
+                        {},
+                    ),
+                    (
+                        "k8s_services",
+                        k8s_manager.list_native_services,
+                        kg_ingest.ingest_k8s_services,
+                        {},
+                    ),
+                ]
+            )
         for name, lister, mapper, kwargs in sweeps:
             if name in want:
                 result["modalities"][name] = await _ingest_modality_sweep(
                     name, lister, mapper, kwargs
                 )
+
+        # Defensive: a modality accepted by the signature but matched by no sweep
+        # entry would otherwise return an empty success, indistinguishable from a
+        # real sweep that found nothing. Fail loudly instead -- this catches future
+        # drift between the `modality` Literal and the `sweeps` table.
+        unswept = want - set(result["modalities"])
+        if unswept:
+            raise ValueError(
+                f"cm_ingest_inventory: no sweep is registered for modality/modalities "
+                f"{', '.join(sorted(unswept))} on backend "
+                f"{type(manager).__name__!r} (host={host!r}). This is an internal "
+                f"inconsistency between the accepted modality set and the sweep table, "
+                f"not an empty inventory."
+            )
 
         return result
 

@@ -4,12 +4,19 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class ClusterNodesMixin:
+
+class ClusterNodesMixin(_Base):
     def _summarize_node_for_list(self, node) -> dict:
         meta = node.metadata
         labels = meta.labels or {}
@@ -271,7 +278,7 @@ class ClusterNodesMixin:
             target.mkdir(mode=0o700, parents=True, exist_ok=True)
             target.chmod(0o700)
 
-            dump_info = {}
+            dump_info: dict[str, Any] = {}
 
             # Get nodes
             nodes = self.core.list_node().items

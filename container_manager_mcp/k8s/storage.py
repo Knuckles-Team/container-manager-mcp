@@ -1,11 +1,18 @@
 """StorageMixin for KubernetesManager (split from k8s_manager.py)."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class StorageMixin:
+
+class StorageMixin(_Base):
     def list_persistent_volumes(self) -> list[dict]:
         """List PersistentVolumes."""
         params: dict[str, Any] = {}
@@ -17,7 +24,9 @@ class StorageMixin:
                     "capacity": (
                         pv.spec.capacity.dict()
                         if hasattr(pv.spec.capacity, "dict")
-                        else pv.spec.capacity if pv.spec and pv.spec.capacity else {}
+                        else pv.spec.capacity
+                        if pv.spec and pv.spec.capacity
+                        else {}
                     ),
                     "access_modes": pv.spec.access_modes or [],
                     "reclaim_policy": (
