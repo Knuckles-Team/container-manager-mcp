@@ -7,7 +7,8 @@ CIDR / connectivity tests), endpoints/endpointslices, DNS debugging, and native
 
 import json
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -83,7 +84,9 @@ async def _delete_networkpolicy_action(manager, netpol_name, namespace):
 
 async def _create_network_policy_with_cidr_action(manager, name, ns, spec):
     if not name or not spec:
-        return "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
+        return (
+            "Error: 'name' and 'spec' are required for create_network_policy_with_cidr"
+        )
     return await run_blocking(manager.create_network_policy_with_cidr, name, ns, spec)
 
 
@@ -105,7 +108,9 @@ async def _dispatch_networkpolicy_action(
     if action == "list_networkpolicies":
         return await run_blocking(manager.list_networkpolicies, namespace=namespace)
     if action == "create_networkpolicy":
-        return await _create_networkpolicy_action(manager, netpol_name, namespace, netpol_spec)
+        return await _create_networkpolicy_action(
+            manager, netpol_name, namespace, netpol_spec
+        )
     if action == "delete_networkpolicy":
         return await _delete_networkpolicy_action(manager, netpol_name, namespace)
     if action == "create_network_policy_with_cidr":
@@ -224,7 +229,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "delete_k8s_service": "native_service",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "ingress": _dispatch_ingress_action,
     "ingress_class": _dispatch_ingress_class_action,
     "networkpolicy": _dispatch_networkpolicy_action,

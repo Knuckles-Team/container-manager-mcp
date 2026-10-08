@@ -1,11 +1,18 @@
 """ConfigMixin for KubernetesManager (split from k8s_manager.py)."""
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class ConfigMixin:
+
+class ConfigMixin(_Base):
     _PATCH_TABLE: dict[str, tuple[str, str, bool]] = {
         "pod": ("core", "pod", True),
         "deployment": ("apps", "deployment", True),
@@ -640,7 +647,7 @@ class ConfigMixin:
 
     def watch_resource(
         self, resource_type: str, name: str, namespace: str | None = None
-    ) -> list[dict]:
+    ) -> dict:
         """Watch a specific resource for changes."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:

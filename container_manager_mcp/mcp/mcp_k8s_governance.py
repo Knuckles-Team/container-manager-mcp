@@ -5,7 +5,8 @@ PodDisruptionBudgets, and HorizontalPodAutoscalers (full CRUD).
 """
 
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -154,7 +155,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "delete_horizontal_pod_autoscaler": "horizontal_pod_autoscaler",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "resource_quota": _dispatch_resource_quota_action,
     "limit_range": _dispatch_limit_range_action,
     "priority_class": _dispatch_priority_class_action,

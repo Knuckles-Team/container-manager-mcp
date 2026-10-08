@@ -2,13 +2,23 @@
 
 import os
 import subprocess
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+if TYPE_CHECKING:
+    # Type-checking-only ancestor providing the attribute/method surface this
+    # mixin assumes once composed into KubernetesManager (self.core, self.apps,
+    # self.namespace, self.log_action, self._ts, ...). Never part of the real
+    # MRO -- see k8s/base.py and k8s/manager.py for the full explanation and
+    # the before/after MRO proof.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class WorkloadsMixin:
+
+class WorkloadsMixin(_Base):
     def list_services(self) -> list[dict]:
         params: dict[str, Any] = {}
         try:
@@ -584,7 +594,9 @@ class WorkloadsMixin:
             self.log_action("list_daemonsets", params, error=e)
             raise RuntimeError("Failed to list daemonsets") from e
 
-    def _rollout_status_deployment(self, resource, name: str, resource_type: str) -> dict:
+    def _rollout_status_deployment(
+        self, resource, name: str, resource_type: str
+    ) -> dict:
         conditions = resource.status.conditions or []
         available = any(
             c.type == "Available" and c.status == "True" for c in conditions
@@ -668,9 +680,7 @@ class WorkloadsMixin:
                 apps_ext = self.apps
                 # Add restart annotation
                 annotation = {
-                    "kubectl.kubernetes.io/restartedAt": self._ts(
-                        datetime.now(timezone.utc)
-                    )
+                    "kubectl.kubernetes.io/restartedAt": self._ts(datetime.now(UTC))
                 }
                 apps_ext.patch_namespaced_deployment(
                     name, ns, {"metadata": {"annotations": annotation}}

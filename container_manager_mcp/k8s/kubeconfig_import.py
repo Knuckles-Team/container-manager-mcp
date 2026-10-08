@@ -331,7 +331,9 @@ def _resolve_kubeconfig_context(
     return ctx
 
 
-def _resolve_kubeconfig_cluster_and_user(src: dict, ctx_body: dict) -> tuple[dict, dict | None]:
+def _resolve_kubeconfig_cluster_and_user(
+    src: dict, ctx_body: dict
+) -> tuple[dict, dict | None]:
     cluster_ref = ctx_body.get("cluster")
     user_ref = ctx_body.get("user")
     cluster = next(
@@ -386,11 +388,19 @@ def _capture_from_current_kubeconfig(
 
 
 def _index_by_name(entries: list[dict]) -> dict[str, int]:
-    return {
-        e.get("name"): i
-        for i, e in enumerate(entries)
-        if isinstance(e, dict) and e.get("name")
-    }
+    result: dict[str, int] = {}
+    for i, e in enumerate(entries):
+        if not isinstance(e, dict):
+            continue
+        name = e.get("name")
+        # Only a string `name` is a valid index key; a malformed entry
+        # (missing/non-string/empty "name") is skipped rather than silently
+        # coerced -- the previous truthiness-only check would have accepted
+        # a non-string "name" too, violating this function's own
+        # `dict[str, int]` contract at runtime.
+        if isinstance(name, str) and name:
+            result[name] = i
+    return result
 
 
 def merge_kubeconfig(target: dict, incoming: dict, overwrite: bool = False) -> dict:
@@ -498,6 +508,13 @@ def _resolve_import_mode(req: _SaveKubeContextRequest) -> dict:
         if not os.path.exists(os.path.expanduser(req.source_file)):
             raise FileNotFoundError(f"source kubeconfig not found: {req.source_file}")
     else:
+        # Only reached when the caller already established `source_file or
+        # source_yaml` is truthy (see the `import` dispatch below); this
+        # guard makes that invariant explicit/self-contained here too,
+        # instead of relying on it silently, and narrows `source_yaml` from
+        # `str | None` to `str` for `yaml.safe_load`.
+        if not req.source_yaml:
+            raise ValueError("either source_file or source_yaml must be provided")
         loaded = yaml.safe_load(req.source_yaml) or {}
         if not isinstance(loaded, dict):
             raise ValueError("source_yaml is not a valid kubeconfig YAML mapping")
@@ -693,7 +710,9 @@ def save_kube_context(
         source_context=source_context,
     )
     mode, incoming = _resolve_incoming_kubeconfig(req, path)
-    return _finalize_saved_kubeconfig(path, mode, incoming, name, overwrite, use, validate)
+    return _finalize_saved_kubeconfig(
+        path, mode, incoming, name, overwrite, use, validate
+    )
 
 
 # ---------------------------------------------------------------------------

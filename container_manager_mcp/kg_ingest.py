@@ -439,7 +439,9 @@ def ingest_pods(
 
 
 def _digit_str_to_int(value: Any) -> int | None:
-    return int(value) if isinstance(value, (int, str)) and str(value).isdigit() else None
+    return (
+        int(value) if isinstance(value, (int, str)) and str(value).isdigit() else None
+    )
 
 
 def _ingest_deployment_record(

@@ -7,7 +7,8 @@ CSI drivers.
 
 import json
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -27,7 +28,9 @@ async def _dispatch_pv_action(action, manager, name, spec):
     return None
 
 
-async def _create_persistent_volume_claim_action(manager, pvc_name, namespace, pvc_spec):
+async def _create_persistent_volume_claim_action(
+    manager, pvc_name, namespace, pvc_spec
+):
     if not pvc_name:
         return "Error: 'pvc_name' is required for create_persistent_volume_claim"
     claim_spec = json.loads(pvc_spec) if pvc_spec else None
@@ -69,9 +72,13 @@ async def _dispatch_pvc_action(
             manager.list_persistent_volume_claims, namespace=namespace
         )
     if action == "create_persistent_volume_claim":
-        return await _create_persistent_volume_claim_action(manager, pvc_name, namespace, pvc_spec)
+        return await _create_persistent_volume_claim_action(
+            manager, pvc_name, namespace, pvc_spec
+        )
     if action == "delete_persistent_volume_claim":
-        return await _delete_persistent_volume_claim_action(manager, pvc_name, namespace)
+        return await _delete_persistent_volume_claim_action(
+            manager, pvc_name, namespace
+        )
     if action == "expand_pvc":
         return await _expand_pvc_action(manager, pvc_name, namespace, pvc_size)
     if action == "expand_persistent_volume":
@@ -79,12 +86,16 @@ async def _dispatch_pvc_action(
     return None
 
 
-async def _dispatch_storage_class_action(action, manager, name, parameters, provisioner):
+async def _dispatch_storage_class_action(
+    action, manager, name, parameters, provisioner
+):
     if action == "list_storage_classes":
         return await run_blocking(manager.list_storage_classes)
     elif action == "create_storage_class":
         if not name or not provisioner:
-            return "Error: 'name' and 'provisioner' are required for create_storage_class"
+            return (
+                "Error: 'name' and 'provisioner' are required for create_storage_class"
+            )
         return await run_blocking(
             manager.create_storage_class, name, provisioner, parameters
         )
@@ -105,9 +116,7 @@ async def _dispatch_volume_snapshot_action(action, manager, name, namespace, spe
     elif action == "create_volume_snapshot":
         if not name or not namespace or not spec:
             return "Error: 'name', 'namespace', and 'spec' are required for create_volume_snapshot"
-        return await run_blocking(
-            manager.create_volume_snapshot, name, namespace, spec
-        )
+        return await run_blocking(manager.create_volume_snapshot, name, namespace, spec)
     return None
 
 
@@ -144,7 +153,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "get_csi_driver_capacity": "csi_driver",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "pv": _dispatch_pv_action,
     "pvc": _dispatch_pvc_action,
     "storage_class": _dispatch_storage_class_action,

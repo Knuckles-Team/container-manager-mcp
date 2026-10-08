@@ -5,7 +5,8 @@ metrics/history, watch/stream/events, field-selector listing, and debug helpers.
 """
 
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -131,7 +132,10 @@ async def _dispatch_watch_stream_action(
 
 
 _DEBUG_ACTIONS = {
-    "debug_pod": (("name", "namespace"), "'name' and 'namespace' are required for debug_pod"),
+    "debug_pod": (
+        ("name", "namespace"),
+        "'name' and 'namespace' are required for debug_pod",
+    ),
     "debug_node": (("name",), "'name' is required for debug_node"),
     "debug_service": (
         ("name", "namespace"),
@@ -153,7 +157,9 @@ async def _dispatch_debug_action(action, manager, name, namespace):
     values = {"name": name, "namespace": namespace}
     if not all(values[field] for field in required):
         return f"Error: {error_message}"
-    return await run_blocking(getattr(manager, action), *(values[field] for field in required))
+    return await run_blocking(
+        getattr(manager, action), *(values[field] for field in required)
+    )
 
 
 _ACTION_GROUPS: dict[str, str] = {
@@ -177,7 +183,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "debug_deployment": "debug",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "metrics": _dispatch_metrics_action,
     "autoscaler": _dispatch_autoscaler_action,
     "watch_stream": _dispatch_watch_stream_action,

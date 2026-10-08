@@ -6,7 +6,8 @@ stacks, configs, secrets, and node management — dispatched directly onto the r
 """
 
 import logging
-from typing import Literal
+from collections.abc import Callable
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -16,8 +17,12 @@ from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log
 
 # Every action's manager method name equals the action name; only the
-# required fields, guard message, and positional call args differ.
-_SWARM_ACTIONS: dict[str, tuple[tuple[str, ...], str | None, "callable"]] = {
+# required fields, guard message, and positional call args differ. The third
+# tuple element builds the manager method's positional args from the request
+# `values` dict (see `_dispatch_docker_swarm_action` below).
+_SWARM_ACTIONS: dict[
+    str, tuple[tuple[str, ...], str | None, Callable[[dict[str, Any]], tuple]]
+] = {
     "docker_swarm_init": (
         ("advertise_addr",),
         "advertise_addr is required for docker_swarm_init",

@@ -5,7 +5,8 @@ StatefulSets, DaemonSets, ReplicaSets, Jobs, and CronJobs.
 """
 
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -25,7 +26,9 @@ async def _describe_pod_action(manager, pod_name, namespace):
     )
 
 
-async def _exec_pod_action(manager, pod_name, namespace, command, exec_command, exec_container):
+async def _exec_pod_action(
+    manager, pod_name, namespace, command, exec_command, exec_container
+):
     if not pod_name:
         return "Error: 'pod_name' is required for exec_pod"
     cmd = command if command else (exec_command.split() if exec_command else None)
@@ -38,7 +41,9 @@ async def _exec_pod_action(manager, pod_name, namespace, command, exec_command, 
     )
 
 
-async def _port_forward_pod_action(manager, pod_name, namespace, local_port, remote_port):
+async def _port_forward_pod_action(
+    manager, pod_name, namespace, local_port, remote_port
+):
     if not pod_name or not local_port or not remote_port:
         return "Error: 'pod_name', 'local_port', and 'remote_port' are required for port_forward_pod"
     return await run_blocking(
@@ -63,8 +68,12 @@ async def _attach_pod_action(manager, pod_name, namespace, attach_container):
 
 async def _copy_pod_action(manager, action, pod_name, ns, source, destination):
     if not pod_name or not source or not destination:
-        return f"Error: 'pod_name', 'source', and 'destination' are required for {action}"
-    return await run_blocking(getattr(manager, action), pod_name, ns, source, destination)
+        return (
+            f"Error: 'pod_name', 'source', and 'destination' are required for {action}"
+        )
+    return await run_blocking(
+        getattr(manager, action), pod_name, ns, source, destination
+    )
 
 
 async def _dispatch_pod_action(
@@ -96,11 +105,15 @@ async def _dispatch_pod_action(
             manager, pod_name, namespace, command, exec_command, exec_container
         )
     if action == "port_forward_pod":
-        return await _port_forward_pod_action(manager, pod_name, namespace, local_port, remote_port)
+        return await _port_forward_pod_action(
+            manager, pod_name, namespace, local_port, remote_port
+        )
     if action == "attach_pod":
         return await _attach_pod_action(manager, pod_name, namespace, attach_container)
     if action in ("copy_to_pod", "copy_from_pod"):
-        return await _copy_pod_action(manager, action, pod_name, ns, source, destination)
+        return await _copy_pod_action(
+            manager, action, pod_name, ns, source, destination
+        )
     return _UNHANDLED
 
 
@@ -282,7 +295,7 @@ _ACTION_GROUPS: dict[str, str] = {
 }
 
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "pod": _dispatch_pod_action,
     "rollout": _dispatch_rollout_action,
     "strategy": _dispatch_strategy_action,

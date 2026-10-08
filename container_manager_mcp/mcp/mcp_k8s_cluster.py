@@ -6,7 +6,8 @@ cluster info, and admission plugins.
 """
 
 import logging
-from typing import Literal
+from collections.abc import Callable, Coroutine
+from typing import Any, Literal
 
 from agent_utilities.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
@@ -210,7 +211,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "test_cluster_plugin": "admission_plugin",
 }
 
-_GROUP_FUNCS = {
+_GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {
     "node_basic": _dispatch_node_basic_action,
     "node_taint_drain": _dispatch_node_taint_drain_action,
     "node_affinity": _dispatch_node_affinity_action,

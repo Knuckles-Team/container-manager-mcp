@@ -13,7 +13,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from container_manager_mcp.models import (
     ContainerInfo,
@@ -21,6 +21,12 @@ from container_manager_mcp.models import (
     NetworkInfo,
     VolumeInfo,
 )
+
+if TYPE_CHECKING:
+    # `multi_context_manager` imports back from this module at runtime (see
+    # `_resolve_multi_context_manager` below), so this import is
+    # TYPE_CHECKING-only to avoid a real import cycle.
+    from container_manager_mcp.multi_context_manager import MultiContextManager
 
 __version__ = "3.1.0"
 
@@ -147,18 +153,6 @@ class ContainerManagerBase(ABC):
                 safe_action,
                 type(error).__name__,
             )
-
-    def _extract_image_labels(self, attrs: dict) -> dict[str, str] | None:
-        """Return an image's OCI labels from either list-summary or inspect ``attrs``.
-
-        The Docker/Podman ``/images/json`` list summary carries ``Labels`` at the
-        top level; the ``/images/{id}/json`` inspect shape nests them under
-        ``Config.Labels``. Checked in that order so either source works.
-        """
-        labels = attrs.get("Labels")
-        if not labels:
-            labels = (attrs.get("Config") or {}).get("Labels")
-        return labels or None
 
     def _extract_image_labels(self, attrs: dict) -> dict[str, str] | None:
         """Return an image's OCI labels from either list-summary or inspect ``attrs``.
@@ -1569,7 +1563,7 @@ class DockerManager(ContainerManagerBase):
 
     def _resolve_service_labels(
         self, spec: dict, labels: dict[str, str] | None
-    ) -> dict:
+    ) -> dict | None:
         new_labels = spec.get("Labels")
         if labels is not None:
             new_labels = {**(spec.get("Labels") or {}), **labels}
@@ -3216,13 +3210,29 @@ def create_manager(
         ``KubernetesManager``/``DockerManager``/``PodmanManager``) rather than
         the ``MultiContextManager`` pool itself, so callers see the full verb
         surface they expect. Only ``manager_type=None`` or ``"multi"`` returns
-        the raw ``MultiContextManager`` (pool-level operations).
+        the raw ``MultiContextManager`` (pool-level operations) -- **not**
+        actually a ``ContainerManagerBase``, despite this signature (see the
+        ``cast`` below). The one caller that relies on that path
+        (``cm_multi_context``'s ``create_manager(manager_type="multi")``)
+        casts the result back to ``MultiContextManager`` at its own call
+        site; every other caller in this codebase only ever passes a
+        concrete backend name (or lets ``manager_type`` default/autodetect),
+        so for them this declared return type is exact, not approximate. Two
+        `@overload`\\ s keyed on ``Literal["multi"]`` were tried instead but
+        mypy rejects them as an ``[overload-overlap]`` (their return types --
+        ``MultiContextManager`` vs ``ContainerManagerBase`` -- are unrelated,
+        and a plain ``str`` argument can satisfy either signature); the
+        `cast` pair below is the honest alternative that doesn't touch the
+        other ~24 call sites' inferred type.
     """
     if host is None:
         host = os.environ.get("CONTAINER_MANAGER_HOST", None)
 
     if _is_multi_context_mode(manager_type, multi_context):
-        return _resolve_multi_context_manager(manager_type, silent, log_file)
+        return cast(
+            ContainerManagerBase,
+            _resolve_multi_context_manager(manager_type, silent, log_file),
+        )
 
     if manager_type is None:
         manager_type = _autodetect_manager_type()
@@ -3240,7 +3250,7 @@ def _is_multi_context_mode(manager_type: str | None, multi_context: bool) -> boo
 
 def _resolve_multi_context_manager(
     manager_type: str | None, silent: bool, log_file: str | None
-) -> ContainerManagerBase:
+) -> "ContainerManagerBase | MultiContextManager":
     from container_manager_mcp.multi_context_manager import MultiContextManager
 
     multi_manager = MultiContextManager(silent=silent, log_file=log_file)

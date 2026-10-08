@@ -1,5 +1,7 @@
 """UnsupportedMixin for KubernetesManager (split from k8s_manager.py)."""
 
+from typing import TYPE_CHECKING
+
 from container_manager_mcp.models import (
     ContainerInfo,
     ImageInfo,
@@ -7,8 +9,15 @@ from container_manager_mcp.models import (
     VolumeInfo,
 )
 
+if TYPE_CHECKING:
+    # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
+    # part of the real MRO.
+    from container_manager_mcp.k8s.base import _K8sBase as _Base
+else:
+    _Base = object
 
-class UnsupportedMixin:
+
+class UnsupportedMixin(_Base):
     def list_images(self) -> list[ImageInfo]:
         raise self._unsupported("list_images")
 
@@ -53,7 +62,11 @@ class UnsupportedMixin:
         raise self._unsupported("get_container_logs")
 
     def exec_in_container(
-        self, container_id: str, command: list[str], detach: bool = False
+        self,
+        container_id: str,
+        command: list[str],
+        detach: bool = False,
+        binary: bool = False,
     ) -> dict:
         raise self._unsupported("exec_in_container")
 
