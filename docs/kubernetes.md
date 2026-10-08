@@ -20,12 +20,12 @@ condensed, action-routed pattern used for Docker/Podman (`cm_container_operation
 | `cm_k8s_observability` | `K8SOBSERVABILITYTOOL` | `top_pods`/`top_nodes`, pod/node/cluster metrics, autoscaler metrics and history, `watch_resource`, `stream_pod_logs`, `get_resource_events`, and `debug_pod`/`debug_node`/`debug_service`/`debug_deployment` helpers |
 
 Every action is routed through a single `action` parameter per tool (the same condensed pattern as the
-Docker/Podman tools), keeping the exposed tool count small regardless of how many operations a domain covers.
+Docker/Podman tools), keeping the exposed tool count small in either case of how multiple operations a domain covers.
 
 ## `patch_resource`: the generic escalation hatch
 
 `cm_k8s_config`'s `patch_resource` action applies a `strategic`, `merge`, or `json` patch to **any** resource
-kind and name. Use it whenever a domain tool doesn't have a dedicated action for the field you need to change
+kind and name. Use it whenever a domain tool doesn't have a dedicated action for the field the operator must change
 (for example, an ad-hoc field on a CRD instance, or a spec field not covered by a themed helper action).
 
 ## True core Services vs. Swarm-parity services
@@ -34,8 +34,8 @@ kind and name. Use it whenever a domain tool doesn't have a dedicated action for
 operate on **real Kubernetes `Service` objects**. This is intentionally distinct from the Swarm-parity
 `list_services` exposed by `cm_multi_context` (and `cm_docker_swarm`/`cm_swarm_operations`), which is
 **Deployment-shaped** so it can be compared uniformly across Docker Swarm and Kubernetes backends in a single
-multi-context call. If you need the literal `Service` resource (`ClusterIP`/`NodePort`/`LoadBalancer`,
-selectors, ports), use the `cm_k8s_networking` actions; if you need a cross-backend "what's running" view,
+multi-context call. If the operator need the literal `Service` resource (`ClusterIP`/`NodePort`/`LoadBalancer`,
+selectors, ports), use the `cm_k8s_networking` actions; if the operator need a cross-backend "what's running" view,
 use `cm_multi_context`.
 
 ## Configuration
@@ -50,7 +50,7 @@ See [Multi-Host → Kubernetes Kubeconfig Contexts](multi_host.md#kubernetes-kub
 differs from the Docker/Podman remote-host inventory model, and [Usage → Kubernetes](usage.md#kubernetes) for
 worked examples of each tool.
 
-Setting a cluster up for the first time? Run the **doctor** to verify the kubeconfig is
+Setting a cluster up for the first time? Run the **doctor** to check the kubeconfig is
 found, valid, and each context reaches its API server — with concrete remediation when it
 does not:
 
@@ -60,12 +60,12 @@ container-manager-doctor --backend kubernetes --context prod   # or: cm_doctor a
 
 It checks kubeconfig presence (`KUBECONFIG` / `~/.kube/config` / in-cluster), runs
 `validate_kubeconfig`, lists contexts, and probes each target context via
-`get_version`/`list_nodes` — pointing you at `K8S_CONTEXTS`/`DEFAULT_K8S_CONTEXT` or the
+`get_version`/`list_nodes` — pointing the operator at `K8S_CONTEXTS`/`DEFAULT_K8S_CONTEXT` or the
 `kubernetes-mesh-provisioner` skill when a context is unreachable.
 
 ## Multi-context operation
 
-`cm_multi_context` (toggle `MULTICONTEXTTOOL`) lets one call fan out across several Docker, Podman, Swarm,
+`cm_multi_context` (toggle `MULTICONTEXTTOOL`) lets one call fan out across multiple Docker, Podman, Swarm,
 and/or Kubernetes contexts in parallel (`ThreadPoolExecutor`-backed), with per-backend health checks and lazy
 reconnect. Configure the pool via `K8S_CONTEXTS`, `DOCKER_CONTEXTS`, `SWARM_CONTEXTS`, and their
 `DEFAULT_*_CONTEXT` values, or set `MULTI_CONTEXT_MODE=True` to route every call through it. See

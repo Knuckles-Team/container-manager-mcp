@@ -1,7 +1,7 @@
 # Usage — API / CLI / MCP
 
 `container-manager-mcp` exposes the same capability three ways: as **MCP tools** an
-agent calls, as a **Python API** (`DockerManager` / `PodmanManager`) you import, and
+agent calls, as a **Python API** (`DockerManager` / `PodmanManager`) the operator import, and
 as a **CLI**. The complete tool surface and ecosystem role are in
 [Overview](overview.md).
 
@@ -98,7 +98,7 @@ Example agent prompts:
 
 ### Multi-context
 
-`cm_multi_context` (toggle `MULTICONTEXTTOOL`) targets several Docker/Podman/Swarm/Kubernetes contexts in one
+`cm_multi_context` (toggle `MULTICONTEXTTOOL`) targets multiple Docker/Podman/Swarm/Kubernetes contexts in one
 call — configure the pool via `K8S_CONTEXTS` / `DOCKER_CONTEXTS` / `SWARM_CONTEXTS` and their
 `DEFAULT_*_CONTEXT` values:
 
@@ -160,7 +160,7 @@ container-manager-mcp --help
 container-manager-mcp --transport streamable-http --host 0.0.0.0 --port 8000
 ```
 
-Dynamic tool selection lets you restrict the exposed surface so the LLM context stays
+Dynamic tool selection lets the operator restrict the exposed surface so the LLM context stays
 focused:
 
 ```bash

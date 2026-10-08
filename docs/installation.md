@@ -1,13 +1,13 @@
 # Installation
 
 `container-manager-mcp` is a standard Python package and a prebuilt container image.
-Pick the path that matches how you want to run it.
+Pick the path that matches how the operator want to run it.
 
 ## Requirements
 
 - **Python 3.11 – 3.14**.
 - A reachable **Docker** or **Podman** engine on the controller host (or on the
-  remote hosts you target — see [Multi-Host](multi_host.md)).
+  remote hosts the operator target — see [Multi-Host](multi_host.md)).
 
 ## From PyPI (recommended)
 
@@ -17,7 +17,7 @@ pip install container-manager-mcp
 
 ### Optional extras
 
-The base install pulls in the Docker engine client. Install the extra for what you
+The base install pulls in the Docker engine client. Install the extra for what the operator
 need:
 
 | Extra | Install | Pulls in |

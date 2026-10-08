@@ -30,14 +30,14 @@
 
 ## Overview
 
-**Container Manager Mcp** is a production-grade Agent and Model Context Protocol (MCP) server designed to interface directly with Container Manager - manage Docker, Docker Swarm, Podman, **and Kubernetes** containers and workloads. MCP+A2A Servers Out of the Box!.
+**Container Manager Mcp** is a production-grade Agent and Model Context Protocol (MCP) server designed to interface directly with Container Manager - manage Docker, Docker Swarm, Podman, **and Kubernetes** containers and workloads. MCP+A2A Servers By default!.
 
 **Full coverage across all three engines:** Docker (incl. Swarm/service/stack/config/secret/node
 operations via `cm_docker_swarm`), Podman (incl. pod/kube operations, `generate`/`play kube`, checkpoint/restore
 via `cm_podman`), and a **complete Kubernetes surface** (RKE2 / k3s / vanilla) spanning workloads,
 config, networking, storage, RBAC, cluster admin, governance, and observability through 8 themed `cm_k8s_*`
 tools built on the official `kubernetes` Python client. A `cm_multi_context` tool lets an agent fan out
-operations across several Docker/Podman/Swarm/Kubernetes contexts in parallel, and `cm_ingest_inventory` feeds
+operations across multiple Docker/Podman/Swarm/Kubernetes contexts in parallel, and `cm_ingest_inventory` feeds
 Docker, Swarm, **and Kubernetes** resources into the ontology-driven Knowledge Graph as typed nodes.
 
 ---
@@ -46,8 +46,8 @@ Docker, Swarm, **and Kubernetes** resources into the ontology-driven Knowledge G
 
 - **Consolidated Action-Routed MCP Tools:** Minimizes token overhead and eliminates tool bloat in LLM contexts by grouping methods into optimized, togglable tool modules.
 - **Full Docker + Swarm + Podman + Kubernetes Coverage:** First-class support for Docker (incl. Swarm/service/stack/config/secret/node ops), rootless Podman (incl. pods, `generate`/`play kube`, checkpoint/restore), and a full Kubernetes surface (RKE2 / k3s / vanilla) across workloads, config, networking, storage, RBAC, cluster admin, governance, and observability. See [Kubernetes](#kubernetes) below.
-- **Multi-Context Parallel Operation:** `cm_multi_context` fans operations out across several Docker, Podman, Swarm, and/or Kubernetes contexts at once (`ThreadPoolExecutor`-backed), with health checks and lazy reconnect.
-- **Enterprise-Grade Security:** Comprehensive support for Eunomia policies, OIDC token delegation, and granular execution context tracking.
+- **Multi-Context Parallel Operation:** `cm_multi_context` fans operations out across multiple Docker, Podman, Swarm, and/or Kubernetes contexts at once (`ThreadPoolExecutor`-backed), with health checks and lazy reconnect.
+- **Enterprise-Grade Security:** Complete support for Eunomia policies, OIDC token delegation, and granular execution context tracking.
 - **Integrated Graph Agent:** Built-in Pydantic AI agent supporting the Agent Control Protocol (ACP) and standard Web interfaces (AG-UI).
 - **Ontology-Driven KG Ingestion:** `cm_ingest_inventory` maps live Docker/Swarm/Kubernetes inventory (containers, images, volumes, networks, services, nodes, pods, deployments, namespaces, native k8s Services) into typed OWL/RDF nodes for cross-source reasoning.
 - **Native Telemetry & Tracing:** Out-of-the-box OpenTelemetry exports and native Langfuse tracing.
@@ -56,35 +56,35 @@ Docker, Swarm, **and Kubernetes** resources into the ontology-driven Knowledge G
 
 ## Multi-Host & Zero-Script Remote Docker Orchestration
 
-`container-manager-mcp` allows a single master instance of the MCP server on your controller to route container and volume operations securely to remote hosts over SSH standard tunneling.
+`container-manager-mcp` allows a single master instance of the MCP server on the operator's controller to route container and volume operations securely to remote hosts over SSH standard tunneling.
 
 - **Unified Inventory**: Connection endpoints are loaded dynamically from the XDG shared inventory at `~/.config/agent-utilities/inventory.yml` (`.yml` preferred; a legacy `inventory.yaml` is still read when no `.yml` exists).
-- **Zero TCP Socket Exposure**: Operations route directly over the standard SSH channel securely, removing the need to expose Docker socket TCP ports.
+- **Zero TCP Socket Exposure**: Operations route directly over the standard SSH channel securely, removing the must expose Docker socket TCP ports.
 
-> **Shared inventory:** the `cm_*` host aliases you pass as `host` come from the **same**
-> `inventory.yml` used by **tunnel-manager** — define your fleet once. Create and validate
+> **Shared inventory:** the `cm_*` host aliases the operator pass as `host` come from the **same**
+> `inventory.yml` used by **tunnel-manager** — define the operator's fleet once. Create and validate
 > it with `tunnel-manager inventory init` / `tunnel-manager inventory doctor`. See
 > tunnel-manager's [Inventory guide](https://knuckles-team.github.io/tunnel-manager/inventory/)
 > for the full schema, template, and override options.
 
-To configure and utilize the multi-host remote routing, see the detailed [Multi-Host Architecture Guide](docs/multi_host.md).
+To configure and use the multi-host remote routing, see the detailed [Multi-Host Architecture Guide](docs/multi_host.md).
 
 ---
 
 ## CLI or API
 
-This agent wraps the Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers Out of the Box! API. You can interact with it programmatically or via its integrated execution entrypoints.
+This agent wraps the Container Manager - manage Docker, Docker Swarm, and Podman containers. MCP+A2A Servers By default! API. The operator can interact with it programmatically or via its integrated execution entrypoints.
 
 Detailed instructions on how to use the underlying API wrappers, extended schema bindings, and developer SDK references are maintained in [docs/index.md](docs/index.md).
 
 ### Environment doctor
 
-Not sure your environment is wired up? Run the guided **doctor** first. It probes
+Not sure the operator's environment is wired up? Run the guided **doctor** first. It probes
 every surface with real checks — python client libs + CLIs, `CONTAINER_MANAGER_TYPE`
 / toggles / `K8S_CONTEXTS` parsing, the tunnel-manager SSH **inventory** (and per-host
 reachability), the **docker** / **podman** daemons, and each **kubernetes** context —
-and prints concrete remediation for anything that is not OK, so you are walked through
-connecting to your environments. Available as the `container-manager-doctor` CLI and
+and prints concrete remediation for anything that is not OK, so the operator are walked through
+connecting to the operator's environments. Available as the `container-manager-doctor` CLI and
 the `cm_doctor` MCP tool.
 
 ```bash
@@ -105,15 +105,15 @@ remediation}` plus a summary. Start here, then follow the
 ### Save a Kubernetes environment (register a kubeconfig context)
 
 Dynamically add a kube context to the kubeconfig cm reads (`$KUBECONFIG` first entry,
-else `~/.kube/config`) so you can reuse it later (via `use_context` /
+else `~/.kube/config`) so the operator can reuse it later (via `use_context` /
 `CONTAINER_MANAGER_KUBECONTEXT` / `K8S_CONTEXTS`). The merge is non-destructive —
-existing entries are never clobbered, and a context-name collision errors unless you
+existing entries are never clobbered, and a context-name collision errors unless the operator
 pass `--overwrite`. Available as the `container-manager-save-context` CLI and the
 `cm_k8s_cluster` `save_context` MCP action (both call the same core function). Secrets
 (tokens, key data) are kept out of logs; cert/key files are embedded as base64 so the
 saved context is portable.
 
-Four credential input modes, each saved under a context name you choose:
+Four credential input modes, each saved under a context name the operator choose:
 
 1. **URL + token** — server URL + bearer token (ServiceAccount / OIDC id-token).
 2. **URL + client-cert + client-key + CA** — mTLS (how an RKE2 admin kubeconfig
@@ -124,7 +124,7 @@ Four credential input modes, each saved under a context name you choose:
    issuer and embeds the resulting id-token; it requires `--oidc-issuer` +
    `--oidc-client-id` and fails clearly if they are missing.
 4. **Import a kubeconfig** — merge an existing file/blob, or capture the cluster
-   you are currently on.
+   the operator are currently on.
 
 ```bash
 # 1. URL + token
@@ -164,7 +164,7 @@ The `cm_k8s_cluster` MCP action mirrors every flag (`action=save_context`,
 
 ## MCP
 
-This server utilizes dynamic Action-Routed tools to optimize token overhead and maximize IDE compatibility.
+This server use dynamic Action-Routed tools to optimize token overhead and maximize IDE compatibility.
 
 ### Available MCP Tools
 
@@ -534,14 +534,14 @@ Two details worth knowing:
   Deployment-shaped for cross-backend comparability.
 
 Kubernetes access is configured via `CONTAINER_MANAGER_TYPE=kubernetes` and `CONTAINER_MANAGER_KUBECONTEXT`
-(see [Environment Variables](#environment-variables)); for operating several clusters at once, see
+(see [Environment Variables](#environment-variables)); for operating multiple clusters at once, see
 `K8S_CONTEXTS` / `cm_multi_context` below. For a full worked walkthrough of the tool surface, see the
 [`container-manager-kubernetes-operations`](container_manager_mcp/skills/container-manager-kubernetes-operations)
 skill and [docs/usage.md](docs/usage.md#kubernetes).
 
 ### Multi-Context Operation
 
-`cm_multi_context` (toggle `MULTICONTEXTTOOL`) lets a single MCP call operate across **several Docker,
+`cm_multi_context` (toggle `MULTICONTEXTTOOL`) lets a single MCP call operate across **multiple Docker,
 Podman, Swarm, and/or Kubernetes contexts at once** — configured via `K8S_CONTEXTS`, `DOCKER_CONTEXTS`,
 `SWARM_CONTEXTS`, and their `DEFAULT_*_CONTEXT` defaults (`MULTI_CONTEXT_MODE=True` routes every call through
 it). Fan-out is parallel (`ThreadPoolExecutor`-backed) with per-backend health checks and lazy reconnect, so
@@ -551,9 +551,9 @@ skill and [docs/usage.md](docs/usage.md#multi-context) for examples.
 
 ### Dynamic Tool Selection & Visibility
 
-This MCP server supports dynamic toolset selection and visibility filtering at runtime. This allows you to restrict the set of exposed tools in order to prevent blowing up the LLM's context window.
+This MCP server supports dynamic toolset selection and visibility filtering at runtime. This allows the operator to restrict the set of exposed tools to prevent blowing up the LLM's context window.
 
-You can configure tool filtering via multiple input channels:
+The operator can configure tool filtering via multiple input channels:
 
 - **CLI Arguments:** Pass `--tools` or `--toolsets` (or their disabled counterparts `--disabled-tools` and `--disabled-toolsets`) during startup.
 - **Environment Variables:** Define standard environment variables:
@@ -562,7 +562,7 @@ You can configure tool filtering via multiple input channels:
 - **HTTP SSE Request Headers:** Pass custom headers during transport initialization:
   - `x-mcp-enabled-tools` / `x-mcp-disabled-tools`
   - `x-mcp-enabled-tags` / `x-mcp-disabled-tags`
-- **HTTP SSE Request Query Parameters:** Append query parameters directly to your transport connection URL:
+- **HTTP SSE Request Query Parameters:** Append query parameters directly to the operator's transport connection URL:
   - `?tools=tool1,tool2`
   - `?tags=tag1`
 
@@ -858,7 +858,7 @@ _54 package + 16 inherited variable(s). Auto-generated from `.env.example` + the
 
 
 Every variable is listed in the auto-generated table above (package vars from
-`.env.example` + the inherited agent-utilities surface). A few pointers:
+`.env.example` + the inherited agent-utilities surface). A small number of pointers:
 
 - **Tool toggles** — each action-routed tool can be disabled via its `<DOMAIN>TOOL`
   toggle; the tool ↔ toggle mapping is in the [Available MCP Tools](#available-mcp-tools)
@@ -871,7 +871,7 @@ See [`.env.example`](.env.example) for a copy-paste starting point.
 
 ## Agent
 
-This repository features a fully integrated Pydantic AI Graph Agent. It communicates over the **Agent Control Protocol (ACP)** and interacts seamlessly with the **Agent Web UI (AG-UI)** and Terminal interface.
+This repository features a fully integrated Pydantic AI Graph Agent. It communicates over the **Agent Control Protocol (ACP)** and interacts smoothly with the **Agent Web UI (AG-UI)** and Terminal interface.
 
 ### Running the Agent CLI
 To start the interactive command-line agent:
@@ -963,7 +963,7 @@ Built directly upon the enterprise-ready [`agent-utilities`](https://github.com/
 - **Scoped Credentials:** Execution context runs restricted to the specific caller identity.
 
 ### Runtime Security Grid
-| Feature | Functionality | Enablement |
+| Feature | Feature | Enablement |
 |---------|---------------|------------|
 | **Tool Guard** | Sensitivity inspection with human-in-the-loop validation | Enabled by default |
 | **Prompt Injection Defense** | Input scanning, repetition monitoring, and recursive loop blocks | Enabled by default |
@@ -973,12 +973,12 @@ Built directly upon the enterprise-ready [`agent-utilities`](https://github.com/
 
 ## Installation
 
-Pick the extra that matches what you want to run:
+Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`agent-utilities[mcp]` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | You run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
-| `container-manager-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | You run the **integrated agent** |
+| `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`agent-utilities[mcp]` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | The operator run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
+| `container-manager-mcp[agent]` | Agent runtime (`agent-utilities[agent-runtime,logfire]` — model orchestration + `epistemic-graph[full]`) | The operator run the **integrated agent** |
 | `container-manager-mcp[all]` | Everything (`mcp` + `agent` + the `docker` / `podman` / `kubernetes` backends) | Development / both surfaces |
 
 ```bash
@@ -1013,7 +1013,7 @@ agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
 Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
 Agent Utilities core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
-the server connector-focused; `[agent]` additionally enables model orchestration. Local
+the server connector-focused; `[agent]` also enables model orchestration. Local
 deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
@@ -1053,7 +1053,7 @@ common operational flows:
 | `container-manager-swarm` | Docker Swarm cluster orchestration (init/leave, nodes, services) |
 | `container-manager-podman-operations` | Rootless Podman pod/kube operations — pods, `generate`/`play kube`, checkpoint/restore, pod-scoped networks/volumes, health, system prune |
 | `container-manager-kubernetes-operations` | The full Kubernetes operational surface — workloads, config, networking, storage, RBAC, cluster, governance, observability |
-| `container-manager-multi-context` | Operating several Docker/Podman/Swarm/Kubernetes backends and contexts at once via `cm_multi_context` |
+| `container-manager-multi-context` | Operating multiple Docker/Podman/Swarm/Kubernetes backends and contexts at once via `cm_multi_context` |
 | `container-manager-kg-ingestion` | Snapshotting Docker/Podman/Swarm **and Kubernetes** inventory into the epistemic-graph Knowledge Graph via `cm_ingest_inventory` |
 
 `container-manager-kubernetes-operations`, `container-manager-podman-operations`,
@@ -1073,11 +1073,11 @@ and `kg-ingestion` were updated for the expanded tool surface.
 
 ## Contribute
 
-Contributions are welcome! Please ensure code quality by executing local checks before submitting pull requests:
+Contributions are welcome! Please ensure code quality by running local checks before submitting pull requests:
 - Format code using `ruff format .`
 - Lint code using `ruff check .`
 - Validate type-safety with `mypy .`
-- Execute test suites using `pytest`
+- Ran test suites using `pytest`
 
 
 <!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->

@@ -6,7 +6,7 @@
 ## Description
 
 Container Manager - manage Docker, Docker Swarm, Podman, and Kubernetes containers and workloads.
-MCP+A2A Servers Out of the Box!
+MCP+A2A Servers By default!
 
 ## Capability Overview
 
@@ -20,7 +20,7 @@ MCP+A2A Servers Out of the Box!
 - **Kubernetes** (RKE2 / k3s / vanilla) — a full operational surface built on the official `kubernetes`
   Python client, exposed as 8 themed tools: `cm_k8s_workloads`, `cm_k8s_config`, `cm_k8s_networking`,
   `cm_k8s_storage`, `cm_k8s_rbac`, `cm_k8s_cluster`, `cm_k8s_governance`, and `cm_k8s_observability`.
-- **Multi-context** — `cm_multi_context` operates several Docker/Podman/Swarm/Kubernetes contexts
+- **Multi-context** — `cm_multi_context` operates multiple Docker/Podman/Swarm/Kubernetes contexts
   simultaneously with parallel fan-out, health checks, and lazy reconnect.
 - **Knowledge Graph ingestion** — `cm_ingest_inventory` maps live inventory (containers, images, volumes,
   networks, Swarm services/nodes, and — on a Kubernetes manager — pods, deployments, namespaces, and native

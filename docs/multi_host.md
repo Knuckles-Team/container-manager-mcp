@@ -8,7 +8,7 @@ This document describes the design, configuration, and execution lifecycle of th
 
 Managing Docker, Docker Swarm, and Podman containers across multiple servers typically requires installing and exposing Docker ports globally, or setting up complex TLS credentials on every single remote host.
 
-`container-manager-mcp` bypasses this complexity by leveraging **Docker over SSH** (using standard `ssh://` endpoints) coupled with a unified local inventory configuration:
+`container-manager-mcp` bypasses this complexity by use **Docker over SSH** (using standard `ssh://` endpoints) coupled with a unified local inventory configuration:
 
 ```mermaid
 graph TD
@@ -22,7 +22,7 @@ graph TD
 
 ### Pre-bound Virtual Host Namespacing (Multiplexer Integration)
 
-To optimize the developer and AI agent experience in IDEs (like Antigravity), we avoid requiring the AI agent to remember to supply `host` explicitly on every call. Instead, the `mcp-multiplexer` reads `inventory.yml` and exposes host-specific **pre-bound virtual sub-servers** using namespaced prefixes (e.g. `cnt_r510__list_containers`).
+To optimize the developer and AI agent experience in IDEs (like Antigravity), this repository avoid requiring the AI agent to remember to supply `host` explicitly on every call. Instead, the `mcp-multiplexer` reads `inventory.yml` and exposes host-specific **pre-bound virtual sub-servers** using namespaced prefixes (e.g. `cnt_r510__list_containers`).
 
 ```mermaid
 graph TD
@@ -46,8 +46,8 @@ This virtual namespacing maintains a single centralized executable on the contro
 
 ### Key Design Pillars:
 - **Centralized Master Instance**: Run a single master instance of `container-manager-mcp` on the controller.
-- **Zero TLS/TCP Exposes**: There is no need to open Docker's TCP socket port (`2376`/`2375`) on remote hosts. Remote communication is fully encrypted and transported over standard SSH (port `22`).
-- **Shared Unified Inventory**: Shares the same standard inventory (`inventory.yml`, with a legacy `inventory.yaml` fallback) utilized by `systems-manager` and `tunnel-manager`. Manage it with `tunnel-manager inventory init|doctor`.
+- **Zero TLS/TCP Exposes**: There is no must open Docker's TCP socket port (`2376`/`2375`) on remote hosts. Remote communication is fully encrypted and transported over standard SSH (port `22`).
+- **Shared Unified Inventory**: Shares the same standard inventory (`inventory.yml`, with a legacy `inventory.yaml` fallback) use by `systems-manager` and `tunnel-manager`. Manage it with `tunnel-manager inventory init|doctor`.
 
 ---
 
@@ -60,7 +60,7 @@ Host connection definitions are parsed from the shared inventory (`inventory.yml
 2. `~/.config/agent-utilities/inventory.yaml` (legacy fallback)
 
 ### Inventory Format:
-Create or edit your inventory file at `~/.config/agent-utilities/inventory.yml` (the
+Create or edit the operator's inventory file at `~/.config/agent-utilities/inventory.yml` (the
 fastest way is `tunnel-manager inventory init`). Host
 aliases are **top-level keys** (no `hosts:` wrapper) — this is the flat form the shared
 `HostManager` loader expects:
@@ -111,7 +111,7 @@ Pass the target `host` argument as part of standard tool payloads:
 }
 ```
 
-This ensures full isolation, extreme simplicity, and zero configuration drift across your application environment.
+This ensures full isolation, extreme simplicity, and zero configuration drift across the operator's application environment.
 
 ---
 
@@ -119,7 +119,7 @@ This ensures full isolation, extreme simplicity, and zero configuration drift ac
 
 The inventory model above (`host="node-alpha"` resolved from `inventory.yml`) is specific to **Docker and
 Podman** — it routes a standard engine API call over an SSH tunnel to a remote daemon. **Kubernetes does not
-use it.** A Kubernetes API server is already a network-reachable, authenticated endpoint described by your
+use it.** A Kubernetes API server is already a network-reachable, authenticated endpoint described by the operator's
 **kubeconfig**, so `container-manager-mcp` targets clusters the Kubernetes-native way instead:
 
 | | Docker / Podman (remote host) | Kubernetes (remote / multi cluster) |

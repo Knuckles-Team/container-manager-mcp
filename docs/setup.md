@@ -1,7 +1,7 @@
 # Setup
 
 A step-by-step guide to installing `container-manager-mcp`, wiring it into an MCP
-client, and pointing it at remote hosts. For the deep dive on the multi-host control
+client, and pointing it at remote hosts. For the detailed review on the multi-host control
 plane see [Multi-Host](multi_host.md).
 
 ## 1. Install
@@ -56,7 +56,7 @@ fleet — see `container-manager-mcp --help`.
 
 ## 3. Wire it into an MCP client
 
-Add a server block to your client's `mcp_config.json` (Claude Code, Cursor, Windsurf,
+Add a server block to the operator's client's `mcp_config.json` (Claude Code, Cursor, Windsurf,
 Antigravity, …):
 
 ```jsonc
@@ -76,7 +76,7 @@ Antigravity, …):
 ## 4. Quickstart (local socket)
 
 With no `host` argument, tools operate on the local Docker/Podman socket. Invoke a tool
-such as `list_containers` (no `host`) from your MCP client and you should see the
+such as `list_containers` (no `host`) from the operator's MCP client and the operator should see the
 containers on the controller. Once that works, add remote hosts (next section).
 
 ## 5. Remote hosts
