@@ -8,7 +8,7 @@ is mapped through a logging-level->name table (unknown ints fall back to
 with the 2-arg form when `level` is an int (e.g. ``logging.INFO`` becomes
 the string ``"20"``, not ``"info"``) -- this test pins that asymmetry
 rather than "fixing" it; and any other arg count, which falls through to
-``agent_utilities.mcp.context_helpers.ctx_log`` if importable. In every
+``agent_connector_sdk.mcp.context.ctx_log`` if importable. In every
 shape, if `ctx` is truthy, the same client-side logging is attempted:
 ``getattr(ctx, level_str, None) or getattr(ctx, "info", None)``, called
 with `message`; a coroutine result is scheduled onto the running loop if
@@ -123,7 +123,7 @@ def test_three_arg_form_with_ctx_calls_matching_client_method(_restore_logger):
 def test_other_arg_count_falls_through_to_real_ctx_log(monkeypatch, _restore_logger):
     fake_real = MagicMock()
     monkeypatch.setattr(
-        "agent_utilities.mcp.context_helpers.ctx_log", fake_real, raising=False
+        "agent_connector_sdk.mcp.context.ctx_log", fake_real, raising=False
     )
     mcp_server.ctx_log(None, "one_positional")
     fake_real.assert_called_once_with(None, "one_positional")
@@ -132,7 +132,7 @@ def test_other_arg_count_falls_through_to_real_ctx_log(monkeypatch, _restore_log
 def test_zero_extra_args_falls_through_to_real_ctx_log(monkeypatch, _restore_logger):
     fake_real = MagicMock()
     monkeypatch.setattr(
-        "agent_utilities.mcp.context_helpers.ctx_log", fake_real, raising=False
+        "agent_connector_sdk.mcp.context.ctx_log", fake_real, raising=False
     )
     mcp_server.ctx_log(None)
     fake_real.assert_called_once_with(None)
@@ -141,7 +141,7 @@ def test_zero_extra_args_falls_through_to_real_ctx_log(monkeypatch, _restore_log
 def test_fallback_swallows_real_ctx_log_exception(monkeypatch, _restore_logger):
     fake_real = MagicMock(side_effect=RuntimeError("boom"))
     monkeypatch.setattr(
-        "agent_utilities.mcp.context_helpers.ctx_log", fake_real, raising=False
+        "agent_connector_sdk.mcp.context.ctx_log", fake_real, raising=False
     )
     # Must not raise.
     mcp_server.ctx_log(None, "one_positional")

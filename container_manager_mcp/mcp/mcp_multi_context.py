@@ -8,7 +8,7 @@ import logging
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Literal, cast
 
-from agent_utilities.mcp.concurrency import run_blocking
+from agent_connector_sdk.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
 
