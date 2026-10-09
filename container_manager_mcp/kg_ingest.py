@@ -1,9 +1,9 @@
 """Native epistemic-graph ingestion for container-manager records.
 
 CONCEPT:AU-KG.ingest.enterprise-source-extractor. Connector-specific mappers emit
-canonical node_type nodes and relationship edges. The required agent-utilities
-native-ingest primitive owns the transaction and raises NativeIngestError when the
-authoritative engine cannot commit.
+canonical node_type nodes and relationship edges. The ``agent_connector_sdk.ingest``
+knowledge-ingest facade (the generated EG client) owns the transaction and raises
+``IngestError`` when the authoritative engine cannot commit.
 """
 
 from __future__ import annotations
@@ -12,12 +12,19 @@ import re
 from typing import Any
 from urllib.parse import urlsplit
 
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    ingest_entities as _native_ingest_entities,
+from agent_connector_sdk.ingest import (
+    ChangeSet,
+    Entity,
+    IngestBinding,
+    IngestError,
+    KnowledgeIngest,
+    Relationship,
+    current_ingest,
 )
 
 _SOURCE = "container-manager-mcp"
 _DOMAIN = "container"
+_BINDING = IngestBinding(connector="container-manager-mcp", stream=_DOMAIN)
 
 # OCI image-source labels, in priority order: the standard
 # ``org.opencontainers.image.source`` annotation, falling back to the legacy
@@ -26,24 +33,46 @@ _SOURCE_LABEL = "org.opencontainers.image.source"
 _VCS_URL_LABEL = "org.label-schema.vcs-url"
 
 
-def ingest_entities(
+def _to_entity(record: dict[str, Any]) -> Entity:
+    return Entity(
+        id=record.get("id"),
+        node_type=record.get("node_type"),
+        properties={
+            k: v for k, v in record.items() if k not in ("id", "node_type")
+        },
+    )
+
+
+def _to_relationship(record: dict[str, Any]) -> Relationship:
+    props = {
+        k: v
+        for k, v in record.items()
+        if k not in ("source", "target", "relationship")
+    }
+    return Relationship(
+        source=record["source"],
+        target=record["target"],
+        relationship=record["relationship"],
+        properties=props or None,
+    )
+
+
+async def ingest_entities(
     entities: list[dict[str, Any]],
     relationships: list[dict[str, Any]] | None = None,
     *,
-    source: str = _SOURCE,
-    domain: str = _DOMAIN,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
-    """Write canonical typed nodes and relationships through agent-utilities."""
-    return _native_ingest_entities(
-        entities,
-        relationships,
-        source=source,
-        domain=domain,
-        client=client,
-        graph=graph,
+    """Write canonical typed nodes and relationships through the EG client."""
+    if not entities:
+        raise IngestError("ingest_entities needs at least one entity")
+    change_set = ChangeSet(
+        entities=tuple(_to_entity(e) for e in entities),
+        relationships=tuple(_to_relationship(r) for r in relationships or ()),
     )
+    service = ingest or current_ingest()
+    receipt = await service.submit(_BINDING, change_set)
+    return {"nodes": receipt.affected_count, "edges": receipt.relationship_count}
 
 
 def _s(value: Any) -> str | None:
@@ -102,12 +131,11 @@ def _ingest_container_record(
         )
 
 
-def ingest_containers(
+async def ingest_containers(
     containers: list[dict[str, Any]],
     *,
     host: str | None = None,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map container records (``ContainerInfo``) → ``:Container`` (+ ``:ContainerImage``) nodes.
 
@@ -125,7 +153,7 @@ def ingest_containers(
         )
     if host_id and entities:
         entities.append({"id": host_id, "node_type": "Host", "name": host})
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)
 
 
 def _parse_source_url_host_path(raw: str) -> tuple[str, str] | None:
@@ -223,11 +251,10 @@ def _ingest_image_record(
     _link_image_source_repo(rec, img_id, seen_repos, entities, relationships)
 
 
-def ingest_images(
+async def ingest_images(
     images: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map image records (``ImageInfo``) → ``:ContainerImage`` nodes.
 
@@ -243,14 +270,13 @@ def ingest_images(
     seen_repos: set[str] = set()
     for rec in images or []:
         _ingest_image_record(rec, seen_repos, entities, relationships)
-    return ingest_entities(entities, relationships or None, client=client, graph=graph)
+    return await ingest_entities(entities, relationships or None, ingest=ingest)
 
 
-def ingest_volumes(
+async def ingest_volumes(
     volumes: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map volume records (``VolumeInfo``) → ``:ContainerVolume`` nodes."""
     entities: list[dict[str, Any]] = []
@@ -269,14 +295,13 @@ def ingest_volumes(
                 "externalToolId": name,
             }
         )
-    return ingest_entities(entities, None, client=client, graph=graph)
+    return await ingest_entities(entities, None, ingest=ingest)
 
 
-def ingest_networks(
+async def ingest_networks(
     networks: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map network records (``NetworkInfo``) → ``:ContainerNetwork`` nodes."""
     entities: list[dict[str, Any]] = []
@@ -294,14 +319,13 @@ def ingest_networks(
                 "externalToolId": nid,
             }
         )
-    return ingest_entities(entities, None, client=client, graph=graph)
+    return await ingest_entities(entities, None, ingest=ingest)
 
 
-def ingest_services(
+async def ingest_services(
     services: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map swarm service records → ``:SwarmService`` (+ ``:ContainerImage``) nodes."""
     entities: list[dict[str, Any]] = []
@@ -346,14 +370,13 @@ def ingest_services(
             relationships.append(
                 {"source": node_id, "target": img_id, "relationship": "usesImage"}
             )
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)
 
 
-def ingest_nodes(
+async def ingest_nodes(
     nodes: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map swarm node records → ``:SwarmNode`` nodes."""
     entities: list[dict[str, Any]] = []
@@ -374,14 +397,13 @@ def ingest_nodes(
                 "externalToolId": nid,
             }
         )
-    return ingest_entities(entities, None, client=client, graph=graph)
+    return await ingest_entities(entities, None, ingest=ingest)
 
 
-def ingest_pods(
+async def ingest_pods(
     records: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map Kubernetes pod records (``list_pods``) → ``:Pod`` nodes.
 
@@ -435,7 +457,7 @@ def ingest_pods(
                     "relationship": "scheduledOnK8sNode",
                 }
             )
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)
 
 
 def _digit_str_to_int(value: Any) -> int | None:
@@ -494,11 +516,10 @@ def _ingest_deployment_record(
         )
 
 
-def ingest_deployments(
+async def ingest_deployments(
     records: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map Kubernetes deployment records (Deployment-shaped ``list_services``) → ``:Deployment`` nodes.
 
@@ -512,14 +533,13 @@ def ingest_deployments(
     seen_images: set[str] = set()
     for rec in records or []:
         _ingest_deployment_record(rec, seen_images, entities, relationships)
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)
 
 
-def ingest_namespaces(
+async def ingest_namespaces(
     records: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map Kubernetes namespace records (``list_namespaces``) → ``:Namespace`` nodes."""
     entities: list[dict[str, Any]] = []
@@ -537,14 +557,13 @@ def ingest_namespaces(
                 "externalToolId": name,
             }
         )
-    return ingest_entities(entities, None, client=client, graph=graph)
+    return await ingest_entities(entities, None, ingest=ingest)
 
 
-def ingest_k8s_services(
+async def ingest_k8s_services(
     records: list[dict[str, Any]],
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Map native Kubernetes service records (``list_native_services``) → ``:K8sService`` nodes.
 
@@ -583,4 +602,4 @@ def ingest_k8s_services(
                     "relationship": "runsInNamespace",
                 }
             )
-    return ingest_entities(entities, relationships, client=client, graph=graph)
+    return await ingest_entities(entities, relationships, ingest=ingest)

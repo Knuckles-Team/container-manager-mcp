@@ -16,7 +16,7 @@ import logging
 import os
 from typing import Any
 
-from agent_utilities.mcp.concurrency import run_blocking
+from agent_connector_sdk.mcp.concurrency import run_blocking
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
