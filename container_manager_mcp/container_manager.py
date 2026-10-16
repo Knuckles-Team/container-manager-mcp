@@ -420,7 +420,7 @@ def list_inventory_hosts() -> dict:
 
     Each alias targets a remote machine's Docker daemon over SSH
     (``ssh://<user>@<hostname>:<port>``), resolved from the tunnel-manager
-    inventory (``~/.config/agent-utilities/inventory.yaml``). Omit ``host`` to
+    inventory (``~/.config/agent-connector-sdk/inventory.yaml``). Omit ``host`` to
     use the local Docker socket."""
     from tunnel_manager.tunnel_manager import HostManager
 

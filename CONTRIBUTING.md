@@ -68,7 +68,7 @@ uv run container-manager-doctor --backend kubernetes --context <context>
 ```
 
 Remote Docker and Podman hosts are resolved from the shared
-`~/.config/agent-utilities/inventory.yml` file. Kubernetes targets use kubeconfig
+`~/.config/agent-connector-sdk/inventory.yml` file. Kubernetes targets use kubeconfig
 contexts or `K8S_CONTEXTS`; they do not use the inventory host alias mechanism.
 
 ## Testing and Quality
@@ -101,7 +101,7 @@ When adding or changing behavior:
 
 - Follow the patterns in `AGENTS.md`.
 - Keep tools action-routed and idempotent where possible.
-- Use `agent-utilities` helpers for shared MCP and agent patterns.
+- Use `agent-connector-sdk` helpers for shared MCP and agent patterns.
 - Use Pydantic models for structured inputs and outputs.
 - Keep public tool docstrings clear; they become LLM-facing tool descriptions.
 - Check optional integrations with `try/except ImportError`.

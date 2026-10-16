@@ -191,7 +191,7 @@ def register_inventory_tools(mcp: FastMCP):
         socket, or pass an alias here to target another machine — e.g. a swarm
         MANAGER node for cluster ops — without deploying a container-manager on
         each box. Aliases come from the tunnel-manager inventory
-        (``~/.config/agent-utilities/inventory.yaml``) and connect as
+        (``~/.config/agent-connector-sdk/inventory.yaml``) and connect as
         ``ssh://<user>@<hostname>:<port>``.
         """
         try:
@@ -202,7 +202,7 @@ def register_inventory_tools(mcp: FastMCP):
                 "hosts": {},
                 "hint": (
                     "No inventory configured. Add hosts to "
-                    "~/.config/agent-utilities/inventory.yaml (tunnel-manager "
+                    "~/.config/agent-connector-sdk/inventory.yaml (tunnel-manager "
                     "format) and ensure SSH keys are available."
                 ),
             }

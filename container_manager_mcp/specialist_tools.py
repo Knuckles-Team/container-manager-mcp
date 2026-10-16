@@ -3,9 +3,8 @@
 
 Provides containerized specialist lifecycle management as MCP tools.
 These tools are the container layer of the Agent OS Triad and are
-discoverable through the Knowledge Graph in agent-utilities.
+discoverable through the Knowledge Graph in agent-connector-sdk.
 
-Requires ``agent-utilities >= 0.3.0`` for ``ContainerConfig`` model.
 Falls back gracefully when not available.
 """
 
@@ -20,20 +19,6 @@ from agent_connector_sdk.mcp.concurrency import run_blocking
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
-
-# Graceful import — becomes no-op without agent-utilities
-try:
-    from agent_utilities.core.registry.package_adapter import (
-        ContainerConfig,  # noqa: F401
-    )
-
-    _HAS_AGENT_UTILITIES = True
-except ImportError:
-    _HAS_AGENT_UTILITIES = False
-    logger.debug(
-        "[Agent OS] agent-utilities >= 0.3.0 not found. "
-        "Specialist deployment tools will use inline config."
-    )
 
 
 def _parse_specialist_container_config(
