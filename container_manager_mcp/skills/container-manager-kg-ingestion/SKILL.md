@@ -32,7 +32,7 @@ engine-guarded: with no reachable KG engine the tool still lists the inventory a
 ## When NOT to use
 - Operating containers (start/stop/logs/exec) → `container-manager-lifecycle`.
 - Managing swarm services/nodes → `container-manager-swarm`.
-- Generic KG queries → the graph-os `graph_query` / `graph_search` surface.
+- Generic KG queries → the arbora `graph_query` / `graph_search` surface.
 
 ## Prerequisites & environment
 Connect via the `mcp-client` skill against the **`container-manager-mcp`** MCP server.
