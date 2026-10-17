@@ -25,7 +25,6 @@ need:
 | `docker` | `pip install "container-manager-mcp[docker]"` | Docker engine client (`docker`) |
 | `podman` | `pip install "container-manager-mcp[podman]"` | Podman engine client (`podman`) |
 | `mcp` | `pip install "container-manager-mcp[mcp]"` | FastMCP MCP-server runtime (`agent-connector-sdk`) |
-| `agent` | `pip install "container-manager-mcp[agent]"` | Pydantic-AI agent + Logfire tracing |
 | `all` | `pip install "container-manager-mcp[all]"` | Everything above |
 
 ```bash

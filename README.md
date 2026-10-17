@@ -1,5 +1,5 @@
 # Container Manager Mcp
-## CLI or API | MCP | Agent
+## CLI or API | MCP
 
 ![PyPI - Version](https://img.shields.io/pypi/v/container-manager-mcp)
 ![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
@@ -882,7 +882,6 @@ container-manager-agent --provider openai --model-id gpt-4o
 ```
 
 ### Docker Compose Orchestration
-The following `docker/agent.compose.yml` configures the Agent, Web UI, and Terminal Interface together:
 
 ```yaml
 version: '3.8'
@@ -914,7 +913,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  container-manager-mcp-agent:
     image: example/container-manager-mcp@sha256:<digest>
     container_name: container-manager-mcp-agent
     hostname: container-manager-mcp-agent
@@ -978,7 +976,6 @@ Pick the extra that matches what the operator want to run:
 | Extra | Installs | Use when |
 |-------|----------|----------|
 | `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`agent-connector-sdk` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | The operator run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
-| `container-manager-mcp[agent]` | Agent runtime (`agent-connector-sdk` — model orchestration + `epistemic-graph[full]`) | The operator run the **integrated agent** |
 | `container-manager-mcp[all]` | Everything (`mcp` + `agent` + the `docker` / `podman` / `kubernetes` backends) | Development / both surfaces |
 
 ```bash
@@ -986,34 +983,28 @@ Pick the extra that matches what the operator want to run:
 uv pip install "container-manager-mcp[mcp]"
 
 # Agent runtime (adds model orchestration to the shared graph engine)
-uv pip install "container-manager-mcp[agent]"
 
 # Everything (development)
 uv pip install "container-manager-mcp[all]"      # or: python -m pip install "container-manager-mcp[all]"
 ```
 
-### Container images (`:mcp` vs `:agent`)
+### Container images (`:mcp`)
 
-One multi-stage `docker/Dockerfile` builds two right-sized images, selected by `--target`:
+One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
 | `example/container-manager-mcp:mcp` | `--target mcp` | `container-manager-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `container-manager-mcp` |
-| `example/container-manager-mcp@sha256:<digest>` | `--target agent` (default) | `container-manager-mcp[agent]` — **agent runtime**, model orchestration + `epistemic-graph[full]` | `container-manager-agent` |
 
 ```bash
 docker build --target mcp   -t example/container-manager-mcp:mcp    docker/   # connector-focused MCP server
-docker build --target agent -t example/container-manager-mcp:agent-local docker/   # agent runtime
 ```
 
-`docker/mcp.compose.yml` runs the connector-focused `:mcp` server; `docker/agent.compose.yml` runs the
 agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-Both `[mcp]` and `[agent]` carry the **epistemic-graph** engine through the required
 Agent Connector SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
-the server connector-focused; `[agent]` also enables model orchestration. Local
 deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
