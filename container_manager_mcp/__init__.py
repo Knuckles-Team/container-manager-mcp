@@ -77,8 +77,6 @@ def __getattr__(name: str) -> Any:
     # Availability flags resolved without eager imports.
     if name == "_MCP_AVAILABLE":
         return _mcp_available()
-    if name == "_AGENT_AVAILABLE":
-        return _agent_available()
     return _lookup_in_optional_modules(name)
 
 
