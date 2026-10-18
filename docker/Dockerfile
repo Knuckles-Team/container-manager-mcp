@@ -13,7 +13,7 @@ RUN apt-get update \
 # Slim MCP-only dependency closure.
 FROM builder-base AS builder-mcp
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv pip install --system --break-system-packages container-manager-mcp[mcp]==3.1.0
+    uv pip install --system --break-system-packages container-manager-mcp[mcp]==3.2.0
 
 # ── Kubernetes auth CLIs ──────────────────────────────────────────────────────
 # cm shells out to `kubectl` (copy_to_pod/copy_from_pod use `kubectl cp`) and,

@@ -7,11 +7,8 @@
         "container-manager-mcp"
       ],
       "env": {
-        "MCP_TOOL_MODE": "intent",
         "COMPOSETOOL": "True",
         "CONTAINERTOOL": "True",
-        "CONTAINER_MANAGER_HEALTH_AGGREGATE_S": "3600",
-        "CONTAINER_MANAGER_HEALTH_INGEST": "true",
         "CONTAINER_MANAGER_TYPE": "docker",
         "DOCKERSWARMTOOL": "True",
         "DOCTORTOOL": "True",
