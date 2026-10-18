@@ -166,7 +166,7 @@ from container_manager_mcp.container_manager import (
     list_inventory_hosts,
 )
 
-__version__ = "3.2.0"
+__version__ = "3.2.1"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
