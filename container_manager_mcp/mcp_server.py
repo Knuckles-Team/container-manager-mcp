@@ -161,12 +161,14 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
 
 
 from container_manager_mcp.container_manager import (
-    ContainerManagerBase,
+    DockerManager,
+    PodmanManager,
     create_manager,
     list_inventory_hosts,
 )
+from container_manager_mcp.k8s.manager import KubernetesManager
 
-__version__ = "3.2.1"
+__version__ = "3.3.0"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
@@ -1590,20 +1592,44 @@ def get_mcp_instance() -> tuple[Any, ...]:
     # podman/docker/multi-context) and gates each on its <TAG>TOOL setting.
     register_tool_surface(
         mcp,
-        client_cls=ContainerManagerBase,
-        get_client=create_manager,
         service=_SERVICE,
         tools_module=sys.modules[__name__],
+        verbose_targets=[
+            {
+                "client_cls": DockerManager,
+                "get_client": lambda: create_manager("docker"),
+                "prefix": "docker",
+                # ``docker_service_logs`` wraps ``service_logs`` under another
+                # argument shape; keep both tools addressable.
+                "manifest": [
+                    {
+                        "method": "docker_service_logs",
+                        "name": "swarm_service_logs",
+                    },
+                    {"method": "docker_service_ps", "name": "swarm_service_ps"},
+                ],
+            },
+            {
+                "client_cls": PodmanManager,
+                "get_client": lambda: create_manager("podman"),
+                "prefix": "podman",
+            },
+            {
+                "client_cls": KubernetesManager,
+                "get_client": lambda: create_manager("kubernetes"),
+                "prefix": "k8s",
+            },
+        ],
     )
 
-    return args, mcp, middlewares
+    return mcp, args, middlewares
 
 
 def mcp_server() -> None:
     """Main entry point for the MCP server."""
     import sys
 
-    args, mcp, middlewares = get_mcp_instance()
+    mcp, args, middlewares = get_mcp_instance()
     print(f"container-manager-mcp MCP v{__version__}", file=sys.stderr)
     print("\nStarting MCP Server", file=sys.stderr)
     print(f"  Transport: {args.transport.upper()}", file=sys.stderr)
