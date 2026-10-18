@@ -24,25 +24,40 @@ from container_manager_mcp.mcp_server import get_mcp_instance
 
 
 @lru_cache(maxsize=1)
-def _tool_actions() -> dict[str, set[str]]:
-    """Map every registered tool name → the set of actions its schema enumerates."""
+def _tool_names() -> set[str]:
+    """Names of every registered tool (one per manager operation)."""
     # get_mcp_instance() parses sys.argv for server flags (--port, etc.); isolate it
-    # so the test is hermetic under any pytest invocation (e.g. `-p no:cacheprovider`).
+    # so the test is hermetic under any pytest invocation.
     _saved_argv = sys.argv
     sys.argv = [_saved_argv[0] if _saved_argv else "container-manager-mcp"]
     try:
-        _args, mcp, _mw = get_mcp_instance()
+        mcp, _args, _mw = get_mcp_instance()
     finally:
         sys.argv = _saved_argv
-    tools = asyncio.run(mcp.list_tools())
-    out: dict[str, set[str]] = {}
-    for tool in tools:
-        schema = getattr(tool, "inputSchema", None) or getattr(tool, "parameters", {})
-        action = (schema.get("properties") or {}).get("action") or {}
-        enum = action.get("enum")
-        if enum:
-            out[tool.name] = set(enum)
-    return out
+    return {tool.name for tool in asyncio.run(mcp.list_tools())}
+
+
+#: Matrix actions of the retired themed tools whose operation was renamed.
+_ALIASES = {
+    "list_k8s_services": "k8s_list_native_services",
+    "get_k8s_service": "k8s_get_native_service",
+    "create_k8s_service": "k8s_create_native_service",
+    "delete_k8s_service": "k8s_delete_native_service",
+    "list_csr": "k8s_list_certificate_signing_requests",
+}
+
+
+def _operation_tool(tool: str, action: str) -> str:
+    """The per-operation tool serving a matrix action of a retired themed tool."""
+    if tool.startswith("cm_k8s_"):
+        prefix = "k8s"
+    elif tool == "cm_docker_swarm":
+        prefix = "docker"
+    else:
+        prefix = "podman"
+    if action.startswith(f"{prefix}_"):
+        return action
+    return _ALIASES.get(action, f"{prefix}_{action}")
 
 
 # --- The 10 user-checklist actions that MUST exist (tool -> actions) ----------
@@ -251,21 +266,13 @@ def _cases() -> list[tuple[str, str]]:
     ]
 
 
-def test_all_expected_tools_are_registered():
-    """Every tool named in the matrix is actually registered with an action enum."""
-    live = _tool_actions()
-    missing = [t for t in CAPABILITY_MATRIX if t not in live]
-    assert not missing, f"expected tools absent from the live surface: {missing}"
-
-
 @pytest.mark.parametrize("tool,action", _cases(), ids=lambda v: v)
 def test_capability_action_present(tool: str, action: str):
-    """Coverage gate: each expected action must exist on the live tool's enum."""
-    live = _tool_actions()
-    assert tool in live, f"tool {tool!r} not registered"
-    assert action in live[tool], (
-        f"MISSING capability: {tool}.{action} — the tool no longer exposes this "
-        f"action (coverage regression). Live actions: {sorted(live[tool])}"
+    """Coverage gate: each expected capability is served as its own tool."""
+    name = _operation_tool(tool, action)
+    assert name in _tool_names(), (
+        f"MISSING capability: {name} - the surface no longer exposes {tool}.{action} "
+        "(coverage regression)"
     )
 
 
@@ -275,9 +282,8 @@ def test_capability_action_present(tool: str, action: str):
     ids=lambda v: v,
 )
 def test_user_checklist_action_present(tool: str, action: str):
-    """The 10 user-checklist actions must all exist on their themed tools."""
-    live = _tool_actions()
-    assert action in live.get(tool, set()), f"checklist action absent: {tool}.{action}"
+    """The user-checklist capabilities must all exist as operation tools."""
+    assert _operation_tool(tool, action) in _tool_names()
 
 
 def test_matrix_guards_every_runtime():

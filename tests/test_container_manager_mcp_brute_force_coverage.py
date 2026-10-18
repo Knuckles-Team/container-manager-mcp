@@ -72,7 +72,9 @@ def _build_manager_method_call_kwargs(method, common_kwargs: dict) -> dict:
     return kwargs
 
 
-def _brute_force_call_manager_method(manager, name, method, common_kwargs: dict) -> None:
+def _brute_force_call_manager_method(
+    manager, name, method, common_kwargs: dict
+) -> None:
     """Call one manager method with synthesized kwargs; this is a smoke sweep
     (does the call not blow up in an unexpected way), so any exception is
     swallowed rather than asserted on."""
@@ -152,9 +154,7 @@ def _build_tool_call_params(tool) -> dict:
         p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
     )
     if not has_kwargs:
-        target_params = {
-            k: v for k, v in target_params.items() if k in sig.parameters
-        }
+        target_params = {k: v for k, v in target_params.items() if k in sig.parameters}
     return target_params
 
 
@@ -185,7 +185,7 @@ def test_mcp_server_coverage(mock_container_deps):
             mock_cm.return_value = mock_manager
 
             mcp_data = get_mcp_instance()
-            mcp = mcp_data[1] if isinstance(mcp_data, tuple) else mcp_data
+            mcp = mcp_data[0] if isinstance(mcp_data, tuple) else mcp_data
 
             async def run_tools():
                 tool_objs = (
@@ -197,8 +197,6 @@ def test_mcp_server_coverage(mock_container_deps):
                     await _call_registered_tool_smoke(mcp, tool)
 
             asyncio.run(run_tools())
-
-
 
 
 def test_main_coverage():

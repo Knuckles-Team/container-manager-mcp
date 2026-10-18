@@ -4,70 +4,70 @@ ontology_source: container
 sync:
 - preset: container-containers
   server: container-manager-mcp
-  tool: cm_container_operations
-  action: list_containers
+  tool: docker_list_containers
+  action: null
   records_path: ''
   id_field: id
   title_field: name
   text_field: image
   updated_field: created
   doc_type: container
-  tool_schema_sha256: a977a24486bb17afc52241d14551d486a382b1d18dd8ae68c8079eb14f5bbeeb
+  tool_schema_sha256: 379432793e905660d41e20643318066e34e4aaf3912693d291daf597b90bfee2
 - preset: container-images
   server: container-manager-mcp
-  tool: cm_image_operations
-  action: list_images
+  tool: docker_list_images
+  action: null
   records_path: ''
   id_field: id
   title_field: repository
   text_field: tag
   updated_field: created
   doc_type: container-image
-  tool_schema_sha256: 42724d6685092e1bd1ac36dc8b460182fac87d70a8e171608efb8ca490f925b0
+  tool_schema_sha256: c743b4c57607838a5373bfd8e3f1ebc0b2f7d5edf6afbcc109b95297ef6346fd
 - preset: k8s-deployments
   server: container-manager-mcp
-  tool: cm_k8s_workloads
-  action: list_services
+  tool: k8s_list_services
+  action: null
   records_path: ''
   id_field: id
   title_field: name
   text_field: image
   updated_field: created
   doc_type: k8s-deployment
-  tool_schema_sha256: 1869d52a5bfbecc70965e51cfcd9c896b161d714d9d2b76bfb3f57077caf95ef
+  tool_schema_sha256: 7ad674d34915bc7d235d45b681201e408398eef7c2a25ab9aec71d45107f611d
 - preset: k8s-namespaces
   server: container-manager-mcp
-  tool: cm_k8s_config
-  action: list_namespaces
+  tool: k8s_list_namespaces
+  action: null
   records_path: ''
   id_field: name
   title_field: name
   text_field: status
   updated_field: created
   doc_type: k8s-namespace
-  tool_schema_sha256: 7e58e8c86ac219c4d31f3e89af16360bf5f92075fec0735f2df8626ccb070a3b
+  tool_schema_sha256: 603ee68ddc54ef45c198d95bf8830335e33d0691156e48ca1784df7fa953ffc5
 - preset: k8s-pods
   server: container-manager-mcp
-  tool: cm_k8s_workloads
-  action: list_pods
+  tool: k8s_list_pods
+  action: null
   records_path: ''
   id_field: name
   title_field: name
   text_field: status
   updated_field: created
   doc_type: k8s-pod
-  tool_schema_sha256: 1869d52a5bfbecc70965e51cfcd9c896b161d714d9d2b76bfb3f57077caf95ef
+  tool_schema_sha256: 5af9f5b90b263266e5c751931e55dd33354e4ff55b7f9e368d024111a12b5b80
 - preset: k8s-services
   server: container-manager-mcp
-  tool: cm_k8s_networking
-  action: list_k8s_services
+  tool: k8s_list_native_services
+  action: null
   records_path: ''
   id_field: name
   title_field: name
   text_field: type
   updated_field: created
   doc_type: k8s-service
-  tool_schema_sha256: 5f80b42a40bf2da0def9c9a8749778fb65e9292dab4d319ae3244c4f59c61bf9
+  tool_schema_sha256: a811069e53f536dbbc4c555fbc6488574918fc88288254ba9b73203c5ebc634b
 governance:
   default_acl: quarantine
   identity: opaque-reference
