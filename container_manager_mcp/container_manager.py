@@ -28,7 +28,7 @@ if TYPE_CHECKING:
     # TYPE_CHECKING-only to avoid a real import cycle.
     from container_manager_mcp.multi_context_manager import MultiContextManager
 
-__version__ = "3.3.0"
+__version__ = "3.3.1"
 
 
 class _MissingRuntimeError(Exception):
