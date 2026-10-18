@@ -175,7 +175,7 @@ def _normalize_source_url(url: Any) -> tuple[str, str] | None:
     Mirrors ``portainer_agent.kg_ingest._normalize_repo_url``'s ``git:repo:<host>/<path>``
     id convention (so a deployed ``:Stack``'s ``:Repository`` and this image's
     ``:Repository`` land on the same node id), plus the case/``www.``-insensitive
-    normalization ``agent_utilities.observability.repo_crosswalk.normalize_clone_url``
+    normalization ``agent_connector_sdk.observability.repo_crosswalk.normalize_clone_url``
     uses (so the same repo always yields the same id regardless of label casing) —
     the crosswalk then ``owl:sameAs``-unifies this URL-keyed node with the numeric-id
     node the code ingestors (github-agent/gitlab-api) create. Handles HTTP(S) and

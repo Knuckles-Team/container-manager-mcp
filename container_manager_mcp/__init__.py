@@ -16,7 +16,6 @@ CORE_MODULES: list[str] = [
 # runtime (`pydantic-ai`). Each maps to the pip extra that provides its dependencies.
 OPTIONAL_MODULES = {
     "container_manager_mcp.mcp_server": "mcp",
-    "container_manager_mcp.agent_server": "agent",
 }
 
 
@@ -78,8 +77,6 @@ def __getattr__(name: str) -> Any:
     # Availability flags resolved without eager imports.
     if name == "_MCP_AVAILABLE":
         return _mcp_available()
-    if name == "_AGENT_AVAILABLE":
-        return _agent_available()
     return _lookup_in_optional_modules(name)
 
 

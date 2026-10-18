@@ -172,12 +172,10 @@ through `MCP_URL`.
 container-manager-agent --provider openai --model-id gpt-4o
 ```
 
-The repo ships [`docker/agent.compose.yml`](https://github.com/Knuckles-Team/container-manager-mcp/blob/main/docker/agent.compose.yml),
 which runs the MCP server and the agent together and wires the agent to the MCP
 server by container name:
 
 ```yaml
-  container-manager-mcp-agent:
     image: example/container-manager-mcp@sha256:<digest>
     container_name: container-manager-mcp-agent
     restart: always
@@ -198,7 +196,6 @@ server by container name:
 ```
 
 ```bash
-docker compose -f docker/agent.compose.yml up -d
 ```
 
 ## Behind a Caddy reverse proxy

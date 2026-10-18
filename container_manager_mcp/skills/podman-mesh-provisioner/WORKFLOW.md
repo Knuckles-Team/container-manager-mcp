@@ -15,7 +15,7 @@ Kubernetes. Podman has no built-in clustering daemon; the "mesh" is the API sock
 - `container-manager-mcp` — set `CONTAINER_MANAGER_TYPE=podman` and (optionally)
   `COMPOSE_TOOL=podman-compose`; it drives Podman socket/compose/host operations.
 - `tunnel-manager-mcp` — remote command execution + the shared
-  `~/.config/agent-utilities/inventory.yaml`.
+  `~/.config/agent-connector-sdk/inventory.yaml`.
 
 ## Inputs
 
@@ -65,7 +65,7 @@ This is an atomic skill — run the steps above in order via `container-manager-
 Podman branch (peer to `swarm-mesh-provisioner` / `kubernetes-mesh-provisioner`); the
 caller picks the branch from the operator's chosen orchestrator.
 
-> **Execution:** If graph-os is reachable, offload via
+> **Execution:** If arbora is reachable, offload via
 > `graph_orchestrate action=execute_agent` (or the `kg-delegate` skill) so
 > the per-host steps fan out; otherwise execute the steps natively in order against
 > the two MCP servers above.

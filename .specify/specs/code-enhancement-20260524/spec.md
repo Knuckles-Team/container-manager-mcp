@@ -18,7 +18,7 @@
 
 ## Functional Requirements
 
-- **FR-001**: Minor update: agent-utilities 0.2.40 (installed) -> 0.16.0
+- **FR-001**: Minor update: agent-connector-sdk 0.2.40 (installed) -> 0.16.0
 - **FR-002**: Minor update: pytest-xdist 3.6.0 (constraint — not installed) -> 3.8.0
 - **FR-003**: Minor update: podman 5.6.0 (constraint — not installed) -> 5.8.0
 - **FR-004**: 2 functions exceed 200 lines (actionable refactoring targets): container_manager (420L), register_specialist_deployment_tools (214L)
@@ -60,7 +60,7 @@
 - **FR-040**: Partial env var documentation: 39% coverage
 - **FR-041**: Undocumented env vars: AUTH_TYPE, COMPOSETOOL, CONTAINERTOOL, CONTAINER_MANAGER_PODMAN_BASE_URL, CONTAINER_MANAGER_TYPE, EUNOMIA_POLICY_FILE, EUNOMIA_TYPE, IMAGETOOL, INFOTOOL, LLM_API_KEY
 - **FR-042**: 6 Python env vars not in .env.example: CONTAINER_MANAGER_PODMAN_BASE_URL, CONTAINER_MANAGER_TYPE, LLM_API_KEY, LLM_BASE_URL, MCP_URL
-- **FR-043**: Analysis error: No module named 'agent_utilities.knowledge_graph'
+- **FR-043**: Analysis error: No module named 'agent_connector_sdk.knowledge_graph'
 
 ## Success Criteria
 
