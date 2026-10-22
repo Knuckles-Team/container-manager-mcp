@@ -25,6 +25,7 @@ def server():
     return mcp, registered_tools(mcp)
 
 
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R001.1")
 def test_generic_tools_advertise_context(server):
     _, tools = server
     generic = {n: t for n, t in tools.items() if backend_for_tool(n)}
@@ -56,6 +57,9 @@ def _call(mcp, name, arguments):
     return asyncio.run(run())
 
 
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R001.2")
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R001.4")
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R001.5")
 def test_context_argument_selects_the_named_context(server):
     mcp, _ = server
     seen = []
@@ -81,6 +85,7 @@ def test_context_argument_selects_the_named_context(server):
     assert seen == [("kubernetes", "prod-east"), ("docker", "edge-host")]
 
 
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R001.3")
 def test_without_context_the_default_manager_is_used(server):
     mcp, _ = server
     created = []
