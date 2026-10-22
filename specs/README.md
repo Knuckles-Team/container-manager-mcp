@@ -12,4 +12,7 @@ Read the existing specs first. Extend the spec that owns the behavior. Create a 
 
 ## Local specifications
 
-This repository has no local spec yet.
+- [`CONN-CONTAINER-MANAGER-MCP`](container-manager-mcp/spec.md) — Container manager call context.
+
+The lifecycle generator owns delivery receipts in `status.json`.
+Run `pipelines-hook spec-status --write` after reviewed source changes enter Git history.

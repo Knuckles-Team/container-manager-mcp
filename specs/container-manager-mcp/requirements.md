@@ -1,0 +1,14 @@
+# CONN-CONTAINER-MANAGER-MCP — Requirements
+
+Governing spec: [spec.md](spec.md).
+
+Each row is one requirement. A row names the file it touches and the test that proves it.
+
+| ID | Requirement | Acceptance |
+|---|---|---|
+| `CONN-CONTAINER-MANAGER-MCP-R001` | **Per-call context.** Every generic `docker_*` and `k8s_*` tool must accept an optional `context` argument that selects the manager. | `tests/test_call_context.py` rows R001.1 to R001.5 pass. |
+| `CONN-CONTAINER-MANAGER-MCP-R001.1` | **Advertised argument.** Each generic tool schema must list an optional `context` property, and the property must not be required. | `tests/test_call_context.py::test_generic_tools_advertise_context` must pass. |
+| `CONN-CONTAINER-MANAGER-MCP-R001.2` | **Named context selects the manager.** A call with `context` must run against the manager of that context for the tool backend. | `tests/test_call_context.py::test_context_argument_selects_the_named_context` must pass. |
+| `CONN-CONTAINER-MANAGER-MCP-R001.3` | **Default manager.** A call without `context` must use the default manager of the tool backend. | `tests/test_call_context.py::test_without_context_the_default_manager_is_used` must pass. |
+| `CONN-CONTAINER-MANAGER-MCP-R001.4` | **Wiring.** `container_manager_mcp/mcp_server.py:1634` must advertise the argument and `:1635` must add `CallContextMiddleware`. `:1609` and `:1628` must resolve clients through `manager_for`. | `tests/test_call_context.py::test_context_argument_selects_the_named_context` must reach those call sites. |
+| `CONN-CONTAINER-MANAGER-MCP-R001.5` | **Hot-path proof.** An MCP client calling `k8s_list_pods` and `docker_list_containers` with `context` must reach the named manager. | `tests/test_call_context.py::test_context_argument_selects_the_named_context` must pass. |

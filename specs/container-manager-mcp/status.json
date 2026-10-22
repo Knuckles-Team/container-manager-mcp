@@ -1,0 +1,75 @@
+{
+  "schema_version": 2,
+  "spec_id": "CONN-CONTAINER-MANAGER-MCP",
+  "owner_repo": "container-manager-mcp",
+  "delivery_state": "SPECIFIED",
+  "requirement_ids": [
+    "CONN-CONTAINER-MANAGER-MCP-R001",
+    "CONN-CONTAINER-MANAGER-MCP-R001.1",
+    "CONN-CONTAINER-MANAGER-MCP-R001.2",
+    "CONN-CONTAINER-MANAGER-MCP-R001.3",
+    "CONN-CONTAINER-MANAGER-MCP-R001.4",
+    "CONN-CONTAINER-MANAGER-MCP-R001.5"
+  ],
+  "requirements": [
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R001",
+      "title": "Per-call context",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "CONN-CONTAINER-MANAGER-MCP-R001.1",
+        "CONN-CONTAINER-MANAGER-MCP-R001.2",
+        "CONN-CONTAINER-MANAGER-MCP-R001.3",
+        "CONN-CONTAINER-MANAGER-MCP-R001.4",
+        "CONN-CONTAINER-MANAGER-MCP-R001.5"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R001.1",
+      "title": "Advertised argument",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_call_context.py:28"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R001.2",
+      "title": "Named context selects the manager",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_call_context.py:60"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R001.3",
+      "title": "Default manager",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_call_context.py:88"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R001.4",
+      "title": "Wiring",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_call_context.py:61"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R001.5",
+      "title": "Hot-path proof",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_call_context.py:62"
+      ]
+    }
+  ]
+}
