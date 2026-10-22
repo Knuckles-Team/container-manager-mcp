@@ -35,7 +35,16 @@ from agent_connector_sdk.config import load_config
 from agent_connector_sdk.mcp.action_dispatch import resolve_action
 from agent_connector_sdk.mcp.concurrency import run_blocking
 from agent_connector_sdk.mcp.server import create_mcp_server
-from agent_connector_sdk.mcp.tool_surface import register_tool_surface
+from agent_connector_sdk.mcp.tool_surface import (
+    register_tool_surface,
+    registered_tools,
+)
+
+from container_manager_mcp.call_context import (
+    CallContextMiddleware,
+    advertise_context_argument,
+    manager_for,
+)
 
 _SERVICE = "container-manager-mcp"
 
@@ -168,7 +177,7 @@ from container_manager_mcp.container_manager import (
 )
 from container_manager_mcp.k8s.manager import KubernetesManager
 
-__version__ = "3.3.1"
+__version__ = "3.3.2"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
@@ -1597,7 +1606,7 @@ def get_mcp_instance() -> tuple[Any, ...]:
         verbose_targets=[
             {
                 "client_cls": DockerManager,
-                "get_client": lambda: create_manager("docker"),
+                "get_client": lambda: manager_for("docker"),
                 "prefix": "docker",
                 # ``docker_service_logs`` wraps ``service_logs`` under another
                 # argument shape; keep both tools addressable.
@@ -1616,11 +1625,14 @@ def get_mcp_instance() -> tuple[Any, ...]:
             },
             {
                 "client_cls": KubernetesManager,
-                "get_client": lambda: create_manager("kubernetes"),
+                "get_client": lambda: manager_for("kubernetes"),
                 "prefix": "k8s",
             },
         ],
     )
+
+    advertise_context_argument(registered_tools(mcp))
+    mcp.add_middleware(CallContextMiddleware())
 
     return mcp, args, middlewares
 
