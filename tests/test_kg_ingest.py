@@ -64,7 +64,7 @@ def _edge_types(request):
         (
             rel.source.record_id,
             rel.target.record_id,
-            rel.relation_reference.rsplit("/relations/", 1)[-1],
+            rel.relation_reference.rsplit("/", 1)[-1],
         )
         for rel in request.relationships
     }
@@ -119,8 +119,16 @@ async def test_ingest_containers_maps_container_image_and_host(ingest):
     assert _is_type(by_id["container:image:nginx:latest"], "ContainerImage")
     assert _is_type(by_id["container:host:test-node-1"], "Host")
     edges = _edge_types(request)
-    assert ("container:container:abc123", "container:image:nginx:latest", "usesImage") in edges
-    assert ("container:container:abc123", "container:host:test-node-1", "runsOn") in edges
+    assert (
+        "container:container:abc123",
+        "container:image:nginx:latest",
+        "usesImage",
+    ) in edges
+    assert (
+        "container:container:abc123",
+        "container:host:test-node-1",
+        "runsOn",
+    ) in edges
 
 
 async def test_ingest_images_maps_repo_tag_size(ingest):
@@ -317,9 +325,21 @@ async def test_ingest_pods_maps_phase_namespace_and_node(ingest):
     assert pod.payload["podPhase"] == "Running"
     assert pod.payload["externalToolId"] == "web-abc123"
     edges = _edge_types(request)
-    assert ("container:pod:default/web-abc123", "container:namespace:default", "runsInNamespace") in edges
-    assert ("container:pod:default/web-abc123", "container:deployment:web", "managedByDeployment") in edges
-    assert ("container:pod:default/web-abc123", "container:k8snode:node-1", "scheduledOnK8sNode") in edges
+    assert (
+        "container:pod:default/web-abc123",
+        "container:namespace:default",
+        "runsInNamespace",
+    ) in edges
+    assert (
+        "container:pod:default/web-abc123",
+        "container:deployment:web",
+        "managedByDeployment",
+    ) in edges
+    assert (
+        "container:pod:default/web-abc123",
+        "container:k8snode:node-1",
+        "scheduledOnK8sNode",
+    ) in edges
 
 
 async def test_ingest_deployments_maps_replicas_image_and_namespace(ingest):
@@ -344,8 +364,16 @@ async def test_ingest_deployments_maps_replicas_image_and_namespace(ingest):
     assert _is_type(dep, "Deployment")
     assert dep.payload["deploymentReplicas"] == 3
     edges = _edge_types(request)
-    assert ("container:deployment:dep123", "container:image:nginx:latest", "usesImage") in edges
-    assert ("container:deployment:dep123", "container:namespace:default", "runsInNamespace") in edges
+    assert (
+        "container:deployment:dep123",
+        "container:image:nginx:latest",
+        "usesImage",
+    ) in edges
+    assert (
+        "container:deployment:dep123",
+        "container:namespace:default",
+        "runsInNamespace",
+    ) in edges
 
 
 async def test_ingest_namespaces_maps_status(ingest):

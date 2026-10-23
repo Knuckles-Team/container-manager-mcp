@@ -13,10 +13,10 @@
 # node gets the per-package IRI.
 #
 # REUSE (defined in the hub's ontology_infrastructure.ttl — NOT redefined here):
-#   :Container       — a running container instance (Docker/Podman/containerd/CRI-O)
-#   :ContainerImage  — an OCI image / repository:tag
+#   <http://knuckles.team/kg/infrastructure#Container>       — a running container instance (Docker/Podman/containerd/CRI-O)
+#   <http://knuckles.team/kg/infrastructure#ContainerImage>  — an OCI image / repository:tag
 #   :ContainerStack  — a compose/stack grouping of containers
-#   :Host            — a reachable host in the tunnel-manager inventory
+#   <http://knuckles.team/kg/infrastructure#Host>            — a reachable host in the tunnel-manager inventory
 # and the links :runsOn (Container->Host), :belongsToStack (Container->ContainerStack),
 # and the field :runtime. This leg only adds the volume / network / swarm resources and
 # the container-scoped links/fields the connector materializes.
@@ -83,18 +83,18 @@
 :usesImage a owl:ObjectProperty ;
     rdfs:label "uses image" ;
     rdfs:comment "Links a Container, SwarmService, Pod or Deployment to the ContainerImage it was created from." ;
-    rdfs:range :ContainerImage .
+    rdfs:range <http://knuckles.team/kg/infrastructure#ContainerImage> .
 
 :builtFrom a owl:ObjectProperty ;
     rdfs:label "built from" ;
     rdfs:comment "Links a ContainerImage to the source-code Repository it was built from, resolved from the image's OCI org.opencontainers.image.source label (org.label-schema.vcs-url fallback) via cm_ingest_inventory. The gap-#1 predicate closing the service<->repo<->image provenance chain (reports/autonomous-sdlc-loop-design.md); agent_connector_sdk.observability.repo_crosswalk owl:sameAs-unifies the resulting URL-keyed Repository node with the numeric-id node the code ingestors (github-agent/gitlab-api) create." ;
-    rdfs:domain :ContainerImage ;
+    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
     rdfs:range :Repository .
 
 :mountsVolume a owl:ObjectProperty ;
     rdfs:label "mounts volume" ;
     rdfs:comment "Links a Container to a ContainerVolume it mounts." ;
-    rdfs:domain :Container ;
+    rdfs:domain <http://knuckles.team/kg/infrastructure#Container> ;
     rdfs:range :ContainerVolume .
 
 :attachedToNetwork a owl:ObjectProperty ;
@@ -110,7 +110,7 @@
 :hostsResource a owl:ObjectProperty ;
     rdfs:label "hosts resource" ;
     rdfs:comment "Links a Host to a Container, ContainerVolume, ContainerNetwork or SwarmNode it hosts." ;
-    rdfs:domain :Host .
+    rdfs:domain <http://knuckles.team/kg/infrastructure#Host> .
 
 # --- Kubernetes links (owl:ObjectProperty) ---
 
@@ -142,7 +142,7 @@
 :containerStatus a owl:DatatypeProperty ;
     rdfs:label "container status" ;
     rdfs:comment "Lifecycle status of a Container (running, exited, paused, created)." ;
-    rdfs:domain :Container ;
+    rdfs:domain <http://knuckles.team/kg/infrastructure#Container> ;
     rdfs:range xsd:string .
 
 :portMappings a owl:DatatypeProperty ;
@@ -153,19 +153,19 @@
 :imageRepository a owl:DatatypeProperty ;
     rdfs:label "image repository" ;
     rdfs:comment "Repository component of a ContainerImage reference (registry/namespace/name)." ;
-    rdfs:domain :ContainerImage ;
+    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
     rdfs:range xsd:string .
 
 :imageTag a owl:DatatypeProperty ;
     rdfs:label "image tag" ;
     rdfs:comment "Tag component of a ContainerImage reference (e.g. latest, 1.29.1)." ;
-    rdfs:domain :ContainerImage ;
+    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
     rdfs:range xsd:string .
 
 :imageSize a owl:DatatypeProperty ;
     rdfs:label "image size" ;
     rdfs:comment "Human-readable on-disk size of a ContainerImage (e.g. 142MB)." ;
-    rdfs:domain :ContainerImage ;
+    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
     rdfs:range xsd:string .
 
 :volumeDriver a owl:DatatypeProperty ;
@@ -270,6 +270,16 @@
     scheduledOnK8sNode / exposedByIngress — materialized by the cm_k8s_* themed tools
     (cm_k8s_workloads / cm_k8s_config / cm_k8s_networking / cm_k8s_storage / cm_k8s_rbac /
     cm_k8s_cluster / cm_k8s_governance / cm_k8s_observability) via cm_ingest_inventory.
-    Reuses the hub :Container / :ContainerImage / :ContainerStack / :Host classes and adds the
-    volume/network/swarm/k8s resources, federated into the agent-connector-sdk knowledge-graph hub.""" ;
-    owl:imports <http://knuckles.team/kg> .
+    Reuses the hub <http://knuckles.team/kg/infrastructure#Container> / <http://knuckles.team/kg/infrastructure#ContainerImage> / :ContainerStack / <http://knuckles.team/kg/infrastructure#Host> classes and adds the
+    volume/network/swarm/k8s resources, federated into the agent-connector-sdk knowledge-graph hub.""" .
+
+# ontology-codemod R3
+<http://knuckles.team/kg#ContainerNetwork> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Network> .
+<http://knuckles.team/kg#ContainerVolume> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Volume> .
+<http://knuckles.team/kg#K8sService> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#K8sService> .
+<http://knuckles.team/kg#Namespace> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Namespace> .
+<http://knuckles.team/kg#Pod> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Pod> .
+<http://knuckles.team/kg#SwarmService> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#SwarmService> .
+
+# ontology-codemod R4
+<http://knuckles.team/kg#Deployment> rdfs:subClassOf <http://knuckles.team/kg#RunEvent> .
