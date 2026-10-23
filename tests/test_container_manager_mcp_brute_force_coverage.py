@@ -1,5 +1,6 @@
 import asyncio
 import inspect
+import logging
 import sys
 import types
 from typing import Any
@@ -196,7 +197,15 @@ def test_mcp_server_coverage(mock_container_deps):
                 for tool in tool_objs:
                     await _call_registered_tool_smoke(mcp, tool)
 
-            asyncio.run(run_tools())
+            # The sweep deliberately drives every tool with synthetic arguments, so
+            # most calls fail and log an exception; rendering each one as a rich
+            # traceback (pygments-lexed source) dominates the runtime and trips the
+            # per-test timeout. Nothing here asserts on logs, so silence them.
+            logging.disable(logging.CRITICAL)
+            try:
+                asyncio.run(run_tools())
+            finally:
+                logging.disable(logging.NOTSET)
 
 
 def test_main_coverage():
