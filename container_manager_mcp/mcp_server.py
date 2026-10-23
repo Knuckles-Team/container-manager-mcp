@@ -177,7 +177,7 @@ from container_manager_mcp.container_manager import (
 )
 from container_manager_mcp.k8s.manager import KubernetesManager
 
-__version__ = "3.3.3"
+__version__ = "3.3.4"
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)

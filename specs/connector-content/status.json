@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "spec_id": "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT",
+  "owner_repo": "container-manager-mcp",
+  "delivery_state": "VERIFIED",
+  "requirement_ids": [
+    "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R001"
+  ],
+  "requirements": [
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R001",
+      "title": "Default content",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "d20cec8cfeb7"
+      ],
+      "verified_by": [
+        "tests/test_default_content_surfaces.py:15"
+      ]
+    }
+  ]
+}
