@@ -46,6 +46,12 @@ import sys
 from dataclasses import dataclass
 from typing import Any
 
+import httpx
+from agent_connector_sdk.auth.oidc import discover_token_endpoint
+from agent_connector_sdk.http.client import create_http_client
+from agent_connector_sdk.http.options import HttpClientOptions
+from agent_connector_sdk.tls.resolve import resolve_tls_profile
+
 try:
     import yaml
 except ImportError:  # pragma: no cover - PyYAML ships with the kubernetes client
@@ -184,13 +190,18 @@ def _build_explicit_kubeconfig(
     }
 
 
-def _oidc_verify_arg(ca_cert: str | None, insecure: bool):
-    """Map ca_cert/insecure into the ``verify=`` argument for the OIDC HTTP calls."""
-    if insecure:
-        return False
+def _oidc_tls_profile(ca_cert: str | None):
+    """Resolve the TLS profile for the OIDC calls; verification stays on.
+
+    A readable ``ca_cert`` file is added as a trust anchor. The
+    ``insecure_skip_tls_verify`` flag only shapes the kubeconfig cluster entry and
+    never reaches these calls.
+    """
     if ca_cert and os.path.isfile(ca_cert):
-        return ca_cert
-    return True
+        return resolve_tls_profile(
+            "CONTAINER_MANAGER_OIDC", profile={"ca_bundle_path": ca_cert}
+        )
+    return resolve_tls_profile("CONTAINER_MANAGER_OIDC")
 
 
 def _oidc_password_grant(
@@ -202,36 +213,53 @@ def _oidc_password_grant(
     scope: str = "openid",
     ca_cert: str | None = None,
     insecure: bool = False,
+    transport: httpx.BaseTransport | None = None,
 ) -> str:
     """Obtain an OIDC id-token via the resource-owner password grant.
 
-    Discovers the token endpoint from ``{issuer}/.well-known/openid-configuration``
-    and posts ``grant_type=password``. Returns the ``id_token`` (which the
-    Kubernetes OIDC authenticator consumes). Raises a clear ``RuntimeError`` when
-    the issuer is unreachable, the grant is rejected, or no id-token is returned.
+    Discovers the token endpoint with the SDK (``discover_token_endpoint``) and
+    posts ``grant_type=password`` through the SDK governed client. Returns the
+    ``id_token`` (which the Kubernetes OIDC authenticator consumes). Raises a clear
+    ``RuntimeError`` when the issuer is unreachable, the grant is rejected, or no
+    id-token is returned. ``insecure`` is accepted for compatibility and ignored:
+    TLS verification of the OIDC calls cannot be disabled.
     """
+    del insecure
+    tls = _oidc_tls_profile(ca_cert)
     try:
-        import requests
-    except ImportError as e:  # pragma: no cover - requests ships with docker
-        raise RuntimeError(
-            "the OIDC username/password mode requires the 'requests' library"
-        ) from e
+        client = create_http_client(
+            HttpClientOptions(base_url=issuer.rstrip("/"), timeout=30, tls=tls),
+            transport=transport,
+        )
+    except ValueError as e:
+        tls.cleanup()
+        raise RuntimeError(f"OIDC issuer {issuer!r} is not usable: {e}") from e
+    try:
+        return _password_grant_with(
+            client, issuer, client_id, username, password, client_secret, scope
+        )
+    finally:
+        client.close()
+        tls.cleanup()
 
-    verify = _oidc_verify_arg(ca_cert, insecure)
+
+def _password_grant_with(
+    client: httpx.Client,
+    issuer: str,
+    client_id: str,
+    username: str,
+    password: str,
+    client_secret: str | None,
+    scope: str,
+) -> str:
     disc_url = issuer.rstrip("/") + "/.well-known/openid-configuration"
     try:
-        disc = requests.get(disc_url, verify=verify, timeout=30)
-        disc.raise_for_status()
-        token_endpoint = disc.json().get("token_endpoint")
+        token_endpoint = discover_token_endpoint(issuer, client)
     except Exception as e:  # noqa: BLE001
         raise RuntimeError(
             f"OIDC discovery failed at {disc_url}: {e}. Confirm 'oidc_issuer' is the "
             "issuer URL of an OIDC provider the cluster trusts."
         ) from e
-    if not token_endpoint:
-        raise RuntimeError(
-            f"OIDC discovery at {disc_url} did not advertise a token_endpoint"
-        )
 
     data = {
         "grant_type": "password",
@@ -243,7 +271,7 @@ def _oidc_password_grant(
     if client_secret:
         data["client_secret"] = client_secret
     try:
-        resp = requests.post(token_endpoint, data=data, verify=verify, timeout=30)
+        resp = client.post(token_endpoint, data=data)
     except Exception as e:  # noqa: BLE001
         raise RuntimeError(f"OIDC token request to {token_endpoint} failed: {e}") from e
     if resp.status_code >= 400:

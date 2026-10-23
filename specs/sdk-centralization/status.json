@@ -1,0 +1,47 @@
+{
+  "schema_version": 2,
+  "spec_id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION",
+  "owner_repo": "container-manager-mcp",
+  "delivery_state": "SPECIFIED",
+  "requirement_ids": [
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001",
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3"
+  ],
+  "requirements": [
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001",
+      "title": "Transport comes from the SDK (rollup)",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [],
+      "rollup_of": [
+        "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
+        "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",
+        "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
+      "title": "OIDC through the governed client",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",
+      "title": "TLS profile for OIDC",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3",
+      "title": "SDK floor",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
+    }
+  ]
+}

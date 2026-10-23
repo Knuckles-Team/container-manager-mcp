@@ -13,6 +13,7 @@ Read the existing specs first. Extend the spec that owns the behavior. Create a 
 ## Local specifications
 
 - [`CONN-CONTAINER-MANAGER-MCP`](container-manager-mcp/spec.md) — Container manager call context.
+- [`CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION`](sdk-centralization/spec.md) — Transport through the SDK.
 
 The lifecycle generator owns delivery receipts in `status.json`.
 Run `pipelines-hook spec-status --write` after reviewed source changes enter Git history.
