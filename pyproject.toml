@@ -9,7 +9,7 @@ description = "Container Manager - manage Docker, Docker Swarm, and Podman conta
 readme = "README.md"
 classifiers = [ "Development Status :: 5 - Production/Stable", "License :: Public Domain", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0", "docker[ssh]>=7.2.0", "tunnel-manager>=2.1.0",]
+dependencies = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0", "docker[ssh]>=7.2.0", "tunnel-manager>=2.1.0",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -21,7 +21,7 @@ text = "MIT"
 podman = [ "podman>=5.8.0",]
 docker = [ "docker[ssh]>=7.2.0",]
 kubernetes = [ "kubernetes>=37.0.1",]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.11,<1.0.0", "docker[ssh]>=7.2.0", "podman>=5.8.0", "kubernetes>=37.0.1",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.18,<1.0.0", "docker[ssh]>=7.2.0", "podman>=5.8.0", "kubernetes>=37.0.1",]
 all = [ "container-manager-mcp[docker,podman,kubernetes,mcp]>=2.3.0",]
 test = [
     "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
@@ -39,6 +39,10 @@ container-manager-mcp = "container_manager_mcp.ontology"
 
 [project.entry-points."agent_connector_sdk.source_connector_providers"]
 container-manager-mcp = "container_manager_mcp.connectors"
+
+# The one declared connector identity: the fleet name (SDK-CONNECTOR-CONTROL-R071).
+[project.entry-points."agent_connector_sdk.connector"]
+container-manager-mcp = "container_manager_mcp"
 
 [tool.uv.workspace]
 members = ["."]
