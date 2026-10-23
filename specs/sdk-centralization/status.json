@@ -1,0 +1,69 @@
+{
+  "schema_version": 2,
+  "spec_id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION",
+  "owner_repo": "container-manager-mcp",
+  "delivery_state": "VERIFIED",
+  "requirement_ids": [
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001",
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",
+    "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3"
+  ],
+  "requirements": [
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001",
+      "title": "Transport comes from the SDK (rollup)",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "41d0e4b216f3"
+      ],
+      "verified_by": [
+        "tests/test_kubeconfig_import.py:347",
+        "tests/test_kubeconfig_import.py:372",
+        "tests/test_kubeconfig_import.py:391",
+        "tests/test_kubeconfig_import.py:404",
+        "tests/test_sdk_transport.py:11"
+      ],
+      "rollup_of": [
+        "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
+        "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",
+        "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
+      "title": "OIDC through the governed client",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "41d0e4b216f3"
+      ],
+      "verified_by": [
+        "tests/test_kubeconfig_import.py:347",
+        "tests/test_kubeconfig_import.py:372",
+        "tests/test_kubeconfig_import.py:391"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",
+      "title": "TLS profile for OIDC",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "41d0e4b216f3"
+      ],
+      "verified_by": [
+        "tests/test_kubeconfig_import.py:404"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3",
+      "title": "SDK floor",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "41d0e4b216f3"
+      ],
+      "verified_by": [
+        "tests/test_sdk_transport.py:11"
+      ]
+    }
+  ]
+}

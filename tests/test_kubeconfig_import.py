@@ -8,8 +8,10 @@ client is only touched by the validation path, which is mocked.
 
 import base64
 import os
+import pathlib
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
 import yaml
 
@@ -342,54 +344,85 @@ def test_oidc_embeds_id_token(tmp_path):
     assert "pw" not in str(result["merged"])
 
 
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
 def test_oidc_password_grant_discovers_and_posts():
     """The grant helper discovers the token endpoint then posts the password grant."""
-    disc = MagicMock()
-    disc.json.return_value = {"token_endpoint": "https://issuer/token"}
-    disc.raise_for_status.return_value = None
-    token_resp = MagicMock(status_code=200)
-    token_resp.json.return_value = {"id_token": "abc.def.ghi"}
-    fake_requests = MagicMock()
-    fake_requests.get.return_value = disc
-    fake_requests.post.return_value = token_resp
-    with patch.dict("sys.modules", {"requests": fake_requests}):
-        tok = kci._oidc_password_grant(
+    seen = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.path.endswith("/.well-known/openid-configuration"):
+            return httpx.Response(200, json={"token_endpoint": "https://issuer/token"})
+        return httpx.Response(200, json={"id_token": "abc.def.ghi"})
+
+    tok = kci._oidc_password_grant(
+        issuer="https://issuer",
+        client_id="k8s",
+        username="alice",
+        password="pw",
+        insecure=True,
+        transport=httpx.MockTransport(handler),
+    )
+    assert tok == "abc.def.ghi"
+    assert str(seen[0].url) == "https://issuer/.well-known/openid-configuration"
+    assert str(seen[1].url) == "https://issuer/token"
+    assert b"grant_type=password" in seen[1].content
+
+
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
+def test_oidc_password_grant_rejected_raises_clear():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/.well-known/openid-configuration"):
+            return httpx.Response(200, json={"token_endpoint": "https://issuer/token"})
+        return httpx.Response(
+            401, json={"error": "invalid_grant", "error_description": "bad creds"}
+        )
+
+    with pytest.raises(RuntimeError, match="password grant rejected"):
+        kci._oidc_password_grant(
             issuer="https://issuer",
             client_id="k8s",
             username="alice",
             password="pw",
-            insecure=True,
+            transport=httpx.MockTransport(handler),
         )
-    assert tok == "abc.def.ghi"
-    assert fake_requests.get.call_args[0][0] == (
-        "https://issuer/.well-known/openid-configuration"
-    )
-    posted = fake_requests.post.call_args
-    assert posted[0][0] == "https://issuer/token"
-    assert posted[1]["data"]["grant_type"] == "password"
-    assert posted[1]["verify"] is False
 
 
-def test_oidc_password_grant_rejected_raises_clear():
-    disc = MagicMock()
-    disc.json.return_value = {"token_endpoint": "https://issuer/token"}
-    disc.raise_for_status.return_value = None
-    token_resp = MagicMock(status_code=401)
-    token_resp.json.return_value = {
-        "error": "invalid_grant",
-        "error_description": "bad creds",
-    }
-    fake_requests = MagicMock()
-    fake_requests.get.return_value = disc
-    fake_requests.post.return_value = token_resp
-    with patch.dict("sys.modules", {"requests": fake_requests}):
-        with pytest.raises(RuntimeError, match="password grant rejected"):
-            kci._oidc_password_grant(
-                issuer="https://issuer",
-                client_id="k8s",
-                username="alice",
-                password="pw",
-            )
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
+def test_oidc_discovery_failure_names_the_issuer():
+    transport = httpx.MockTransport(lambda r: httpx.Response(500))
+    with pytest.raises(RuntimeError, match="OIDC discovery failed"):
+        kci._oidc_password_grant(
+            issuer="https://issuer",
+            client_id="k8s",
+            username="alice",
+            password="pw",
+            transport=transport,
+        )
+
+
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2")
+def test_oidc_calls_resolve_a_tls_profile_and_never_skip_verification(
+    tmp_path, monkeypatch
+):
+    ca = tmp_path / "ca.pem"
+    ca.write_text("x")
+    seen = {}
+
+    def spy(service, **kw):
+        seen.update(service=service, profile=kw.get("profile"))
+        raise RuntimeError("stop")
+
+    monkeypatch.setattr(kci, "resolve_tls_profile", spy)
+    with pytest.raises(RuntimeError, match="stop"):
+        kci._oidc_password_grant(
+            "https://issuer", "k8s", "a", "b", ca_cert=str(ca), insecure=True
+        )
+    assert seen["service"] == "CONTAINER_MANAGER_OIDC"
+    assert seen["profile"] == {"ca_bundle_path": str(ca)}
+    source = pathlib.Path(kci.__file__).read_text()
+    assert "import requests" not in source
+    assert "verify=False" not in source
 
 
 # ---------------------------------------------------------------------------

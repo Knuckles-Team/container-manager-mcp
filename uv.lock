@@ -11,7 +11,7 @@ overrides = [{ name = "fastmcp-slim", extras = ["client", "server"], specifier =
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.3.4"
+version = "0.3.11"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -23,9 +23,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2f/72/67870bd2df5d6e1e43ffede413c7e44e9a325db20ae19e707f07826ec035/agent_connector_sdk-0.3.4.tar.gz", hash = "sha256:79a62d3e5b1f33196c25c8e49bc35e00818b2f20b08cb97864afc1187c09efb3", size = 722575, upload-time = "2026-10-18T11:05:07.919Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/46/49/9259f99d1d16a8f4e6f45715bf421808cf886df633f010254fc06c2211d2/agent_connector_sdk-0.3.11.tar.gz", hash = "sha256:3d2b38bd4a2781ea3dca94f147dbc5e4b26fb343d781354467ca393c21a81f14", size = 745118, upload-time = "2026-10-22T23:32:22.111Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/9d/f4031b07d9f6a3df2459463a50d09c828d88da6ea5fbf9cacadc051dc7d8/agent_connector_sdk-0.3.4-py3-none-any.whl", hash = "sha256:5f0723220616d2ae9b34a900beab8beec2485ec154785db584af7c84dcbe60fd", size = 727939, upload-time = "2026-10-18T11:05:06.666Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/db/2985f2e6afa2a1708c86a7770616529fbd3dc01304f236e9db098e6c50bb/agent_connector_sdk-0.3.11-py3-none-any.whl", hash = "sha256:aaea4baf2fc870f9f31bfb2d9b10e090842c6e58772777804d720e602f2e33ec", size = 742982, upload-time = "2026-10-22T23:32:20.508Z" },
 ]
 
 [package.optional-dependencies]
@@ -518,7 +518,6 @@ source = { editable = "." }
 dependencies = [
     { name = "agent-connector-sdk", extra = ["mcp"] },
     { name = "docker", extra = ["ssh"] },
-    { name = "requests" },
     { name = "tunnel-manager" },
 ]
 
@@ -558,8 +557,8 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["mcp"], specifier = ">=0.3.4,<1.0.0" },
-    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.3.4,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], specifier = ">=0.3.11,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.3.11,<1.0.0" },
     { name = "container-manager-mcp", extras = ["docker", "podman", "kubernetes", "mcp"], marker = "extra == 'all'", specifier = ">=2.3.0" },
     { name = "docker", extras = ["ssh"], specifier = ">=7.2.0" },
     { name = "docker", extras = ["ssh"], marker = "extra == 'docker'", specifier = ">=7.2.0" },
@@ -572,7 +571,6 @@ requires-dist = [
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.8.0" },
-    { name = "requests", specifier = ">=2.34.2" },
     { name = "tunnel-manager", specifier = ">=2.1.0" },
 ]
 provides-extras = ["podman", "docker", "kubernetes", "mcp", "all", "test"]
