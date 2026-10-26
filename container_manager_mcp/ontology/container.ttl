@@ -283,3 +283,6 @@
 
 # ontology-codemod R4
 <http://knuckles.team/kg#Deployment> rdfs:subClassOf <http://knuckles.team/kg#RunEvent> .
+
+# semantic-core mapping (AUD-007; reviewed against public Medulla 2.27.7)
+<http://knuckles.team/kg#Ingress> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#ProxyRoute> .
