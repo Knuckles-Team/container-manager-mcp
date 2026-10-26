@@ -522,7 +522,7 @@ wheels = [
 
 [[package]]
 name = "container-manager-mcp"
-version = "3.3.5"
+version = "3.3.6"
 source = { editable = "." }
 dependencies = [
     { name = "agent-connector-sdk", extra = ["mcp"] },
