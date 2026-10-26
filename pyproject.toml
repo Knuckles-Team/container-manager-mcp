@@ -24,7 +24,7 @@ kubernetes = [ "kubernetes>=37.0.1",]
 mcp = [ "agent-connector-sdk[mcp]>=0.4.1,<1.0.0", "docker[ssh]>=7.2.0", "podman>=5.8.0", "kubernetes>=37.0.1",]
 all = [ "container-manager-mcp[docker,podman,kubernetes,mcp]>=2.3.0",]
 test = [
-    "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
+    "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0", "rdflib==7.6.0",]
 
 [project.scripts]
 container-manager-mcp = "container_manager_mcp.mcp_server:mcp_server"
@@ -73,6 +73,7 @@ exclude = [".venv", "venv", "tests/"]
 
 [dependency-groups]
 dev = [
+    "bump2version==1.0.1",
     "pytest-timeout>=2.4.0",
 ]
 
