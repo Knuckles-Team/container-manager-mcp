@@ -123,8 +123,10 @@ Copy it to `.env` and adjust only what the operator use.
 
 ## Docker Compose
 
-The repo ships [`docker/mcp.compose.yml`](https://github.com/Knuckles-Team/container-manager-mcp/blob/main/docker/mcp.compose.yml).
-It reads a sibling `.env` and publishes the HTTP server on `:8000`:
+The central release pipeline renders `docker/mcp.compose.yml` from this project; the
+generated file is a build artifact and is not tracked here. Generate the local preview
+with the provider contract, then use the resulting compose file. It reads a sibling
+`.env` and publishes the HTTP server on `:8000`:
 
 ```yaml
 services:
@@ -152,9 +154,11 @@ services:
 ```
 
 ```bash
+uvx --from "git+https://github.com/Knuckles-Team/pipelines@main" pipelines-connector \
+  render --root . --out /tmp/container-manager-mcp-docker
 cp .env.example .env          # then edit values
-docker compose -f docker/mcp.compose.yml up -d
-docker compose -f docker/mcp.compose.yml logs -f
+docker compose -f /tmp/container-manager-mcp-docker/mcp.compose.yml up -d
+docker compose -f /tmp/container-manager-mcp-docker/mcp.compose.yml logs -f
 ```
 
 The server needs access to a container engine. Mount the host Docker socket
