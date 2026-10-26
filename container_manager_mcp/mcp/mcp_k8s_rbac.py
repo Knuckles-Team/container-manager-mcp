@@ -258,9 +258,9 @@ _ACTION_GROUPS: dict[str, str] = {
     "create_serviceaccount": "serviceaccount",
     "delete_serviceaccount": "serviceaccount",
     "auth_can_i": "serviceaccount",
-    "create_service_account_token": "sa_token",
-    "list_service_account_tokens": "sa_token",
-    "delete_service_account_token": "sa_token",
+    "create_service_account_token": "sa_token",  # nosec B105
+    "list_service_account_tokens": "sa_token",  # nosec B105
+    "delete_service_account_token": "sa_token",  # nosec B105
     "subject_access_review": "sar",
     "local_subject_access_review": "sar",
     "create_aggregated_cluster_role": "aggregated_role",
@@ -271,8 +271,8 @@ _ACTION_GROUPS: dict[str, str] = {
     "delete_pod_security_policy": "pod_security",
     "evaluate_pod_security": "pod_security",
     "list_service_account_mapped_secrets": "sa_secret_mapping",
-    "map_secret_to_service_account": "sa_secret_mapping",
-    "unmap_secret_from_service_account": "sa_secret_mapping",
+    "map_secret_to_service_account": "sa_secret_mapping",  # nosec B105
+    "unmap_secret_from_service_account": "sa_secret_mapping",  # nosec B105
 }
 
 _GROUP_FUNCS: dict[str, Callable[..., Coroutine[Any, Any, Any]]] = {

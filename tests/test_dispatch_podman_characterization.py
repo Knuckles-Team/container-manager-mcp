@@ -53,7 +53,9 @@ def test_podman_generate_kube_yaml_dispatches_with_namespace_default(tool_and_ma
 
 def test_podman_generate_kube_yaml_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="pod_name is required for podman_generate_kube_yaml"):
+    with pytest.raises(
+        ValueError, match="pod_name is required for podman_generate_kube_yaml"
+    ):
         _run(tool, action="podman_generate_kube_yaml", pod_name=None)
     manager.podman_generate_kube_yaml.assert_not_called()
 
@@ -66,7 +68,9 @@ def test_podman_play_kube_yaml_dispatches(tool_and_manager):
 
 def test_podman_play_kube_yaml_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="yaml_path is required for podman_play_kube_yaml"):
+    with pytest.raises(
+        ValueError, match="yaml_path is required for podman_play_kube_yaml"
+    ):
         _run(tool, action="podman_play_kube_yaml", yaml_path=None)
 
 
@@ -78,7 +82,10 @@ def test_podman_checkpoint_dispatches(tool_and_manager):
 
 def test_podman_checkpoint_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="container_id and checkpoint_dir are required for podman_checkpoint"):
+    with pytest.raises(
+        ValueError,
+        match="container_id and checkpoint_dir are required for podman_checkpoint",
+    ):
         _run(tool, action="podman_checkpoint", container_id=None, checkpoint_dir=None)
 
 
@@ -90,19 +97,26 @@ def test_podman_restore_dispatches(tool_and_manager):
 
 def test_podman_restore_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="container_id and checkpoint_dir are required for podman_restore"):
+    with pytest.raises(
+        ValueError,
+        match="container_id and checkpoint_dir are required for podman_restore",
+    ):
         _run(tool, action="podman_restore", container_id=None, checkpoint_dir=None)
 
 
 def test_podman_pod_create_dispatches(tool_and_manager):
     tool, manager = tool_and_manager
-    _run(tool, action="podman_pod_create", pod_name="pod1", image="nginx", command="run")
+    _run(
+        tool, action="podman_pod_create", pod_name="pod1", image="nginx", command="run"
+    )
     manager.podman_pod_create.assert_called_once_with("pod1", "nginx", "run")
 
 
 def test_podman_pod_create_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="pod_name and image are required for podman_pod_create"):
+    with pytest.raises(
+        ValueError, match="pod_name and image are required for podman_pod_create"
+    ):
         _run(tool, action="podman_pod_create", pod_name=None, image=None)
 
 
@@ -186,13 +200,23 @@ def test_podman_pod_rm_guard(tool_and_manager):
 
 def test_podman_network_create_dispatches_with_driver_default(tool_and_manager):
     tool, manager = tool_and_manager
-    _run(tool, action="podman_network_create", network_name="net1", driver=None, subnet="10.0.0.0/24")
-    manager.podman_network_create.assert_called_once_with("net1", "bridge", "10.0.0.0/24")
+    _run(
+        tool,
+        action="podman_network_create",
+        network_name="net1",
+        driver=None,
+        subnet="10.0.0.0/24",
+    )
+    manager.podman_network_create.assert_called_once_with(
+        "net1", "bridge", "10.0.0.0/24"
+    )
 
 
 def test_podman_network_create_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="network_name is required for podman_network_create"):
+    with pytest.raises(
+        ValueError, match="network_name is required for podman_network_create"
+    ):
         _run(tool, action="podman_network_create", network_name=None)
 
 
@@ -210,7 +234,9 @@ def test_podman_network_inspect_dispatches(tool_and_manager):
 
 def test_podman_network_inspect_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="network_name is required for podman_network_inspect"):
+    with pytest.raises(
+        ValueError, match="network_name is required for podman_network_inspect"
+    ):
         _run(tool, action="podman_network_inspect", network_name=None)
 
 
@@ -222,7 +248,9 @@ def test_podman_volume_create_dispatches_with_driver_default(tool_and_manager):
 
 def test_podman_volume_create_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="volume_name is required for podman_volume_create"):
+    with pytest.raises(
+        ValueError, match="volume_name is required for podman_volume_create"
+    ):
         _run(tool, action="podman_volume_create", volume_name=None)
 
 
@@ -240,7 +268,9 @@ def test_podman_volume_inspect_dispatches(tool_and_manager):
 
 def test_podman_volume_inspect_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="volume_name is required for podman_volume_inspect"):
+    with pytest.raises(
+        ValueError, match="volume_name is required for podman_volume_inspect"
+    ):
         _run(tool, action="podman_volume_inspect", volume_name=None)
 
 
@@ -258,7 +288,9 @@ def test_podman_health_check_dispatches(tool_and_manager):
 
 def test_podman_health_check_guard(tool_and_manager):
     tool, manager = tool_and_manager
-    with pytest.raises(ValueError, match="container_id and config are required for podman_health_check"):
+    with pytest.raises(
+        ValueError, match="container_id and config are required for podman_health_check"
+    ):
         _run(tool, action="podman_health_check", container_id=None, config=None)
 
 

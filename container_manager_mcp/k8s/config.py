@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
 
+_DEFAULT_OBJECT_TYPE = "Opaque"
+
 if TYPE_CHECKING:
     # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
     # part of the real MRO.
@@ -123,7 +125,7 @@ class ConfigMixin(_Base):
         self,
         name: str,
         namespace: str | None = None,
-        secret_type: str = "Opaque",
+        secret_type: str = _DEFAULT_OBJECT_TYPE,
         data: dict | None = None,
     ) -> dict:
         """Create a Secret (data values should be base64-encoded)."""

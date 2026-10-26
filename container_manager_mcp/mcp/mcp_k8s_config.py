@@ -260,8 +260,9 @@ async def _dispatch_state_tracking_action(
 _ACTION_GROUPS: dict[str, str] = {
     "list_configmaps": "configmap",
     "create_configmap": "configmap",
-    "list_secrets": "secret",
-    "create_secret": "secret",
+    # These are internal routing labels, not credential values.
+    "list_secrets": "secret",  # nosec B105
+    "create_secret": "secret",  # nosec B105
     "list_namespaces": "namespace",
     "create_namespace": "namespace",
     "delete_namespace": "namespace",
@@ -274,7 +275,7 @@ _ACTION_GROUPS: dict[str, str] = {
     "patch_resource": "resource_meta",
     "compare_configmap_state": "state_tracking",
     "sync_configmap_from_file": "state_tracking",
-    "get_secret_state_hash": "state_tracking",
+    "get_secret_state_hash": "state_tracking",  # nosec B105
     "track_resource_version": "state_tracking",
     "wait_for_resource_version": "state_tracking",
 }
