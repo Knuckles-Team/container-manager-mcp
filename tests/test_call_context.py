@@ -37,6 +37,10 @@ def test_generic_tools_advertise_context(server):
         n for n, t in generic.items() if "context" not in t.parameters["properties"]
     ]
     assert not missing
+    required = [
+        n for n, t in generic.items() if "context" in t.parameters.get("required", [])
+    ]
+    assert not required, f"context is required for generic tools: {required}"
 
 
 class _FakeManager:
