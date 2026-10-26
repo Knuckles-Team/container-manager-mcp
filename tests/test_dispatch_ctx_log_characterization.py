@@ -69,7 +69,6 @@ def test_two_arg_ctx_client_exception_is_swallowed(_restore_logger):
 
 def test_two_arg_ctx_coroutine_result_scheduled_when_loop_running(_restore_logger):
     ctx = MagicMock()
-    scheduled = {}
 
     async def fake_client_info(message):
         return message

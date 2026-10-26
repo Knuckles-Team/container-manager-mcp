@@ -59,7 +59,9 @@ def test_deploy_success_with_explicit_name(tool_and_manager):
         env='{"X": "1"}',
         labels='{"managed-by": "agent-os"}',
     )
-    manager.pull_image.assert_called_once_with("registry.example.invalid/svc@sha256:deadbeef")
+    manager.pull_image.assert_called_once_with(
+        "registry.example.invalid/svc@sha256:deadbeef"
+    )
     manager.run_container.assert_called_once_with(
         image="registry.example.invalid/svc@sha256:deadbeef",
         name="svc1",

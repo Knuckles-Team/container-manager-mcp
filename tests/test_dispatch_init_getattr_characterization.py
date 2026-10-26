@@ -1,11 +1,8 @@
-
 import container_manager_mcp
 
 
 def test_mcp_available_flag_resolves_without_raising():
     assert isinstance(container_manager_mcp._MCP_AVAILABLE, bool)
-
-
 
 
 def test_known_mcp_server_symbol_is_reachable():
@@ -20,7 +17,7 @@ def test_known_core_symbol_is_reachable():
 
 def test_unknown_attribute_raises_with_exact_message():
     try:
-        container_manager_mcp.totally_bogus_symbol_xyz
+        _ = container_manager_mcp.totally_bogus_symbol_xyz
     except AttributeError as e:
         assert (
             str(e)

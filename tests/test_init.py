@@ -5,7 +5,6 @@
 class TestInitModule:
     """Tests for __init__ module."""
 
-
     def test___all__(self):
         """Test that __all__ is properly populated."""
         import container_manager_mcp
@@ -23,5 +22,3 @@ class TestInitModule:
 
 class TestMainModule:
     """Tests for __main__ module."""
-
-

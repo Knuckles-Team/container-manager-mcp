@@ -63,7 +63,9 @@ def test_list_contexts_does_not_resolve_target_manager(tool_and_managers):
 def test_list_containers_dispatches(tool_and_managers):
     tool, manager, target = tool_and_managers
     target.list_containers.return_value = []
-    result = _run(tool, action="list_containers", backend="kubernetes", context=None, all=True)
+    result = _run(
+        tool, action="list_containers", backend="kubernetes", context=None, all=True
+    )
     manager.get_manager.assert_called_once_with("kubernetes", None)
     target.list_containers.assert_called_once_with(all=True)
     assert result == []
@@ -82,8 +84,12 @@ def test_run_container_dispatches(tool_and_managers):
         environment={"X": "1"},
     )
     target.run_container.assert_called_once_with(
-        image="nginx", name="c1", command="echo hi", ports=[80],
-        volumes={"/a": "/b"}, environment={"X": "1"},
+        image="nginx",
+        name="c1",
+        command="echo hi",
+        ports=[80],
+        volumes={"/a": "/b"},
+        environment={"X": "1"},
     )
 
 
@@ -234,7 +240,9 @@ def test_create_service_dispatches(tool_and_managers):
 
 def test_create_service_guard_raises(tool_and_managers):
     tool, manager, target = tool_and_managers
-    with pytest.raises(ValueError, match="name and image are required for create_service"):
+    with pytest.raises(
+        ValueError, match="name and image are required for create_service"
+    ):
         _run(tool, action="create_service", name=None, image=None)
 
 
@@ -264,7 +272,9 @@ def test_list_pods_default_namespace(tool_and_managers):
 
 def test_list_pods_rejects_non_kubernetes_backend(tool_and_managers):
     tool, manager, target = tool_and_managers
-    with pytest.raises(ValueError, match="list_pods is only available for Kubernetes, not docker"):
+    with pytest.raises(
+        ValueError, match="list_pods is only available for Kubernetes, not docker"
+    ):
         _run(tool, action="list_pods", backend="docker")
     target.list_pods.assert_not_called()
 
@@ -277,13 +287,19 @@ def test_describe_pod_dispatches_on_kubernetes(tool_and_managers):
 
 def test_describe_pod_guard_raises(tool_and_managers):
     tool, manager, target = tool_and_managers
-    with pytest.raises(ValueError, match="name and namespace are required for describe_pod"):
-        _run(tool, action="describe_pod", backend="kubernetes", name=None, namespace=None)
+    with pytest.raises(
+        ValueError, match="name and namespace are required for describe_pod"
+    ):
+        _run(
+            tool, action="describe_pod", backend="kubernetes", name=None, namespace=None
+        )
 
 
 def test_describe_pod_rejects_non_kubernetes_backend(tool_and_managers):
     tool, manager, target = tool_and_managers
-    with pytest.raises(ValueError, match="describe_pod is only available for Kubernetes, not podman"):
+    with pytest.raises(
+        ValueError, match="describe_pod is only available for Kubernetes, not podman"
+    ):
         _run(tool, action="describe_pod", backend="podman", name="p1", namespace="ns1")
 
 
@@ -295,7 +311,9 @@ def test_list_deployments_dispatches_on_kubernetes(tool_and_managers):
 
 def test_list_deployments_rejects_non_kubernetes_backend(tool_and_managers):
     tool, manager, target = tool_and_managers
-    with pytest.raises(ValueError, match="list_deployments is only available for Kubernetes, not swarm"):
+    with pytest.raises(
+        ValueError, match="list_deployments is only available for Kubernetes, not swarm"
+    ):
         _run(tool, action="list_deployments", backend="swarm")
 
 
@@ -315,7 +333,8 @@ def test_scale_deployment_dispatches_on_kubernetes(tool_and_managers):
 def test_scale_deployment_guard_raises(tool_and_managers):
     tool, manager, target = tool_and_managers
     with pytest.raises(
-        ValueError, match="name, namespace, and replicas are required for scale_deployment"
+        ValueError,
+        match="name, namespace, and replicas are required for scale_deployment",
     ):
         _run(
             tool,
@@ -329,8 +348,18 @@ def test_scale_deployment_guard_raises(tool_and_managers):
 
 def test_scale_deployment_rejects_non_kubernetes_backend(tool_and_managers):
     tool, manager, target = tool_and_managers
-    with pytest.raises(ValueError, match="scale_deployment is only available for Kubernetes, not docker"):
-        _run(tool, action="scale_deployment", backend="docker", name="d1", namespace="ns1", replicas=3)
+    with pytest.raises(
+        ValueError,
+        match="scale_deployment is only available for Kubernetes, not docker",
+    ):
+        _run(
+            tool,
+            action="scale_deployment",
+            backend="docker",
+            name="d1",
+            namespace="ns1",
+            replicas=3,
+        )
 
 
 def test_unknown_action_raises_after_resolving_target_manager(tool_and_managers):

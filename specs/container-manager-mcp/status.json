@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_id": "CONN-CONTAINER-MANAGER-MCP",
   "owner_repo": "container-manager-mcp",
-  "delivery_state": "SPECIFIED",
+  "delivery_state": "VERIFIED",
   "requirement_ids": [
     "CONN-CONTAINER-MANAGER-MCP-R001",
     "CONN-CONTAINER-MANAGER-MCP-R001.1",
@@ -15,9 +15,17 @@
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R001",
       "title": "Per-call context",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
-      "verified_by": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "72569b73e27d"
+      ],
+      "verified_by": [
+        "tests/test_call_context.py:28",
+        "tests/test_call_context.py:64",
+        "tests/test_call_context.py:65",
+        "tests/test_call_context.py:66",
+        "tests/test_call_context.py:92"
+      ],
       "rollup_of": [
         "CONN-CONTAINER-MANAGER-MCP-R001.1",
         "CONN-CONTAINER-MANAGER-MCP-R001.2",
@@ -29,8 +37,10 @@
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R001.1",
       "title": "Advertised argument",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "72569b73e27d"
+      ],
       "verified_by": [
         "tests/test_call_context.py:28"
       ]
@@ -38,37 +48,45 @@
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R001.2",
       "title": "Named context selects the manager",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "72569b73e27d"
+      ],
       "verified_by": [
-        "tests/test_call_context.py:60"
+        "tests/test_call_context.py:64"
       ]
     },
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R001.3",
       "title": "Default manager",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "72569b73e27d"
+      ],
       "verified_by": [
-        "tests/test_call_context.py:88"
+        "tests/test_call_context.py:92"
       ]
     },
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R001.4",
       "title": "Wiring",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "72569b73e27d"
+      ],
       "verified_by": [
-        "tests/test_call_context.py:61"
+        "tests/test_call_context.py:65"
       ]
     },
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R001.5",
       "title": "Hot-path proof",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "72569b73e27d"
+      ],
       "verified_by": [
-        "tests/test_call_context.py:62"
+        "tests/test_call_context.py:66"
       ]
     }
   ]

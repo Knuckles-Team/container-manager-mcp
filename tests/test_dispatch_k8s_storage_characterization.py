@@ -36,9 +36,7 @@ def tool_and_manager(monkeypatch):
     from container_manager_mcp.mcp import mcp_k8s_storage
 
     fake_manager = MagicMock()
-    monkeypatch.setattr(
-        mcp_k8s_storage, "create_manager", lambda backend: fake_manager
-    )
+    monkeypatch.setattr(mcp_k8s_storage, "create_manager", lambda backend: fake_manager)
     tool = _capture_tool(mcp_k8s_storage.register_k8sstorage_tools)
     return tool, fake_manager
 
@@ -63,7 +61,9 @@ def test_create_persistent_volume_dispatches(tool_and_manager):
 def test_create_persistent_volume_guard(tool_and_manager):
     tool, manager = tool_and_manager
     result = _run(tool, action="create_persistent_volume", name=None, spec=None)
-    assert result == "Error: 'name' and 'spec' are required for create_persistent_volume"
+    assert (
+        result == "Error: 'name' and 'spec' are required for create_persistent_volume"
+    )
     manager.create_persistent_volume.assert_not_called()
 
 
@@ -96,7 +96,9 @@ def test_create_persistent_volume_claim_guard(tool_and_manager):
 
 def test_delete_persistent_volume_claim_dispatches(tool_and_manager):
     tool, manager = tool_and_manager
-    _run(tool, action="delete_persistent_volume_claim", pvc_name="pvc1", namespace="ns1")
+    _run(
+        tool, action="delete_persistent_volume_claim", pvc_name="pvc1", namespace="ns1"
+    )
     manager.delete_persistent_volume_claim.assert_called_once_with(
         name="pvc1", namespace="ns1"
     )
@@ -111,7 +113,9 @@ def test_delete_persistent_volume_claim_guard(tool_and_manager):
 def test_expand_pvc_dispatches(tool_and_manager):
     tool, manager = tool_and_manager
     _run(tool, action="expand_pvc", pvc_name="pvc1", namespace="ns1", pvc_size="10Gi")
-    manager.expand_pvc.assert_called_once_with(name="pvc1", namespace="ns1", size="10Gi")
+    manager.expand_pvc.assert_called_once_with(
+        name="pvc1", namespace="ns1", size="10Gi"
+    )
 
 
 def test_expand_pvc_guard(tool_and_manager):
@@ -122,7 +126,13 @@ def test_expand_pvc_guard(tool_and_manager):
 
 def test_expand_persistent_volume_dispatches(tool_and_manager):
     tool, manager = tool_and_manager
-    _run(tool, action="expand_persistent_volume", name="pv1", namespace="ns1", size="10Gi")
+    _run(
+        tool,
+        action="expand_persistent_volume",
+        name="pv1",
+        namespace="ns1",
+        size="10Gi",
+    )
     manager.expand_persistent_volume.assert_called_once_with("pv1", "ns1", "10Gi")
 
 
@@ -145,14 +155,23 @@ def test_list_storage_classes_dispatches(tool_and_manager):
 
 def test_create_storage_class_dispatches(tool_and_manager):
     tool, manager = tool_and_manager
-    _run(tool, action="create_storage_class", name="sc1", provisioner="csi.driver", parameters={"p": 1})
+    _run(
+        tool,
+        action="create_storage_class",
+        name="sc1",
+        provisioner="csi.driver",
+        parameters={"p": 1},
+    )
     manager.create_storage_class.assert_called_once_with("sc1", "csi.driver", {"p": 1})
 
 
 def test_create_storage_class_guard(tool_and_manager):
     tool, manager = tool_and_manager
     result = _run(tool, action="create_storage_class", name=None, provisioner=None)
-    assert result == "Error: 'name' and 'provisioner' are required for create_storage_class"
+    assert (
+        result
+        == "Error: 'name' and 'provisioner' are required for create_storage_class"
+    )
 
 
 def test_set_default_storage_class_dispatches(tool_and_manager):
@@ -187,7 +206,13 @@ def test_list_volume_snapshots_dispatches(tool_and_manager):
 
 def test_create_volume_snapshot_dispatches(tool_and_manager):
     tool, manager = tool_and_manager
-    _run(tool, action="create_volume_snapshot", name="snap1", namespace="ns1", spec={"s": 1})
+    _run(
+        tool,
+        action="create_volume_snapshot",
+        name="snap1",
+        namespace="ns1",
+        spec={"s": 1},
+    )
     manager.create_volume_snapshot.assert_called_once_with("snap1", "ns1", {"s": 1})
 
 

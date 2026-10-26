@@ -40,9 +40,9 @@ class MultiContextManager:
         self.k8s_managers: dict[str, Any] = {}  # context_name -> KubernetesManager
         self.docker_managers: dict[str, Any] = {}  # context_name -> DockerManager
         self.podman_manager: Any = None  # Single Podman manager (local only)
-        self.swarm_managers: dict[
-            str, Any
-        ] = {}  # context_name -> DockerManager (Swarm mode)
+        self.swarm_managers: dict[str, Any] = (
+            {}
+        )  # context_name -> DockerManager (Swarm mode)
 
         # Default contexts
         self.default_k8s_context: str | None = None
@@ -341,8 +341,8 @@ class MultiContextManager:
         filtered/denied by ``identity_scoped_resources`` itself, not here.
         """
         try:
-            from agent_connector_sdk.identity import IdentityRequiredError
             from agent_connector_sdk.entitlements import identity_scoped_resources
+            from agent_connector_sdk.identity import IdentityRequiredError
         except Exception:
             return names
         try:

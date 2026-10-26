@@ -1,6 +1,7 @@
 """ComposeMixin for KubernetesManager (split from k8s_manager.py)."""
 
 import os
+import shutil
 import subprocess
 import tempfile
 from typing import TYPE_CHECKING
@@ -13,6 +14,11 @@ else:
     _Base = object
 
 
+def _executable(name: str) -> str:
+    """Resolve a command before handing it to subprocess."""
+    return shutil.which(name) or name
+
+
 class ComposeMixin(_Base):
     def compose_up(
         self, compose_file: str, detach: bool = True, build: bool = False
@@ -22,14 +28,14 @@ class ComposeMixin(_Base):
             with tempfile.TemporaryDirectory() as tmp:
                 out = os.path.join(tmp, "manifests.yaml")
                 convert = subprocess.run(
-                    ["kompose", "convert", "-f", compose_file, "-o", out],
+                    [_executable("kompose"), "convert", "-f", compose_file, "-o", out],
                     capture_output=True,
                     text=True,
                 )
                 if convert.returncode != 0:
                     raise RuntimeError(convert.stderr)
                 apply = subprocess.run(
-                    ["kubectl", "apply", "-n", self.namespace, "-f", out],
+                    [_executable("kubectl"), "apply", "-n", self.namespace, "-f", out],
                     capture_output=True,
                     text=True,
                 )
@@ -47,14 +53,14 @@ class ComposeMixin(_Base):
             with tempfile.TemporaryDirectory() as tmp:
                 out = os.path.join(tmp, "manifests.yaml")
                 convert = subprocess.run(
-                    ["kompose", "convert", "-f", compose_file, "-o", out],
+                    [_executable("kompose"), "convert", "-f", compose_file, "-o", out],
                     capture_output=True,
                     text=True,
                 )
                 if convert.returncode != 0:
                     raise RuntimeError(convert.stderr)
                 delete = subprocess.run(
-                    ["kubectl", "delete", "-n", self.namespace, "-f", out],
+                    [_executable("kubectl"), "delete", "-n", self.namespace, "-f", out],
                     capture_output=True,
                     text=True,
                 )
@@ -70,7 +76,7 @@ class ComposeMixin(_Base):
         params = {"compose_file": compose_file}
         try:
             result = subprocess.run(
-                ["kubectl", "get", "all", "-n", self.namespace],
+                [_executable("kubectl"), "get", "all", "-n", self.namespace],
                 capture_output=True,
                 text=True,
             )
@@ -85,7 +91,7 @@ class ComposeMixin(_Base):
     def compose_logs(self, compose_file: str, service: str | None = None) -> str:
         params = {"compose_file": compose_file, "service": service}
         try:
-            cmd = ["kubectl", "logs", "-n", self.namespace]
+            cmd = [_executable("kubectl"), "logs", "-n", self.namespace]
             cmd += [f"deploy/{service}"] if service else ["--all-containers"]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if result.returncode != 0:
