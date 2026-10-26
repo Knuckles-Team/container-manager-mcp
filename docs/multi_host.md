@@ -22,7 +22,7 @@ graph TD
 
 ### Pre-bound Virtual Host Namespacing (Multiplexer Integration)
 
-To optimize the developer and AI agent experience in IDEs (like Antigravity), this repository avoid requiring the AI agent to remember to supply `host` explicitly on every call. Instead, the `mcp-multiplexer` reads `inventory.yml` and exposes host-specific **pre-bound virtual sub-servers** using namespaced prefixes (e.g. `cnt_r510__list_containers`).
+To optimize the developer and AI agent experience in IDEs (like Antigravity), this repository avoid requiring the AI agent to remember to supply `host` explicitly on every call. Instead, the `mcp-multiplexer` reads `inventory.yml` and exposes host-specific **pre-bound virtual sub-servers** using namespaced prefixes (e.g. `cnt_<alias>__list_containers`).
 
 ```mermaid
 graph TD

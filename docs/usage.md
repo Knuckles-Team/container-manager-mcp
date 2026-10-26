@@ -178,9 +178,9 @@ with real probes and concrete remediation for anything that is not OK. It exits
 ```bash
 container-manager-doctor                       # diagnose everything
 container-manager-doctor --guided              # + probe every inventory host
-container-manager-doctor --backend inventory --host r820
+container-manager-doctor --backend inventory --host <alias>
 container-manager-doctor --backend kubernetes --context prod
-container-manager-doctor --backend docker --host r820
+container-manager-doctor --backend docker --host <alias>
 container-manager-doctor --json                # machine-readable report
 ```
 
