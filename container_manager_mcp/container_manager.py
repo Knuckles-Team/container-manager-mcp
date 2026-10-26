@@ -13,6 +13,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
+from importlib.metadata import version as package_version
 from typing import TYPE_CHECKING, Any, cast
 
 from container_manager_mcp.models import (
@@ -28,7 +29,7 @@ if TYPE_CHECKING:
     # TYPE_CHECKING-only to avoid a real import cycle.
     from container_manager_mcp.multi_context_manager import MultiContextManager
 
-__version__ = "3.3.6"
+__version__ = package_version("container-manager-mcp")
 
 
 class _MissingRuntimeError(Exception):

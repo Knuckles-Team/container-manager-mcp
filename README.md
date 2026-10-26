@@ -20,8 +20,6 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/container-manager-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/container-manager-mcp)
 
-*Version: 3.3.6*
-
 > **Documentation** — Installation, deployment, usage across the API, CLI, MCP, and
 > A2A agent interfaces, and the multi-host control plane are maintained in the
 > [official documentation](https://knuckles-team.github.io/container-manager-mcp/).
@@ -990,14 +988,17 @@ uv pip install "container-manager-mcp[all]"      # or: python -m pip install "co
 
 ### Container images (`:mcp`)
 
-One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
+The central release pipeline renders the MCP image definition from this project and
+builds it from the published wheel. Generated Dockerfiles and compose files are build
+artifacts, so they are not tracked in this repository. To preview the generated files:
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
 | `example/container-manager-mcp:mcp` | `--target mcp` | `container-manager-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `container-manager-mcp` |
 
 ```bash
-docker build --target mcp   -t example/container-manager-mcp:mcp    docker/   # connector-focused MCP server
+uvx --from "git+https://github.com/Knuckles-Team/pipelines@main" pipelines-connector \
+  render --root . --out /tmp/container-manager-mcp-docker
 ```
 
 agent (`immutable agent digest`) with a co-located `:mcp` sidecar.

@@ -17,7 +17,13 @@
       "landed_in": [
         "41d0e4b216f3"
       ],
-      "verified_by": [],
+      "verified_by": [
+        "tests/test_kubeconfig_import.py:347",
+        "tests/test_kubeconfig_import.py:372",
+        "tests/test_kubeconfig_import.py:391",
+        "tests/test_kubeconfig_import.py:404",
+        "tests/test_sdk_transport.py:11"
+      ],
       "rollup_of": [
         "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1",
         "CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2",

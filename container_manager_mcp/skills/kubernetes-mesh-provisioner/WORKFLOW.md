@@ -34,7 +34,7 @@ On the manager node **R820 ([REDACTED_IPV4])**:
 - Retrieve the node-join token from `/var/lib/rancher/rke2/server/node-token` and
   the kubeconfig from `/etc/rancher/rke2/rke2.yaml` (rewrite the server URL to
   `[configured-endpoint]`).
-- Trust the internal CA: add `registry.arpa` to `/etc/rancher/rke2/registries.yaml`
+- Trust the internal CA: add `[configured-endpoint]` to `/etc/rancher/rke2/registries.yaml`
   so containerd pulls from the private registry.
 
 ### Step 2: Join RKE2 Agents (workers)
@@ -44,7 +44,7 @@ throttled-vLLM soak passed):
 - Otherwise install the RKE2 agent, write `/etc/rancher/rke2/config.yaml` with
   `server: [configured-endpoint]`, the join token, and node labels; then
   `systemctl enable --now rke2-agent`.
-- Distribute `registries.yaml` (registry.arpa + internal CA) to every agent.
+- Distribute `registries.yaml` ([configured-endpoint] + internal CA) to every agent.
 - **GB10** is ARM64 (Grace-Blackwell); it joins as a tainted GPU agent
   (`gpu=true:NoSchedule`) so only GPU workloads with matching tolerations land
   there. Only arm64 images may schedule on it.

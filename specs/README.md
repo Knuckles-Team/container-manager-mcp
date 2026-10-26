@@ -12,6 +12,7 @@ Read the existing specs first. Extend the spec that owns the behavior. Create a 
 
 ## Local specifications
 
+- [`CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT`](connector-content/spec.md) — Packaged default MCP content.
 - [`CONN-CONTAINER-MANAGER-MCP`](container-manager-mcp/spec.md) — Container manager call context.
 - [`CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION`](sdk-centralization/spec.md) — Transport through the SDK.
 

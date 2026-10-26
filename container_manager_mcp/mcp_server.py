@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import warnings
+from importlib.metadata import version as package_version
 
 from fastmcp import Context, FastMCP
 from fastmcp.utilities.logging import get_logger
@@ -177,7 +178,7 @@ from container_manager_mcp.container_manager import (
 )
 from container_manager_mcp.k8s.manager import KubernetesManager
 
-__version__ = "3.3.6"
+__version__ = package_version("container-manager-mcp")
 
 logger = get_logger(name="ContainerManagerServer")
 logger.setLevel(logging.DEBUG)
