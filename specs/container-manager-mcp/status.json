@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_id": "CONN-CONTAINER-MANAGER-MCP",
   "owner_repo": "container-manager-mcp",
-  "delivery_state": "SPECIFIED",
+  "delivery_state": "VERIFIED",
   "requirement_ids": [
     "CONN-CONTAINER-MANAGER-MCP-R001",
     "CONN-CONTAINER-MANAGER-MCP-R001.1",
@@ -94,8 +94,10 @@
     {
       "id": "CONN-CONTAINER-MANAGER-MCP-R002",
       "title": "Deployed workload access contract",
-      "delivery_state": "SPECIFIED",
-      "landed_in": [],
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "68eb1599862d"
+      ],
       "verified_by": [
         "tests/test_access_contracts.py:42"
       ]
