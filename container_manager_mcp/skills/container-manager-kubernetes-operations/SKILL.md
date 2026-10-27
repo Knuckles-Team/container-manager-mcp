@@ -15,7 +15,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, kubernetes, k8s, cluster, ops, mcp]
 metadata:
-  author: Genius
+  author: example-operator
   version: '0.1.0'
 ---
 # Kubernetes Operations

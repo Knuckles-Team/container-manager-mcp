@@ -11,7 +11,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, docker, swarm, orchestration, cluster, mcp]
 metadata:
-  author: Genius
+  author: example-operator
   version: '0.1.0'
 ---
 # Docker Swarm Orchestration

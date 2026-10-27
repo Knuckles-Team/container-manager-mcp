@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, multi-context, kubernetes, docker, podman, swarm, mcp]
 metadata:
-  author: Genius
+  author: example-operator
   version: '0.1.0'
 ---
 # Multi-Context Container Management

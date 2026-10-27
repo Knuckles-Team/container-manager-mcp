@@ -24,7 +24,9 @@ class StorageMixin(_Base):
                     "capacity": (
                         pv.spec.capacity.dict()
                         if hasattr(pv.spec.capacity, "dict")
-                        else pv.spec.capacity if pv.spec and pv.spec.capacity else {}
+                        else pv.spec.capacity
+                        if pv.spec and pv.spec.capacity
+                        else {}
                     ),
                     "access_modes": pv.spec.access_modes or [],
                     "reclaim_policy": (
