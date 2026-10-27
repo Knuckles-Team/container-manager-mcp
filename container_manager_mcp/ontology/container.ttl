@@ -54,6 +54,14 @@
     rdfs:label "Kubernetes Deployment" ;
     rdfs:comment "A Kubernetes Deployment — declarative desired-state ReplicaSet controller for Pods (cm_k8s_workloads: list_services / create_service)." .
 
+:deploymentStatus a owl:DatatypeProperty ;
+    rdfs:domain :Deployment ; rdfs:range xsd:string ;
+    rdfs:comment "The provider-reported Available condition, or unknown." .
+
+:deploymentImageReference a owl:DatatypeProperty ;
+    rdfs:domain :Deployment ; rdfs:range xsd:string ;
+    rdfs:comment "The first container image reference returned by the deployment summary." .
+
 :StatefulSet a owl:Class ;
     rdfs:label "Kubernetes StatefulSet" ;
     rdfs:comment "A Kubernetes StatefulSet — ordered, stable-identity Pod controller for stateful workloads (cm_k8s_workloads)." .

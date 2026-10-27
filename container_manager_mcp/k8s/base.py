@@ -251,6 +251,18 @@ class _K8sBase(_Base):
         spec = dep.spec
         containers = spec.template.spec.containers if spec and spec.template else []
         image = containers[0].image if containers else "unknown"
+        conditions = getattr(getattr(dep, "status", None), "conditions", None) or []
+        status = (
+            next(
+                (
+                    condition.status
+                    for condition in conditions
+                    if condition.type == "Available"
+                ),
+                None,
+            )
+            or "unknown"
+        )
         ports = []
         if containers and containers[0].ports:
             ports = [str(p.container_port) for p in containers[0].ports]
@@ -259,6 +271,7 @@ class _K8sBase(_Base):
             "name": dep.metadata.name,
             "namespace": dep.metadata.namespace,
             "image": image,
+            "status": status,
             "replicas": spec.replicas if spec else 0,
             "ports": ", ".join(ports) if ports else "none",
             "created": self._ts(dep.metadata.creation_timestamp),
