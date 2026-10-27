@@ -1,0 +1,11 @@
+{
+  "id": "fixture-uid",
+  "name": "fixture-deployment",
+  "namespace": "fixture-namespace",
+  "image": "example.invalid/fixture:v1",
+  "status": "True",
+  "replicas": 2,
+  "ports": "none",
+  "created": "unknown",
+  "updated": "unknown"
+}

@@ -1,0 +1,19 @@
+@prefix ac: <https://knuckles-team.github.io/agent-connector-sdk/access#> .
+@prefix kg: <http://knuckles.team/kg#> .
+@prefix cm: <http://knuckles.team/kg/container-access#> .
+
+cm:deploymentAccess a ac:AccessContract ;
+    ac:classIri kg:Deployment ;
+    ac:sourceId "container-manager-mcp" ;
+    ac:entity "deployment" ;
+    ac:keyField "id" ;
+    ac:accessKind "mcp_tool" ;
+    ac:operation "k8s_list_services" ;
+    ac:pagination "none" .
+
+cm:name a ac:PropertyBinding ;
+    ac:contract cm:deploymentAccess ; ac:property kg:name ; ac:field "name" .
+cm:status a ac:PropertyBinding ;
+    ac:contract cm:deploymentAccess ; ac:property kg:deploymentStatus ; ac:field "status" .
+cm:image a ac:PropertyBinding ;
+    ac:contract cm:deploymentAccess ; ac:property kg:deploymentImageReference ; ac:field "image" .

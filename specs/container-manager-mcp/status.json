@@ -10,6 +10,7 @@
     "CONN-CONTAINER-MANAGER-MCP-R001.3",
     "CONN-CONTAINER-MANAGER-MCP-R001.4",
     "CONN-CONTAINER-MANAGER-MCP-R001.5",
+    "CONN-CONTAINER-MANAGER-MCP-R002",
     "CONN-CONTAINER-MANAGER-MCP-R003"
   ],
   "requirements": [
@@ -88,6 +89,17 @@
       ],
       "verified_by": [
         "tests/test_call_context.py:66"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R002",
+      "title": "Deployed workload access contract",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "97ff9ec8412e"
+      ],
+      "verified_by": [
+        "tests/test_access_contracts.py:42"
       ]
     },
     {

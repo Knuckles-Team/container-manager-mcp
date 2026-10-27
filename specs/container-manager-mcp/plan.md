@@ -36,3 +36,11 @@ A tool without the `context` property would ignore the named context and run on 
 Inventory entries retain a configured SSH user. If no user is configured,
 the connector omits the username from the SSH authority and lets SSH choose
 its normal identity. Public examples use synthetic aliases and accounts.
+## Amendment: deployed workload access
+
+The existing `k8s_list_services` operation reads Kubernetes deployments.
+Its summary carries the provider's `Available` condition as status, or
+`unknown` when that condition is absent. Publish the SDK access contract and
+test the listed field bindings against a served response from a synthetic
+Kubernetes provider. It is not a recording from a live cluster. This
+implements the connector side of SDK-CONNECTOR-CONTROL-R039.
