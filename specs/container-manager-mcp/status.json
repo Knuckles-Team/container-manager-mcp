@@ -96,7 +96,7 @@
       "title": "Deployed workload access contract",
       "delivery_state": "VERIFIED",
       "landed_in": [
-        "68eb1599862d"
+        "97ff9ec8412e"
       ],
       "verified_by": [
         "tests/test_access_contracts.py:42"
