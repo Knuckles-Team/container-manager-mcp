@@ -429,7 +429,7 @@ def list_inventory_hosts() -> dict:
     hosts = {
         name: {
             "hostname": info.get("hostname"),
-            "user": info.get("user", "genius"),
+            "user": info.get("user"),
             "port": info.get("port", 22),
         }
         for name, info in (hm.hosts or {}).items()
@@ -459,7 +459,7 @@ def resolve_host_from_inventory(host: str) -> dict:
     hinfo = hm.hosts[host]
     return {
         "hostname": hinfo.get("hostname"),
-        "user": hinfo.get("user", "genius"),
+        "user": hinfo.get("user"),
         "port": hinfo.get("port", 22),
         "identity_file": hinfo.get("key_path") or hinfo.get("identity_file"),
         "password": hinfo.get("password"),

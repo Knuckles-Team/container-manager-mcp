@@ -31,3 +31,8 @@ Run `pytest tests/test_call_context.py` and `pipelines-hook spec-standard`.
 ## Risks, alternatives, and decisions
 
 A tool without the `context` property would ignore the named context and run on the default manager. `R001.1` guards that case.
+## Amendment: inventory identities
+
+Inventory entries retain a configured SSH user. If no user is configured,
+the connector omits the username from the SSH authority and lets SSH choose
+its normal identity. Public examples use synthetic aliases and accounts.

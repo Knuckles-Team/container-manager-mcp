@@ -2,14 +2,15 @@
   "schema_version": 2,
   "spec_id": "CONN-CONTAINER-MANAGER-MCP",
   "owner_repo": "container-manager-mcp",
-  "delivery_state": "VERIFIED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "CONN-CONTAINER-MANAGER-MCP-R001",
     "CONN-CONTAINER-MANAGER-MCP-R001.1",
     "CONN-CONTAINER-MANAGER-MCP-R001.2",
     "CONN-CONTAINER-MANAGER-MCP-R001.3",
     "CONN-CONTAINER-MANAGER-MCP-R001.4",
-    "CONN-CONTAINER-MANAGER-MCP-R001.5"
+    "CONN-CONTAINER-MANAGER-MCP-R001.5",
+    "CONN-CONTAINER-MANAGER-MCP-R003"
   ],
   "requirements": [
     {
@@ -87,6 +88,15 @@
       ],
       "verified_by": [
         "tests/test_call_context.py:66"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R003",
+      "title": "Inventory privacy",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": [
+        "tests/test_inventory_hosts.py:47"
       ]
     }
   ]

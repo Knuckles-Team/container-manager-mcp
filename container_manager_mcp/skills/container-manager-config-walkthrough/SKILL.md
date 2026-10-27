@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, setup, configuration, onboarding, mcp]
 metadata:
-  author: Genius
+  author: example-operator
   version: '0.1.0'
 ---
 # Container Manager — Configuration Walkthrough

@@ -38,7 +38,7 @@ On the manager node **R820 ([REDACTED_IPV4])**:
   so containerd pulls from the private registry.
 
 ### Step 2: Join RKE2 Agents (workers)
-For each worker — **R710, R510, RW710, GR1080** (and **GB10** if its
+For each worker — **R710, R510, RW710, example-operator** (and **GB10** if its
 throttled-vLLM soak passed):
 - If `systemctl is-active rke2-agent` is active, skip.
 - Otherwise install the RKE2 agent, write `/etc/rancher/rke2/config.yaml` with
@@ -58,12 +58,12 @@ RKE2 with `cni: cilium` self-installs Cilium. Verify the dataplane:
   (e.g. reuse `[REDACTED_IPV4]` so Technitium's `*.arpa → VIP` needs no change).
 
 ### Step 4: GPU Device Plugin
-On GPU nodes **GR1080 ([REDACTED_IPV4])** and **GB10 ([REDACTED_IPV4], if joined)**:
+On GPU nodes **example-operator ([REDACTED_IPV4])** and **GB10 ([REDACTED_IPV4], if joined)**:
 - Ensure the NVIDIA driver + `nvidia-container-toolkit` are present (RKE2
   auto-creates `RuntimeClass nvidia` when it detects the runtime).
 - Deploy the NVIDIA k8s device-plugin DaemonSet with a nodeSelector to the GPU
   nodes; verify `nvidia.com/gpu` appears under the node's allocatable resources
-  (`kubectl describe node GR1080`).
+  (`kubectl describe node example-operator`).
 - GPU workloads then request `nvidia.com/gpu` with `runtimeClassName: nvidia` —
   no more `swarm-launcher` device-passthrough wrapper.
 
