@@ -113,7 +113,7 @@
       "verified_by": [
         "tests/test_inventory_hosts.py:57",
         "tests/test_served_actor_binding.py:103",
-        "tests/test_served_actor_binding.py:122",
+        "tests/test_served_actor_binding.py:120",
         "tests/test_served_actor_binding.py:92"
       ]
     }
