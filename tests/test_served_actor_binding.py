@@ -110,9 +110,7 @@ async def test_anonymous_http_lists_nothing_and_a_single_alias_is_refused(
             listed = await client.call_tool("cm_list_hosts", {})
             assert listed.data["hosts"] == {}
             with pytest.raises(MCPError) as denied:
-                await client.call_tool(
-                    "cm_ingest_inventory", {"host": "lab"}
-                )
+                await client.call_tool("cm_ingest_inventory", {"host": "lab"})
     assert denied.value.code == -32000
     assert "not entitled" in denied.value.message
     assert "actor context is required" not in denied.value.message
@@ -153,8 +151,6 @@ async def test_authenticated_http_lists_the_entitled_aliases(
             listed = await client.call_tool("cm_list_hosts", {})
             assert set(listed.data["hosts"]) == {"prod-a", "lab", "edge"}
             with pytest.raises(MCPError) as denied:
-                await client.call_tool(
-                    "cm_ingest_inventory", {"host": "prod-b"}
-                )
+                await client.call_tool("cm_ingest_inventory", {"host": "prod-b"})
     assert denied.value.code == -32000
     assert "not entitled" in denied.value.message
