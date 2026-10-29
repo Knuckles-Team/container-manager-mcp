@@ -1,8 +1,8 @@
 # CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION — Transport through the SDK
 
-Owner: container-manager-mcp. Cross-repo IDs: `SDK-CENTRALIZED-CAPABILITIES-R001`, `SDK-CENTRALIZED-CAPABILITIES-R008`, `SDK-CENTRALIZED-CAPABILITIES-R012`, `SDK-CENTRALIZED-CAPABILITIES-R040`.
+Owner: container-manager-mcp. Cross-repo IDs: `SCION-CENTRALIZED-CAPABILITIES-R001`, `SCION-CENTRALIZED-CAPABILITIES-R008`, `SCION-CENTRALIZED-CAPABILITIES-R012`, `SCION-CENTRALIZED-CAPABILITIES-R040`.
 
-Extends: [SDK-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/centralized-capabilities/spec.md)
+Extends: [SCION-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/centralized-capabilities/spec.md)
 
 ## Purpose and user stories
 

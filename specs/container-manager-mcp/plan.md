@@ -43,4 +43,4 @@ Its summary carries the provider's `Available` condition as status, or
 `unknown` when that condition is absent. Publish the SDK access contract and
 test the listed field bindings against a served response from a synthetic
 Kubernetes provider. It is not a recording from a live cluster. This
-implements the connector side of SDK-CONNECTOR-CONTROL-R039.
+implements the connector side of SCION-CONNECTOR-CONTROL-R039.
