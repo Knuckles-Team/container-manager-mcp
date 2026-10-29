@@ -1,8 +1,10 @@
 """Discoverable remote-host targeting (cm_list_hosts + clear errors)."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
+import yaml
+from agent_connector_sdk.identity import SYSTEM_ACTOR, use_actor
 
 from container_manager_mcp.container_manager import (
     DockerManager,
@@ -11,34 +13,42 @@ from container_manager_mcp.container_manager import (
 )
 
 
-def _fake_hm(hosts):
-    hm = MagicMock()
-    hm.hosts = hosts
-    hm.config_file = "/cfg/inventory.yaml"
-    return hm
+@pytest.fixture
+def inventory(request, tmp_path, monkeypatch):
+    """Point the real tunnel-manager HostManager at a flat inventory file."""
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+    local = use_actor(SYSTEM_ACTOR)
+    local.__enter__()
+    request.addfinalizer(lambda: local.__exit__(None, None, None))
+    path = tmp_path / "agent-connectors" / "inventory.yml"
+    path.parent.mkdir()
+
+    def write(hosts):
+        path.write_text(yaml.safe_dump(hosts))
+        return str(path)
+
+    return write
 
 
-def test_list_inventory_hosts_shapes_aliases():
-    fake = _fake_hm(
+def test_list_inventory_hosts_shapes_aliases(inventory):
+    path = inventory(
         {
             "R820": {"hostname": "10.0.0.20", "user": "fixture-user", "port": 22},
             "R710": {"hostname": "10.0.0.10"},  # user/port default
         }
     )
-    with patch("tunnel_manager.tunnel_manager.HostManager", return_value=fake):
-        out = list_inventory_hosts()
+    out = list_inventory_hosts()
     assert out["count"] == 2
-    assert out["inventory_path"] == "/cfg/inventory.yaml"
+    assert out["inventory_path"] == path
     assert out["hosts"]["R820"]["hostname"] == "10.0.0.20"
     assert out["hosts"]["R710"]["user"] is None  # no implicit account
     assert out["hosts"]["R710"]["port"] == 22  # default
 
 
-def test_list_inventory_hosts_empty():
-    with patch("tunnel_manager.tunnel_manager.HostManager", return_value=_fake_hm({})):
-        out = list_inventory_hosts()
-    assert out == {
-        "inventory_path": "/cfg/inventory.yaml",
+def test_list_inventory_hosts_empty(inventory):
+    path = inventory({})
+    assert list_inventory_hosts() == {
+        "inventory_path": path,
         "count": 0,
         "hosts": {},
     }
@@ -50,29 +60,23 @@ def test_list_inventory_hosts_empty():
     [("fixture-user", "fixture-user@"), (None, "")],
 )
 def test_docker_host_preserves_only_configured_user(
-    configured_user, expected_authority
+    inventory, configured_user, expected_authority
 ):
     item = {"hostname": "example.invalid", "port": 22}
     if configured_user is not None:
         item["user"] = configured_user
-    with (
-        patch(
-            "tunnel_manager.tunnel_manager.HostManager",
-            return_value=_fake_hm({"example-host": item}),
-        ),
-        patch("container_manager_mcp.container_manager.docker") as docker,
-    ):
+    inventory({"example-host": item})
+    with patch("container_manager_mcp.container_manager.docker") as docker:
         DockerManager(host="example-host")
     docker.DockerClient.assert_called_once_with(
         base_url=f"ssh://{expected_authority}example.invalid:22"
     )
 
 
-def test_resolve_unknown_host_lists_available():
-    fake = _fake_hm({"R820": {"hostname": "10.0.0.20"}})
-    with patch("tunnel_manager.tunnel_manager.HostManager", return_value=fake):
-        with pytest.raises(ValueError) as exc:
-            resolve_host_from_inventory("does-not-exist")
+def test_resolve_unknown_host_lists_available(inventory):
+    inventory({"R820": {"hostname": "10.0.0.20"}})
+    with pytest.raises(ValueError) as exc:
+        resolve_host_from_inventory("does-not-exist")
     msg = str(exc.value)
     assert "R820" in msg  # tells you what IS available
     assert "cm_list_hosts" in msg  # points at the discovery tool

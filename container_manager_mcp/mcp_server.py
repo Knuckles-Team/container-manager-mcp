@@ -44,7 +44,6 @@ from agent_connector_sdk.mcp.tool_surface import (
 from container_manager_mcp.call_context import (
     CallContextMiddleware,
     advertise_context_argument,
-    manager_for,
 )
 
 _SERVICE = "container-manager-mcp"
@@ -171,12 +170,11 @@ def ctx_log(ctx: Any, *args, **kwargs) -> None:
 
 
 from container_manager_mcp.container_manager import (
-    DockerManager,
-    PodmanManager,
     create_manager,
     list_inventory_hosts,
 )
 from container_manager_mcp.k8s.manager import KubernetesManager
+from container_manager_mcp.surface import VERBOSE_TARGETS
 
 __version__ = package_version("container-manager-mcp")
 
@@ -1604,36 +1602,13 @@ def get_mcp_instance() -> tuple[Any, ...]:
         mcp,
         service=_SERVICE,
         tools_module=sys.modules[__name__],
-        verbose_targets=[
-            {
-                "client_cls": DockerManager,
-                "get_client": lambda: manager_for("docker"),
-                "prefix": "docker",
-                # ``docker_service_logs`` wraps ``service_logs`` under another
-                # argument shape; keep both tools addressable.
-                "manifest": [
-                    {
-                        "method": "docker_service_logs",
-                        "name": "swarm_service_logs",
-                    },
-                    {"method": "docker_service_ps", "name": "swarm_service_ps"},
-                ],
-            },
-            {
-                "client_cls": PodmanManager,
-                "get_client": lambda: create_manager("podman"),
-                "prefix": "podman",
-            },
-            {
-                "client_cls": KubernetesManager,
-                "get_client": lambda: manager_for("kubernetes"),
-                "prefix": "k8s",
-            },
-        ],
+        verbose_targets=list(VERBOSE_TARGETS),
     )
 
     advertise_context_argument(registered_tools(mcp))
     mcp.add_middleware(CallContextMiddleware())
+    for middleware in middlewares:
+        mcp.add_middleware(middleware)
 
     return mcp, args, middlewares
 

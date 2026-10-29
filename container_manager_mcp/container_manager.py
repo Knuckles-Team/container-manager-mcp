@@ -429,10 +429,10 @@ def list_inventory_hosts() -> dict:
     hosts = {
         name: {
             "hostname": info.get("hostname"),
-            "user": info.get("user"),
-            "port": info.get("port", 22),
+            "user": info.get("user") or None,
+            "port": info.get("port") or 22,
         }
-        for name, info in (hm.hosts or {}).items()
+        for name, info in hm.list_hosts().items()
     }
     return {
         "inventory_path": getattr(hm, "config_file", None),
@@ -450,19 +450,20 @@ def resolve_host_from_inventory(host: str) -> dict:
             f"No valid hosts configuration or inventory found (attempted: {hm.config_file})"
         )
 
-    if host not in hm.hosts:
+    # get_host raises PermissionError for an alias the caller is not entitled to.
+    config = hm.get_host(host)
+    if config is None:
         raise ValueError(
             f"Host '{host}' not configured in inventory ({hm.config_file}). "
-            f"Available hosts: {sorted(hm.hosts)} — or call cm_list_hosts."
+            f"Available hosts: {sorted(hm.list_hosts())} — or call cm_list_hosts."
         )
 
-    hinfo = hm.hosts[host]
     return {
-        "hostname": hinfo.get("hostname"),
-        "user": hinfo.get("user"),
-        "port": hinfo.get("port", 22),
-        "identity_file": hinfo.get("key_path") or hinfo.get("identity_file"),
-        "password": hinfo.get("password"),
+        "hostname": config.hostname,
+        "user": config.user or None,
+        "port": config.port or 22,
+        "identity_file": config.key_path or config.identity_file,
+        "password": config.resolved_password(),
     }
 
 
@@ -530,6 +531,8 @@ class DockerManager(ContainerManagerBase):
                 self.client = docker.DockerClient(base_url=base_url)  # type: ignore
             else:
                 self.client = docker.from_env()  # type: ignore
+        except PermissionError:
+            raise  # an alias the caller is not entitled to is a typed refusal
         except Exception as e:
             self.logger.error("Operation failed: error_type=%s", type(e).__name__)
             raise RuntimeError("Configured Docker daemon is unavailable") from e

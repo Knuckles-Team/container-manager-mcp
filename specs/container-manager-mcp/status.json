@@ -107,10 +107,14 @@
       "title": "Inventory privacy",
       "delivery_state": "VERIFIED",
       "landed_in": [
+        "875fa9ba90a6",
         "a9b2e89d54ee"
       ],
       "verified_by": [
-        "tests/test_inventory_hosts.py:47"
+        "tests/test_inventory_hosts.py:57",
+        "tests/test_served_actor_binding.py:103",
+        "tests/test_served_actor_binding.py:120",
+        "tests/test_served_actor_binding.py:92"
       ]
     }
   ]

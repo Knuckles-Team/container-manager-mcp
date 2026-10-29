@@ -89,3 +89,18 @@ container-manager
 
 Manage your containers using docker, podman, compose, or docker swarm!
 """
+
+
+from agent_connector_sdk.connector import Connector  # noqa: E402
+
+from container_manager_mcp.surface import (  # noqa: E402
+    VERBOSE_TARGETS,
+    wire_call_context,
+)
+
+connector = Connector(
+    tools="container_manager_mcp.mcp_server",
+    verbose_targets=VERBOSE_TARGETS,
+    extra_registrations=(wire_call_context,),
+    instructions="Container Manager MCP Server - Manage Docker and Podman containers, images, volumes, networks, and swarm.",
+)

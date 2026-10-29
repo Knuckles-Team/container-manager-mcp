@@ -23,12 +23,13 @@ import json
 import os
 import socket
 import sys
+from importlib.metadata import version as package_version
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
     from container_manager_mcp.k8s.manager import KubernetesManager
 
-__version__ = "2.0.1"
+__version__ = package_version("container-manager-mcp")
 
 # --- Guarded reuse of the server's own managers/inventory --------------------
 # These are the real code paths the MCP server uses; importing them here means
