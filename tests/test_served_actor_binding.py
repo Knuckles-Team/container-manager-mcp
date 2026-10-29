@@ -35,9 +35,9 @@ AUDIENCE = "container-manager-hosts"
 
 @pytest.fixture(autouse=True)
 def _inventory(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-    path = tmp_path / "agent-connectors" / "inventory.yml"
-    path.parent.mkdir()
+    path = tmp_path / "inventory.yml"
+    module = importlib.import_module("tunnel_manager.tunnel_manager")
+    monkeypatch.setattr(module, "default_inventory_path", lambda: str(path))
     path.write_text(
         yaml.safe_dump(
             {a: {"hostname": f"{a}.example.invalid", "user": "ops"} for a in ALIASES}
