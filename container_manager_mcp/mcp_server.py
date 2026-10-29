@@ -1634,6 +1634,8 @@ def get_mcp_instance() -> tuple[Any, ...]:
 
     advertise_context_argument(registered_tools(mcp))
     mcp.add_middleware(CallContextMiddleware())
+    for middleware in middlewares:
+        mcp.add_middleware(middleware)
 
     return mcp, args, middlewares
 
