@@ -33,7 +33,7 @@ container-manager-save-context = "container_manager_mcp.k8s.kubeconfig_import:ma
 
 # The one declared connector identity: the fleet name (SCION-CONNECTOR-CONTROL-R071).
 [project.entry-points."agent_connector_sdk.connector"]
-container-manager-mcp = "container_manager_mcp"
+container-manager-mcp = "container_manager_mcp:connector"
 
 [tool.uv.workspace]
 members = ["."]
