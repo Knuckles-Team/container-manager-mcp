@@ -533,7 +533,7 @@ wheels = [
 
 [[package]]
 name = "container-manager-mcp"
-version = "3.3.7"
+version = "3.3.8"
 source = { editable = "." }
 dependencies = [
     { name = "docker", extra = ["ssh"] },

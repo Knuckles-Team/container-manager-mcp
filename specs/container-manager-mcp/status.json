@@ -11,7 +11,8 @@
     "CONN-CONTAINER-MANAGER-MCP-R001.4",
     "CONN-CONTAINER-MANAGER-MCP-R001.5",
     "CONN-CONTAINER-MANAGER-MCP-R002",
-    "CONN-CONTAINER-MANAGER-MCP-R003"
+    "CONN-CONTAINER-MANAGER-MCP-R003",
+    "CONN-CONTAINER-MANAGER-MCP-R004"
   ],
   "requirements": [
     {
@@ -115,6 +116,17 @@
         "tests/test_served_actor_binding.py:103",
         "tests/test_served_actor_binding.py:120",
         "tests/test_served_actor_binding.py:92"
+      ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R004",
+      "title": "Shared inventory path",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7af40e22f556"
+      ],
+      "verified_by": [
+        "tests/test_inventory_hosts.py:85"
       ]
     }
   ]

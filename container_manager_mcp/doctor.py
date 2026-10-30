@@ -58,6 +58,15 @@ except Exception:  # pragma: no cover - tunnel-manager is a hard dependency
         )
 
 
+def _default_inventory() -> str:
+    """The inventory the served tools read: ``$TUNNEL_INVENTORY`` first."""
+    try:
+        from container_manager_mcp.container_manager import inventory_path
+    except Exception:  # pragma: no cover - only when the package itself is broken
+        return default_inventory_path()
+    return inventory_path()
+
+
 # ---------------------------------------------------------------------------
 # Check primitives
 # ---------------------------------------------------------------------------
@@ -288,7 +297,7 @@ def _check_inventory(
 ) -> list[dict]:
     """Inventory file exists + parses via HostManager; optional per-host reachability."""
     checks: list[dict] = []
-    path = inventory or default_inventory_path()
+    path = inventory or _default_inventory()
 
     if HostManager is None:
         checks.append(
@@ -631,7 +640,7 @@ def run_doctor(
         "backend": backend,
         "host": host,
         "context": context,
-        "inventory": inventory or default_inventory_path(),
+        "inventory": inventory or _default_inventory(),
         "checks": checks,
         "summary": _summarize(checks),
     }

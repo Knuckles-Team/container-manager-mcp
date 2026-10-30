@@ -80,3 +80,21 @@ def test_resolve_unknown_host_lists_available(inventory):
     msg = str(exc.value)
     assert "R820" in msg  # tells you what IS available
     assert "cm_list_hosts" in msg  # points at the discovery tool
+
+
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R004")
+def test_tunnel_inventory_env_selects_the_shared_inventory(
+    inventory, tmp_path, monkeypatch
+):
+    """A deployment mounts the shared inventory at ``$TUNNEL_INVENTORY`` (as
+    tunnel-manager does); cm_list_hosts and host resolution must read it rather
+    than the empty XDG default."""
+    inventory({})  # the XDG default exists but is empty
+    shared = tmp_path / "mounted" / "inventory.yml"
+    shared.parent.mkdir()
+    shared.write_text(yaml.safe_dump({"R820": {"hostname": "10.0.0.20"}}))
+    monkeypatch.setenv("TUNNEL_INVENTORY", str(shared))
+    out = list_inventory_hosts()
+    assert out["inventory_path"] == str(shared)
+    assert out["count"] == 1
+    assert resolve_host_from_inventory("R820")["hostname"] == "10.0.0.20"

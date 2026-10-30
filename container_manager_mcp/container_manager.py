@@ -416,16 +416,33 @@ class ContainerManagerBase(ABC):
         pass
 
 
+def inventory_path() -> str:
+    """Resolve the shared host inventory path the way tunnel-manager serves it.
+
+    ``$TUNNEL_INVENTORY`` wins (deployments mount the shared inventory there and
+    tunnel-manager's MCP server reads the same variable); otherwise the
+    tunnel-manager library default applies."""
+    from agent_connector_sdk.config import setting
+    from tunnel_manager.tunnel_manager import default_inventory_path
+
+    return setting("TUNNEL_INVENTORY") or default_inventory_path()
+
+
+def _inventory_host_manager():
+    from tunnel_manager.tunnel_manager import HostManager
+
+    return HostManager(inventory_path())
+
+
 def list_inventory_hosts() -> dict:
     """List the host aliases available for the ``host`` parameter.
 
     Each alias targets a remote machine's Docker daemon over SSH
     (``ssh://<user>@<hostname>:<port>``), resolved from the tunnel-manager
-    inventory (``~/.config/agent-connector-sdk/inventory.yaml``). Omit ``host`` to
+    inventory (``$TUNNEL_INVENTORY``, else
+    ``$XDG_CONFIG_HOME/agent-connectors/inventory.yml``). Omit ``host`` to
     use the local Docker socket."""
-    from tunnel_manager.tunnel_manager import HostManager
-
-    hm = HostManager()
+    hm = _inventory_host_manager()
     hosts = {
         name: {
             "hostname": info.get("hostname"),
@@ -442,9 +459,7 @@ def list_inventory_hosts() -> dict:
 
 
 def resolve_host_from_inventory(host: str) -> dict:
-    from tunnel_manager.tunnel_manager import HostManager
-
-    hm = HostManager()
+    hm = _inventory_host_manager()
     if not hm.hosts:
         raise FileNotFoundError(
             f"No valid hosts configuration or inventory found (attempted: {hm.config_file})"
