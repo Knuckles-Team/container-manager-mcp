@@ -2,9 +2,10 @@
   "schema_version": 2,
   "spec_id": "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT",
   "owner_repo": "container-manager-mcp",
-  "delivery_state": "VERIFIED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
-    "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R001"
+    "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R001",
+    "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R002"
   ],
   "requirements": [
     {
@@ -20,6 +21,13 @@
       "verified_by": [
         "tests/test_default_content_surfaces.py:15"
       ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R002",
+      "title": "Access contract for pods, containers and images",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }
