@@ -2,7 +2,7 @@
 
 Owner: container-manager-mcp. Cross-repo IDs: `SCION-CENTRALIZED-CAPABILITIES-R001`, `SCION-CENTRALIZED-CAPABILITIES-R008`, `SCION-CENTRALIZED-CAPABILITIES-R012`, `SCION-CENTRALIZED-CAPABILITIES-R040`.
 
-Extends: [SCION-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/specs/centralized-capabilities/spec.md)
+Extends: [SCION-CENTRALIZED-CAPABILITIES](https://github.com/Knuckles-Team/scion-sdk/blob/main/specs/centralized-capabilities/spec.md)
 
 ## Purpose and user stories
 

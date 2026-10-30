@@ -3,7 +3,7 @@
 
 Provides containerized specialist lifecycle management as MCP tools.
 These tools are the container layer of the Agent OS Triad and are
-discoverable through the Knowledge Graph in agent-connector-sdk.
+discoverable through the Knowledge Graph in scion-sdk.
 
 Falls back gracefully when not available.
 """
@@ -15,8 +15,8 @@ import logging
 import os
 from typing import Any
 
-from agent_connector_sdk.mcp.concurrency import run_blocking
 from pydantic import Field
+from scion_sdk.mcp.concurrency import run_blocking
 
 logger = logging.getLogger(__name__)
 

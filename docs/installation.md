@@ -24,7 +24,7 @@ need:
 |---|---|---|
 | `docker` | `pip install "container-manager-mcp[docker]"` | Docker engine client (`docker`) |
 | `podman` | `pip install "container-manager-mcp[podman]"` | Podman engine client (`podman`) |
-| `mcp` | `pip install "container-manager-mcp[mcp]"` | FastMCP MCP-server runtime (`agent-connector-sdk`) |
+| `mcp` | `pip install "container-manager-mcp[mcp]"` | FastMCP MCP-server runtime (`scion-sdk`) |
 | `all` | `pip install "container-manager-mcp[all]"` | Everything above |
 
 ```bash

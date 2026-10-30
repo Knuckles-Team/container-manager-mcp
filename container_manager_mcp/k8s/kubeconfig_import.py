@@ -47,10 +47,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import httpx
-from agent_connector_sdk.auth.oidc import discover_token_endpoint
-from agent_connector_sdk.http.client import create_http_client
-from agent_connector_sdk.http.options import HttpClientOptions
-from agent_connector_sdk.tls.resolve import resolve_tls_profile
+from scion_sdk.auth.oidc import discover_token_endpoint
+from scion_sdk.http.client import create_http_client
+from scion_sdk.http.options import HttpClientOptions
+from scion_sdk.tls.resolve import resolve_tls_profile
 
 try:
     import yaml

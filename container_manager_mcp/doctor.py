@@ -54,7 +54,7 @@ except Exception:  # pragma: no cover - tunnel-manager is a hard dependency
 
     def default_inventory_path() -> str:  # type: ignore[misc]
         return os.path.join(
-            os.path.expanduser("~/.config"), "agent-connector-sdk", "inventory.yml"
+            os.path.expanduser("~/.config"), "scion-sdk", "inventory.yml"
         )
 
 
@@ -318,7 +318,7 @@ def _check_inventory(
                 "inventory",
                 "fail",
                 f"no inventory file at {path}",
-                "Create ~/.config/agent-connector-sdk/inventory.yml (tunnel-manager format): "
+                "Create ~/.config/scion-sdk/inventory.yml (tunnel-manager format): "
                 "run `tunnel-manager inventory init` or the ssh-bootstrap skill, then add your hosts",
             )
         )

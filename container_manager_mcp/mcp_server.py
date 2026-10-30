@@ -32,11 +32,11 @@ from typing import TYPE_CHECKING, Any, Literal, cast
 if TYPE_CHECKING:
     from container_manager_mcp.k8s.manager import KubernetesManager
 
-from agent_connector_sdk.config import load_config
-from agent_connector_sdk.mcp.action_dispatch import resolve_action
-from agent_connector_sdk.mcp.concurrency import run_blocking
-from agent_connector_sdk.mcp.server import create_mcp_server
-from agent_connector_sdk.mcp.tool_surface import (
+from scion_sdk.config import load_config
+from scion_sdk.mcp.action_dispatch import resolve_action
+from scion_sdk.mcp.concurrency import run_blocking
+from scion_sdk.mcp.server import create_mcp_server
+from scion_sdk.mcp.tool_surface import (
     register_tool_surface,
     registered_tools,
 )
@@ -50,7 +50,7 @@ _SERVICE = "container-manager-mcp"
 
 # Resilient context helpers to handle environment-specific import issues
 try:
-    from agent_connector_sdk.progress import ctx_progress as _ctx_progress
+    from scion_sdk.progress import ctx_progress as _ctx_progress
 
     async def ctx_progress(ctx: Any, progress: int, total: int = 100) -> None:
         if ctx:
@@ -71,7 +71,7 @@ except ImportError:
 
 
 try:
-    from agent_connector_sdk.mcp.context import (
+    from scion_sdk.mcp.context import (
         ctx_confirm_destructive as _ctx_confirm,
     )
 
@@ -151,7 +151,7 @@ def _ctx_log_three_arg(ctx: Any, server_logger: Any, level: Any, message: Any) -
 
 def _ctx_log_fallback(ctx: Any, args: tuple, kwargs: dict) -> None:
     try:
-        from agent_connector_sdk.mcp.context import ctx_log as _real_ctx_log
+        from scion_sdk.mcp.context import ctx_log as _real_ctx_log
     except ImportError:
         return
     try:
@@ -201,7 +201,7 @@ def register_inventory_tools(mcp: FastMCP):
         socket, or pass an alias here to target another machine — e.g. a swarm
         MANAGER node for cluster ops — without deploying a container-manager on
         each box. Aliases come from the tunnel-manager inventory
-        (``~/.config/agent-connector-sdk/inventory.yaml``) and connect as
+        (``~/.config/scion-sdk/inventory.yaml``) and connect as
         ``ssh://<user>@<hostname>:<port>``.
         """
         try:
@@ -212,7 +212,7 @@ def register_inventory_tools(mcp: FastMCP):
                 "hosts": {},
                 "hint": (
                     "No inventory configured. Add hosts to "
-                    "~/.config/agent-connector-sdk/inventory.yaml (tunnel-manager "
+                    "~/.config/scion-sdk/inventory.yaml (tunnel-manager "
                     "format) and ensure SSH keys are available."
                 ),
             }
@@ -1359,7 +1359,7 @@ _UNIVERSAL_MODALITIES = frozenset(
 
 async def _ingest_modality_sweep(name: str, lister, mapper, kwargs: dict) -> dict:
     """List one resource modality and push it through its kg_ingest mapper."""
-    from agent_connector_sdk.ingest import IngestError
+    from scion_sdk.ingest import IngestError
 
     try:
         records = await run_blocking(lister)

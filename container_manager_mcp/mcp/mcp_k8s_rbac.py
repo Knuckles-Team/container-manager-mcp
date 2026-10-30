@@ -10,9 +10,9 @@ import logging
 from collections.abc import Callable, Coroutine
 from typing import Any, Literal
 
-from agent_connector_sdk.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
+from scion_sdk.mcp.concurrency import run_blocking
 
 from container_manager_mcp.container_manager import create_manager
 from container_manager_mcp.mcp_server import ctx_log

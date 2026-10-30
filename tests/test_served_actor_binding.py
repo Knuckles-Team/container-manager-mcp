@@ -21,10 +21,10 @@ from unittest.mock import AsyncMock
 import pytest
 import uvicorn
 import yaml
-from agent_connector_sdk.mcp.served_security import ServedSecurityOverride
 from fastmcp import Client
 from fastmcp.server.auth.providers.jwt import RSAKeyPair
 from mcp.shared.exceptions import MCPError
+from scion_sdk.mcp.served_security import ServedSecurityOverride
 
 mcp_server = importlib.import_module("container_manager_mcp.mcp_server")
 
@@ -112,7 +112,7 @@ async def test_anonymous_http_lists_nothing_and_a_single_alias_is_refused(
             with pytest.raises(MCPError) as denied:
                 await client.call_tool("cm_ingest_inventory", {"host": "lab"})
     assert denied.value.code == -32000
-    assert "not entitled" in denied.value.message
+    assert "anonymous_caller" in denied.value.message
     assert "actor context is required" not in denied.value.message
     assert "Internal error" not in denied.value.message
 

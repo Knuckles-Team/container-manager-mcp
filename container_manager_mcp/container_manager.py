@@ -422,7 +422,7 @@ def inventory_path() -> str:
     ``$TUNNEL_INVENTORY`` wins (deployments mount the shared inventory there and
     tunnel-manager's MCP server reads the same variable); otherwise the
     tunnel-manager library default applies."""
-    from agent_connector_sdk.config import setting
+    from scion_sdk.config import setting
     from tunnel_manager.tunnel_manager import default_inventory_path
 
     return setting("TUNNEL_INVENTORY") or default_inventory_path()

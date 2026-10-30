@@ -2,8 +2,8 @@
 
 from typing import Any
 
-from agent_connector_sdk.connector_hooks import RegistrationContext
-from agent_connector_sdk.mcp.tool_surface import registered_tools
+from scion_sdk.connector_hooks import RegistrationContext
+from scion_sdk.mcp.tool_surface import registered_tools
 
 from container_manager_mcp.call_context import (
     CallContextMiddleware,
