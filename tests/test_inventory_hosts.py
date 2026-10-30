@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-from agent_connector_sdk.identity import SYSTEM_ACTOR, use_actor
+from scion_sdk.identity import SYSTEM_ACTOR, use_actor
 
 from container_manager_mcp.container_manager import (
     DockerManager,

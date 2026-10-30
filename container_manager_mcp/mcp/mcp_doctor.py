@@ -9,9 +9,9 @@ configuration through the same real probes the CLI uses.
 import logging
 from typing import Literal
 
-from agent_connector_sdk.mcp.concurrency import run_blocking
 from fastmcp import Context, FastMCP
 from pydantic import Field
+from scion_sdk.mcp.concurrency import run_blocking
 
 from container_manager_mcp.doctor import run_doctor
 from container_manager_mcp.mcp_server import ctx_log

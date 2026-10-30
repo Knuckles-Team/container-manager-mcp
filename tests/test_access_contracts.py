@@ -7,8 +7,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-from agent_connector_sdk.access_contract import parse_access_contracts
 from fastmcp import Client
+from scion_sdk.access_contract import parse_access_contracts
 
 from container_manager_mcp.k8s.base import _K8sBase
 from container_manager_mcp.mcp_server import get_mcp_instance

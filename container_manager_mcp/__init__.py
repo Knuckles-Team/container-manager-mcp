@@ -91,7 +91,7 @@ Manage your containers using docker, podman, compose, or docker swarm!
 """
 
 
-from agent_connector_sdk.connector import Connector  # noqa: E402
+from scion_sdk.connector import Connector  # noqa: E402
 
 from container_manager_mcp.surface import (  # noqa: E402
     VERBOSE_TARGETS,

@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import rdflib
-from agent_connector_sdk.mcp import content
+from scion_sdk.mcp import content
 
 PACKAGE = "container_manager_mcp"
 CONNECTOR = "container-manager-mcp"

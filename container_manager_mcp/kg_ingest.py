@@ -1,7 +1,7 @@
 """Native epistemic-graph ingestion for container-manager records.
 
 CONCEPT:AU-KG.ingest.enterprise-source-extractor. Connector-specific mappers emit
-canonical node_type nodes and relationship edges. The ``agent_connector_sdk.ingest``
+canonical node_type nodes and relationship edges. The ``scion_sdk.ingest``
 knowledge-ingest facade (the generated EG client) owns the transaction and raises
 ``IngestError`` when the authoritative engine cannot commit.
 """
@@ -12,7 +12,7 @@ import re
 from typing import Any
 from urllib.parse import urlsplit
 
-from agent_connector_sdk.ingest import (
+from scion_sdk.ingest import (
     ChangeSet,
     Entity,
     IngestBinding,
@@ -171,7 +171,7 @@ def _normalize_source_url(url: Any) -> tuple[str, str] | None:
     Mirrors ``portainer_agent.kg_ingest._normalize_repo_url``'s ``git:repo:<host>/<path>``
     id convention (so a deployed ``:Stack``'s ``:Repository`` and this image's
     ``:Repository`` land on the same node id), plus the case/``www.``-insensitive
-    normalization ``agent_connector_sdk.observability.repo_crosswalk.normalize_clone_url``
+    normalization ``scion_sdk.observability.repo_crosswalk.normalize_clone_url``
     uses (so the same repo always yields the same id regardless of label casing) —
     the crosswalk then ``owl:sameAs``-unifies this URL-keyed node with the numeric-id
     node the code ingestors (github-agent/gitlab-api) create. Handles HTTP(S) and
