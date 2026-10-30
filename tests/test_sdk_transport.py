@@ -14,4 +14,4 @@ def test_dependencies_come_from_the_sdk():
     deps = project["dependencies"]
     assert not any(d.startswith("requests") for d in deps)
     sdk = next(d for d in deps if d.startswith("scion-sdk"))
-    assert ">=0.6.2" in sdk
+    assert ">=0.6.3" in sdk
