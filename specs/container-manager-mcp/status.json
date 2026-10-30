@@ -2,7 +2,7 @@
   "schema_version": 2,
   "spec_id": "CONN-CONTAINER-MANAGER-MCP",
   "owner_repo": "container-manager-mcp",
-  "delivery_state": "VERIFIED",
+  "delivery_state": "SPECIFIED",
   "requirement_ids": [
     "CONN-CONTAINER-MANAGER-MCP-R001",
     "CONN-CONTAINER-MANAGER-MCP-R001.1",
@@ -12,7 +12,8 @@
     "CONN-CONTAINER-MANAGER-MCP-R001.5",
     "CONN-CONTAINER-MANAGER-MCP-R002",
     "CONN-CONTAINER-MANAGER-MCP-R003",
-    "CONN-CONTAINER-MANAGER-MCP-R004"
+    "CONN-CONTAINER-MANAGER-MCP-R004",
+    "CONN-CONTAINER-MANAGER-MCP-R005"
   ],
   "requirements": [
     {
@@ -128,6 +129,13 @@
       "verified_by": [
         "tests/test_inventory_hosts.py:85"
       ]
+    },
+    {
+      "id": "CONN-CONTAINER-MANAGER-MCP-R005",
+      "title": "Workload recorded response",
+      "delivery_state": "SPECIFIED",
+      "landed_in": [],
+      "verified_by": []
     }
   ]
 }
