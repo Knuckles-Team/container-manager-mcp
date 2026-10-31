@@ -23,8 +23,14 @@ import json
 import os
 import socket
 import sys
+from pathlib import Path
 from importlib.metadata import version as package_version
 from typing import TYPE_CHECKING, cast
+
+from container_manager_mcp.platform_compat import (
+    default_docker_endpoint,
+    default_kubeconfig,
+)
 
 if TYPE_CHECKING:
     from container_manager_mcp.k8s.manager import KubernetesManager
@@ -54,7 +60,7 @@ except Exception:  # pragma: no cover - tunnel-manager is a hard dependency
 
     def default_inventory_path() -> str:  # type: ignore[misc]
         return os.path.join(
-            os.path.expanduser("~/.config"), "scion-sdk", "inventory.yml"
+            str(Path.home() / ".config"), "scion-sdk", "inventory.yml"
         )
 
 
@@ -396,10 +402,10 @@ def _check_docker(host: str | None = None, focused: bool = False) -> list[dict]:
             where = "configured remote host"
         else:
             remediation = (
-                "Start dockerd (`systemctl start docker`), check /var/run/docker.sock "
-                "permissions, or set CONTAINER_MANAGER_HOST to a tunnel-manager alias for a remote daemon"
+                "Start the Docker daemon (Docker Desktop on Windows, `systemctl start docker` on Linux), check "
+                f"{default_docker_endpoint()} permissions, or set CONTAINER_MANAGER_HOST to a tunnel-manager alias for a remote daemon"
             )
-            where = "local /var/run/docker.sock"
+            where = f"local {default_docker_endpoint()}"
         return [
             _check(
                 "docker daemon",
@@ -531,7 +537,7 @@ def _check_kubernetes(context: str | None = None, focused: bool = False) -> list
     bad = "fail" if focused else "warn"
 
     in_cluster = bool(os.environ.get("KUBERNETES_SERVICE_HOST"))
-    kubeconfig = os.environ.get("KUBECONFIG") or os.path.expanduser("~/.kube/config")
+    kubeconfig = os.environ.get("KUBECONFIG") or default_kubeconfig()
     present = in_cluster or any(
         os.path.exists(p) for p in kubeconfig.split(os.pathsep) if p
     )

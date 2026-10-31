@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import container_manager_mcp.k8s_manager as _km
+from container_manager_mcp.platform_compat import restrict_to_owner, write_private_text
 
 if TYPE_CHECKING:
     # See k8s/base.py / k8s/manager.py: type-checking-only ancestor, never
@@ -276,7 +277,7 @@ class ClusterNodesMixin(_Base):
             if target.is_symlink():
                 raise ValueError("output directory cannot be a symbolic link")
             target.mkdir(mode=0o700, parents=True, exist_ok=True)
-            target.chmod(0o700)
+            restrict_to_owner(target, 0o700)
 
             dump_info: dict[str, Any] = {}
 
@@ -304,21 +305,9 @@ class ClusterNodesMixin(_Base):
             ]
 
             # Write to file
-            directory_flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
-            directory_flags |= getattr(os, "O_NOFOLLOW", 0)
-            directory_fd = os.open(target, directory_flags)
-            try:
-                file_flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
-                file_flags |= getattr(os, "O_NOFOLLOW", 0)
-                file_fd = os.open(
-                    "cluster-dump.json", file_flags, 0o600, dir_fd=directory_fd
-                )
-                if hasattr(os, "fchmod"):
-                    os.fchmod(file_fd, 0o600)
-                with os.fdopen(file_fd, "w", encoding="utf-8") as handle:
-                    json.dump(dump_info, handle, indent=2)
-            finally:
-                os.close(directory_fd)
+            write_private_text(
+                target / "cluster-dump.json", json.dumps(dump_info, indent=2)
+            )
 
             dump_file = target / "cluster-dump.json"
             result = {

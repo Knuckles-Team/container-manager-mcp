@@ -44,9 +44,14 @@ import json
 import os
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import httpx
+from container_manager_mcp.platform_compat import (
+    default_kubeconfig,
+    write_private_text,
+)
 from scion_sdk.auth.oidc import discover_token_endpoint
 from scion_sdk.http.client import create_http_client
 from scion_sdk.http.options import HttpClientOptions
@@ -73,7 +78,7 @@ def default_kubeconfig_path() -> str:
         for part in env.split(os.pathsep):
             if part.strip():
                 return os.path.expanduser(part.strip())
-    return os.path.expanduser("~/.kube/config")
+    return default_kubeconfig()
 
 
 def _require_yaml():
@@ -485,12 +490,9 @@ def _write_kubeconfig(path: str, config: dict) -> None:
     directory = os.path.dirname(path)
     if directory:
         os.makedirs(directory, exist_ok=True)
-    with open(path, "w") as fh:
-        yaml.safe_dump(config, fh, default_flow_style=False, sort_keys=False)
-    try:
-        os.chmod(path, 0o600)
-    except OSError:  # pragma: no cover - best effort on exotic filesystems
-        pass
+    write_private_text(
+        Path(path), yaml.safe_dump(config, default_flow_style=False, sort_keys=False)
+    )
 
 
 def _validate_context(context_name: str) -> dict:
