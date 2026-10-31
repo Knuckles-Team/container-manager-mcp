@@ -1,7 +1,6 @@
 """ClusterNodesMixin for KubernetesManager (split from k8s_manager.py)."""
 
 import json
-import os
 import tempfile
 from pathlib import Path
 from typing import TYPE_CHECKING, Any

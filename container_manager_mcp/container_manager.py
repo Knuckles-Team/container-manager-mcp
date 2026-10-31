@@ -16,13 +16,13 @@ from datetime import datetime
 from importlib.metadata import version as package_version
 from typing import TYPE_CHECKING, Any, cast
 
-from container_manager_mcp.platform_compat import current_uid, docker_environment
 from container_manager_mcp.models import (
     ContainerInfo,
     ImageInfo,
     NetworkInfo,
     VolumeInfo,
 )
+from container_manager_mcp.platform_compat import current_uid, docker_environment
 
 if TYPE_CHECKING:
     # `multi_context_manager` imports back from this module at runtime (see

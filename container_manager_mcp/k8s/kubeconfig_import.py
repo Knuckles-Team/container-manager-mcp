@@ -48,14 +48,15 @@ from pathlib import Path
 from typing import Any
 
 import httpx
-from container_manager_mcp.platform_compat import (
-    default_kubeconfig,
-    write_private_text,
-)
 from scion_sdk.auth.oidc import discover_token_endpoint
 from scion_sdk.http.client import create_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.tls.resolve import resolve_tls_profile
+
+from container_manager_mcp.platform_compat import (
+    default_kubeconfig,
+    write_private_text,
+)
 
 try:
     import yaml

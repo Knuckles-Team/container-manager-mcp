@@ -23,8 +23,8 @@ import json
 import os
 import socket
 import sys
-from pathlib import Path
 from importlib.metadata import version as package_version
+from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
 from container_manager_mcp.platform_compat import (
@@ -59,9 +59,7 @@ except Exception:  # pragma: no cover - tunnel-manager is a hard dependency
     HostManager = None  # type: ignore[assignment]
 
     def default_inventory_path() -> str:  # type: ignore[misc]
-        return os.path.join(
-            str(Path.home() / ".config"), "scion-sdk", "inventory.yml"
-        )
+        return os.path.join(str(Path.home() / ".config"), "scion-sdk", "inventory.yml")
 
 
 def _default_inventory() -> str:

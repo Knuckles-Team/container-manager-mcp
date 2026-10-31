@@ -7,8 +7,6 @@ import os
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
-
 from container_manager_mcp import platform_compat as pc
 from container_manager_mcp.container_manager import PodmanManager
 from container_manager_mcp.k8s.cluster_nodes import ClusterNodesMixin
