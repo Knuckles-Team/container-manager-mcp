@@ -345,13 +345,13 @@ def test_oidc_embeds_id_token(tmp_path):
     assert "pw" not in str(result["merged"])
 
 
-@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
 @pytest.fixture
 def _tls_runtime_root(monkeypatch, tmp_path):
     """Give the SDK TLS store an explicit runtime root; its default needs ``os.getuid``."""
     monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
 
 
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
 @pytest.mark.usefixtures("_tls_runtime_root")
 def test_oidc_password_grant_discovers_and_posts():
     """The grant helper discovers the token endpoint then posts the password grant."""
