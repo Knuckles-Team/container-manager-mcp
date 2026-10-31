@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, podman, pods, rootless, checkpoint, mcp]
 metadata:
-  author: example-operator
+  author: Repository Maintainers
   version: '0.1.0'
 ---
 # Podman Pod/Kube Operations
