@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, development, connectors, mcp, specs, gates]
 metadata:
-  author: Project Maintainers
+  author: Repository Maintainers
   version: '0.1.0'
 ---
 # container-manager-mcp development

@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, knowledge-graph, ingestion, ontology, mcp]
 metadata:
-  author: example-operator
+  author: Repository Maintainers
   version: '0.1.0'
 ---
 # Container Inventory → Knowledge Graph
