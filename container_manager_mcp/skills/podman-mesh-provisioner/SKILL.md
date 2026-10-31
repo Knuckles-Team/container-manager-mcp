@@ -33,7 +33,7 @@ Kubernetes. Podman has no built-in clustering daemon; the "mesh" is the API sock
 - `container-manager-mcp` — set `CONTAINER_MANAGER_TYPE=podman` and (optionally)
   `COMPOSE_TOOL=podman-compose`; it drives Podman socket/compose/host operations.
 - `tunnel-manager-mcp` — remote command execution + the shared
-  `~/.config/agent-connector-sdk/inventory.yaml`.
+  `~/.config/scion-sdk/inventory.yaml`.
 
 ## Inputs
 

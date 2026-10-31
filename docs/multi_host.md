@@ -56,11 +56,11 @@ This virtual namespacing maintains a single centralized executable on the contro
 Host connection definitions are parsed from the shared inventory (`inventory.yml`, with a legacy `inventory.yaml` fallback). The XDG-standard directory is searched by default to achieve a single source of truth.
 
 ### Search Paths (first match wins):
-1. `~/.config/agent-connector-sdk/inventory.yml` (preferred)
-2. `~/.config/agent-connector-sdk/inventory.yaml` (legacy fallback)
+1. `~/.config/scion-sdk/inventory.yml` (preferred)
+2. `~/.config/scion-sdk/inventory.yaml` (legacy fallback)
 
 ### Inventory Format:
-Create or edit the operator's inventory file at `~/.config/agent-connector-sdk/inventory.yml` (the
+Create or edit the operator's inventory file at `~/.config/scion-sdk/inventory.yml` (the
 fastest way is `tunnel-manager inventory init`). Host
 aliases are **top-level keys** (no `hosts:` wrapper) — this is the flat form the shared
 `HostManager` loader expects:
@@ -125,7 +125,7 @@ use it.** A Kubernetes API server is already a network-reachable, authenticated 
 | | Docker / Podman (remote host) | Kubernetes (remote / multi cluster) |
 |---|---|---|
 | Targeting mechanism | `host` argument → `inventory.yml` alias → SSH tunnel | kubeconfig **context** name |
-| Config source | `~/.config/agent-connector-sdk/inventory.yml` (shared with `tunnel-manager` / `systems-manager`) | `~/.kube/config` (or `CONTAINER_MANAGER_KUBECONTEXT` / `K8S_CONTEXTS`) |
+| Config source | `~/.config/scion-sdk/inventory.yml` (shared with `tunnel-manager` / `systems-manager`) | `~/.kube/config` (or `CONTAINER_MANAGER_KUBECONTEXT` / `K8S_CONTEXTS`) |
 | Transport | Docker/Podman engine API over `ssh://` | Kubernetes API server over TLS (standard kubeconfig auth) |
 | Single-target env var | `CONTAINER_MANAGER_HOST` (Docker) / `CONTAINER_MANAGER_PODMAN_BASE_URL` (Podman) | `CONTAINER_MANAGER_KUBECONTEXT` |
 | Multi-target | N/A per-call (one host per call via `host=`) | `K8S_CONTEXTS` (`name=kubeconfig_context;…`) + `cm_multi_context` for parallel fan-out |

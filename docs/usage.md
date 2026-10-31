@@ -134,7 +134,7 @@ nodes = cm.list_nodes()
 services = cm.list_services()
 ```
 
-Target a remote host defined in `~/.config/agent-connector-sdk/inventory.yml` (`.yaml` legacy fallback):
+Target a remote host defined in `~/.config/scion-sdk/inventory.yml` (`.yaml` legacy fallback):
 
 ```python
 cm = DockerManager(host="node-alpha")   # connects over ssh://user@host:port

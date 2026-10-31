@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [container-manager-mcp, development, connectors, mcp, specs, gates]
 metadata:
-  author: Project Maintainers
+  author: Repository Maintainers
   version: '0.1.0'
 ---
 # container-manager-mcp development
@@ -16,7 +16,7 @@ metadata:
 This skill is the repository contract for the container-manager-mcp connector. The
 package owns the Docker, Podman, Swarm, and Kubernetes calls and their MCP content;
 transport, release rendering, generated ontology artifacts, and shared validation
-come from `agent-connector-sdk` and `pipelines`.
+come from `scion-sdk` and `pipelines`.
 
 ## Repository workflow
 

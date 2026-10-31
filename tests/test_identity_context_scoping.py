@@ -3,7 +3,7 @@
 The caller's entitled contexts auto-load; a non-entitled named context is denied;
 the default falls to the first entitled when the configured default is off-limits.
 Tests the resolution/enforcement logic with the entitlement source mocked (the
-resolver itself is tested in agent-connector-sdk).
+resolver itself is tested in scion-sdk).
 """
 
 import pytest

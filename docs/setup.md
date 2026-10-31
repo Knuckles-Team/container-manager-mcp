@@ -35,7 +35,7 @@ container-manager-mcp --help
 
 ```bash
 docker run --rm -i \
-  -v $HOME/.config/agent-connector-sdk:/root/.config/agent-connector-sdk:ro \
+  -v $HOME/.config/scion-sdk:/root/.config/scion-sdk:ro \
   -v $HOME/.ssh:/root/.ssh:ro \
   example/container-manager-mcp@sha256:<digest>
 ```
@@ -82,7 +82,7 @@ containers on the controller. Once that works, add remote hosts (next section).
 ## 5. Remote hosts
 
 Remote operation uses **Docker-over-SSH** and the **same shared inventory** as
-tunnel-manager — `~/.config/agent-connector-sdk/inventory.yml` (`.yaml` legacy fallback). Define each host once
+tunnel-manager — `~/.config/scion-sdk/inventory.yml` (`.yaml` legacy fallback). Define each host once
 there (see the [tunnel-manager inventory tutorial](https://knuckles-team.github.io/tunnel-manager/inventory/)),
 then pass the alias as the `host` argument to any tool (or set `CONTAINER_MANAGER_HOST`).
 The full lifecycle, virtual-host namespacing via the multiplexer, and SSH key

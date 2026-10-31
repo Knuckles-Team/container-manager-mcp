@@ -56,7 +56,7 @@ Docker, Swarm, **and Kubernetes** resources into the ontology-driven Knowledge G
 
 `container-manager-mcp` allows a single master instance of the MCP server on the operator's controller to route container and volume operations securely to remote hosts over SSH standard tunneling.
 
-- **Unified Inventory**: Connection endpoints are loaded dynamically from the XDG shared inventory at `~/.config/agent-connector-sdk/inventory.yml` (`.yml` preferred; a legacy `inventory.yaml` is still read when no `.yml` exists).
+- **Unified Inventory**: Connection endpoints are loaded dynamically from the XDG shared inventory at `~/.config/scion-sdk/inventory.yml` (`.yml` preferred; a legacy `inventory.yaml` is still read when no `.yml` exists).
 - **Zero TCP Socket Exposure**: Operations route directly over the standard SSH channel securely, removing the must expose Docker socket TCP ports.
 
 > **Shared inventory:** the `cm_*` host aliases the operator pass as `host` come from the **same**
@@ -573,7 +573,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
 <!-- MCP-CONFIG-EXAMPLES:START -->
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `container-manager-mcp[mcp]` to add
-> FastMCP / FastAPI through `agent-connector-sdk`; the required Agent Connector SDK core
+> FastMCP / FastAPI through `scion-sdk`; the required Scion SDK core
 > still carries `epistemic-graph[full]`. The `[agent-runtime]` extra additionally
 > enables model orchestration.
 
@@ -830,7 +830,7 @@ the detailed transport contract.
 | `DEFAULT_SWARM_CONTEXT` | — | Default Swarm context name (must match a key in SWARM_CONTEXTS) |
 | `PODMAN_ENABLED` | `true` | Enable Podman (local only) |
 
-#### Inherited agent-connector-sdk variables (apply to every connector)
+#### Inherited scion-sdk variables (apply to every connector)
 
 | Variable | Example | Description |
 |----------|---------|-------------|
@@ -851,18 +851,18 @@ the detailed transport contract.
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_54 package + 16 inherited variable(s). Auto-generated from `.env.example` + the shared agent-connector-sdk set — do not edit._
+_54 package + 16 inherited variable(s). Auto-generated from `.env.example` + the shared scion-sdk set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 
 Every variable is listed in the auto-generated table above (package vars from
-`.env.example` + the inherited agent-connector-sdk surface). A small number of pointers:
+`.env.example` + the inherited scion-sdk surface). A small number of pointers:
 
 - **Tool toggles** — each action-routed tool can be disabled via its `<DOMAIN>TOOL`
   toggle; the tool ↔ toggle mapping is in the [Available MCP Tools](#available-mcp-tools)
   table above.
 - **Multi-host control plane** — remote host endpoints load from the XDG shared inventory
-  `~/.config/agent-connector-sdk/inventory.yml` (`.yml` preferred, `.yaml` legacy fallback),
+  `~/.config/scion-sdk/inventory.yml` (`.yml` preferred, `.yaml` legacy fallback),
   managed via `tunnel-manager inventory init|doctor` (see [Multi-Host guide](docs/multi_host.md)).
 
 See [`.env.example`](.env.example) for a copy-paste starting point.
@@ -951,7 +951,7 @@ Detailed graph node architecture explanations, custom skill configurations, and 
 
 ## Security & Governance
 
-Built directly upon the enterprise-ready [`agent-connector-sdk`](https://github.com/Knuckles-Team/agent-connector-sdk) core, standard security parameters are fully supported:
+Built directly upon the enterprise-ready [`scion-sdk`](https://github.com/Knuckles-Team/scion-sdk) core, standard security parameters are fully supported:
 
 ### Access Control & Policy Enforcement
 - **Eunomia Policies:** Fine-grained, policy-driven tool authorization. Supports `none`, local `embedded` (`mcp_policies.json`), or centralized `remote` modes.
@@ -973,7 +973,7 @@ Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`agent-connector-sdk` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | The operator run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
+| `container-manager-mcp[mcp]` | MCP server + the Docker/Podman/Kubernetes client libraries bundled by default (`scion-sdk` — FastMCP/FastAPI; `docker` + `podman` + `kubernetes`) | The operator run the **MCP server** with full Docker/Podman/Kubernetes support (no separate extras needed) |
 | `container-manager-mcp[all]` | Everything (`mcp` + `agent` + the `docker` / `podman` / `kubernetes` backends) | Development / both surfaces |
 
 ```bash
@@ -1005,7 +1005,7 @@ agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
 ### Knowledge-graph database (`epistemic-graph`)
 
-Agent Connector SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+Scion SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
 deployments can use the bundled engine. For production or shared state, run
 **epistemic-graph as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture

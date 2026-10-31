@@ -330,19 +330,19 @@ class MultiContextManager:
     def _entitled(self, namespace: str, names: list[str]) -> list[str]:
         """Filter a context pool to what the calling identity may reach.
 
-        Routes the pool through agent-connector-sdk' shared identity-scoped resolver
+        Routes the pool through scion-sdk' shared identity-scoped resolver
         (CONCEPT:AU-OS.identity.identity-scoped-resource-autoload): a caller's
         Okta/Keycloak groups decide which contexts auto-load for them.
         Unauthenticated/local callers (no ambient actor bound at all) see the
         full pool, so behaviour is unchanged until a real identity scopes it
-        down. Degrades to the full pool if agent-connector-sdk predates the
+        down. Degrades to the full pool if scion-sdk predates the
         resolver, or has no ambient identity bound (``IdentityRequiredError``)
         — an authenticated caller who is simply under-entitled still gets
         filtered/denied by ``identity_scoped_resources`` itself, not here.
         """
         try:
-            from agent_connector_sdk.entitlements import identity_scoped_resources
-            from agent_connector_sdk.identity import IdentityRequiredError
+            from scion_sdk.entitlements import identity_scoped_resources
+            from scion_sdk.identity import IdentityRequiredError
         except Exception:
             return names
         try:
