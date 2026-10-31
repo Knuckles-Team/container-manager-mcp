@@ -15,7 +15,7 @@ def _make_manager(mock_docker) -> DockerManager:
     return manager
 
 
-def _fake_node(node_id="abc123def456", hostname="R820", labels=None, role="worker"):
+def _fake_node(node_id="abc123def456", hostname="node-a", labels=None, role="worker"):
     node = MagicMock()
     node.id = node_id
     node.attrs = {
@@ -40,18 +40,18 @@ class TestNodeOps:
     @patch("container_manager_mcp.container_manager.docker")
     def test_update_node_merges_labels(self, mock_docker):
         manager = _make_manager(mock_docker)
-        node = _fake_node(labels={"name": "R820"})
+        node = _fake_node(labels={"name": "node-a"})
         manager.client.nodes.get.return_value = node
 
-        result = manager.update_node("R820", labels={"poweredge": "true"})
+        result = manager.update_node("node-a", labels={"poweredge": "true"})
 
         # node.update called once with merged labels + preserved role/availability
         node.update.assert_called_once()
         sent_spec = node.update.call_args[0][0]
-        assert sent_spec["Labels"] == {"name": "R820", "poweredge": "true"}
+        assert sent_spec["Labels"] == {"name": "node-a", "poweredge": "true"}
         assert sent_spec["Role"] == "worker"
         assert sent_spec["Availability"] == "active"
-        assert result["hostname"] == "R820"
+        assert result["hostname"] == "node-a"
 
     @patch("container_manager_mcp.container_manager.docker")
     def test_update_node_replace_labels(self, mock_docker):
@@ -59,7 +59,7 @@ class TestNodeOps:
         node = _fake_node(labels={"old": "x"})
         manager.client.nodes.get.return_value = node
 
-        manager.update_node("R820", labels={"poweredge": "true"}, replace_labels=True)
+        manager.update_node("node-a", labels={"poweredge": "true"}, replace_labels=True)
         sent_spec = node.update.call_args[0][0]
         assert sent_spec["Labels"] == {"poweredge": "true"}
 
@@ -69,18 +69,18 @@ class TestNodeOps:
         node = _fake_node()
         manager.client.nodes.get.return_value = node
 
-        manager.update_node("R820", availability="drain")
+        manager.update_node("node-a", availability="drain")
         sent_spec = node.update.call_args[0][0]
         assert sent_spec["Availability"] == "drain"
 
     @patch("container_manager_mcp.container_manager.docker")
     def test_resolve_node_by_hostname_fallback(self, mock_docker):
         manager = _make_manager(mock_docker)
-        node = _fake_node(hostname="RW710")
+        node = _fake_node(hostname="node-d")
         manager.client.nodes.get.side_effect = Exception("not found by id")
         manager.client.nodes.list.return_value = [node]
 
-        resolved = manager._resolve_node("RW710")
+        resolved = manager._resolve_node("node-d")
         assert resolved is node
 
     @patch("container_manager_mcp.container_manager.docker")
@@ -88,7 +88,7 @@ class TestNodeOps:
         manager = _make_manager(mock_docker)
         manager.client.nodes.get.return_value = _fake_node(labels={"poweredge": "true"})
 
-        result = manager.inspect_node("R820")
+        result = manager.inspect_node("node-a")
         assert result["labels"] == {"poweredge": "true"}
         assert result["role"] == "worker"
         assert result["engine_version"] == "29.5.2"

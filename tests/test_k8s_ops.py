@@ -38,7 +38,7 @@ def _make_manager() -> KubernetesManager:
     return manager
 
 
-def _fake_node(name="R820", uid="abc123def456789", role="worker", unschedulable=False):
+def _fake_node(name="node-a", uid="abc123def456789", role="worker", unschedulable=False):
     labels = {"name": name}
     if role == "manager":
         labels["node-role.kubernetes.io/control-plane"] = ""
@@ -81,10 +81,10 @@ class TestNodeOps:
     def test_list_nodes_maps_role_and_state(self):
         manager = _make_manager()
         manager.core.list_node.return_value = types.SimpleNamespace(
-            items=[_fake_node(role="manager"), _fake_node(name="R710", role="worker")]
+            items=[_fake_node(role="manager"), _fake_node(name="node-b", role="worker")]
         )
         result = manager.list_nodes()
-        assert result[0]["hostname"] == "R820"
+        assert result[0]["hostname"] == "node-a"
         assert result[0]["role"] == "manager"
         assert result[0]["status"] == "ready"
         assert result[0]["availability"] == "active"
@@ -96,18 +96,18 @@ class TestNodeOps:
         manager.core.list_pod_for_all_namespaces.return_value = types.SimpleNamespace(
             items=[]
         )
-        manager.update_node("R820", labels={"gpu": "true"}, availability="drain")
+        manager.update_node("node-a", labels={"gpu": "true"}, availability="drain")
         # patch_node called with merged labels and unschedulable=True
         body = manager.core.patch_node.call_args[0][1]
-        assert body["metadata"]["labels"]["name"] == "R820"
+        assert body["metadata"]["labels"]["name"] == "node-a"
         assert body["metadata"]["labels"]["gpu"] == "true"
         assert body["spec"]["unschedulable"] is True
 
     def test_inspect_node_summary(self):
         manager = _make_manager()
         manager.core.read_node.return_value = _fake_node(role="manager")
-        summary = manager.inspect_node("R820")
-        assert summary["hostname"] == "R820"
+        summary = manager.inspect_node("node-a")
+        assert summary["hostname"] == "node-a"
         assert summary["manager"] is True
         assert summary["engine_version"] == "v1.31.0"
         assert summary["addr"] == "10.0.0.13"
@@ -143,10 +143,10 @@ class TestServiceOps:
     def test_update_service_translates_constraints_to_node_selector(self):
         manager = _make_manager()
         manager.update_service(
-            "caddy", image="caddy:3", constraints=["node.labels.name == R820"]
+            "caddy", image="caddy:3", constraints=["node.labels.name == node-a"]
         )
         body = manager.apps.patch_namespaced_deployment.call_args[0][2]
-        assert body["spec"]["template"]["spec"]["nodeSelector"] == {"name": "R820"}
+        assert body["spec"]["template"]["spec"]["nodeSelector"] == {"name": "node-a"}
         assert body["spec"]["template"]["spec"]["containers"][0]["image"] == "caddy:3"
 
     def test_service_ps_maps_pods(self):
@@ -155,7 +155,7 @@ class TestServiceOps:
             metadata=types.SimpleNamespace(
                 name="caddy-abc", creation_timestamp=datetime(2026, 6, 1)
             ),
-            spec=types.SimpleNamespace(node_name="R820"),
+            spec=types.SimpleNamespace(node_name="node-a"),
             status=types.SimpleNamespace(phase="Running", container_statuses=[]),
         )
         manager.core.list_namespaced_pod.return_value = types.SimpleNamespace(
@@ -163,7 +163,7 @@ class TestServiceOps:
         )
         result = manager.service_ps("caddy")
         assert result[0]["id"] == "caddy-abc"
-        assert result[0]["node"] == "R820"
+        assert result[0]["node"] == "node-a"
         assert result[0]["state"] == "Running"
 
     def test_list_services_summarizes_deployments(self):
@@ -217,16 +217,16 @@ class TestUnsupportedOps:
 class TestHelpers:
     def test_constraints_to_node_selector(self):
         sel = KubernetesManager._constraints_to_node_selector(
-            ["node.labels.name == R820", "node.hostname==R710"]
+            ["node.labels.name == node-a", "node.hostname==node-b"]
         )
-        assert sel == {"name": "R820", "kubernetes.io/hostname": "R710"}
+        assert sel == {"name": "node-a", "kubernetes.io/hostname": "node-b"}
 
     def test_node_role_detection(self):
         assert (
             KubernetesManager._node_role({"node-role.kubernetes.io/control-plane": ""})
             == "manager"
         )
-        assert KubernetesManager._node_role({"name": "R710"}) == "worker"
+        assert KubernetesManager._node_role({"name": "node-b"}) == "worker"
 
 
 class TestFactoryRouting:
