@@ -62,7 +62,7 @@ def test_default_kubeconfig_path_prefers_kubeconfig_env(monkeypatch, tmp_path):
 
 def test_default_kubeconfig_path_falls_back_to_home(monkeypatch):
     monkeypatch.delenv("KUBECONFIG", raising=False)
-    assert default_kubeconfig_path() == os.path.expanduser("~/.kube/config")
+    assert default_kubeconfig_path() == str(pathlib.Path.home() / ".kube" / "config")
 
 
 # ---------------------------------------------------------------------------
@@ -125,8 +125,9 @@ def test_save_explicit_params_into_empty(tmp_path):
     assert ctx["namespace"] == "apps"
     # secret is written to the file but NOT leaked into the returned summary
     assert "s3cr3t" not in str(result)
-    # file is written 0600
-    assert oct(os.stat(kc).st_mode & 0o777) == "0o600"
+    # file is written 0600 (POSIX mode bits do not exist on Windows)
+    if os.name != "nt":
+        assert oct(os.stat(kc).st_mode & 0o777) == "0o600"
 
 
 def test_save_explicit_requires_auth(tmp_path):
@@ -345,6 +346,13 @@ def test_oidc_embeds_id_token(tmp_path):
 
 
 @pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
+@pytest.fixture
+def _tls_runtime_root(monkeypatch, tmp_path):
+    """Give the SDK TLS store an explicit runtime root; its default needs ``os.getuid``."""
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+
+
+@pytest.mark.usefixtures("_tls_runtime_root")
 def test_oidc_password_grant_discovers_and_posts():
     """The grant helper discovers the token endpoint then posts the password grant."""
     seen = []
@@ -370,6 +378,7 @@ def test_oidc_password_grant_discovers_and_posts():
 
 
 @pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
+@pytest.mark.usefixtures("_tls_runtime_root")
 def test_oidc_password_grant_rejected_raises_clear():
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/.well-known/openid-configuration"):
@@ -389,6 +398,7 @@ def test_oidc_password_grant_rejected_raises_clear():
 
 
 @pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1")
+@pytest.mark.usefixtures("_tls_runtime_root")
 def test_oidc_discovery_failure_names_the_issuer():
     transport = httpx.MockTransport(lambda r: httpx.Response(500))
     with pytest.raises(RuntimeError, match="OIDC discovery failed"):

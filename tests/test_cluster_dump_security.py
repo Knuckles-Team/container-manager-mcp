@@ -21,6 +21,7 @@ def _manager() -> ClusterNodesMixin:
     return manager
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits do not exist on Windows")
 def test_cluster_dump_defaults_to_private_unique_storage() -> None:
     result = _manager().cluster_info_dump()
     try:

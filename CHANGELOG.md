@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.3.10] - 2026-10-30
 
+### Changed
+- Require `scion-sdk>=0.6.4,<0.7.0`; `uv.lock` relocked.
+
 ### Fixed
 - Windows compatibility: portable private-file writes (no `os.fchmod`/`dir_fd`), `npipe` Docker default, guarded `os.getuid` for Podman sockets, `pathlib` kubeconfig home, and a Windows CI job that runs the suite.
 

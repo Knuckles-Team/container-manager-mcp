@@ -13,6 +13,6 @@ Governing spec: [spec.md](spec.md).
 | `CONN-CONTAINER-MANAGER-MCP-R002` | Integration | `tests/test_access_contracts.py::test_served_deployment_access_contract_matches_fixture` checks a synthetic provider through MCP. |
 | `CONN-CONTAINER-MANAGER-MCP-R003` | Integration | `tests/test_inventory_hosts.py::test_docker_host_preserves_only_configured_user` checks both SSH authority forms; `tests/test_served_actor_binding.py` proves host listing and refusal per transport. |
 | `CONN-CONTAINER-MANAGER-MCP-R004` | Unit | `tests/test_inventory_hosts.py::test_tunnel_inventory_env_selects_the_shared_inventory` proves `$TUNNEL_INVENTORY` wins over the XDG default for listing and resolution. |
-| `CONN-CONTAINER-MANAGER-MCP-R005` | Unit | `tests/test_windows_portability.py::test_docker_default_endpoint_is_named_pipe_on_windows` and `tests/test_windows_portability.py::test_cluster_dump_on_windows_branch` prove the Windows branches by monkeypatching. |
+| `CONN-CONTAINER-MANAGER-MCP-R006` | Unit | `tests/test_windows_portability.py::test_docker_default_endpoint_is_named_pipe_on_windows` and `tests/test_windows_portability.py::test_cluster_dump_on_windows_branch` prove the Windows branches by monkeypatching. |
 
 The tests run against the production server object. They need no vendor requests.

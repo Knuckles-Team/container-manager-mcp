@@ -289,7 +289,7 @@ async def test_ingest_nodes_maps_role_and_availability(ingest):
         [
             {
                 "id": "node1",
-                "hostname": "rw710",
+                "hostname": "node-d",
                 "role": "manager",
                 "status": "ready",
                 "availability": "active",

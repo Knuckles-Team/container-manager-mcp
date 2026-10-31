@@ -33,16 +33,16 @@ def inventory(request, tmp_path, monkeypatch):
 def test_list_inventory_hosts_shapes_aliases(inventory):
     path = inventory(
         {
-            "R820": {"hostname": "10.0.0.20", "user": "fixture-user", "port": 22},
-            "R710": {"hostname": "10.0.0.10"},  # user/port default
+            "node-a": {"hostname": "10.0.0.20", "user": "fixture-user", "port": 22},
+            "node-b": {"hostname": "10.0.0.10"},  # user/port default
         }
     )
     out = list_inventory_hosts()
     assert out["count"] == 2
     assert out["inventory_path"] == path
-    assert out["hosts"]["R820"]["hostname"] == "10.0.0.20"
-    assert out["hosts"]["R710"]["user"] is None  # no implicit account
-    assert out["hosts"]["R710"]["port"] == 22  # default
+    assert out["hosts"]["node-a"]["hostname"] == "10.0.0.20"
+    assert out["hosts"]["node-b"]["user"] is None  # no implicit account
+    assert out["hosts"]["node-b"]["port"] == 22  # default
 
 
 def test_list_inventory_hosts_empty(inventory):
@@ -74,11 +74,11 @@ def test_docker_host_preserves_only_configured_user(
 
 
 def test_resolve_unknown_host_lists_available(inventory):
-    inventory({"R820": {"hostname": "10.0.0.20"}})
+    inventory({"node-a": {"hostname": "10.0.0.20"}})
     with pytest.raises(ValueError) as exc:
         resolve_host_from_inventory("does-not-exist")
     msg = str(exc.value)
-    assert "R820" in msg  # tells you what IS available
+    assert "node-a" in msg  # tells you what IS available
     assert "cm_list_hosts" in msg  # points at the discovery tool
 
 
@@ -92,9 +92,9 @@ def test_tunnel_inventory_env_selects_the_shared_inventory(
     inventory({})  # the XDG default exists but is empty
     shared = tmp_path / "mounted" / "inventory.yml"
     shared.parent.mkdir()
-    shared.write_text(yaml.safe_dump({"R820": {"hostname": "10.0.0.20"}}))
+    shared.write_text(yaml.safe_dump({"node-a": {"hostname": "10.0.0.20"}}))
     monkeypatch.setenv("TUNNEL_INVENTORY", str(shared))
     out = list_inventory_hosts()
     assert out["inventory_path"] == str(shared)
     assert out["count"] == 1
-    assert resolve_host_from_inventory("R820")["hostname"] == "10.0.0.20"
+    assert resolve_host_from_inventory("node-a")["hostname"] == "10.0.0.20"
