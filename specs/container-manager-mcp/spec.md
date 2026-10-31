@@ -11,7 +11,7 @@ The `container-manager-mcp` repository owns this behavior. The shared connector 
 The shared pipelines repository owns quality gates and delivery rendering.
 
 Component: Connector integration
-References: [Connector SDK](https://github.com/Knuckles-Team/agent-connector-sdk/blob/main/README.md)
+References: [Connector SDK](https://github.com/Knuckles-Team/scion-sdk/blob/main/README.md)
 Code: ../../container_manager_mcp/call_context.py ../../container_manager_mcp/mcp_server.py:1602 ../../container_manager_mcp/mcp_server.py:1634 ../../tests/test_call_context.py
 
 ## Non-goals

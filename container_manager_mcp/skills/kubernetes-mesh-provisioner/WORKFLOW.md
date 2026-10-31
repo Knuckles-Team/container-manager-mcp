@@ -26,10 +26,10 @@ Every step is **idempotent**: check the desired state, act only on drift.
 ## Steps
 
 ### Step 1: Install RKE2 Server (control plane)
-On the manager node **R820 ([REDACTED_IPV4])**:
+On the manager node **node-a ([REDACTED_IPV4])**:
 - If `systemctl is-active rke2-server` is already active, skip to token retrieval.
 - Otherwise install RKE2 server, write `/etc/rancher/rke2/config.yaml` with
-  `cni: cilium`, `node-label` entries (`name=R820`), and the cluster CIDR; then
+  `cni: cilium`, `node-label` entries (`name=node-a`), and the cluster CIDR; then
   `systemctl enable --now rke2-server`.
 - Retrieve the node-join token from `/var/lib/rancher/rke2/server/node-token` and
   the kubeconfig from `/etc/rancher/rke2/rke2.yaml` (rewrite the server URL to
@@ -38,7 +38,7 @@ On the manager node **R820 ([REDACTED_IPV4])**:
   so containerd pulls from the private registry.
 
 ### Step 2: Join RKE2 Agents (workers)
-For each worker — **R710, R510, RW710, example-operator** (and **GB10** if its
+For each worker — **node-b, node-c, node-d, example-operator** (and **GB10** if its
 throttled-vLLM soak passed):
 - If `systemctl is-active rke2-agent` is active, skip.
 - Otherwise install the RKE2 agent, write `/etc/rancher/rke2/config.yaml` with

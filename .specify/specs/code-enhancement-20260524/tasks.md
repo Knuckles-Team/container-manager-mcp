@@ -3,7 +3,7 @@
 Generated: 2026-05-24T04:17:16.173620+00:00
 Skipped informational: 4
 
-- [ ] [P] **T001** [Dependency Audit] Minor update: agent-connector-sdk 0.2.40 (installed) -> 0.16.0
+- [ ] [P] **T001** [Dependency Audit] Minor update: scion-sdk 0.2.40 (installed) -> 0.16.0
   - Priority: P3-Low | Effort: Small
 - [ ] [P] **T002** [Dependency Audit] Minor update: pytest-xdist 3.6.0 (constraint — not installed) -> 3.8.0
   - Priority: P3-Low | Effort: Small
@@ -87,5 +87,5 @@ Skipped informational: 4
   - Priority: P2-Medium | Effort: Medium
 - [ ] [P] **T042** [Environment Variables] 6 Python env vars not in .env.example: CONTAINER_MANAGER_PODMAN_BASE_URL, CONTAI
   - Priority: P2-Medium | Effort: Medium
-- [ ] [P] **T043** [analyze_xdg_kg] Analysis error: No module named 'agent_connector_sdk.knowledge_graph'
+- [ ] [P] **T043** [analyze_xdg_kg] Analysis error: No module named 'scion_sdk.knowledge_graph'
   - Priority: P1-High | Effort: Medium

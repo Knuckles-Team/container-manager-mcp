@@ -22,6 +22,7 @@ from container_manager_mcp.models import (
     NetworkInfo,
     VolumeInfo,
 )
+from container_manager_mcp.platform_compat import current_uid, docker_environment
 
 if TYPE_CHECKING:
     # `multi_context_manager` imports back from this module at runtime (see
@@ -422,7 +423,7 @@ def inventory_path() -> str:
     ``$TUNNEL_INVENTORY`` wins (deployments mount the shared inventory there and
     tunnel-manager's MCP server reads the same variable); otherwise the
     tunnel-manager library default applies."""
-    from agent_connector_sdk.config import setting
+    from scion_sdk.config import setting
     from tunnel_manager.tunnel_manager import default_inventory_path
 
     return setting("TUNNEL_INVENTORY") or default_inventory_path()
@@ -545,7 +546,7 @@ class DockerManager(ContainerManagerBase):
                 self.logger.info("Connecting to configured remote Docker daemon")
                 self.client = docker.DockerClient(base_url=base_url)  # type: ignore
             else:
-                self.client = docker.from_env()  # type: ignore
+                self.client = docker.from_env(environment=docker_environment())  # type: ignore
         except PermissionError:
             raise  # an alias the caller is not entitled to is a typed refusal
         except Exception as e:
@@ -2090,11 +2091,12 @@ class PodmanManager(ContainerManagerBase):
                 ]
             )
         elif system == "Linux" or is_wsl:
-            uid = os.getuid()
+            uid = current_uid()
 
+            if uid is not None:
+                socket_candidates.append(f"unix:///run/user/{uid}/podman/podman.sock")
             socket_candidates.extend(
                 [
-                    f"unix:///run/user/{uid}/podman/podman.sock",
                     "unix:///run/podman/podman.sock",
                     "unix:///var/run/podman/podman.sock",
                 ]

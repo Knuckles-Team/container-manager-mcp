@@ -19,7 +19,7 @@ from container_manager_mcp.mcp_server import get_mcp_instance
 
 @pytest.fixture(scope="module")
 def server():
-    from agent_connector_sdk.mcp.tool_surface import registered_tools
+    from scion_sdk.mcp.tool_surface import registered_tools
 
     mcp, _, _ = get_mcp_instance()
     return mcp, registered_tools(mcp)

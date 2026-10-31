@@ -1,7 +1,7 @@
 """Native epistemic-graph typed-node ingestion — Wire-First coverage.
 
 Exercises the real ``ingest_entities`` + per-modality mappers with a fake
-transport one level below ``agent_connector_sdk.ingest.KnowledgeIngest`` (no
+transport one level below ``scion_sdk.ingest.KnowledgeIngest`` (no
 engine required), so the SDK's own request-building/validation/privacy-guard
 contract runs unfaked, asserting the container-manager record → typed-node
 mapping.
@@ -14,7 +14,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from agent_connector_sdk.ingest import IngestError, KnowledgeIngest
+from scion_sdk.ingest import IngestError, KnowledgeIngest
 
 from container_manager_mcp.kg_ingest import (
     ingest_containers,
@@ -289,7 +289,7 @@ async def test_ingest_nodes_maps_role_and_availability(ingest):
         [
             {
                 "id": "node1",
-                "hostname": "rw710",
+                "hostname": "node-d",
                 "role": "manager",
                 "status": "ready",
                 "availability": "active",

@@ -10,23 +10,6 @@ resolution-markers = [
 overrides = [{ name = "fastmcp-slim", extras = ["client", "server"], specifier = ">=4.1.0" }]
 
 [[package]]
-name = "agent-connector-sdk"
-version = "0.5.9"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "scion-sdk" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/94/f6/a06f7a0361732c776bb16311148d0647368e606e5e1cb4330c67f185fb82/agent_connector_sdk-0.5.9.tar.gz", hash = "sha256:5cc0ad7244e1e568ba2748517dcc7523a09d955a402f1a597026af0641820425", size = 2785, upload-time = "2026-10-29T19:25:56.771Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/fd/e0/37e36240cf20fb5caa4131f55a38b4fe05334f92b3c8bb05eadf20d3e631/agent_connector_sdk-0.5.9-py3-none-any.whl", hash = "sha256:97cc724304b0f6f3b761ac212ef2c30f3fb548828368c083efa92e545bbd43b4", size = 2418, upload-time = "2026-10-29T19:25:55.725Z" },
-]
-
-[package.optional-dependencies]
-mcp = [
-    { name = "scion-sdk", extra = ["mcp"] },
-]
-
-[[package]]
 name = "aiofile"
 version = "3.12.3"
 source = { registry = "https://pypi.org/simple" }
@@ -533,7 +516,7 @@ wheels = [
 
 [[package]]
 name = "container-manager-mcp"
-version = "3.3.8"
+version = "3.3.10"
 source = { editable = "." }
 dependencies = [
     { name = "docker", extra = ["ssh"] },
@@ -591,9 +574,9 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.1.0" },
     { name = "pytest-xdist", marker = "extra == 'test'", specifier = ">=3.8.0" },
     { name = "rdflib", marker = "extra == 'test'", specifier = "==7.6.0" },
-    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.5.9,<0.6.0" },
-    { name = "scion-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.5.9,<0.6.0" },
-    { name = "tunnel-manager", specifier = ">=3.3.6" },
+    { name = "scion-sdk", extras = ["mcp"], specifier = ">=0.6.4,<0.7.0" },
+    { name = "scion-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.6.4,<0.7.0" },
+    { name = "tunnel-manager", specifier = ">=3.4.2" },
 ]
 provides-extras = ["podman", "docker", "kubernetes", "mcp", "all", "test"]
 
@@ -2168,7 +2151,7 @@ wheels = [
 
 [[package]]
 name = "scion-sdk"
-version = "0.5.9"
+version = "0.6.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -2181,9 +2164,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/33/974f6fd4df64f31008739f5c964d9588b01e06717df9bdd9a1614c690db5/scion_sdk-0.5.9.tar.gz", hash = "sha256:ba040fcc0f1320abffbf752ec8e52937c56004335fea3c0e8e87347c099d76ac", size = 1084120, upload-time = "2026-10-29T19:25:52.763Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/61/5a694538fe4b5c3313d18dfb2ddf28b3a15d9dd93eb6e32c4f5486326c62/scion_sdk-0.6.4.tar.gz", hash = "sha256:4441e8e543f65587def7e98a78246be303a95ca840acae73f92bdaa08d8ea10f", size = 1151330, upload-time = "2026-10-31T02:50:26.547Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/b0/c0b0ca2390fe8843e22b09baafb623934abca3030b948f3d68b0dcc64ba1/scion_sdk-0.5.9-py3-none-any.whl", hash = "sha256:6b5548b1cc499eba3cb6560d30abce70e761491a12b61b578c7c78dc05a0d898", size = 988008, upload-time = "2026-10-29T19:25:54.334Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/34/2990f86ca875f09a7ddbc2179668635b54e058cfc704d7dfea6e397c4762/scion_sdk-0.6.4-py3-none-any.whl", hash = "sha256:b5535a9342a3f675e173c933fcb3e26b59bb2f603875ad419bfb4261486ab5d2", size = 1093413, upload-time = "2026-10-31T02:50:25.131Z" },
 ]
 
 [package.optional-dependencies]
@@ -2238,17 +2221,17 @@ wheels = [
 
 [[package]]
 name = "tunnel-manager"
-version = "3.3.6"
+version = "3.4.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "agent-connector-sdk", extra = ["mcp"] },
     { name = "asyncssh" },
     { name = "fastmcp" },
     { name = "paramiko" },
+    { name = "scion-sdk", extra = ["mcp"] },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/57/61/158251bc4b0c61b8ff9df5e8a1bd38f0f8e359276f4a2f389909c496a100/tunnel_manager-3.3.6.tar.gz", hash = "sha256:ec22582e8913abdf2c4baa3f8c8f4fdbfdb76526578a506411059ebcb515eba9", size = 396958, upload-time = "2026-10-26T16:40:17.707Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/8d/27834c0cc21cc774bbdecc4b1c749b80d70fa764392777616d212a1db552/tunnel_manager-3.4.2.tar.gz", hash = "sha256:b4d9338664f41313efbc509c1641f713991736f0c4f917215272fbd88f7c9b68", size = 423948, upload-time = "2026-10-30T21:56:42.009Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/1e/06d513a7ab33b9155f2f69764ae416447d6e9ef3f3ad3b8509cf19f4e24c/tunnel_manager-3.3.6-py3-none-any.whl", hash = "sha256:0ffdae01c51459d1cd412011b3193e52dc5d247cc21aa5f192c37ad25f15b193", size = 144477, upload-time = "2026-10-26T16:40:15.772Z" },
+    { url = "https://files.pythonhosted.org/packages/fa/52/a5bd51a09dfbd2e83f0bf4def93e37345c3959fd65e637d7e37ecaaedbed/tunnel_manager-3.4.2-py3-none-any.whl", hash = "sha256:9ced5edb0a3f8e11f5d23654a823b708b1ff13dd61eef4fbcc0162171efd9343", size = 147681, upload-time = "2026-10-30T21:56:40.522Z" },
 ]
 
 [[package]]
