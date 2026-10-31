@@ -38,7 +38,9 @@ def _make_manager() -> KubernetesManager:
     return manager
 
 
-def _fake_node(name="node-a", uid="abc123def456789", role="worker", unschedulable=False):
+def _fake_node(
+    name="node-a", uid="abc123def456789", role="worker", unschedulable=False
+):
     labels = {"name": name}
     if role == "manager":
         labels["node-role.kubernetes.io/control-plane"] = ""
