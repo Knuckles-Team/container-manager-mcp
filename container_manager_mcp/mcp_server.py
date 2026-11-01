@@ -4,6 +4,7 @@ from importlib.metadata import version as package_version
 
 from fastmcp import Context, FastMCP
 from fastmcp.utilities.logging import get_logger
+from mcp.types import InputRequiredResult
 from pydantic import Field
 
 # Filter RequestsDependencyWarning early to prevent log spam
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 from scion_sdk.config import load_config
 from scion_sdk.mcp.action_dispatch import resolve_action
 from scion_sdk.mcp.concurrency import run_blocking
+from scion_sdk.mcp.context import confirmation_refusal, ctx_confirm_destructive
 from scion_sdk.mcp.server import create_mcp_server
 from scion_sdk.mcp.tool_surface import (
     register_tool_surface,
@@ -70,30 +72,29 @@ except ImportError:
                 pass
 
 
-try:
-    from scion_sdk.mcp.context import (
-        ctx_confirm_destructive as _ctx_confirm,
+async def _confirm_or_refuse(
+    ctx: Any,
+    description: str,
+    operation: str,
+    confirm: bool,
+    **arguments: Any,
+) -> Any:
+    """Return None when confirmed, else the refusal (or InputRequiredResult) to return."""
+    outcome = await ctx_confirm_destructive(
+        ctx,
+        description,
+        confirmation_arguments={"operation": operation, **arguments},
+        explicit_confirm=confirm,
     )
-
-    async def ctx_confirm_destructive(ctx: Any, action_description: str) -> bool:
-        try:
-            return await _ctx_confirm(ctx, action_description)
-        except Exception:
-            return True
-
-except ImportError:
-
-    async def ctx_confirm_destructive(ctx: Any, action_description: str) -> bool:
-        if not ctx:
-            return True
-        try:
-            result = await ctx.elicit(
-                f"⚠️ Are you sure you want to {action_description}?",
-                response_type=bool,
-            )
-            return result.action == "accept" and bool(result.data)
-        except Exception:
-            return True
+    if isinstance(outcome, InputRequiredResult):
+        return outcome
+    if outcome is not True:
+        return {
+            "status": "cancelled",
+            "message": "Operation cancelled: destructive action not confirmed",
+            **confirmation_refusal(ctx, operation),
+        }
+    return None
 
 
 _CTX_LOG_LEVEL_NAMES = {
@@ -283,17 +284,19 @@ async def _pull_image_action(manager, ctx, image, tag, platform):
     return await run_blocking(manager.pull_image, image, tag=tag, platform=platform)
 
 
-async def _remove_image_action(manager, ctx, image, force):
+async def _remove_image_action(manager, ctx, image, force, confirm=False):
     if not image:
         return "Error: 'image' is required for remove_image"
-    if ctx and not await ctx_confirm_destructive(ctx, "remove image"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    refusal = await _confirm_or_refuse(ctx, "remove image", "remove_image", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.remove_image, image, force=force)
 
 
-async def _prune_images_action(manager, ctx):
-    if ctx and not await ctx_confirm_destructive(ctx, "prune images"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+async def _prune_images_action(manager, ctx, confirm=False):
+    refusal = await _confirm_or_refuse(ctx, "prune images", "prune_images", confirm)
+    if refusal is not None:
+        return refusal
     if ctx:
         await ctx_progress(ctx, 0, 100)
     return await run_blocking(manager.prune_images)
@@ -336,6 +339,10 @@ def register_image_tools(mcp: FastMCP):
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
+        confirm: bool = Field(
+            default=False,
+            description="Confirm a destructive action without elicitation.",
+        ),
         ctx: Context | None = None,
     ) -> dict | list | str:
         """
@@ -359,9 +366,9 @@ def register_image_tools(mcp: FastMCP):
             if action == "pull_image":
                 return await _pull_image_action(manager, ctx, image, tag, platform)
             if action == "remove_image":
-                return await _remove_image_action(manager, ctx, image, force)
+                return await _remove_image_action(manager, ctx, image, force, confirm)
             if action == "prune_images":
-                return await _prune_images_action(manager, ctx)
+                return await _prune_images_action(manager, ctx, confirm)
             return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
@@ -387,17 +394,23 @@ async def _stop_container_action(manager, container_id):
     return await run_blocking(manager.stop_container, container_id)
 
 
-async def _remove_container_action(manager, ctx, container_id, force):
+async def _remove_container_action(manager, ctx, container_id, force, confirm=False):
     if not container_id:
         return "Error: 'container_id' is required"
-    if ctx and not await ctx_confirm_destructive(ctx, "remove container"):
-        return {"status": "cancelled"}
+    refusal = await _confirm_or_refuse(
+        ctx, "remove container", "remove_container", confirm
+    )
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.remove_container, container_id, force=force)
 
 
-async def _prune_containers_action(manager, ctx):
-    if ctx and not await ctx_confirm_destructive(ctx, "prune containers"):
-        return {"status": "cancelled"}
+async def _prune_containers_action(manager, ctx, confirm=False):
+    refusal = await _confirm_or_refuse(
+        ctx, "prune containers", "prune_containers", confirm
+    )
+    if refusal is not None:
+        return refusal
     if ctx:
         await ctx_progress(ctx, 0, 100)
     return await run_blocking(manager.prune_containers)
@@ -464,6 +477,10 @@ def register_container_tools(mcp: FastMCP):
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
+        confirm: bool = Field(
+            default=False,
+            description="Confirm a destructive action without elicitation.",
+        ),
         ctx: Context | None = None,
     ) -> dict | str | list:
         """
@@ -498,9 +515,11 @@ def register_container_tools(mcp: FastMCP):
                 ),
                 "stop_container": lambda: _stop_container_action(manager, container_id),
                 "remove_container": lambda: _remove_container_action(
-                    manager, ctx, container_id, force
+                    manager, ctx, container_id, force, confirm
                 ),
-                "prune_containers": lambda: _prune_containers_action(manager, ctx),
+                "prune_containers": lambda: _prune_containers_action(
+                    manager, ctx, confirm
+                ),
                 "exec_in_container": lambda: _exec_in_container_action(
                     manager, container_id, command, binary
                 ),
@@ -527,17 +546,19 @@ async def _create_volume_action(manager, name):
     return await run_blocking(manager.create_volume, name)
 
 
-async def _remove_volume_action(manager, ctx, name, force):
+async def _remove_volume_action(manager, ctx, name, force, confirm=False):
     if not name:
         return "Error: 'name' is required"
-    if ctx and not await ctx_confirm_destructive(ctx, "remove volume"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    refusal = await _confirm_or_refuse(ctx, "remove volume", "remove_volume", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.remove_volume, name, force=force)
 
 
-async def _prune_volumes_action(manager, ctx):
-    if ctx and not await ctx_confirm_destructive(ctx, "prune volumes"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+async def _prune_volumes_action(manager, ctx, confirm=False):
+    refusal = await _confirm_or_refuse(ctx, "prune volumes", "prune_volumes", confirm)
+    if refusal is not None:
+        return refusal
     if ctx:
         await ctx_progress(ctx, 0, 100)
     return await run_blocking(manager.prune_volumes)
@@ -576,6 +597,10 @@ def register_volume_tools(mcp: FastMCP):
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager",
         ),
+        confirm: bool = Field(
+            default=False,
+            description="Confirm a destructive action without elicitation.",
+        ),
         ctx: Context | None = None,
     ) -> Any:
         """
@@ -599,9 +624,9 @@ def register_volume_tools(mcp: FastMCP):
             if action == "create_volume":
                 return await _create_volume_action(manager, name)
             if action == "remove_volume":
-                return await _remove_volume_action(manager, ctx, name, force)
+                return await _remove_volume_action(manager, ctx, name, force, confirm)
             if action == "prune_volumes":
-                return await _prune_volumes_action(manager, ctx)
+                return await _prune_volumes_action(manager, ctx, confirm)
             return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
@@ -621,17 +646,19 @@ async def _create_network_action(manager, network_id, driver):
     return await run_blocking(manager.create_network, network_id, driver=driver)
 
 
-async def _remove_network_action(manager, ctx, network_id):
+async def _remove_network_action(manager, ctx, network_id, confirm=False):
     if not network_id:
         return "Error: 'network_id' is required"
-    if ctx and not await ctx_confirm_destructive(ctx, "remove network"):
-        return {"status": "cancelled"}
+    refusal = await _confirm_or_refuse(ctx, "remove network", "remove_network", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.remove_network, network_id)
 
 
-async def _prune_networks_action(manager, ctx):
-    if ctx and not await ctx_confirm_destructive(ctx, "prune networks"):
-        return {"status": "cancelled"}
+async def _prune_networks_action(manager, ctx, confirm=False):
+    refusal = await _confirm_or_refuse(ctx, "prune networks", "prune_networks", confirm)
+    if refusal is not None:
+        return refusal
     if ctx:
         await ctx_progress(ctx, 0, 100)
     return await run_blocking(manager.prune_networks)
@@ -670,6 +697,10 @@ def register_network_tools(mcp: FastMCP):
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager",
         ),
+        confirm: bool = Field(
+            default=False,
+            description="Confirm a destructive action without elicitation.",
+        ),
         ctx: Context | None = None,
     ) -> Any:
         """
@@ -693,9 +724,9 @@ def register_network_tools(mcp: FastMCP):
             if action == "create_network":
                 return await _create_network_action(manager, network_id, driver)
             if action == "remove_network":
-                return await _remove_network_action(manager, ctx, network_id)
+                return await _remove_network_action(manager, ctx, network_id, confirm)
             if action == "prune_networks":
-                return await _prune_networks_action(manager, ctx)
+                return await _prune_networks_action(manager, ctx, confirm)
             return f"Error: Unknown action '{action}'"
         except Exception as e:
             if ctx:
@@ -705,15 +736,17 @@ def register_network_tools(mcp: FastMCP):
             return f"Error executing {action}: {type(e).__name__}"
 
 
-async def _init_swarm_action(manager, ctx, advertise_addr):
-    if ctx and not await ctx_confirm_destructive(ctx, "init swarm"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+async def _init_swarm_action(manager, ctx, advertise_addr, confirm=False):
+    refusal = await _confirm_or_refuse(ctx, "init swarm", "init_swarm", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.init_swarm, advertise_addr)
 
 
-async def _leave_swarm_action(manager, ctx, force):
-    if ctx and not await ctx_confirm_destructive(ctx, "leave swarm"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+async def _leave_swarm_action(manager, ctx, force, confirm=False):
+    refusal = await _confirm_or_refuse(ctx, "leave swarm", "leave_swarm", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.leave_swarm, force=force)
 
 
@@ -740,11 +773,12 @@ async def _create_swarm_service_action(manager, name, image, ports, mounts, repl
     )
 
 
-async def _remove_swarm_service_action(manager, ctx, service_id):
+async def _remove_swarm_service_action(manager, ctx, service_id, confirm=False):
     if not service_id:
         return "Error: 'service_id' is required"
-    if ctx and not await ctx_confirm_destructive(ctx, "remove service"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    refusal = await _confirm_or_refuse(ctx, "remove service", "remove_service", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.remove_service, service_id)
 
 
@@ -772,11 +806,12 @@ async def _update_swarm_node_action(
     )
 
 
-async def _remove_swarm_node_action(manager, ctx, node_id, force):
+async def _remove_swarm_node_action(manager, ctx, node_id, force, confirm=False):
     if not node_id:
         return "Error: 'node_id' is required"
-    if ctx and not await ctx_confirm_destructive(ctx, "remove node"):
-        return {"status": "cancelled", "message": "Operation cancelled by user"}
+    refusal = await _confirm_or_refuse(ctx, "remove node", "remove_node", confirm)
+    if refusal is not None:
+        return refusal
     return await run_blocking(manager.remove_node, node_id, force=force)
 
 
@@ -925,6 +960,10 @@ def register_swarm_tools(mcp: FastMCP):
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
+        confirm: bool = Field(
+            default=False,
+            description="Confirm a destructive action without elicitation.",
+        ),
         ctx: Context | None = None,
     ) -> dict | str | list:
         """
@@ -959,22 +998,26 @@ def register_swarm_tools(mcp: FastMCP):
 
         try:
             dispatch = {
-                "init_swarm": lambda: _init_swarm_action(manager, ctx, advertise_addr),
-                "leave_swarm": lambda: _leave_swarm_action(manager, ctx, force),
+                "init_swarm": lambda: _init_swarm_action(
+                    manager, ctx, advertise_addr, confirm
+                ),
+                "leave_swarm": lambda: _leave_swarm_action(
+                    manager, ctx, force, confirm
+                ),
                 "list_nodes": lambda: _list_swarm_nodes_action(manager),
                 "list_services": lambda: _list_swarm_services_action(manager),
                 "create_service": lambda: _create_swarm_service_action(
                     manager, name, image, ports, mounts, replicas
                 ),
                 "remove_service": lambda: _remove_swarm_service_action(
-                    manager, ctx, service_id
+                    manager, ctx, service_id, confirm
                 ),
                 "inspect_node": lambda: _inspect_swarm_node_action(manager, node_id),
                 "update_node": lambda: _update_swarm_node_action(
                     manager, node_id, labels, role, availability, replace_labels
                 ),
                 "remove_node": lambda: _remove_swarm_node_action(
-                    manager, ctx, node_id, force
+                    manager, ctx, node_id, force, confirm
                 ),
                 "inspect_service": lambda: _inspect_swarm_service_action(
                     manager, service_id
@@ -1042,6 +1085,10 @@ def register_system_tools(mcp: FastMCP):
             default=os.environ.get("CONTAINER_MANAGER_TYPE", None),
             description="Container manager: docker, podman, kubernetes (default: auto-detect)",
         ),
+        confirm: bool = Field(
+            default=False,
+            description="Confirm a destructive action without elicitation.",
+        ),
         ctx: Context | None = None,
     ) -> dict | str:
         """
@@ -1059,12 +1106,12 @@ def register_system_tools(mcp: FastMCP):
 
         try:
             if action == "prune_system":
+                refusal = await _confirm_or_refuse(
+                    ctx, "prune system", "prune_system", confirm
+                )
+                if refusal is not None:
+                    return refusal
                 if ctx:
-                    if not await ctx_confirm_destructive(ctx, "prune system"):
-                        return {
-                            "status": "cancelled",
-                            "message": "Operation cancelled by user",
-                        }
                     await ctx_progress(ctx, 0, 100)
                 return await run_blocking(manager.prune_system, force=force, all=all)
             elif action == "get_info":
