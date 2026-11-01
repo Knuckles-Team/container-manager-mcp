@@ -17,3 +17,7 @@ Governing spec: [spec.md](spec.md).
 | `CONN-CONTAINER-MANAGER-MCP-R007` | Integration | `tests/test_destructive_confirmation_transports.py` calls a destructive action through real stdio, HTTP and JWT HTTP clients, with and without elicitation. |
 
 The tests run against the production server object. They need no vendor requests.
+
+## Rows awaiting bound tests
+- `CONN-CONTAINER-MANAGER-MCP-R005`: proof `tests/test_access_contracts.py::test_served_deployment_access_contract_matches_fixture`; the test carries the row's `spec` marker when it lands.
+- `CONN-CONTAINER-MANAGER-MCP-R008`: proof `tests/test_access_contracts.py::test_deployment_contract_matches_served_fixture`; the test carries the row's `spec` marker when it lands.
