@@ -5,6 +5,12 @@ All notable changes to `container-manager-mcp` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.1] - 2026-11-06
+
+### Fixed
+- Every tool call built a new context pool, reloading all kubeconfig contexts, Docker hosts and the Podman socket (and logging the missing Podman socket on each call). One pool per process is reused.
+- `k8s_export_manifest` drops the `force-sync` bookkeeping annotation.
+
 ## [3.4.0] - 2026-11-06
 
 ### Added

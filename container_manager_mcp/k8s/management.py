@@ -56,6 +56,7 @@ _VOLATILE_ANNOTATIONS = (
     LAST_APPLIED,
     "deployment.kubernetes.io/revision",
     "kubectl.kubernetes.io/restartedAt",
+    "force-sync",
 )
 
 

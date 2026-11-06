@@ -3272,9 +3272,9 @@ def _is_multi_context_mode(manager_type: str | None, multi_context: bool) -> boo
 def _resolve_multi_context_manager(
     manager_type: str | None, silent: bool, log_file: str | None
 ) -> "ContainerManagerBase | MultiContextManager":
-    from container_manager_mcp.multi_context_manager import MultiContextManager
+    from container_manager_mcp.multi_context_manager import shared_pool
 
-    multi_manager = MultiContextManager(silent=silent, log_file=log_file)
+    multi_manager = shared_pool(silent=silent, log_file=log_file)
 
     if manager_type is None or manager_type == "multi":
         return multi_manager
