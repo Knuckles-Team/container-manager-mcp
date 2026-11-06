@@ -26,3 +26,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Order is pr
 - [x] T020 [US1] CONN-CONTAINER-MANAGER-MCP-R015 Served content.
 - [x] T021 [US1] CONN-CONTAINER-MANAGER-MCP-R016 Ontology contracts and core roll-up.
 - [x] T022 [US1] CONN-CONTAINER-MANAGER-MCP-R017 Deployments and logs in any namespace.
+- [x] T023 [US1] CONN-CONTAINER-MANAGER-MCP-R018 One context pool per process.

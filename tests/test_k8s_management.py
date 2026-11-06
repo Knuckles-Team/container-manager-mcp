@@ -446,3 +446,14 @@ def test_deployment_describe_scale_and_pod_logs_take_a_namespace():
     logs = manager.read_pod_logs("web-1", "zz", container="web", previous=True)
     assert logs["logs"] == "line"
     assert manager.core.read_namespaced_pod_log.call_args.kwargs["container"] == "web"
+
+
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R018")
+def test_context_pool_is_built_once_per_process():
+    from container_manager_mcp import multi_context_manager
+
+    with patch.object(multi_context_manager, "MultiContextManager") as pool_cls:
+        first = multi_context_manager.shared_pool(silent=True)
+        second = multi_context_manager.shared_pool(silent=True)
+    assert first is second
+    pool_cls.assert_called_once_with(silent=True, log_file=None)

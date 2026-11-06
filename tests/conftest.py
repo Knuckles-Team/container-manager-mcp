@@ -9,3 +9,13 @@ def mock_env(monkeypatch):
     monkeypatch.setenv("CONTAINER_URL", "https://test.example.com")
     monkeypatch.setenv("CONTAINER_TOKEN", "test-token-12345")
     monkeypatch.setenv("CONTAINER_SSL_VERIFY", "False")
+
+
+@pytest.fixture(autouse=True)
+def _fresh_context_pool():
+    """Each test builds its own process-wide context pool."""
+    from container_manager_mcp import multi_context_manager
+
+    multi_context_manager._POOLS.clear()
+    yield
+    multi_context_manager._POOLS.clear()

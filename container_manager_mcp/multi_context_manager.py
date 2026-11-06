@@ -647,3 +647,29 @@ class MultiContextManager:
         """List networks from specified backend and context."""
         manager = self.get_manager(backend, context)
         return manager.list_networks(**kwargs)
+
+
+_POOLS: dict[tuple[bool, str | None], "MultiContextManager"] = {}
+_POOLS_LOCK = threading.Lock()
+
+
+def shared_pool(
+    silent: bool = False, log_file: str | None = None
+) -> "MultiContextManager":
+    """The process-wide context pool.
+
+    Building a pool loads every configured kubeconfig context, Docker host and
+    the Podman socket, so building one per tool call repeated that work (and
+    its failure logs) on every request. One pool per process is reused; each
+    pooled manager is health-checked and reconnected lazily, and the caller's
+    entitlements are still resolved per call in ``get_*_manager``.
+    """
+    key = (silent, log_file)
+    pool = _POOLS.get(key)
+    if pool is None:
+        with _POOLS_LOCK:
+            pool = _POOLS.get(key)
+            if pool is None:
+                pool = MultiContextManager(silent=silent, log_file=log_file)
+                _POOLS[key] = pool
+    return pool

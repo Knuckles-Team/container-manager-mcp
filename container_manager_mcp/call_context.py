@@ -41,9 +41,9 @@ def manager_for(backend: str) -> Any:
     context = current_call_context()
     if not context:
         return create_manager(backend)
-    from container_manager_mcp.multi_context_manager import MultiContextManager
+    from container_manager_mcp.multi_context_manager import shared_pool
 
-    return MultiContextManager(silent=True).get_manager(backend, context)
+    return shared_pool(silent=True).get_manager(backend, context)
 
 
 class CallContextMiddleware(Middleware):

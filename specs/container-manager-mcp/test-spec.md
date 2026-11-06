@@ -24,6 +24,7 @@ Governing spec: [spec.md](spec.md).
 | `CONN-CONTAINER-MANAGER-MCP-R015` | Unit | `tests/test_k8s_management.py::test_served_surface_has_the_management_tools_prompts_skills_and_ontology` |
 | `CONN-CONTAINER-MANAGER-MCP-R016` | Unit | `tests/test_k8s_management.py::test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core` |
 | `CONN-CONTAINER-MANAGER-MCP-R017` | Unit | `tests/test_k8s_management.py::test_deployment_describe_scale_and_pod_logs_take_a_namespace` |
+| `CONN-CONTAINER-MANAGER-MCP-R018` | Unit | `tests/test_k8s_management.py::test_context_pool_is_built_once_per_process` |
 
 The tests run against the production server object. They need no vendor requests.
 
