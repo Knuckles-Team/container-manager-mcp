@@ -282,11 +282,22 @@ def test_diff_reports_drift_paths_and_absent_objects():
     resource.server_side_apply.return_value = _obj(would_be)
     manager._resource = MagicMock(return_value=resource)
     doc = "apiVersion: v1\nkind: ConfigMap\nmetadata: {name: c, namespace: apps}\ndata: {A: '2'}\n"
+    resource.create.return_value = _obj(
+        {**live, "metadata": {"name": "c-drift-probe", "namespace": "apps"}}
+    )
     (entry,) = manager.diff_manifest(doc)
     assert entry["drift"] and entry["paths"] == [".data.A"]
+    assert entry["live_only_paths"] == []
+    assert (
+        resource.create.call_args.kwargs["body"]["metadata"]["name"] == "c-drift-probe"
+    )
     assert resource.server_side_apply.call_args.kwargs["dry_run"] == "All"
     resource.server_side_apply.return_value = _obj(live)
     assert manager.diff_manifest(doc)[0]["drift"] is False
+    # A live-only field (set by another field manager) is drift too.
+    resource.create.return_value = _obj({**live, "data": {}})
+    entry = manager.diff_manifest(doc)[0]
+    assert entry["drift"] and entry["live_only_paths"] == [".data.A"]
     resource.get.side_effect = _ApiException(404)
     assert manager.diff_manifest(doc)[0]["live"] == "absent"
 

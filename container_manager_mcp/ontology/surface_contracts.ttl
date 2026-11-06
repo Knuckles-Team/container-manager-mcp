@@ -756,4 +756,3 @@
     a kg:Tool ;
     rdfs:label "k8s_scale_deployment" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:scale-workload> .
-

@@ -326,6 +326,56 @@ class ManagementMixin(_Base):
         self.log_action("export_manifest", {"kind": kind, "name": name}, {"ok": True})
         return result
 
+    def _live_only_paths(
+        self, resource: Any, doc: dict, ns: str | None, live_body: dict
+    ) -> list[str] | None:
+        """Fields set live (by another field manager) that the manifest lacks.
+
+        A server-side apply keeps fields other managers own, so a live-only
+        addition (an env var patched in by hand, say) is invisible to the apply
+        dry run. The manifest is dry-run CREATED under a probe name to get the
+        server-defaulted object it declares, and the live object's spec, data,
+        labels and annotations are compared against that. ``None`` when the
+        probe cannot be created (the kind rejects a second name, a quota).
+        """
+        probe = json.loads(json.dumps(doc))
+        probe["metadata"] = {
+            k: v
+            for k, v in probe["metadata"].items()
+            if k in ("name", "namespace", "labels", "annotations")
+        }
+        probe["metadata"]["name"] = f"{doc['metadata']['name']}-drift-probe"[:253]
+        kwargs: dict[str, Any] = {"body": probe, "dry_run": "All"}
+        if ns:
+            kwargs["namespace"] = ns
+        try:
+            declared_text = json.dumps(resource.create(**kwargs).to_dict())
+        except Exception:  # noqa: BLE001 - any refusal means "cannot tell"
+            return None
+        # Values the server derives from the name follow the real name.
+        declared = json.loads(
+            declared_text.replace(
+                json.dumps(probe["metadata"]["name"])[1:-1],
+                json.dumps(doc["metadata"]["name"])[1:-1],
+            )
+        )
+
+        def scope(body: dict) -> dict:
+            clean = clean_for_git(body)
+            meta = clean.get("metadata") or {}
+            out = {
+                k: clean[k]
+                for k in ("spec", "data", "binaryData", "stringData")
+                if k in clean
+            }
+            out["metadata"] = {
+                "labels": meta.get("labels") or {},
+                "annotations": meta.get("annotations") or {},
+            }
+            return out
+
+        return _diff_paths(scope(live_body), scope(declared))
+
     def diff_manifest(
         self, manifest_yaml: str, namespace: str | None = None
     ) -> list[dict]:
@@ -370,6 +420,7 @@ class ManagementMixin(_Base):
                 kwargs["namespace"] = ns
             would_be = resource.server_side_apply(**kwargs).to_dict()
             live_body = live.to_dict()
+            live_only: list[str] | None = []
             if _is_secret(live_body):
                 changed = _data_digest(would_be.get("data")) != _data_digest(
                     live_body.get("data")
@@ -377,8 +428,15 @@ class ManagementMixin(_Base):
                 paths = [".data"] if changed else []
             else:
                 paths = _diff_paths(clean_for_git(would_be), clean_for_git(live_body))
+                live_only = self._live_only_paths(resource, doc, ns, live_body)
             results.append(
-                {**entry, "drift": bool(paths), "live": "present", "paths": paths}
+                {
+                    **entry,
+                    "drift": bool(paths or live_only),
+                    "live": "present",
+                    "paths": paths,
+                    "live_only_paths": live_only,
+                }
             )
         self.log_action("diff_manifest", {"documents": len(results)}, {"ok": True})
         return results

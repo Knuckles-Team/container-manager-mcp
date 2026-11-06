@@ -29,7 +29,7 @@ Use a disposable namespace `zz-validation` and objects named `zz-validation-<dat
 5. Patch: `k8s_patch_resource(resource_type=deployment, patch_body={spec: {template:
    {spec: {containers: [{name, env: [...]}]}}}})` creates a new revision.
 6. Restart: `k8s_rollout_restart` stamps the pod template; another revision.
-7. History and undo: `k8s_rollout_history` lists revisions with images; 
+7. History and undo: `k8s_rollout_history` lists revisions with images;
    `k8s_rollout_undo` (default previous revision) and `k8s_rollout_status` until
    complete; `k8s_describe_deployment` shows the restored template.
 8. Drift: `k8s_diff_manifest` with the original manifest shows the paths that differ.
