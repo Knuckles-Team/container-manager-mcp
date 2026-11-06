@@ -17,3 +17,54 @@ cm:status a ac:PropertyBinding ;
     ac:contract cm:deploymentAccess ; ac:property kg:deploymentStatus ; ac:field "status" .
 cm:image a ac:PropertyBinding ;
     ac:contract cm:deploymentAccess ; ac:property kg:deploymentImageReference ; ac:field "image" .
+
+cm:podAccess a ac:AccessContract ;
+    ac:classIri kg:Pod ;
+    ac:sourceId "container-manager-mcp" ;
+    ac:entity "pod" ;
+    ac:keyField "name" ;
+    ac:accessKind "mcp_tool" ;
+    ac:operation "k8s_list_pods" ;
+    ac:parameter "namespace", "label_selector", "all_namespaces" ;
+    ac:pagination "none" ;
+    ac:pushdown "filter" ;
+    ac:freshnessSeconds 30 ;
+    ac:costHint "low" .
+
+cm:podName a ac:PropertyBinding ;
+    ac:contract cm:podAccess ; ac:property kg:name ; ac:field "name" .
+cm:podPhase a ac:PropertyBinding ;
+    ac:contract cm:podAccess ; ac:property kg:podPhase ; ac:field "status" .
+
+cm:nodeAccess a ac:AccessContract ;
+    ac:classIri kg:K8sNode ;
+    ac:sourceId "container-manager-mcp" ;
+    ac:entity "node" ;
+    ac:keyField "hostname" ;
+    ac:accessKind "mcp_tool" ;
+    ac:operation "k8s_list_nodes" ;
+    ac:pagination "none" ;
+    ac:freshnessSeconds 60 ;
+    ac:costHint "low" .
+
+cm:nodeName a ac:PropertyBinding ;
+    ac:contract cm:nodeAccess ; ac:property kg:name ; ac:field "hostname" .
+cm:nodeRole a ac:PropertyBinding ;
+    ac:contract cm:nodeAccess ; ac:property kg:nodeRole ; ac:field "role" .
+
+cm:externalSecretAccess a ac:AccessContract ;
+    ac:classIri kg:ExternalSecret ;
+    ac:sourceId "container-manager-mcp" ;
+    ac:entity "externalsecret" ;
+    ac:keyField "name" ;
+    ac:accessKind "mcp_tool" ;
+    ac:operation "k8s_list_external_secrets" ;
+    ac:parameter "namespace", "all_namespaces" ;
+    ac:pagination "none" ;
+    ac:freshnessSeconds 300 ;
+    ac:costHint "low" .
+
+cm:externalSecretName a ac:PropertyBinding ;
+    ac:contract cm:externalSecretAccess ; ac:property kg:name ; ac:field "name" .
+cm:externalSecretStore a ac:PropertyBinding ;
+    ac:contract cm:externalSecretAccess ; ac:property kg:secretStoreName ; ac:field "store" .

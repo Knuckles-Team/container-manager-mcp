@@ -329,18 +329,24 @@ class WorkloadsMixin(_Base):
             raise RuntimeError("Failed to get service logs") from e
 
     def list_pods(
-        self, namespace: str | None = None, label_selector: str | None = None
+        self,
+        namespace: str | None = None,
+        label_selector: str | None = None,
+        all_namespaces: bool = False,
     ) -> list[dict]:
-        """List all pods with optional filtering."""
-        params = {"namespace": namespace, "label_selector": label_selector}
+        """List pods in a namespace, or in every namespace with ``all_namespaces``."""
+        params = {
+            "namespace": namespace,
+            "label_selector": label_selector,
+            "all_namespaces": all_namespaces,
+        }
         try:
             ns = namespace or self.namespace
-            if label_selector:
-                pods = self.core.list_namespaced_pod(
-                    ns, label_selector=label_selector
-                ).items
+            kwargs = {"label_selector": label_selector} if label_selector else {}
+            if all_namespaces:
+                pods = self.core.list_pod_for_all_namespaces(**kwargs).items
             else:
-                pods = self.core.list_namespaced_pod(ns).items
+                pods = self.core.list_namespaced_pod(ns, **kwargs).items
             result = [
                 {
                     "name": pod.metadata.name,
@@ -349,6 +355,12 @@ class WorkloadsMixin(_Base):
                     "node": pod.spec.node_name or "",
                     "created": self._ts(pod.metadata.creation_timestamp),
                     "labels": pod.metadata.labels or {},
+                    "restarts": sum(
+                        cs.restart_count or 0
+                        for cs in (
+                            getattr(pod.status, "container_statuses", None) or []
+                        )
+                    ),
                 }
                 for pod in pods
             ]
@@ -594,44 +606,129 @@ class WorkloadsMixin(_Base):
             self.log_action("list_daemonsets", params, error=e)
             raise RuntimeError("Failed to list daemonsets") from e
 
-    def _rollout_status_deployment(
-        self, resource, name: str, resource_type: str
-    ) -> dict:
-        conditions = resource.status.conditions or []
-        available = any(
-            c.type == "Available" and c.status == "True" for c in conditions
+    # Rollouts follow kubectl's semantics: a restart stamps the POD TEMPLATE
+    # (spec.template.metadata.annotations), history and undo read the
+    # Deployment's ReplicaSets or the StatefulSet/DaemonSet ControllerRevisions.
+    _ROLLOUT_KINDS = ("deployment", "statefulset", "daemonset")
+    _REVISION = "deployment.kubernetes.io/revision"
+
+    _ROLLOUT_ALIASES = {
+        "deploy": "deployment",
+        "deployments": "deployment",
+        "sts": "statefulset",
+        "statefulsets": "statefulset",
+        "ds": "daemonset",
+        "daemonsets": "daemonset",
+    }
+    _ROLLOUT_SUFFIX = {
+        "deployment": "deployment",
+        "statefulset": "stateful_set",
+        "daemonset": "daemon_set",
+    }
+
+    def _rollout_kind(self, resource_type: str) -> str:
+        kind = resource_type.lower().replace("-", "").replace("_", "")
+        kind = self._ROLLOUT_ALIASES.get(kind, kind)
+        if kind not in self._ROLLOUT_KINDS:
+            raise ValueError(
+                f"rollouts apply to {', '.join(self._ROLLOUT_KINDS)}; got {resource_type!r}"
+            )
+        return kind
+
+    def _read_rollout(self, kind: str, name: str, ns: str):
+        return getattr(self.apps, f"read_namespaced_{self._ROLLOUT_SUFFIX[kind]}")(
+            name, ns
         )
-        updated = any(
-            c.type == "Progressing" and c.status == "True" for c in conditions
+
+    def _patch_rollout(self, kind: str, name: str, ns: str, body):
+        return getattr(self.apps, f"patch_namespaced_{self._ROLLOUT_SUFFIX[kind]}")(
+            name, ns, body
         )
-        return {
-            "name": name,
-            "resource_type": resource_type,
-            "available": available,
-            "updated": updated,
-            "replicas": resource.spec.replicas if resource.spec else 0,
-            "ready_replicas": (
-                resource.status.ready_replicas if resource.status else 0
+
+    @staticmethod
+    def _owned_by(obj, uid: str) -> bool:
+        return any(o.uid == uid for o in (obj.metadata.owner_references or []))
+
+    def _deployment_revisions(self, dep, ns: str) -> list:
+        replica_sets = self.apps.list_namespaced_replica_set(ns).items
+        owned = [rs for rs in replica_sets if self._owned_by(rs, dep.metadata.uid)]
+        return sorted(
+            owned,
+            key=lambda rs: int(
+                (rs.metadata.annotations or {}).get(self._REVISION, "0")
             ),
-        }
+        )
+
+    def _controller_revisions(self, obj, ns: str) -> list:
+        revisions = self.apps.list_namespaced_controller_revision(ns).items
+        owned = [r for r in revisions if self._owned_by(r, obj.metadata.uid)]
+        return sorted(owned, key=lambda r: r.revision)
+
+    @staticmethod
+    def _rollout_complete(kind: str, obj) -> tuple[bool, str]:
+        spec, status, meta = obj.spec, obj.status, obj.metadata
+        observed = getattr(status, "observed_generation", None) or 0
+        if observed < (meta.generation or 0):
+            return False, "waiting for the controller to observe the new generation"
+        if kind == "daemonset":
+            want = status.desired_number_scheduled or 0
+            updated = status.updated_number_scheduled or 0
+            ready = status.number_available or 0
+            if updated < want:
+                return False, f"{updated} of {want} updated pods scheduled"
+            if ready < want:
+                return False, f"{ready} of {want} updated pods available"
+            return True, "daemon set rolled out"
+        want = spec.replicas if spec.replicas is not None else 1
+        updated = status.updated_replicas or 0
+        if kind == "statefulset":
+            ready = status.ready_replicas or 0
+            if updated < want or ready < want:
+                return False, f"{min(updated, ready)} of {want} pods updated and ready"
+            if (
+                status.update_revision
+                and status.current_revision != status.update_revision
+            ):
+                return False, "waiting for the partitioned roll out to finish"
+            return True, "stateful set rolled out"
+        total = status.replicas or 0
+        available = status.available_replicas or 0
+        if updated < want:
+            return False, f"{updated} of {want} new replicas updated"
+        if total > updated:
+            return False, f"{total - updated} old replicas pending termination"
+        if available < updated:
+            return False, f"{available} of {updated} updated replicas available"
+        return True, "deployment successfully rolled out"
 
     def rollout_status(
         self, resource_type: str, name: str, namespace: str | None = None
     ) -> dict:
-        """Check rollout status of a resource."""
+        """Report whether a Deployment/StatefulSet/DaemonSet rollout is complete."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
             ns = namespace or self.namespace
-            # Get the resource and check conditions
-            if resource_type == "deployment":
-                resource = self.apps.read_namespaced_deployment(name, ns)
-                result = self._rollout_status_deployment(resource, name, resource_type)
-            else:
-                result = {
-                    "name": name,
-                    "resource_type": resource_type,
-                    "available": False,
-                }
+            kind = self._rollout_kind(resource_type)
+            obj = self._read_rollout(kind, name, ns)
+            complete, message = self._rollout_complete(kind, obj)
+            status = obj.status
+            result = {
+                "name": name,
+                "namespace": ns,
+                "resource_type": kind,
+                "complete": complete,
+                "message": message,
+                "generation": obj.metadata.generation,
+                "observed_generation": getattr(status, "observed_generation", None),
+                "replicas": getattr(obj.spec, "replicas", None),
+                "ready_replicas": getattr(status, "ready_replicas", None)
+                or getattr(status, "number_ready", None)
+                or 0,
+                "updated_replicas": getattr(status, "updated_replicas", None)
+                or getattr(status, "updated_number_scheduled", None)
+                or 0,
+                "revision": (obj.metadata.annotations or {}).get(self._REVISION),
+            }
             self.log_action("rollout_status", params, result)
             return result
         except _km.ApiException as e:
@@ -641,28 +738,43 @@ class WorkloadsMixin(_Base):
     def rollout_history(
         self, resource_type: str, name: str, namespace: str | None = None
     ) -> list[dict]:
-        """Get rollout history of a resource (revision history)."""
+        """List the revisions of a rollout with their images and change cause."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
             ns = namespace or self.namespace
-            # Get revision history using controller revision
-            if resource_type == "deployment":
-                resource = self.apps.read_namespaced_deployment(name, ns)
-                # Simplified: return basic info (full rollout history requires rollout API)
-                result = [
-                    {
-                        "name": name,
-                        "resource_type": resource_type,
-                        "current_revision": (
-                            resource.metadata.resourceVersion
-                            if resource.metadata
-                            else "unknown"
-                        ),
-                        "note": "Full rollout history requires rollout.k8s.io API - returning basic info",
-                    }
-                ]
+            kind = self._rollout_kind(resource_type)
+            obj = self._read_rollout(kind, name, ns)
+            result = []
+            if kind == "deployment":
+                current = (obj.metadata.annotations or {}).get(self._REVISION)
+                for rs in self._deployment_revisions(obj, ns):
+                    annotations = rs.metadata.annotations or {}
+                    revision = annotations.get(self._REVISION)
+                    result.append(
+                        {
+                            "revision": int(revision or 0),
+                            "replica_set": rs.metadata.name,
+                            "images": [
+                                c.image for c in rs.spec.template.spec.containers
+                            ],
+                            "change_cause": annotations.get(
+                                "kubernetes.io/change-cause"
+                            ),
+                            "current": revision == current,
+                            "created": self._ts(rs.metadata.creation_timestamp),
+                        }
+                    )
             else:
-                result = []
+                revisions = self._controller_revisions(obj, ns)
+                for rev in revisions:
+                    result.append(
+                        {
+                            "revision": rev.revision,
+                            "controller_revision": rev.metadata.name,
+                            "current": rev is revisions[-1],
+                            "created": self._ts(rev.metadata.creation_timestamp),
+                        }
+                    )
             self.log_action("rollout_history", params, {"count": len(result)})
             return result
         except _km.ApiException as e:
@@ -672,24 +784,31 @@ class WorkloadsMixin(_Base):
     def rollout_restart(
         self, resource_type: str, name: str, namespace: str | None = None
     ) -> dict:
-        """Restart a rollout by updating the annotation."""
+        """Restart a rollout (kubectl rollout restart): stamp the pod template."""
         params = {"resource_type": resource_type, "name": name, "namespace": namespace}
         try:
             ns = namespace or self.namespace
-            if resource_type == "deployment":
-                apps_ext = self.apps
-                # Add restart annotation
-                annotation = {
-                    "kubectl.kubernetes.io/restartedAt": self._ts(datetime.now(UTC))
+            kind = self._rollout_kind(resource_type)
+            stamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+            body = {
+                "spec": {
+                    "template": {
+                        "metadata": {
+                            "annotations": {"kubectl.kubernetes.io/restartedAt": stamp}
+                        }
+                    }
                 }
-                apps_ext.patch_namespaced_deployment(
-                    name, ns, {"metadata": {"annotations": annotation}}
-                )
-            result = {"name": name, "resource_type": resource_type, "restarted": True}
+            }
+            self._patch_rollout(kind, name, ns, body)
+            result = {
+                "name": name,
+                "namespace": ns,
+                "resource_type": kind,
+                "restarted": True,
+                "restarted_at": stamp,
+            }
             self.log_action("rollout_restart", params, result)
             return result
-        except ImportError:
-            raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_restart", params, error=e)
             raise RuntimeError("Failed to restart rollout") from e
@@ -701,7 +820,7 @@ class WorkloadsMixin(_Base):
         namespace: str | None = None,
         revision: int | None = None,
     ) -> dict:
-        """Undo a rollout to a specific revision."""
+        """Roll back to a revision (default: the previous one), like kubectl rollout undo."""
         params = {
             "resource_type": resource_type,
             "name": name,
@@ -710,33 +829,55 @@ class WorkloadsMixin(_Base):
         }
         try:
             ns = namespace or self.namespace
-            if resource_type == "deployment":
-                apps_ext = self.apps
-                # Undo by patching the annotation
-                if revision:
-                    annotation = {"deployment.kubernetes.io/revision": str(revision)}
-                else:
-                    # Undo to previous revision
-                    deployment = apps_ext.read_namespaced_deployment(name, ns)
-                    current_rev = deployment.metadata.annotations.get(
-                        "deployment.kubernetes.io/revision", "0"
-                    )
-                    target_rev = str(int(current_rev) - 1) if current_rev else "0"
-                    annotation = {"deployment.kubernetes.io/revision": target_rev}
-
-                apps_ext.patch_namespaced_deployment(
-                    name, ns, {"metadata": {"annotations": annotation}}
+            kind = self._rollout_kind(resource_type)
+            obj = self._read_rollout(kind, name, ns)
+            if kind == "deployment":
+                history = self._deployment_revisions(obj, ns)
+                current = int((obj.metadata.annotations or {}).get(self._REVISION, "0"))
+                by_rev = {
+                    int((rs.metadata.annotations or {}).get(self._REVISION, "0")): rs
+                    for rs in history
+                }
+                target = revision or max(
+                    (r for r in by_rev if r < current), default=None
                 )
+                if target is None or target not in by_rev:
+                    raise ValueError(
+                        f"no revision {revision or 'before ' + str(current)} for {name}"
+                    )
+                template = self.core.api_client.sanitize_for_serialization(
+                    by_rev[target].spec.template
+                )
+                (template.get("metadata") or {}).get("labels", {}).pop(
+                    "pod-template-hash", None
+                )
+                self.apps.patch_namespaced_deployment(
+                    name,
+                    ns,
+                    [{"op": "replace", "path": "/spec/template", "value": template}],
+                )
+            else:
+                revisions = self._controller_revisions(obj, ns)
+                by_rev = {r.revision: r for r in revisions}
+                current = revisions[-1].revision if revisions else 0
+                target = revision or max(
+                    (r for r in by_rev if r < current), default=None
+                )
+                if target is None or target not in by_rev:
+                    raise ValueError(
+                        f"no revision {revision or 'before ' + str(current)} for {name}"
+                    )
+                self._patch_rollout(kind, name, ns, by_rev[target].data)
             result = {
                 "name": name,
-                "resource_type": resource_type,
+                "namespace": ns,
+                "resource_type": kind,
                 "undone": True,
-                "revision": revision,
+                "from_revision": current,
+                "to_revision": target,
             }
             self.log_action("rollout_undo", params, result)
             return result
-        except ImportError:
-            raise RuntimeError("Apps extension API not available") from None
         except _km.ApiException as e:
             self.log_action("rollout_undo", params, error=e)
             raise RuntimeError("Failed to undo rollout") from e

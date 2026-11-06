@@ -174,30 +174,48 @@ class ConfigMixin(_Base):
             raise RuntimeError("Failed to list namespaces") from e
 
     def list_events(
-        self, namespace: str | None = None, field_selector: str | None = None
+        self,
+        namespace: str | None = None,
+        field_selector: str | None = None,
+        all_namespaces: bool = False,
+        limit: int = 500,
     ) -> list[dict]:
-        """List events with optional filtering."""
-        params = {"namespace": namespace, "field_selector": field_selector}
+        """List events newest first, in a namespace or in every namespace."""
+        params = {
+            "namespace": namespace,
+            "field_selector": field_selector,
+            "all_namespaces": all_namespaces,
+        }
         try:
             ns = namespace or self.namespace
-            if field_selector:
-                events = self.core.list_namespaced_event(
-                    ns, field_selector=field_selector
-                ).items
+            kwargs = {"field_selector": field_selector} if field_selector else {}
+            if all_namespaces:
+                events = self.core.list_event_for_all_namespaces(**kwargs).items
             else:
-                events = self.core.list_namespaced_event(ns).items
+                events = self.core.list_namespaced_event(ns, **kwargs).items
             result = [
                 {
+                    "namespace": event.metadata.namespace,
                     "type": event.type,
                     "reason": event.reason,
                     "message": event.message,
-                    "source": event.source.dict() if event.source else {},
+                    "object": (
+                        f"{event.involved_object.kind}/{event.involved_object.name}"
+                        if event.involved_object
+                        else ""
+                    ),
+                    "source": event.source.to_dict() if event.source else {},
                     "first_seen": self._ts(event.first_timestamp),
-                    "last_seen": self._ts(event.last_timestamp),
+                    "last_seen": self._ts(event.last_timestamp or event.event_time),
                     "count": event.count,
                 }
                 for event in events
             ]
+            result.sort(
+                key=lambda e: "" if e["last_seen"] == "unknown" else e["last_seen"],
+                reverse=True,
+            )
+            result = result[: max(1, limit)]
             self.log_action("list_events", params, {"count": len(result)})
             return result
         except _km.ApiException as e:
@@ -342,7 +360,9 @@ class ConfigMixin(_Base):
                         api_client.default_headers.pop("Content-Type", None)
             else:
                 # Unknown kind: resolve via the dynamic client by kind name.
-                dynamic_client = _km.k8s_client.DynamicClient(self.core.api_client)
+                from kubernetes.dynamic import DynamicClient
+
+                dynamic_client = DynamicClient(self.core.api_client)
                 resource = dynamic_client.resources.get(kind=resource_type)
                 if namespace:
                     resource.patch(

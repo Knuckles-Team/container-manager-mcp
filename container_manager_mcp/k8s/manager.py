@@ -6,6 +6,7 @@ from container_manager_mcp.k8s.cluster_nodes import ClusterNodesMixin
 from container_manager_mcp.k8s.compose import ComposeMixin
 from container_manager_mcp.k8s.config import ConfigMixin
 from container_manager_mcp.k8s.governance import GovernanceMixin
+from container_manager_mcp.k8s.management import ManagementMixin
 from container_manager_mcp.k8s.networking import NetworkingMixin
 from container_manager_mcp.k8s.observability import ObservabilityMixin
 from container_manager_mcp.k8s.rbac import RbacMixin
@@ -15,6 +16,7 @@ from container_manager_mcp.k8s.workloads import WorkloadsMixin
 
 
 class KubernetesManager(
+    ManagementMixin,
     WorkloadsMixin,
     ConfigMixin,
     NetworkingMixin,

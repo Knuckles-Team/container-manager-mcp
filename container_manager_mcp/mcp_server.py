@@ -28,6 +28,7 @@ import json
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, cast
 
 if TYPE_CHECKING:
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
 from scion_sdk.config import load_config
 from scion_sdk.mcp.action_dispatch import resolve_action
 from scion_sdk.mcp.concurrency import run_blocking
+from scion_sdk.mcp.content import ConnectorContent
 from scion_sdk.mcp.context import confirmation_refusal, ctx_confirm_destructive
 from scion_sdk.mcp.server import create_mcp_server
 from scion_sdk.mcp.tool_surface import (
@@ -1628,13 +1630,41 @@ def register_misc_tools(mcp: FastMCP):
         return result
 
 
+def register_k8s_resources(mcp: FastMCP) -> None:
+    """Serve the cluster topology and data locations as an MCP resource."""
+
+    @mcp.resource(
+        "k8s://cluster/topology",
+        name="k8s-cluster-topology",
+        description=(
+            "Nodes (roles, readiness, capacity, labels) and the node and host path "
+            "that hold each PersistentVolume's data, for the default k8s context."
+        ),
+        mime_type="application/json",
+    )
+    async def k8s_cluster_topology() -> str:
+        from container_manager_mcp.call_context import manager_for
+
+        manager = manager_for("kubernetes")
+        return json.dumps(await run_blocking(manager.cluster_topology))
+
+
 def get_mcp_instance() -> tuple[Any, ...]:
     """Initialize and return the MCP instance."""
     load_config()
     args, mcp, middlewares = create_mcp_server(
         name="container-manager-mcp",
         version=__version__,
-        instructions="Container Manager MCP Server - Manage Docker and Podman containers, images, volumes, networks, and swarm.",
+        instructions=(
+            "Container Manager MCP Server - manage Kubernetes clusters (any resource "
+            "kind: apply, patch, delete, rollouts, logs, events, ExternalSecrets, "
+            "drift against services/ manifests) and Docker/Podman/Swarm hosts."
+        ),
+        content=ConnectorContent(
+            connector="container-manager-mcp",
+            package_root=Path(__file__).resolve().parent,
+            package_version=__version__,
+        ),
     )
 
     # Tools target the per-call manager from create_manager(host=...), not a
@@ -1652,6 +1682,7 @@ def get_mcp_instance() -> tuple[Any, ...]:
         verbose_targets=list(VERBOSE_TARGETS),
     )
 
+    register_k8s_resources(mcp)
     advertise_context_argument(registered_tools(mcp))
     mcp.add_middleware(CallContextMiddleware())
     for middleware in middlewares:

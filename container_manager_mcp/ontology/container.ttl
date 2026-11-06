@@ -289,8 +289,131 @@
 <http://knuckles.team/kg#Pod> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Pod> .
 <http://knuckles.team/kg#SwarmService> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#SwarmService> .
 
-# ontology-codemod R4
-<http://knuckles.team/kg#Deployment> rdfs:subClassOf <http://knuckles.team/kg#RunEvent> .
+# A Kubernetes Deployment is the core orchestration-layer Deployment (a Workload), not a
+# run event (2026-11-06 correction of the R4 codemod mapping).
+<http://knuckles.team/kg#Deployment> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Deployment> .
 
 # semantic-core mapping (AUD-007; reviewed against public Medulla 2.27.7)
 <http://knuckles.team/kg#Ingress> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#ProxyRoute> .
+
+# --- whole-cluster management surface (2026-11-06) ---------------------------------------
+# Every class below rolls up to a medulla core class by rdfs:subClassOf (never owl:imports).
+# Materialized and operated through the typed k8s_* tools; the cluster topology, the place
+# each record lives and the tool that reads it are declared in surface_contracts.ttl.
+
+:K8sCluster a owl:Class ;
+    rdfs:label "Kubernetes Cluster" ;
+    rdfs:comment "One Kubernetes control plane and its member K8sNodes, addressed by a container-manager context name (k8s_list_contexts)." ;
+    rdfs:subClassOf :ConfigurationItem .
+
+:K8sNode rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Node> .
+:StatefulSet rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+:DaemonSet rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+
+:ReplicaSet a owl:Class ;
+    rdfs:label "Kubernetes ReplicaSet" ;
+    rdfs:comment "One revision of a Deployment's pod template; rollout history and undo read these (k8s_rollout_history / k8s_rollout_undo)." ;
+    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+
+:K8sJob a owl:Class ;
+    rdfs:label "Kubernetes Job" ;
+    rdfs:comment "A run-to-completion Pod controller (k8s_list_jobs / k8s_create_job)." ;
+    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+
+:K8sCronJob a owl:Class ;
+    rdfs:label "Kubernetes CronJob" ;
+    rdfs:comment "A schedule that creates K8sJobs (k8s_list_cron_jobs)." ;
+    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+
+:ConfigMap a owl:Class ;
+    rdfs:label "Kubernetes ConfigMap" ;
+    rdfs:comment "Non-secret configuration consumed by Pods (k8s_list_configmaps / k8s_get_resource)." ;
+    rdfs:subClassOf :ConfigurationItem .
+
+:K8sSecret a owl:Class ;
+    rdfs:label "Kubernetes Secret" ;
+    rdfs:comment "Secret configuration consumed by Pods. Only metadata, key names and a data digest are recorded; values are returned solely by k8s_get_secret with reveal=true." ;
+    rdfs:subClassOf :ConfigurationItem .
+
+:ExternalSecret a owl:Class ;
+    rdfs:label "External Secret" ;
+    rdfs:comment "A declaration that projects values from a secret store into a K8sSecret and refreshes them on an interval (k8s_list_external_secrets / k8s_force_sync_external_secret)." ;
+    rdfs:subClassOf :ConfigurationItem .
+
+:projectsSecret a owl:ObjectProperty ;
+    rdfs:label "projects secret" ;
+    rdfs:comment "Links an ExternalSecret to the K8sSecret it writes." ;
+    rdfs:domain :ExternalSecret ;
+    rdfs:range :K8sSecret .
+
+:secretStoreName a owl:DatatypeProperty ;
+    rdfs:label "secret store name" ;
+    rdfs:comment "The (Cluster)SecretStore an ExternalSecret reads from." ;
+    rdfs:domain :ExternalSecret ;
+    rdfs:range xsd:string .
+
+:PersistentVolume a owl:Class ;
+    rdfs:label "Kubernetes PersistentVolume" ;
+    rdfs:comment "A unit of cluster storage; a local or hostPath volume pins its data to one K8sNode (k8s_list_persistent_volumes)." ;
+    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Volume> .
+
+:PersistentVolumeClaim a owl:Class ;
+    rdfs:label "Kubernetes PersistentVolumeClaim" ;
+    rdfs:comment "A workload's request for storage, bound to one PersistentVolume (k8s_list_persistent_volume_claims)." ;
+    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Volume> .
+
+:StorageClass a owl:Class ;
+    rdfs:label "Kubernetes StorageClass" ;
+    rdfs:comment "The provisioning policy that creates PersistentVolumes (k8s_list_storage_classes)." ;
+    rdfs:subClassOf :Policy .
+
+:boundToVolume a owl:ObjectProperty ;
+    rdfs:label "bound to volume" ;
+    rdfs:comment "Links a PersistentVolumeClaim to the PersistentVolume that holds its data." ;
+    rdfs:domain :PersistentVolumeClaim ;
+    rdfs:range :PersistentVolume .
+
+:volumeOnNode a owl:ObjectProperty ;
+    rdfs:label "volume on node" ;
+    rdfs:comment "Data location: links a node-local PersistentVolume to the K8sNode whose disk holds its data, read from the volume's node affinity." ;
+    rdfs:domain :PersistentVolume ;
+    rdfs:range :K8sNode .
+
+:volumeHostPath a owl:DatatypeProperty ;
+    rdfs:label "volume host path" ;
+    rdfs:comment "Data location: the directory on the K8sNode that holds a local/hostPath PersistentVolume's data." ;
+    rdfs:domain :PersistentVolume ;
+    rdfs:range xsd:string .
+
+:nodeInCluster a owl:ObjectProperty ;
+    rdfs:label "node in cluster" ;
+    rdfs:comment "Links a K8sNode to the K8sCluster it is a member of." ;
+    rdfs:domain :K8sNode ;
+    rdfs:range :K8sCluster .
+
+:k8sNodeIsHost a owl:ObjectProperty ;
+    rdfs:label "k8s node is host" ;
+    rdfs:comment "Links a K8sNode to the physical Host it runs on, matched by node hostname = inventory host alias." ;
+    rdfs:subPropertyOf <http://knuckles.team/kg/infrastructure#isHost> ;
+    rdfs:domain :K8sNode ;
+    rdfs:range <http://knuckles.team/kg/infrastructure#Host> .
+
+:CustomResourceDefinition a owl:Class ;
+    rdfs:label "Kubernetes CustomResourceDefinition" ;
+    rdfs:comment "A schema that extends the Kubernetes API with a new kind (k8s_list_crds / k8s_describe_crd); its objects are read with k8s_get_resource / k8s_list_resources." ;
+    rdfs:subClassOf :Schema .
+
+:K8sEvent a owl:Class ;
+    rdfs:label "Kubernetes Event" ;
+    rdfs:comment "A cluster event about an object (k8s_list_events / k8s_get_resource_events)." ;
+    rdfs:subClassOf :Event .
+
+:ServicesManifest a owl:Class ;
+    rdfs:label "Services Manifest" ;
+    rdfs:comment "A Kubernetes manifest file kept in the services/<name>/ repository: the source of truth a live object must match (k8s_diff_manifest reports drift)." ;
+    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#DeploymentManifest> .
+
+:declaredBy a owl:ObjectProperty ;
+    rdfs:label "declared by" ;
+    rdfs:comment "Links a live Kubernetes object to the ServicesManifest that declares it." ;
+    rdfs:range :ServicesManifest .
