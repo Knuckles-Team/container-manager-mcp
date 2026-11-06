@@ -58,7 +58,13 @@ VERBOSE_TARGETS: tuple[dict[str, Any], ...] = (
         "client_cls": KubernetesManager,
         "get_client": lambda: manager_for("kubernetes"),
         "prefix": "k8s",
-        "manifest": _destructive(*_PRUNES, *_SWARM, "drain_node"),
+        "manifest": _destructive(
+            *_PRUNES,
+            *_SWARM,
+            "drain_node",
+            "delete_resource",
+            "delete_namespace",
+        ),
     },
 )
 

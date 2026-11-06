@@ -42,7 +42,11 @@ class _FixtureManager:
 @pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-R002")
 def test_served_deployment_access_contract_matches_fixture():
     contract_path = ROOT / "container_manager_mcp/ontology/access_contracts.ttl"
-    (contract,) = parse_access_contracts(contract_path.read_text())
+    (contract,) = [
+        c
+        for c in parse_access_contracts(contract_path.read_text())
+        if c.operation == "k8s_list_services"
+    ]
     fixture = json.loads((ROOT / "tests/fixtures/deployment_response.json").read_text())
     assert contract.operation == "k8s_list_services"
     assert contract.key_field == "id"

@@ -5,6 +5,22 @@ All notable changes to `container-manager-mcp` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2026-11-06
+
+### Added
+- Whole-cluster Kubernetes management tools: `k8s_apply_manifest` (server-side apply), `k8s_get_resource`, `k8s_list_resources`, `k8s_delete_resource` (any kind, CRDs included), `k8s_describe_deployment`, `k8s_scale_deployment`, `k8s_read_pod_logs`, `k8s_get_secret` (values only with `reveal=true`), `k8s_list_external_secrets`, `k8s_force_sync_external_secret`, `k8s_cluster_topology`.
+- GitOps tie-in: `k8s_export_manifest` (clean YAML for services/) and `k8s_diff_manifest` (drift paths); skills `container-manager-gitops-persist`, `container-manager-externalsecret-sync`, `container-manager-k8s-change-validation`.
+- `all_namespaces` on `k8s_list_pods` and `k8s_list_events`; events newest first with namespace and object.
+- Served content: skills, prompts (`kubernetes-operator`, `platform-reliability-engineer`), ontology and the `k8s://cluster/topology` resource.
+- Ontology: surface contracts (tool-use contracts, links, data locations, business role) and core roll-ups for nodes, workloads, config, secrets, storage, CRDs and events.
+
+### Fixed
+- `k8s_rollout_restart` stamped the Deployment metadata, not the pod template, so nothing restarted; it now restarts deployments, statefulsets and daemonsets.
+- `k8s_rollout_undo` only patched an annotation; it now restores the previous revision's pod template. `k8s_rollout_history` lists real revisions and `k8s_rollout_status` reports completion.
+- Secret bodies from generic reads are redacted, including the last-applied annotation.
+- The dynamic-client fallback of `k8s_patch_resource` imported a class that does not exist.
+- A Kubernetes Deployment rolls up to the core Deployment workload instead of a run event.
+
 ## [3.3.10] - 2026-10-30
 
 ### Changed

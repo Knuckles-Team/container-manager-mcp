@@ -17,3 +17,12 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Order is pr
 - [ ] T011 [US1] CONN-CONTAINER-MANAGER-MCP-R008 k8s_list_services matches the declared Deployment contract.
 - [x] T012 [US1] CONN-CONTAINER-MANAGER-MCP-R006 Windows portability.
 - [x] T013 [US1] CONN-CONTAINER-MANAGER-MCP-R007 Destructive confirmation fails closed.
+- [x] T014 [US1] CONN-CONTAINER-MANAGER-MCP-R009 Cluster-wide reads.
+- [x] T015 [US1] CONN-CONTAINER-MANAGER-MCP-R010 Secret values stay hidden by default.
+- [x] T016 [US1] CONN-CONTAINER-MANAGER-MCP-R011 Rollouts behave like kubectl.
+- [x] T017 [US1] CONN-CONTAINER-MANAGER-MCP-R012 ExternalSecret force-sync proves the refresh.
+- [x] T018 [US1] CONN-CONTAINER-MANAGER-MCP-R013 GitOps tie-in.
+- [x] T019 [US1] CONN-CONTAINER-MANAGER-MCP-R014 Any-kind apply, read and delete.
+- [x] T020 [US1] CONN-CONTAINER-MANAGER-MCP-R015 Served content.
+- [x] T021 [US1] CONN-CONTAINER-MANAGER-MCP-R016 Ontology contracts and core roll-up.
+- [x] T022 [US1] CONN-CONTAINER-MANAGER-MCP-R017 Deployments and logs in any namespace.
