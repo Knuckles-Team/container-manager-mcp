@@ -8,3 +8,4 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Order is pr
 - [ ] T002 [US1] CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.1 OIDC through the governed client.
 - [ ] T003 [US1] CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.2 TLS profile for OIDC.
 - [ ] T004 [US1] CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R001.3 SDK floor.
+- [ ] T005 [US1] CONN-CONTAINER-MANAGER-MCP-SDK-CENTRALIZATION-R002 Adopt scion-sdk 0.10.0 import paths. Size: S, 1 PR, 30 minutes.
