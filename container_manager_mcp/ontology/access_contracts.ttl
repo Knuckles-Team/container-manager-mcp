@@ -1,9 +1,9 @@
-@prefix ac: <https://knuckles-team.github.io/agent-connector-sdk/access#> .
-@prefix kg: <http://knuckles.team/kg#> .
-@prefix cm: <http://knuckles.team/kg/container-access#> .
+@prefix ac: <https://knuckles-team.github.io/ontology/access#> .
+@prefix : <https://knuckles-team.github.io/ontology/connector/container-manager#> .
+@prefix cm: <https://knuckles-team.github.io/ontology/connector/container-access#> .
 
 cm:deploymentAccess a ac:AccessContract ;
-    ac:classIri kg:Deployment ;
+    ac:classIri :Deployment ;
     ac:sourceId "container-manager-mcp" ;
     ac:entity "deployment" ;
     ac:keyField "id" ;
@@ -12,14 +12,14 @@ cm:deploymentAccess a ac:AccessContract ;
     ac:pagination "none" .
 
 cm:name a ac:PropertyBinding ;
-    ac:contract cm:deploymentAccess ; ac:property kg:name ; ac:field "name" .
+    ac:contract cm:deploymentAccess ; ac:property :name ; ac:field "name" .
 cm:status a ac:PropertyBinding ;
-    ac:contract cm:deploymentAccess ; ac:property kg:deploymentStatus ; ac:field "status" .
+    ac:contract cm:deploymentAccess ; ac:property :deploymentStatus ; ac:field "status" .
 cm:image a ac:PropertyBinding ;
-    ac:contract cm:deploymentAccess ; ac:property kg:deploymentImageReference ; ac:field "image" .
+    ac:contract cm:deploymentAccess ; ac:property :deploymentImageReference ; ac:field "image" .
 
 cm:podAccess a ac:AccessContract ;
-    ac:classIri kg:Pod ;
+    ac:classIri :Pod ;
     ac:sourceId "container-manager-mcp" ;
     ac:entity "pod" ;
     ac:keyField "name" ;
@@ -32,12 +32,12 @@ cm:podAccess a ac:AccessContract ;
     ac:costHint "low" .
 
 cm:podName a ac:PropertyBinding ;
-    ac:contract cm:podAccess ; ac:property kg:name ; ac:field "name" .
+    ac:contract cm:podAccess ; ac:property :name ; ac:field "name" .
 cm:podPhase a ac:PropertyBinding ;
-    ac:contract cm:podAccess ; ac:property kg:podPhase ; ac:field "status" .
+    ac:contract cm:podAccess ; ac:property :podPhase ; ac:field "status" .
 
 cm:nodeAccess a ac:AccessContract ;
-    ac:classIri kg:K8sNode ;
+    ac:classIri :K8sNode ;
     ac:sourceId "container-manager-mcp" ;
     ac:entity "node" ;
     ac:keyField "hostname" ;
@@ -48,12 +48,12 @@ cm:nodeAccess a ac:AccessContract ;
     ac:costHint "low" .
 
 cm:nodeName a ac:PropertyBinding ;
-    ac:contract cm:nodeAccess ; ac:property kg:name ; ac:field "hostname" .
+    ac:contract cm:nodeAccess ; ac:property :name ; ac:field "hostname" .
 cm:nodeRole a ac:PropertyBinding ;
-    ac:contract cm:nodeAccess ; ac:property kg:nodeRole ; ac:field "role" .
+    ac:contract cm:nodeAccess ; ac:property :nodeRole ; ac:field "role" .
 
 cm:externalSecretAccess a ac:AccessContract ;
-    ac:classIri kg:ExternalSecret ;
+    ac:classIri :ExternalSecret ;
     ac:sourceId "container-manager-mcp" ;
     ac:entity "externalsecret" ;
     ac:keyField "name" ;
@@ -65,6 +65,6 @@ cm:externalSecretAccess a ac:AccessContract ;
     ac:costHint "low" .
 
 cm:externalSecretName a ac:PropertyBinding ;
-    ac:contract cm:externalSecretAccess ; ac:property kg:name ; ac:field "name" .
+    ac:contract cm:externalSecretAccess ; ac:property :name ; ac:field "name" .
 cm:externalSecretStore a ac:PropertyBinding ;
-    ac:contract cm:externalSecretAccess ; ac:property kg:secretStoreName ; ac:field "store" .
+    ac:contract cm:externalSecretAccess ; ac:property :secretStoreName ; ac:field "store" .

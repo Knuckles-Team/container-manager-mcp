@@ -1,7 +1,8 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix dc: <http://purl.org/dc/terms/> .
-@prefix : <http://knuckles.team/kg#> .
+@prefix : <https://knuckles-team.github.io/ontology/connector/container-manager#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -13,10 +14,10 @@
 # node gets the per-package IRI.
 #
 # REUSE (defined in the hub's ontology_infrastructure.ttl — NOT redefined here):
-#   <http://knuckles.team/kg/infrastructure#Container>       — a running container instance (Docker/Podman/containerd/CRI-O)
-#   <http://knuckles.team/kg/infrastructure#ContainerImage>  — an OCI image / repository:tag
+#   <https://knuckles-team.github.io/ontology/infrastructure#Container>       — a running container instance (Docker/Podman/containerd/CRI-O)
+#   <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage>  — an OCI image / repository:tag
 #   :ContainerStack  — a compose/stack grouping of containers
-#   <http://knuckles.team/kg/infrastructure#Host>            — a reachable host in the tunnel-manager inventory
+#   <https://knuckles-team.github.io/ontology/infrastructure#Host>            — a reachable host in the tunnel-manager inventory
 # and the links :runsOn (Container->Host), :belongsToStack (Container->ContainerStack),
 # and the field :runtime. This leg only adds the volume / network / swarm resources and
 # the container-scoped links/fields the connector materializes.
@@ -27,18 +28,22 @@
 # --- net-new classes (owl:Class) ---
 
 :ContainerVolume a owl:Class ;
+    rdfs:subClassOf core:StorageContainer ;
     rdfs:label "Container Volume" ;
     rdfs:comment "A named persistent storage volume mounted into containers (cm_volume_operations: list_volumes / create_volume)." .
 
 :ContainerNetwork a owl:Class ;
+    rdfs:subClassOf core:ResourceGroup ;
     rdfs:label "Container Network" ;
     rdfs:comment "A container network (bridge/overlay/macvlan/host) that containers attach to (cm_network_operations: list_networks / create_network)." .
 
 :SwarmService a owl:Class ;
+    rdfs:subClassOf core:ConfigurationItem ;
     rdfs:label "Swarm Service" ;
     rdfs:comment "A Docker Swarm replicated/global service — a desired-state deployment of a container image across the cluster (cm_swarm_operations: list_services / create_service / scale_service)." .
 
 :SwarmNode a owl:Class ;
+    rdfs:subClassOf core:InfrastructureHost ;
     rdfs:label "Swarm Node" ;
     rdfs:comment "A node participating in a Docker Swarm cluster, with a manager/worker role (cm_swarm_operations: list_nodes)." .
 
@@ -47,10 +52,12 @@
 # cm_k8s_networking / cm_k8s_cluster) via cm_ingest_inventory and the connector presets.
 
 :Pod a owl:Class ;
+    rdfs:subClassOf core:ConfigurationItem ;
     rdfs:label "Kubernetes Pod" ;
     rdfs:comment "A Kubernetes Pod — the smallest schedulable unit, one or more co-located containers (cm_k8s_workloads: list_pods / describe_pod)." .
 
 :Deployment a owl:Class ;
+    rdfs:subClassOf core:Deployment ;
     rdfs:label "Kubernetes Deployment" ;
     rdfs:comment "A Kubernetes Deployment — declarative desired-state ReplicaSet controller for Pods (cm_k8s_workloads: list_services / create_service)." .
 
@@ -63,26 +70,32 @@
     rdfs:comment "The first container image reference returned by the deployment summary." .
 
 :StatefulSet a owl:Class ;
+    rdfs:subClassOf core:Deployment ;
     rdfs:label "Kubernetes StatefulSet" ;
     rdfs:comment "A Kubernetes StatefulSet — ordered, stable-identity Pod controller for stateful workloads (cm_k8s_workloads)." .
 
 :DaemonSet a owl:Class ;
+    rdfs:subClassOf core:Deployment ;
     rdfs:label "Kubernetes DaemonSet" ;
     rdfs:comment "A Kubernetes DaemonSet — runs a Pod copy on every (or selected) K8sNode (cm_k8s_workloads)." .
 
 :K8sService a owl:Class ;
+    rdfs:subClassOf core:ConfigurationItem ;
     rdfs:label "Kubernetes Service" ;
     rdfs:comment "A native Kubernetes (core/v1) Service exposing a set of Pods (ClusterIP/NodePort/LoadBalancer) (cm_k8s_networking: list_k8s_services)." .
 
 :Namespace a owl:Class ;
+    rdfs:subClassOf core:ResourceGroup ;
     rdfs:label "Kubernetes Namespace" ;
     rdfs:comment "A Kubernetes Namespace — a virtual cluster partition scoping most namespaced resources (cm_k8s_config: list_namespaces)." .
 
 :K8sNode a owl:Class ;
+    rdfs:subClassOf core:InfrastructureHost ;
     rdfs:label "Kubernetes Node" ;
     rdfs:comment "A Kubernetes worker/control-plane Node onto which Pods are scheduled (cm_k8s_cluster: list_nodes)." .
 
 :Ingress a owl:Class ;
+    rdfs:subClassOf core:Route ;
     rdfs:label "Kubernetes Ingress" ;
     rdfs:comment "A Kubernetes Ingress — HTTP(S) routing rules exposing K8sServices externally (cm_k8s_networking: list_ingress)." .
 
@@ -91,18 +104,18 @@
 :usesImage a owl:ObjectProperty ;
     rdfs:label "uses image" ;
     rdfs:comment "Links a Container, SwarmService, Pod or Deployment to the ContainerImage it was created from." ;
-    rdfs:range <http://knuckles.team/kg/infrastructure#ContainerImage> .
+    rdfs:range <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> .
 
 :builtFrom a owl:ObjectProperty ;
     rdfs:label "built from" ;
     rdfs:comment "Links a ContainerImage to the source-code Repository it was built from, resolved from the image's OCI org.opencontainers.image.source label (org.label-schema.vcs-url fallback) via cm_ingest_inventory. The gap-#1 predicate closing the service<->repo<->image provenance chain (reports/autonomous-sdlc-loop-design.md); scion_sdk.observability.repo_crosswalk owl:sameAs-unifies the resulting URL-keyed Repository node with the numeric-id node the code ingestors (github-agent/gitlab-api) create." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
-    rdfs:range :Repository .
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> ;
+    rdfs:range core:Repository .
 
 :mountsVolume a owl:ObjectProperty ;
     rdfs:label "mounts volume" ;
     rdfs:comment "Links a Container to a ContainerVolume it mounts." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#Container> ;
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#Container> ;
     rdfs:range :ContainerVolume .
 
 :attachedToNetwork a owl:ObjectProperty ;
@@ -118,7 +131,7 @@
 :hostsResource a owl:ObjectProperty ;
     rdfs:label "hosts resource" ;
     rdfs:comment "Links a Host to a Container, ContainerVolume, ContainerNetwork or SwarmNode it hosts." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#Host> .
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#Host> .
 
 # --- Kubernetes links (owl:ObjectProperty) ---
 
@@ -150,7 +163,7 @@
 :containerStatus a owl:DatatypeProperty ;
     rdfs:label "container status" ;
     rdfs:comment "Lifecycle status of a Container (running, exited, paused, created)." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#Container> ;
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#Container> ;
     rdfs:range xsd:string .
 
 :portMappings a owl:DatatypeProperty ;
@@ -161,19 +174,19 @@
 :imageRepository a owl:DatatypeProperty ;
     rdfs:label "image repository" ;
     rdfs:comment "Repository component of a ContainerImage reference (registry/namespace/name)." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> ;
     rdfs:range xsd:string .
 
 :imageTag a owl:DatatypeProperty ;
     rdfs:label "image tag" ;
     rdfs:comment "Tag component of a ContainerImage reference (e.g. latest, 1.29.1)." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> ;
     rdfs:range xsd:string .
 
 :imageSize a owl:DatatypeProperty ;
     rdfs:label "image size" ;
     rdfs:comment "Human-readable on-disk size of a ContainerImage (e.g. 142MB)." ;
-    rdfs:domain <http://knuckles.team/kg/infrastructure#ContainerImage> ;
+    rdfs:domain <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> ;
     rdfs:range xsd:string .
 
 :volumeDriver a owl:DatatypeProperty ;
@@ -267,7 +280,7 @@
     rdfs:domain :K8sNode ;
     rdfs:range xsd:string .
 
-<http://knuckles.team/kg/container> a owl:Ontology ;
+<https://knuckles-team.github.io/ontology/connector/container> a owl:Ontology ;
     rdfs:label "Container Manager Ontology" ;
     rdfs:comment """Container-runtime resource model for the container-manager-mcp connector —
     Docker / Podman / Swarm containers, images, volumes, networks, swarm services and nodes,
@@ -278,23 +291,23 @@
     scheduledOnK8sNode / exposedByIngress — materialized by the cm_k8s_* themed tools
     (cm_k8s_workloads / cm_k8s_config / cm_k8s_networking / cm_k8s_storage / cm_k8s_rbac /
     cm_k8s_cluster / cm_k8s_governance / cm_k8s_observability) via cm_ingest_inventory.
-    Reuses the hub <http://knuckles.team/kg/infrastructure#Container> / <http://knuckles.team/kg/infrastructure#ContainerImage> / :ContainerStack / <http://knuckles.team/kg/infrastructure#Host> classes and adds the
+    Reuses the hub <https://knuckles-team.github.io/ontology/infrastructure#Container> / <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> / :ContainerStack / <https://knuckles-team.github.io/ontology/infrastructure#Host> classes and adds the
     volume/network/swarm/k8s resources, federated into the scion-sdk knowledge-graph hub.""" .
 
 # ontology-codemod R3
-<http://knuckles.team/kg#ContainerNetwork> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Network> .
-<http://knuckles.team/kg#ContainerVolume> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Volume> .
-<http://knuckles.team/kg#K8sService> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#K8sService> .
-<http://knuckles.team/kg#Namespace> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Namespace> .
-<http://knuckles.team/kg#Pod> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Pod> .
-<http://knuckles.team/kg#SwarmService> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#SwarmService> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#ContainerNetwork> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Network> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#ContainerVolume> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Volume> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#K8sService> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#K8sService> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#Namespace> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Namespace> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#Pod> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Pod> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#SwarmService> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#SwarmService> .
 
 # A Kubernetes Deployment is the core orchestration-layer Deployment (a Workload), not a
 # run event (2026-11-06 correction of the R4 codemod mapping).
-<http://knuckles.team/kg#Deployment> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Deployment> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#Deployment> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Deployment> .
 
 # semantic-core mapping (AUD-007; reviewed against public Medulla 2.27.7)
-<http://knuckles.team/kg#Ingress> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#ProxyRoute> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#Ingress> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#ProxyRoute> .
 
 # --- whole-cluster management surface (2026-11-06) ---------------------------------------
 # Every class below rolls up to a medulla core class by rdfs:subClassOf (never owl:imports).
@@ -304,41 +317,44 @@
 :K8sCluster a owl:Class ;
     rdfs:label "Kubernetes Cluster" ;
     rdfs:comment "One Kubernetes control plane and its member K8sNodes, addressed by a container-manager context name (k8s_list_contexts)." ;
-    rdfs:subClassOf :ConfigurationItem .
+    rdfs:subClassOf core:ConfigurationItem .
 
-:K8sNode rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Node> .
-:StatefulSet rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
-:DaemonSet rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+:K8sNode rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Node> .
+:StatefulSet rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Workload> .
+:DaemonSet rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Workload> .
 
 :ReplicaSet a owl:Class ;
+    rdfs:subClassOf core:Deployment ;
     rdfs:label "Kubernetes ReplicaSet" ;
     rdfs:comment "One revision of a Deployment's pod template; rollout history and undo read these (k8s_rollout_history / k8s_rollout_undo)." ;
-    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+    rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Workload> .
 
 :K8sJob a owl:Class ;
+    rdfs:subClassOf core:Job ;
     rdfs:label "Kubernetes Job" ;
     rdfs:comment "A run-to-completion Pod controller (k8s_list_jobs / k8s_create_job)." ;
-    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+    rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Workload> .
 
 :K8sCronJob a owl:Class ;
+    rdfs:subClassOf core:Job ;
     rdfs:label "Kubernetes CronJob" ;
     rdfs:comment "A schedule that creates K8sJobs (k8s_list_cron_jobs)." ;
-    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Workload> .
+    rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Workload> .
 
 :ConfigMap a owl:Class ;
     rdfs:label "Kubernetes ConfigMap" ;
     rdfs:comment "Non-secret configuration consumed by Pods (k8s_list_configmaps / k8s_get_resource)." ;
-    rdfs:subClassOf :ConfigurationItem .
+    rdfs:subClassOf core:ConfigurationItem .
 
 :K8sSecret a owl:Class ;
     rdfs:label "Kubernetes Secret" ;
     rdfs:comment "Secret configuration consumed by Pods. Only metadata, key names and a data digest are recorded; values are returned solely by k8s_get_secret with reveal=true." ;
-    rdfs:subClassOf :ConfigurationItem .
+    rdfs:subClassOf core:ConfigurationItem .
 
 :ExternalSecret a owl:Class ;
     rdfs:label "External Secret" ;
     rdfs:comment "A declaration that projects values from a secret store into a K8sSecret and refreshes them on an interval (k8s_list_external_secrets / k8s_force_sync_external_secret)." ;
-    rdfs:subClassOf :ConfigurationItem .
+    rdfs:subClassOf core:ConfigurationItem .
 
 :projectsSecret a owl:ObjectProperty ;
     rdfs:label "projects secret" ;
@@ -353,19 +369,21 @@
     rdfs:range xsd:string .
 
 :PersistentVolume a owl:Class ;
+    rdfs:subClassOf core:StorageContainer ;
     rdfs:label "Kubernetes PersistentVolume" ;
     rdfs:comment "A unit of cluster storage; a local or hostPath volume pins its data to one K8sNode (k8s_list_persistent_volumes)." ;
-    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Volume> .
+    rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Volume> .
 
 :PersistentVolumeClaim a owl:Class ;
+    rdfs:subClassOf core:StorageContainer ;
     rdfs:label "Kubernetes PersistentVolumeClaim" ;
     rdfs:comment "A workload's request for storage, bound to one PersistentVolume (k8s_list_persistent_volume_claims)." ;
-    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Volume> .
+    rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Volume> .
 
 :StorageClass a owl:Class ;
     rdfs:label "Kubernetes StorageClass" ;
     rdfs:comment "The provisioning policy that creates PersistentVolumes (k8s_list_storage_classes)." ;
-    rdfs:subClassOf :Policy .
+    rdfs:subClassOf core:Policy .
 
 :boundToVolume a owl:ObjectProperty ;
     rdfs:label "bound to volume" ;
@@ -394,28 +412,32 @@
 :k8sNodeIsHost a owl:ObjectProperty ;
     rdfs:label "k8s node is host" ;
     rdfs:comment "Links a K8sNode to the physical Host it runs on, matched by node hostname = inventory host alias." ;
-    rdfs:subPropertyOf <http://knuckles.team/kg/infrastructure#isHost> ;
+    rdfs:subPropertyOf <https://knuckles-team.github.io/ontology/infrastructure#isHost> ;
     rdfs:domain :K8sNode ;
-    rdfs:range <http://knuckles.team/kg/infrastructure#Host> .
+    rdfs:range <https://knuckles-team.github.io/ontology/infrastructure#Host> .
 
 :CustomResourceDefinition a owl:Class ;
     rdfs:label "Kubernetes CustomResourceDefinition" ;
     rdfs:comment "A schema that extends the Kubernetes API with a new kind (k8s_list_crds / k8s_describe_crd); its objects are read with k8s_get_resource / k8s_list_resources." ;
-    rdfs:subClassOf :Schema .
+    rdfs:subClassOf core:Schema .
 
 :K8sEvent a owl:Class ;
     rdfs:label "Kubernetes Event" ;
     rdfs:comment "A cluster event about an object (k8s_list_events / k8s_get_resource_events)." ;
-    rdfs:subClassOf :Event .
+    rdfs:subClassOf core:Event .
 
 :ServicesManifest a owl:Class ;
+    rdfs:subClassOf core:DeploymentBlueprint ;
     rdfs:label "Services Manifest" ;
     rdfs:comment "A Kubernetes manifest file kept in the services/<name>/ repository: the source of truth a live object must match (k8s_diff_manifest reports drift)." ;
-    rdfs:subClassOf <http://knuckles.team/kg/infrastructure#DeploymentManifest> .
+    rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#DeploymentManifest> .
 
 :declaredBy a owl:ObjectProperty ;
     rdfs:label "declared by" ;
     rdfs:comment "Links a live Kubernetes object to the ServicesManifest that declares it." ;
     rdfs:range :ServicesManifest .
 
-<http://knuckles.team/kg#SwarmNode> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Node> .
+<https://knuckles-team.github.io/ontology/connector/container-manager#SwarmNode> rdfs:subClassOf <https://knuckles-team.github.io/ontology/infrastructure#Node> .
+
+<https://knuckles-team.github.io/ontology/connector/container-manager#name> a <http://www.w3.org/2002/07/owl#ObjectProperty> ;
+    <http://www.w3.org/2000/01/rdf-schema#label> "name" .

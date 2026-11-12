@@ -377,7 +377,8 @@ def test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core():
     graph = rdflib.Graph()
     graph.parse(ROOT / "ontology/surface_contracts.ttl", format="turtle")
     label = rdflib.RDFS.label
-    kg = rdflib.Namespace("http://knuckles.team/kg#")
+    kg = rdflib.Namespace("https://knuckles-team.github.io/ontology/core#")
+    CONNECTOR_NS = rdflib.Namespace("https://knuckles-team.github.io/ontology/connector/container-manager#")
     named = {
         kind: {
             str(graph.value(s, label))
@@ -396,7 +397,7 @@ def test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core():
 
     onto = rdflib.Graph()
     onto.parse(ROOT / "ontology/container.ttl", format="turtle")
-    infra = rdflib.Namespace("http://knuckles.team/kg/infrastructure#")
+    infra = rdflib.Namespace("https://knuckles-team.github.io/ontology/infrastructure#")
     for local, parent in (
         ("K8sNode", infra.Node),
         ("Deployment", infra.Deployment),

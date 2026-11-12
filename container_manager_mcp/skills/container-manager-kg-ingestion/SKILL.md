@@ -45,7 +45,7 @@ optional (ingestion no-ops cleanly without one).
 | `CONTAINER_MANAGER_HOST` | optional | Default host alias (else LOCAL socket) |
 
 The typed nodes match `container_manager_mcp.ontology` (`container.ttl`), federated into
-the hub under `http://knuckles.team/kg/container` (reusing the shared `:Container`,
+the hub under `https://knuckles-team.github.io/ontology/connector/container` (reusing the shared `:Container`,
 `:ContainerImage`, `:ContainerStack`, `:Host` classes).
 
 ## Tools & actions

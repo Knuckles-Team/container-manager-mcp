@@ -1,86 +1,87 @@
 # Surface contracts of container-manager-mcp: tool-use contracts, prompt/skill/tool
 # links, data locations and business roles, typed by the scion-sdk contract vocabulary
 # (every class extends a medulla core class; nothing is imported).
-@prefix kg: <http://knuckles.team/kg#> .
-@prefix sc: <https://knuckles-team.github.io/scion-sdk/contract#> .
+@prefix : <https://knuckles-team.github.io/ontology/connector/container-manager#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
+@prefix sc: <https://knuckles-team.github.io/ontology/surface-contract#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 
 <urn:scion:container-manager-mcp:contract:apply-manifest>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:apply-manifest.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:apply-manifest.2> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:apply-manifest.3> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:apply-manifest.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:apply-manifest.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:apply-manifest.3> ;
     rdfs:comment "Server-side apply a manifest and prove the cluster now matches it." ;
     sc:forTask <urn:scion:container-manager-mcp:task:apply-manifest> .
 
 <urn:scion:container-manager-mcp:contract:change-and-roll-back>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.2> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.3> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.4> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.3> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:change-and-roll-back.4> ;
     rdfs:comment "Change a workload, watch the rollout and return to the previous revision if it fails." ;
     sc:forTask <urn:scion:container-manager-mcp:task:change-and-roll-back> .
 
 <urn:scion:container-manager-mcp:contract:delete-object>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:delete-object.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:delete-object.1> ;
     rdfs:comment "Delete any object by apiVersion and kind, with confirmation." ;
     sc:forTask <urn:scion:container-manager-mcp:task:delete-object> .
 
 <urn:scion:container-manager-mcp:contract:force-sync-external-secret>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:force-sync-external-secret.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:force-sync-external-secret.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:force-sync-external-secret.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:force-sync-external-secret.2> ;
     rdfs:comment "Make an ExternalSecret re-read its store now and prove the target Secret was rebuilt." ;
     sc:forTask <urn:scion:container-manager-mcp:task:force-sync-external-secret> .
 
 <urn:scion:container-manager-mcp:contract:inspect-cluster>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:inspect-cluster.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:inspect-cluster.2> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:inspect-cluster.3> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:inspect-cluster.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:inspect-cluster.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:inspect-cluster.3> ;
     rdfs:comment "Health of every node, pod and recent event across all namespaces." ;
     sc:forTask <urn:scion:container-manager-mcp:task:inspect-cluster> .
 
 <urn:scion:container-manager-mcp:contract:map-data-locations>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:map-data-locations.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:map-data-locations.1> ;
     rdfs:comment "Which node and host path hold each volume's data." ;
     sc:forTask <urn:scion:container-manager-mcp:task:map-data-locations> .
 
 <urn:scion:container-manager-mcp:contract:persist-setting-to-services>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:persist-setting-to-services.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:persist-setting-to-services.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:persist-setting-to-services.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:persist-setting-to-services.2> ;
     rdfs:comment "Export a live object as a clean manifest for services/<name>/k8s/ and confirm no drift after the commit." ;
     sc:forTask <urn:scion:container-manager-mcp:task:persist-setting-to-services> .
 
 <urn:scion:container-manager-mcp:contract:read-secret-metadata>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:read-secret-metadata.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:read-secret-metadata.1> ;
     rdfs:comment "Read a Secret's key names and digest; values only with reveal=true." ;
     sc:forTask <urn:scion:container-manager-mcp:task:read-secret-metadata> .
 
 <urn:scion:container-manager-mcp:contract:restart-workload>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:restart-workload.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:restart-workload.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:restart-workload.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:restart-workload.2> ;
     rdfs:comment "Restart every pod of a Deployment, StatefulSet or DaemonSet." ;
     sc:forTask <urn:scion:container-manager-mcp:task:restart-workload> .
 
 <urn:scion:container-manager-mcp:contract:scale-workload>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:scale-workload.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:scale-workload.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:scale-workload.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:scale-workload.2> ;
     rdfs:comment "Scale a Deployment and wait until the rollout completes." ;
     sc:forTask <urn:scion:container-manager-mcp:task:scale-workload> .
 
 <urn:scion:container-manager-mcp:contract:troubleshoot-workload>
     a sc:ToolUseContract ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:troubleshoot-workload.1> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:troubleshoot-workload.2> ;
-    kg:hasStep <urn:scion:container-manager-mcp:step:troubleshoot-workload.3> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:troubleshoot-workload.1> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:troubleshoot-workload.2> ;
+    core:hasStep <urn:scion:container-manager-mcp:step:troubleshoot-workload.3> ;
     rdfs:comment "Find why a workload is unhealthy from its description, pods and logs." ;
     sc:forTask <urn:scion:container-manager-mcp:task:troubleshoot-workload> .
 
@@ -88,25 +89,25 @@
     a sc:DataLocation ;
     rdfs:label "cluster-api" ;
     sc:federationKey "namespace/name" ;
-    sc:holdsClass <http://knuckles.team/kg#ConfigMap> ;
-    sc:holdsClass <http://knuckles.team/kg#CustomResourceDefinition> ;
-    sc:holdsClass <http://knuckles.team/kg#DaemonSet> ;
-    sc:holdsClass <http://knuckles.team/kg#Deployment> ;
-    sc:holdsClass <http://knuckles.team/kg#ExternalSecret> ;
-    sc:holdsClass <http://knuckles.team/kg#Ingress> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sCluster> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sCronJob> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sEvent> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sJob> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sNode> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sSecret> ;
-    sc:holdsClass <http://knuckles.team/kg#K8sService> ;
-    sc:holdsClass <http://knuckles.team/kg#Namespace> ;
-    sc:holdsClass <http://knuckles.team/kg#PersistentVolumeClaim> ;
-    sc:holdsClass <http://knuckles.team/kg#Pod> ;
-    sc:holdsClass <http://knuckles.team/kg#ReplicaSet> ;
-    sc:holdsClass <http://knuckles.team/kg#StatefulSet> ;
-    sc:holdsClass <http://knuckles.team/kg#StorageClass> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ConfigMap> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#CustomResourceDefinition> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#DaemonSet> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Deployment> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ExternalSecret> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Ingress> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sCluster> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sCronJob> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sEvent> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sJob> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sNode> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sSecret> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sService> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Namespace> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#PersistentVolumeClaim> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Pod> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ReplicaSet> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#StatefulSet> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#StorageClass> ;
     sc:instance "in-cluster" ;
     sc:readTool <urn:scion:container-manager-mcp:tool:k8s_get_resource> ;
     sc:routeParam "context" ;
@@ -116,7 +117,7 @@
     a sc:DataLocation ;
     rdfs:label "node-local-volumes" ;
     sc:federationKey "node" ;
-    sc:holdsClass <http://knuckles.team/kg#PersistentVolume> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#PersistentVolume> ;
     sc:instance "per K8sNode (hostname = inventory host alias)" ;
     sc:readTool <urn:scion:container-manager-mcp:tool:k8s_cluster_topology> ;
     sc:routeParam "context" ;
@@ -126,7 +127,7 @@
     a sc:DataLocation ;
     rdfs:label "secret-store" ;
     sc:federationKey "namespace/name" ;
-    sc:holdsClass <http://knuckles.team/kg#ExternalSecret> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ExternalSecret> ;
     sc:instance "openbao ClusterSecretStore" ;
     sc:readTool <urn:scion:container-manager-mcp:tool:k8s_list_external_secrets> ;
     sc:routeParam "context" ;
@@ -136,14 +137,14 @@
     a sc:DataLocation ;
     rdfs:label "services-manifests" ;
     sc:federationKey "kind/namespace/name" ;
-    sc:holdsClass <http://knuckles.team/kg#ServicesManifest> ;
+    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ServicesManifest> ;
     sc:instance "services/<name> git repository" ;
     sc:readTool <urn:scion:container-manager-mcp:tool:k8s_diff_manifest> ;
     sc:routeParam "manifest_yaml" ;
     sc:store "k8s/*.yaml" .
 
 <urn:scion:container-manager-mcp:prompt:kubernetes-operator>
-    a kg:Prompt ;
+    a core:Prompt ;
     rdfs:label "kubernetes-operator" ;
     sc:agentKind "operator" ;
     sc:readsLocation <urn:scion:container-manager-mcp:location:cluster-api> ;
@@ -189,7 +190,7 @@
     sc:writesLocation <urn:scion:container-manager-mcp:location:services-manifests> .
 
 <urn:scion:container-manager-mcp:prompt:platform-reliability-engineer>
-    a kg:Prompt ;
+    a core:Prompt ;
     rdfs:label "platform-reliability-engineer" ;
     sc:agentKind "business-role" ;
     sc:businessRole <urn:scion:container-manager-mcp:role:platform-reliability> ;
@@ -286,7 +287,7 @@
     sc:servesTask <urn:scion:container-manager-mcp:task:troubleshoot-workload> .
 
 <urn:scion:container-manager-mcp:skill:container-manager-externalsecret-sync>
-    a kg:Skill ;
+    a core:Skill ;
     rdfs:label "container-manager-externalsecret-sync" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:force-sync-external-secret> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:read-secret-metadata> ;
@@ -295,7 +296,7 @@
     sc:usesTool <urn:scion:container-manager-mcp:tool:k8s_list_external_secrets> .
 
 <urn:scion:container-manager-mcp:skill:container-manager-gitops-persist>
-    a kg:Skill ;
+    a core:Skill ;
     rdfs:label "container-manager-gitops-persist" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:apply-manifest> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:persist-setting-to-services> ;
@@ -304,7 +305,7 @@
     sc:usesTool <urn:scion:container-manager-mcp:tool:k8s_export_manifest> .
 
 <urn:scion:container-manager-mcp:skill:container-manager-k8s-change-validation>
-    a kg:Skill ;
+    a core:Skill ;
     rdfs:label "container-manager-k8s-change-validation" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:apply-manifest> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:change-and-roll-back> ;
@@ -322,7 +323,7 @@
     sc:usesTool <urn:scion:container-manager-mcp:tool:k8s_scale_deployment> .
 
 <urn:scion:container-manager-mcp:skill:container-manager-kubernetes-operations>
-    a kg:Skill ;
+    a core:Skill ;
     rdfs:label "container-manager-kubernetes-operations" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:inspect-cluster> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:map-data-locations> ;
@@ -336,7 +337,7 @@
 
 <urn:scion:container-manager-mcp:step:apply-manifest.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:apply-manifest.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:apply-manifest.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_diff_manifest> ;
     sc:param "manifest_yaml" ;
     sc:param "namespace" ;
@@ -347,7 +348,7 @@
 
 <urn:scion:container-manager-mcp:step:apply-manifest.2>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:apply-manifest.3> ;
+    core:precedes <urn:scion:container-manager-mcp:step:apply-manifest.3> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_apply_manifest> ;
     sc:param "dry_run" ;
     sc:param "force_conflicts" ;
@@ -369,7 +370,7 @@
 
 <urn:scion:container-manager-mcp:step:change-and-roll-back.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:change-and-roll-back.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:change-and-roll-back.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_patch_resource> ;
     sc:param "name" ;
     sc:param "namespace" ;
@@ -381,7 +382,7 @@
 
 <urn:scion:container-manager-mcp:step:change-and-roll-back.2>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:change-and-roll-back.3> ;
+    core:precedes <urn:scion:container-manager-mcp:step:change-and-roll-back.3> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_rollout_status> ;
     sc:param "name" ;
     sc:param "namespace" ;
@@ -393,7 +394,7 @@
 
 <urn:scion:container-manager-mcp:step:change-and-roll-back.3>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:change-and-roll-back.4> ;
+    core:precedes <urn:scion:container-manager-mcp:step:change-and-roll-back.4> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_rollout_history> ;
     sc:param "name" ;
     sc:param "namespace" ;
@@ -430,7 +431,7 @@
 
 <urn:scion:container-manager-mcp:step:force-sync-external-secret.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:force-sync-external-secret.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:force-sync-external-secret.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_list_external_secrets> ;
     sc:param "all_namespaces" ;
     sc:param "namespace" ;
@@ -457,7 +458,7 @@
 
 <urn:scion:container-manager-mcp:step:inspect-cluster.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:inspect-cluster.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:inspect-cluster.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_list_nodes> ;
     sc:refusal <urn:scion:container-manager-mcp:refusal:inspect-cluster.1.not-entitled> ;
     sc:resultField "hostname" ;
@@ -467,7 +468,7 @@
 
 <urn:scion:container-manager-mcp:step:inspect-cluster.2>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:inspect-cluster.3> ;
+    core:precedes <urn:scion:container-manager-mcp:step:inspect-cluster.3> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_list_pods> ;
     sc:param "all_namespaces" ;
     sc:param "label_selector" ;
@@ -501,7 +502,7 @@
 
 <urn:scion:container-manager-mcp:step:persist-setting-to-services.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:persist-setting-to-services.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:persist-setting-to-services.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_export_manifest> ;
     sc:param "api_version" ;
     sc:param "kind" ;
@@ -533,7 +534,7 @@
 
 <urn:scion:container-manager-mcp:step:restart-workload.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:restart-workload.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:restart-workload.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_rollout_restart> ;
     sc:param "name" ;
     sc:param "namespace" ;
@@ -553,7 +554,7 @@
 
 <urn:scion:container-manager-mcp:step:scale-workload.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:scale-workload.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:scale-workload.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_scale_deployment> ;
     sc:param "name" ;
     sc:param "namespace" ;
@@ -575,7 +576,7 @@
 
 <urn:scion:container-manager-mcp:step:troubleshoot-workload.1>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:troubleshoot-workload.2> ;
+    core:precedes <urn:scion:container-manager-mcp:step:troubleshoot-workload.2> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_describe_deployment> ;
     sc:param "name" ;
     sc:param "namespace" ;
@@ -589,7 +590,7 @@
 
 <urn:scion:container-manager-mcp:step:troubleshoot-workload.2>
     a sc:ToolStep ;
-    kg:precedes <urn:scion:container-manager-mcp:step:troubleshoot-workload.3> ;
+    core:precedes <urn:scion:container-manager-mcp:step:troubleshoot-workload.3> ;
     sc:callsTool <urn:scion:container-manager-mcp:tool:k8s_list_pods> ;
     sc:param "label_selector" ;
     sc:param "namespace" ;
@@ -611,148 +612,148 @@
     sc:stepOrder 3 .
 
 <urn:scion:container-manager-mcp:task:apply-manifest>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "apply-manifest" .
 
 <urn:scion:container-manager-mcp:task:change-and-roll-back>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "change-and-roll-back" .
 
 <urn:scion:container-manager-mcp:task:delete-object>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "delete-object" .
 
 <urn:scion:container-manager-mcp:task:force-sync-external-secret>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "force-sync-external-secret" .
 
 <urn:scion:container-manager-mcp:task:inspect-cluster>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "inspect-cluster" .
 
 <urn:scion:container-manager-mcp:task:map-data-locations>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "map-data-locations" .
 
 <urn:scion:container-manager-mcp:task:persist-setting-to-services>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "persist-setting-to-services" .
 
 <urn:scion:container-manager-mcp:task:read-secret-metadata>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "read-secret-metadata" .
 
 <urn:scion:container-manager-mcp:task:restart-workload>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "restart-workload" .
 
 <urn:scion:container-manager-mcp:task:scale-workload>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "scale-workload" .
 
 <urn:scion:container-manager-mcp:task:troubleshoot-workload>
-    a kg:Task ;
+    a core:Task ;
     rdfs:label "troubleshoot-workload" .
 
 <urn:scion:container-manager-mcp:tool:k8s_apply_manifest>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_apply_manifest" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:apply-manifest> .
 
 <urn:scion:container-manager-mcp:tool:k8s_cluster_topology>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_cluster_topology" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:map-data-locations> .
 
 <urn:scion:container-manager-mcp:tool:k8s_delete_resource>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_delete_resource" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:delete-object> .
 
 <urn:scion:container-manager-mcp:tool:k8s_describe_deployment>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_describe_deployment" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:troubleshoot-workload> .
 
 <urn:scion:container-manager-mcp:tool:k8s_diff_manifest>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_diff_manifest" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:apply-manifest> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:persist-setting-to-services> .
 
 <urn:scion:container-manager-mcp:tool:k8s_export_manifest>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_export_manifest" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:persist-setting-to-services> .
 
 <urn:scion:container-manager-mcp:tool:k8s_force_sync_external_secret>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_force_sync_external_secret" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:force-sync-external-secret> .
 
 <urn:scion:container-manager-mcp:tool:k8s_get_resource>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_get_resource" .
 
 <urn:scion:container-manager-mcp:tool:k8s_get_secret>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_get_secret" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:read-secret-metadata> .
 
 <urn:scion:container-manager-mcp:tool:k8s_list_events>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_list_events" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:inspect-cluster> .
 
 <urn:scion:container-manager-mcp:tool:k8s_list_external_secrets>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_list_external_secrets" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:force-sync-external-secret> .
 
 <urn:scion:container-manager-mcp:tool:k8s_list_nodes>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_list_nodes" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:inspect-cluster> .
 
 <urn:scion:container-manager-mcp:tool:k8s_list_pods>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_list_pods" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:inspect-cluster> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:troubleshoot-workload> .
 
 <urn:scion:container-manager-mcp:tool:k8s_patch_resource>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_patch_resource" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:change-and-roll-back> .
 
 <urn:scion:container-manager-mcp:tool:k8s_read_pod_logs>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_read_pod_logs" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:troubleshoot-workload> .
 
 <urn:scion:container-manager-mcp:tool:k8s_rollout_history>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_rollout_history" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:change-and-roll-back> .
 
 <urn:scion:container-manager-mcp:tool:k8s_rollout_restart>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_rollout_restart" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:restart-workload> .
 
 <urn:scion:container-manager-mcp:tool:k8s_rollout_status>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_rollout_status" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:change-and-roll-back> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:restart-workload> ;
     sc:servesTask <urn:scion:container-manager-mcp:task:scale-workload> .
 
 <urn:scion:container-manager-mcp:tool:k8s_rollout_undo>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_rollout_undo" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:change-and-roll-back> .
 
 <urn:scion:container-manager-mcp:tool:k8s_scale_deployment>
-    a kg:Tool ;
+    a core:Tool ;
     rdfs:label "k8s_scale_deployment" ;
     sc:servesTask <urn:scion:container-manager-mcp:task:scale-workload> .
