@@ -441,7 +441,7 @@ def list_inventory_hosts() -> dict:
     Each alias targets a remote machine's Docker daemon over SSH
     (``ssh://<user>@<hostname>:<port>``), resolved from the tunnel-manager
     inventory (``$TUNNEL_INVENTORY``, else
-    ``$XDG_CONFIG_HOME/agent-connectors/inventory.yml``). Omit ``host`` to
+    ``$XDG_CONFIG_HOME/scion-sdk/inventory.yml``). Omit ``host`` to
     use the local Docker socket."""
     hm = _inventory_host_manager()
     hosts = {

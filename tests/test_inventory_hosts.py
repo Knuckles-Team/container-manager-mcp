@@ -20,7 +20,7 @@ def inventory(request, tmp_path, monkeypatch):
     local = use_actor(SYSTEM_ACTOR)
     local.__enter__()
     request.addfinalizer(lambda: local.__exit__(None, None, None))
-    path = tmp_path / "agent-connectors" / "inventory.yml"
+    path = tmp_path / "scion-sdk" / "inventory.yml"
     path.parent.mkdir()
 
     def write(hosts):

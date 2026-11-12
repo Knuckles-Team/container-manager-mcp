@@ -417,3 +417,5 @@
     rdfs:label "declared by" ;
     rdfs:comment "Links a live Kubernetes object to the ServicesManifest that declares it." ;
     rdfs:range :ServicesManifest .
+
+<http://knuckles.team/kg#SwarmNode> rdfs:subClassOf <http://knuckles.team/kg/infrastructure#Node> .
