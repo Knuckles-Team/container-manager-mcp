@@ -68,3 +68,35 @@ cm:externalSecretName a ac:PropertyBinding ;
     ac:contract cm:externalSecretAccess ; ac:property :name ; ac:field "name" .
 cm:externalSecretStore a ac:PropertyBinding ;
     ac:contract cm:externalSecretAccess ; ac:property :secretStoreName ; ac:field "store" .
+
+cm:containerAccess a ac:AccessContract ;
+    ac:classIri <https://knuckles-team.github.io/ontology/infrastructure#Container> ;
+    ac:sourceId "container-manager-mcp" ;
+    ac:entity "container" ;
+    ac:keyField "id" ;
+    ac:accessKind "mcp_tool" ;
+    ac:operation "docker_list_containers" ;
+    ac:pagination "none" ;
+    ac:freshnessSeconds 30 ;
+    ac:costHint "low" .
+
+cm:containerName a ac:PropertyBinding ;
+    ac:contract cm:containerAccess ; ac:property :name ; ac:field "name" .
+cm:containerStatus a ac:PropertyBinding ;
+    ac:contract cm:containerAccess ; ac:property :containerStatus ; ac:field "status" .
+
+cm:imageAccess a ac:AccessContract ;
+    ac:classIri <https://knuckles-team.github.io/ontology/infrastructure#ContainerImage> ;
+    ac:sourceId "container-manager-mcp" ;
+    ac:entity "image" ;
+    ac:keyField "id" ;
+    ac:accessKind "mcp_tool" ;
+    ac:operation "docker_list_images" ;
+    ac:pagination "none" ;
+    ac:freshnessSeconds 300 ;
+    ac:costHint "low" .
+
+cm:imageRepository a ac:PropertyBinding ;
+    ac:contract cm:imageAccess ; ac:property :imageRepository ; ac:field "repository" .
+cm:imageTag a ac:PropertyBinding ;
+    ac:contract cm:imageAccess ; ac:property :imageTag ; ac:field "tag" .

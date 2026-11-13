@@ -1,0 +1,10 @@
+[
+  {
+    "id": "a1b2c3d4e5f6",
+    "name": "fixture-web",
+    "image": "registry.example.invalid/library/nginx:1.29.1",
+    "status": "running",
+    "ports": "0.0.0.0:8080->80/tcp",
+    "created": "2026-01-15T10:05:00+00:00"
+  }
+]
