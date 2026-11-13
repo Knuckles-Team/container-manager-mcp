@@ -10,7 +10,9 @@ CONNECTOR = "container-manager-mcp"
 ROOT = Path(__file__).resolve().parent.parent / PACKAGE
 ONTOLOGY = ROOT / "ontology"
 TTL = ONTOLOGY / "container.ttl"
-MAPPINGS = (("Ingress", "http://knuckles.team/kg/infrastructure#ProxyRoute"),)
+MAPPINGS = (
+    ("Ingress", "https://knuckles-team.github.io/ontology/infrastructure#ProxyRoute"),
+)
 
 
 def test_approved_classes_reach_shared_core_parents():
@@ -18,7 +20,9 @@ def test_approved_classes_reach_shared_core_parents():
     graph.parse(TTL, format="turtle")
     for local_name, parent_iri in MAPPINGS:
         assert (
-            rdflib.URIRef(f"http://knuckles.team/kg#{local_name}"),
+            rdflib.URIRef(
+                f"https://knuckles-team.github.io/ontology/connector/container-manager#{local_name}"
+            ),
             rdflib.RDFS.subClassOf,
             rdflib.URIRef(parent_iri),
         ) in graph

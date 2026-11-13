@@ -377,7 +377,7 @@ def test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core():
     graph = rdflib.Graph()
     graph.parse(ROOT / "ontology/surface_contracts.ttl", format="turtle")
     label = rdflib.RDFS.label
-    kg = rdflib.Namespace("http://knuckles.team/kg#")
+    kg = rdflib.Namespace("https://knuckles-team.github.io/ontology/core#")
     named = {
         kind: {
             str(graph.value(s, label))
@@ -396,7 +396,10 @@ def test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core():
 
     onto = rdflib.Graph()
     onto.parse(ROOT / "ontology/container.ttl", format="turtle")
-    infra = rdflib.Namespace("http://knuckles.team/kg/infrastructure#")
+    infra = rdflib.Namespace("https://knuckles-team.github.io/ontology/infrastructure#")
+    pack = rdflib.Namespace(
+        "https://knuckles-team.github.io/ontology/connector/container-manager#"
+    )
     for local, parent in (
         ("K8sNode", infra.Node),
         ("Deployment", infra.Deployment),
@@ -405,7 +408,7 @@ def test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core():
         ("PersistentVolume", infra.Volume),
         ("CustomResourceDefinition", kg.Schema),
     ):
-        assert (kg[local], rdflib.RDFS.subClassOf, parent) in onto, local
+        assert (pack[local], rdflib.RDFS.subClassOf, parent) in onto, local
     assert not list(onto.objects(None, rdflib.OWL.imports))
 
 

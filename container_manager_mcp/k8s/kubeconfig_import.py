@@ -49,7 +49,7 @@ from typing import Any
 
 import httpx
 from scion_sdk.auth.oidc import discover_token_endpoint
-from scion_sdk.http.client import create_http_client
+from scion_sdk.http.client import build_http_client
 from scion_sdk.http.options import HttpClientOptions
 from scion_sdk.tls.resolve import resolve_tls_profile
 
@@ -233,7 +233,7 @@ def _oidc_password_grant(
     del insecure
     tls = _oidc_tls_profile(ca_cert)
     try:
-        client = create_http_client(
+        client = build_http_client(
             HttpClientOptions(base_url=issuer.rstrip("/"), timeout=30, tls=tls),
             transport=transport,
         )
