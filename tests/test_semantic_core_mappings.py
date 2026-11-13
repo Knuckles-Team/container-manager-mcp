@@ -21,7 +21,7 @@ def test_approved_classes_reach_shared_core_parents():
     for local_name, parent_iri in MAPPINGS:
         assert (
             rdflib.URIRef(
-                f"https://knuckles-team.github.io/ontology/core#{local_name}"
+                f"https://knuckles-team.github.io/ontology/connector/container-manager#{local_name}"
             ),
             rdflib.RDFS.subClassOf,
             rdflib.URIRef(parent_iri),
