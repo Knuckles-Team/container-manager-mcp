@@ -1,0 +1,10 @@
+[
+  {
+    "id": "sha256:0f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff",
+    "repository": "registry.example.invalid/library/nginx",
+    "tag": "1.29.1",
+    "created": "2026-01-15T10:00:00+00:00",
+    "size": "187.4MB",
+    "labels": null
+  }
+]

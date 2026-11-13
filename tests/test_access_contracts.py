@@ -75,3 +75,72 @@ def test_missing_available_condition_is_unknown():
         _K8sBase._deployment_summary(_FixtureManager(), _deployment(None))["status"]
         == "unknown"
     )
+
+
+class _RecordedManager:
+    """Serves one recorded response for every list read."""
+
+    def __init__(self, records):
+        self._records = records
+
+    def list_images(self):
+        return self._records
+
+    def list_containers(self, all=False):
+        return self._records
+
+    def list_pods(self, namespace=None, label_selector=None, all_namespaces=False):
+        return self._records
+
+
+def _contracts():
+    text = (ROOT / "container_manager_mcp/ontology/access_contracts.ttl").read_text()
+    return {c.entity: c for c in parse_access_contracts(text)}
+
+
+def _serve(contract, records):
+    async def call():
+        server, _, _ = get_mcp_instance()
+        with patch(
+            "container_manager_mcp.container_manager.create_manager",
+            return_value=_RecordedManager(records),
+        ):
+            async with Client(server) as client:
+                return await client.call_tool(
+                    contract.operation, {}, raise_on_error=False
+                )
+
+    result = asyncio.run(call())
+    assert not result.is_error
+    return json.loads(result.content[0].text)
+
+
+def _check(entity, class_local, key, fields):
+    contract = _contracts()[entity]
+    recording = json.loads((ROOT / f"tests/recordings/{entity}.json").read_text())
+    assert contract.class_iri.endswith(class_local)
+    assert contract.key_field == key
+    assert contract.access_kind == "mcp_tool"
+    assert contract.pagination
+    assert {field for _, field in contract.predicates} == fields
+    ontology = (ROOT / "container_manager_mcp/ontology/container.ttl").read_text()
+    for prop, _ in contract.predicates:
+        local = prop.rsplit("#", 1)[-1]
+        assert local == "name" or f":{local} a owl:DatatypeProperty" in ontology
+    records = _serve(contract, recording)
+    assert records == recording
+    for record in records:
+        assert key in record
+        assert all(field in record for _, field in contract.predicates)
+
+
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R002")
+def test_competency_contracts_certified():
+    _check("image", "ContainerImage", "id", {"repository", "tag"})
+
+
+@pytest.mark.spec("CONN-CONTAINER-MANAGER-MCP-CONNECTOR-CONTENT-R003")
+def test_pod_container_image_contracts():
+    _check("pod", "Pod", "name", {"name", "status"})
+    _check("container", "Container", "id", {"name", "status"})
+    _check("image", "ContainerImage", "id", {"repository", "tag"})

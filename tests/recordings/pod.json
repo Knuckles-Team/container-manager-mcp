@@ -1,0 +1,11 @@
+[
+  {
+    "name": "fixture-web-7c9d8b6f5-abcde",
+    "namespace": "fixture-namespace",
+    "status": "Running",
+    "node": "fixture-node",
+    "created": "2026-01-15T10:10:00+00:00",
+    "labels": {"app": "fixture-web"},
+    "restarts": 0
+  }
+]
