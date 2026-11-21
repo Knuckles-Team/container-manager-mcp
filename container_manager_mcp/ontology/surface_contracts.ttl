@@ -5,6 +5,7 @@
 @prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix sc: <https://knuckles-team.github.io/ontology/surface-contract#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix infra: <https://knuckles-team.github.io/ontology/infrastructure#> .
 
 <urn:scion:container-manager-mcp:contract:apply-manifest>
     a sc:ToolUseContract ;
@@ -92,7 +93,7 @@
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ConfigMap> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#CustomResourceDefinition> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#DaemonSet> ;
-    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Deployment> ;
+    sc:holdsClass infra:DeploymentWorkload ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ExternalSecret> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Ingress> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sCluster> ;
@@ -101,10 +102,10 @@
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sJob> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sNode> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sSecret> ;
-    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#K8sService> ;
-    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Namespace> ;
+    sc:holdsClass infra:K8sService ;
+    sc:holdsClass infra:Namespace ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#PersistentVolumeClaim> ;
-    sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#Pod> ;
+    sc:holdsClass infra:Pod ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#ReplicaSet> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#StatefulSet> ;
     sc:holdsClass <https://knuckles-team.github.io/ontology/connector/container-manager#StorageClass> ;
