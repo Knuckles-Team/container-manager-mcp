@@ -402,7 +402,6 @@ def test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core():
     )
     for local, parent in (
         ("K8sNode", infra.Node),
-        ("Deployment", infra.Deployment),
         ("StatefulSet", infra.Workload),
         ("ExternalSecret", kg.ConfigurationItem),
         ("PersistentVolume", infra.Volume),

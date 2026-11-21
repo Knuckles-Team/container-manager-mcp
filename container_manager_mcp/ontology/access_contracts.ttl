@@ -1,9 +1,10 @@
 @prefix ac: <https://knuckles-team.github.io/ontology/access#> .
 @prefix : <https://knuckles-team.github.io/ontology/connector/container-manager#> .
 @prefix cm: <https://knuckles-team.github.io/ontology/connector/container-access#> .
+@prefix infra: <https://knuckles-team.github.io/ontology/infrastructure#> .
 
 cm:deploymentAccess a ac:AccessContract ;
-    ac:classIri :Deployment ;
+    ac:classIri infra:DeploymentWorkload ;
     ac:sourceId "container-manager-mcp" ;
     ac:entity "deployment" ;
     ac:keyField "id" ;
@@ -19,7 +20,7 @@ cm:image a ac:PropertyBinding ;
     ac:contract cm:deploymentAccess ; ac:property :deploymentImageReference ; ac:field "image" .
 
 cm:podAccess a ac:AccessContract ;
-    ac:classIri :Pod ;
+    ac:classIri infra:Pod ;
     ac:sourceId "container-manager-mcp" ;
     ac:entity "pod" ;
     ac:keyField "name" ;
