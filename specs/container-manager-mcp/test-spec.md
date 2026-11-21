@@ -25,6 +25,12 @@ Governing spec: [spec.md](spec.md).
 | `CONN-CONTAINER-MANAGER-MCP-R016` | Unit | `tests/test_k8s_management.py::test_contracts_name_served_tools_prompts_and_skills_and_roll_up_to_core` |
 | `CONN-CONTAINER-MANAGER-MCP-R017` | Unit | `tests/test_k8s_management.py::test_deployment_describe_scale_and_pod_logs_take_a_namespace` |
 | `CONN-CONTAINER-MANAGER-MCP-R018` | Unit | `tests/test_k8s_management.py::test_context_pool_is_built_once_per_process` |
+| `CONN-CONTAINER-MANAGER-MCP-R019` | Unit | `tests/test_inventory_hosts.py::test_docker_host_passes_the_inventory_identity_file` |
+| `CONN-CONTAINER-MANAGER-MCP-R020` | Unit | `tests/test_inventory_hosts.py::test_docker_host_passes_the_inventory_proxy_command` |
+| `CONN-CONTAINER-MANAGER-MCP-R021` | Unit | `tests/test_compose_remote.py::test_compose_up_sets_docker_host_for_a_remote_manager` |
+| `CONN-CONTAINER-MANAGER-MCP-R022` | Unit | `tests/test_inventory_hosts.py::test_cm_list_hosts_text_names_the_resolved_inventory_path` |
+| `CONN-CONTAINER-MANAGER-MCP-R023` | Unit | `tests/test_doctor_rbac.py::test_role_manifests_contain_no_wildcard_and_the_doctor_reports_reachable_groups` |
+| `CONN-CONTAINER-MANAGER-MCP-R024` | Unit | `tests/test_multi_context_manager.py::test_context_verifies_the_tls_server_name_and_fails_closed` |
 
 The tests run against the production server object. They need no vendor requests.
 
