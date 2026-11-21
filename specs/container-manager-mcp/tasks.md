@@ -27,3 +27,9 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Order is pr
 - [x] T021 [US1] CONN-CONTAINER-MANAGER-MCP-R016 Ontology contracts and core roll-up.
 - [x] T022 [US1] CONN-CONTAINER-MANAGER-MCP-R017 Deployments and logs in any namespace.
 - [x] T023 [US1] CONN-CONTAINER-MANAGER-MCP-R018 One context pool per process.
+- [ ] T024 [US1] CONN-CONTAINER-MANAGER-MCP-R019 Inventory identity file reaches Docker over SSH.
+- [ ] T025 [US1] CONN-CONTAINER-MANAGER-MCP-R020 Inventory proxy command reaches Docker over SSH.
+- [ ] T026 [US1] CONN-CONTAINER-MANAGER-MCP-R021 Compose targets the selected host.
+- [ ] T027 [US1] CONN-CONTAINER-MANAGER-MCP-R022 Inventory path text names the served path.
+- [ ] T028 [US1] CONN-CONTAINER-MANAGER-MCP-R023 Least-privilege role per target context.
+- [ ] T029 [US1] CONN-CONTAINER-MANAGER-MCP-R024 A remote single-node context keeps its TLS identity.
