@@ -2,16 +2,7 @@
 name: container-manager-kubernetes-operations
 skill_type: skill
 description: >-
-  Full operational Kubernetes surface via the container-manager-mcp MCP server —
-  workloads (pods/rollouts/StatefulSets/DaemonSets/ReplicaSets/Jobs/CronJobs),
-  config (ConfigMaps/Secrets/Namespaces/CRDs/patch), networking (Ingress/native
-  Services/NetworkPolicy/DNS), storage (PV/PVC/StorageClass/snapshots/CSI), RBAC
-  (roles/bindings/tokens/access reviews/pod security), cluster (nodes/contexts/
-  CSRs/admission plugins), governance (quotas/limits/PDB/HPA), and observability
-  (metrics/watch/debug). Use when the agent must drive real k8s migrations,
-  sustain, or ops work on a cluster. Do NOT use for Docker/Podman single-host
-  lifecycle (container-manager-lifecycle), Docker Swarm (container-manager-swarm),
-  or rootless Podman pods (container-manager-podman-operations).
+  Whole-cluster Kubernetes operations via container-manager-mcp: workloads and rollouts, config, networking, storage, RBAC, nodes, governance and observability. Use for real k8s migration, sustain or ops work on a cluster. Do NOT use for Docker/Podman hosts (container-manager-lifecycle), Swarm, or Podman pods.
 license: MIT
 tags: [container-manager-mcp, kubernetes, k8s, cluster, ops, mcp]
 metadata:
@@ -20,11 +11,31 @@ metadata:
 ---
 # Kubernetes Operations
 
+Scope: Full operational Kubernetes surface via the container-manager-mcp MCP server — workloads (pods/rollouts/StatefulSets/DaemonSets/ReplicaSets/Jobs/CronJobs), config (ConfigMaps/Secrets/Namespaces/CRDs/patch), networking (Ingress/native Services/NetworkPolicy/DNS), storage (PV/PVC/StorageClass/snapshots/CSI), RBAC (roles/bindings/tokens/access reviews/pod security), cluster (nodes/contexts/ CSRs/admission plugins), governance (quotas/limits/PDB/HPA), and observability (metrics/watch/debug). Use when the agent must drive real k8s migrations, sustain, or ops work on a cluster. Do NOT use for Docker/Podman single-host lifecycle (container-manager-lifecycle), Docker Swarm (container-manager-swarm), or rootless Podman pods (container-manager-podman-operations).
+
 Whole-cluster Kubernetes management through the **container-manager-mcp** server, one
 typed tool per operation, named `k8s_<operation>`. Reach it through arbora:
 `find(intent='kubernetes ...')`, then `act(op='fleet.call', params={'server':
 'container-manager-mcp', 'tool': 'k8s_list_pods', 'arguments': {...}})`. Never shell out to
 `kubectl`.
+
+## Steps
+
+1. Sweep node health with `k8s_list_nodes` and verify every node reports Ready.
+2. Locate the workload with `k8s_list_pods(all_namespaces=true)` and verify the target pods appear in the expected phase.
+3. Preview the change with `k8s_diff_manifest(manifest_yaml)` and verify only the intended `paths` report `drift=true`.
+4. Apply the change with `k8s_apply_manifest(manifest_yaml)` or `k8s_patch_resource` and verify `k8s_rollout_status` returns `complete=true`.
+5. Roll back a bad change with `k8s_rollout_undo` and verify `k8s_describe_deployment` shows the previous template.
+6. Persist the change through `container-manager-gitops-persist` and verify `k8s_diff_manifest` returns `drift=false` for every document.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Forbidden or unauthorized | The caller lacks `k8s:*` or `k8s:<context>` entitlement | Ask the owner to grant the entitlement for that context, then repeat the call with the same `context` argument |
+| Delete or drain refused | `confirm=true` was not passed to `k8s_delete_resource`, `k8s_delete_namespace` or `k8s_drain_node` | Pass `confirm=true` after the user has approved the destructive action |
+| Rollout never completes | Pods crash or stay Pending | Read `k8s_describe_deployment` and `k8s_read_pod_logs(previous=true)` for the cause, or revert with `k8s_rollout_undo` |
+| Secret values redacted | `k8s_get_resource` and `k8s_get_secret` hide values by default | Pass `reveal=true` only when the user explicitly asks for the value |
 
 ## When to use
 - Read the cluster: nodes, pods and events in every namespace, logs, any object of any

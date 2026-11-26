@@ -2,13 +2,7 @@
 name: container-manager-kg-ingestion
 skill_type: skill
 description: >-
-  Snapshot a host's Docker/Podman/Swarm inventory into the epistemic-graph
-  knowledge graph as typed OWL nodes via the container-manager-mcp MCP server —
-  containers, images, volumes, networks, swarm services and nodes, with their
-  :usesImage / :runsOn / :builtFrom links. Use when the agent must record live
-  container state into the KG for cross-source reasoning, drift detection, or provenance.
-  Do NOT use for operating containers (use container-manager-lifecycle) or
-  managing swarm services (use container-manager-swarm).
+  Snapshot a host's Docker, Podman or Swarm inventory (and Kubernetes pods, deployments, namespaces, services) into the knowledge graph as typed OWL nodes via container-manager-mcp. Use to record live container state for reasoning, drift detection or provenance. Do NOT use to operate containers or manage swarm services.
 license: MIT
 tags: [container-manager-mcp, knowledge-graph, ingestion, ontology, mcp]
 metadata:
@@ -17,10 +11,29 @@ metadata:
 ---
 # Container Inventory → Knowledge Graph
 
+Scope: Snapshot a host's Docker/Podman/Swarm inventory into the epistemic-graph knowledge graph as typed OWL nodes via the container-manager-mcp MCP server — containers, images, volumes, networks, swarm services and nodes, with their :usesImage / :runsOn / :builtFrom links. Use when the agent must record live container state into the KG for cross-source reasoning, drift detection, or provenance. Do NOT use for operating containers (use container-manager-lifecycle) or managing swarm services (use container-manager-swarm).
+
 Push a host's live container inventory into the ONE epistemic-graph knowledge graph as
 **typed OWL nodes**, natively from the **container-manager-mcp** server. Best-effort and
 engine-guarded: with no reachable KG engine the tool still lists the inventory and reports
 `ingested: null` per modality.
+
+## Steps
+
+1. List the reachable hosts with `cm_list_hosts` and verify the alias you will ingest from is present (omit `host` for the local socket).
+2. Take a full snapshot with `cm_ingest_inventory modality=all` and verify the response holds a `modalities` object with a `listed` count for each modality.
+3. For Swarm, snapshot services and nodes with `cm_ingest_inventory modality=services host=<manager-alias>` and verify the result carries no per-modality `error`.
+4. For Kubernetes, snapshot the cluster with `cm_ingest_inventory modality=pods manager_type=kubernetes` and verify `listed` is above zero.
+5. Re-run `cm_ingest_inventory modality=containers` and verify `ingested` is not null and the counts match the first run, since ids MERGE in place.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `ingested` is null | No knowledge-graph engine was reachable, so only the listing ran | Restore the engine connection, then repeat `cm_ingest_inventory modality=all` and check that `ingested` is populated |
+| Swarm modality returns an `error` | `host` points at a worker or a non-Swarm engine | Pass the swarm manager alias from `cm_list_hosts` as `host` |
+| Unknown host alias | The alias is not in the tunnel-manager inventory | Pick an alias printed by `cm_list_hosts`, or omit `host` for the local socket |
+| Kubernetes modality is empty or errors | The active manager is Docker, not Kubernetes | Set `CONTAINER_MANAGER_TYPE=kubernetes` and pass `manager_type=kubernetes` on the call |
 
 ## When to use
 - Record the current containers/images/volumes/networks (and swarm services/nodes) of a

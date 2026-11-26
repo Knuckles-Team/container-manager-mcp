@@ -2,13 +2,7 @@
 name: container-manager-multi-context
 skill_type: skill
 description: >-
-  Operate several container backends and contexts at once — Kubernetes, Docker,
-  Podman, and Swarm — via the container-manager-mcp MCP server's cm_multi_context
-  tool, with per-call backend/context selection and parallel fan-out across a
-  configured pool of contexts. Use when the agent must compare, migrate between,
-  or simultaneously act on multiple clusters/engines/hosts. Do NOT use for
-  single-backend operations, which are cheaper via the themed skills
-  (container-manager-lifecycle / -swarm / -kubernetes-operations / -podman-operations).
+  Operate several backends and contexts at once (Kubernetes, Docker, Podman, Swarm) through container-manager-mcp cm_multi_context, with per-call context selection and fan-out. Use to compare, migrate between, or act on multiple clusters or hosts. Do NOT use for single-backend work, which the themed skills handle.
 license: MIT
 tags: [container-manager-mcp, multi-context, kubernetes, docker, podman, swarm, mcp]
 metadata:
@@ -17,11 +11,29 @@ metadata:
 ---
 # Multi-Context Container Management
 
+Scope: Operate several container backends and contexts at once — Kubernetes, Docker, Podman, and Swarm — via the container-manager-mcp MCP server's cm_multi_context tool, with per-call backend/context selection and parallel fan-out across a configured pool of contexts. Use when the agent must compare, migrate between, or simultaneously act on multiple clusters/engines/hosts. Do NOT use for single-backend operations, which are cheaper via the themed skills (container-manager-lifecycle / -swarm / -kubernetes-operations / -podman-operations).
+
 Domain-typed control across a **pool of backends and contexts** — Kubernetes clusters,
 Docker hosts, Podman, and Swarm managers — through the single `cm_multi_context` tool
 on the **container-manager-mcp** server. Each call selects a `backend` (and optional
 `context`) so one MCP server can drive many environments without reconnecting. Best
 suited to cross-cluster comparisons, staged migrations, and fan-out operations.
+
+## Steps
+
+1. List the configured pool with `cm_multi_context action=list_contexts` and verify every expected backend and context name appears.
+2. Read one context with `cm_multi_context action=list_pods backend=kubernetes context=<name> namespace=<ns>` and verify pods are returned.
+3. Read the second context with `cm_multi_context action=list_pods backend=kubernetes context=<other> namespace=<ns>` and verify the counts can be compared with the first result.
+4. Change a deployment with `cm_multi_context action=scale_deployment backend=kubernetes context=<name> name=<deployment> namespace=<ns> replicas=<n>` and verify `action=list_deployments` shows the new replica count.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Context fails to resolve | The name is not in the `K8S_CONTEXTS`, `DOCKER_CONTEXTS` or `SWARM_CONTEXTS` pool | Copy a name from the `list_contexts` output, or add the pool entry in the server environment and restart |
+| `describe_pod` or `scale_deployment` rejected | `namespace` or `replicas` was omitted | Pass `namespace` and, for scaling, `replicas` |
+| Podman context not selectable | Podman is local-only in multi-context mode | Use `backend=podman` without `context`, or switch to `container-manager-podman-operations` |
+| Fan-out is slow across many contexts | The thread pool is bounded by `MULTI_CONTEXT_MAX_WORKERS` | Raise `MULTI_CONTEXT_MAX_WORKERS` in the server environment or query fewer contexts per call |
 
 ## When to use
 - Enumerate every configured backend/context and its health in one call

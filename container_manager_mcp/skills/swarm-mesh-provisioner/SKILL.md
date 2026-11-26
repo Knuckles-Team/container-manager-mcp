@@ -26,6 +26,23 @@ Stateless atomic operation to establish multi-node container orchestration clust
 
 ## Steps
 
+1. Initialize the manager with `docker swarm init --advertise-addr <manager-ip>` and verify `docker info` reports `Swarm: active`.
+2. Fetch the worker token with `docker swarm join-token worker` and verify the output contains a join command.
+3. Join each worker through tunnel-manager-mcp with `docker swarm join --token <token> <manager-ip>:2377` and verify `docker info` on the worker reports `Swarm: active`.
+4. Create the overlay with `docker network create --driver overlay --attachable --opt encrypted overlay-net` and verify `docker network ls` shows it with scope `swarm`.
+5. Check membership with `docker node ls` on the manager and verify every node is `Ready` and `Active`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `swarm init` reports the node is already in a swarm | Swarm mode is already active | Read `docker info` and reuse the existing swarm, or leave it with `docker swarm leave --force` only after the user confirms |
+| Worker join times out | The manager is unreachable on port 2377 | Check the route to `<manager-ip>:2377` from the worker and fix the firewall or advertise address |
+| Join is rejected | The token is stale or for the wrong role | Read a fresh token with `docker swarm join-token worker` and join again with it |
+| Overlay creation fails | The command ran on a worker | Run `docker network create` on the manager node |
+
+## Procedure detail
+
 ### Step 1: Initialize Swarm Manager
 On the target Manager node, verify Swarm status. If inactive:
 - Run `docker swarm init` specifying advertise address.

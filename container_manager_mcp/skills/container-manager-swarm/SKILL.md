@@ -2,12 +2,7 @@
 name: container-manager-swarm
 skill_type: skill
 description: >-
-  Docker Swarm cluster orchestration via the container-manager-mcp MCP server —
-  initialize/leave a swarm, list nodes and services, and create or remove
-  replicated services across the cluster. Use when the agent must operate a
-  multi-host Swarm from a manager node, inventory cluster services/nodes, or
-  deploy a service. Do NOT use for single-host container/image lifecycle (use
-  container-manager-lifecycle), standalone docker-compose, or Kubernetes.
+  Docker Swarm orchestration via container-manager-mcp: initialize or leave a swarm, list nodes and services, create or remove replicated services. Use to operate a multi-host Swarm from a manager node or deploy a service. Do NOT use for single-host container lifecycle, plain compose, or Kubernetes.
 license: MIT
 tags: [container-manager-mcp, docker, swarm, orchestration, cluster, mcp]
 metadata:
@@ -16,9 +11,28 @@ metadata:
 ---
 # Docker Swarm Orchestration
 
+Scope: Docker Swarm cluster orchestration via the container-manager-mcp MCP server — initialize/leave a swarm, list nodes and services, and create or remove replicated services across the cluster. Use when the agent must operate a multi-host Swarm from a manager node, inventory cluster services/nodes, or deploy a service. Do NOT use for single-host container/image lifecycle (use container-manager-lifecycle), standalone docker-compose, or Kubernetes.
+
 Domain-typed control of a Docker **Swarm** cluster through the **container-manager-mcp**
 server. These operate the cluster control plane (services + nodes) and must be aimed at a
 swarm **manager** node.
+
+## Steps
+
+1. List the host aliases with `cm_list_hosts` and verify the swarm manager alias is present.
+2. Inventory nodes with `cm_swarm_operations action=list_nodes host=<manager-alias>` and verify the manager nodes report Ready.
+3. Inventory services with `cm_swarm_operations action=list_services host=<manager-alias>` and verify the expected services and replica counts.
+4. Deploy with `cm_swarm_operations action=create_service name=<name> image=<image> replicas=<n> host=<manager-alias>` and verify `list_services` shows the service.
+5. Remove it with `cm_swarm_operations action=remove_service service_id=<id> host=<manager-alias>` and verify `list_services` no longer lists it.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| `This node is not a swarm manager` | `host` points at a worker node | Pass the manager alias from `cm_list_hosts` as `host` |
+| `create_service` rejected | `name` or `image` is missing | Pass both `name` and `image`, plus `replicas` for the desired count |
+| `leave_swarm` refused on a manager | `force=true` was not passed | Pass `force=true` after the user confirms the membership change |
+| List calls fail against a cluster | The target speaks the Kubernetes API, not Swarm | Use `container-manager-kubernetes-operations` for that cluster |
 
 ## When to use
 - Inventory swarm nodes (role/availability/status) and services (image/replicas/ports).

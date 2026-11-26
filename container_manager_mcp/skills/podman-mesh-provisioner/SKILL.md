@@ -1,13 +1,8 @@
 ---
 name: podman-mesh-provisioner
 skill_type: skill
-description: >
-  Podman Mesh Provisioner atomic skill. Provisions a Podman container control
-  plane — rootful OR rootless — enabling the Podman API socket, wiring
-  podman-compose, and registering remote hosts as Podman system connections over
-  SSH, using container-manager-mcp. The Podman peer of swarm-mesh-provisioner and
-  kubernetes-mesh-provisioner. Triggers on "provision podman", "rootless podman",
-  "podman-compose cluster", "set up podman hosts".
+description: >-
+  Podman Mesh Provisioner atomic skill. Provisions a Podman container control plane — rootful OR rootless — enabling the Podman API socket, wiring podman-compose, and registering remote hosts as Podman system connections over SSH, using container-manager-mcp. The Podman peer of swarm-mesh-provisioner and kubernetes-mesh-provisioner.
 domain: infrastructure
 tags:
   - podman
@@ -21,6 +16,8 @@ requires:
 ---
 
 # Podman Mesh Provisioner Skill
+
+Scope: Podman Mesh Provisioner atomic skill. Provisions a Podman container control plane — rootful OR rootless — enabling the Podman API socket, wiring podman-compose, and registering remote hosts as Podman system connections over SSH, using container-manager-mcp. The Podman peer of swarm-mesh-provisioner and kubernetes-mesh-provisioner. Triggers on "provision podman", "rootless podman", "podman-compose cluster", "set up podman hosts".
 
 Stateless atomic operation to stand up a Podman-based container runtime — **rootful
 or rootless** — across one or more hosts, as a first-class peer to Docker Swarm and
@@ -44,6 +41,23 @@ Kubernetes. Podman has no built-in clustering daemon; the "mesh" is the API sock
 - `hosts` — inventory aliases to provision (default: the controller only).
 
 ## Steps
+
+1. For rootless mode enable lingering with `loginctl enable-linger <user>` and verify `loginctl show-user <user> --property=Linger` prints `Linger=yes`.
+2. Enable the API socket with `systemctl --user enable --now podman.socket` (rootful: `sudo systemctl enable --now podman.socket`) and verify the socket path exists with `ls $XDG_RUNTIME_DIR/podman/podman.sock`.
+3. Wire compose with `podman-compose --version` and verify it prints a version before setting `COMPOSE_TOOL=podman-compose`.
+4. Register each remote host with `podman system connection add <alias> ssh://<user>@<host><socket>` and verify `podman system connection list` shows the alias.
+5. Check each target with `podman --connection <alias> info` and verify it reports the requested rootless or rootful mode.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Socket unit not found | Podman is not installed or the user session has no systemd | Install Podman on the host and verify with `podman --version`, then enable the socket again |
+| Rootless socket disappears after logout | Lingering is not enabled for the user | Run `loginctl enable-linger <user>` and confirm with `loginctl show-user` |
+| `podman-compose` not found | The compose tool is not installed | Install `podman-compose` and confirm with `podman-compose --version` |
+| Remote connection fails | SSH key or inventory entry is wrong | Correct the host, user and key in the shared tunnel-manager inventory and re-add the connection |
+
+## Procedure detail
 
 ### Step 1: Select the Podman mode (rootful vs rootless)
 Resolve the `rootless` input. For **rootless**, ensure lingering is enabled so the

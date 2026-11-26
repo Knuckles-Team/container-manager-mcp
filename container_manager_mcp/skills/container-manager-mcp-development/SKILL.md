@@ -18,6 +18,23 @@ package owns the Docker, Podman, Swarm, and Kubernetes calls and their MCP conte
 transport, release rendering, generated ontology artifacts, and shared validation
 come from `scion-sdk` and `pipelines`.
 
+## Steps
+
+1. Create a real worktree with `git worktree add <path> -b <branch> origin/main` and verify `git -C <path> status --short` prints nothing.
+2. Find the owning spec row with `git grep -n "<term>" -- specs` and verify a row ID is returned for the behavior you change.
+3. Run the focused test with `uv run --frozen pytest -q tests/test_mcp_server.py` and verify it passes.
+4. Run the repository hooks with `uvx pre-commit run --all-files` and verify every hook passes.
+5. Commit with a `Spec:` trailer and verify `git log -1 --format=%B` shows `Spec:` and `Co-Authored-By:` in the last paragraph.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| No spec row owns the change | The behavior is new or the search term was too narrow | Search again with `git grep -n` on a related term, and extend the nearest owning spec as `specs/README.md` directs |
+| A test needs a real engine or cluster | The manager boundary was not mocked | Mock the manager boundary and assert context selection, refusal and serialization instead |
+| `uv.lock` out of date after a version bump | `pyproject.toml` changed without the lock | Regenerate `uv.lock` for the bumped version and commit it with the package change |
+| Hook fails | Formatting, spelling or lint findings in the diff | Fix the reported cause in the file and commit again, without skipping the hook |
+
 ## Repository workflow
 
 1. Start from a real worktree based on `origin/main`; keep the canonical checkout and

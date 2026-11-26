@@ -2,13 +2,7 @@
 name: container-manager-lifecycle
 skill_type: skill
 description: >-
-  Docker/Podman container and image lifecycle on local or remote hosts via the
-  container-manager-mcp MCP server — list/inspect/stop/remove/exec containers,
-  read logs, trace which container owns a port, pull/prune images, and run
-  docker-compose stacks. Use when the agent must operate standalone (non-swarm)
-  container workloads on a single engine. Do NOT use for Swarm cluster
-  services/nodes (use container-manager-swarm) or for pushing inventory into the
-  knowledge graph (use container-manager-kg-ingestion).
+  Docker/Podman container and image lifecycle on local or remote hosts via container-manager-mcp: list, inspect, stop, remove, exec, read logs, trace a port owner, pull or prune images, run compose stacks. Use for standalone single-engine workloads. Do NOT use for Swarm services or for KG ingestion.
 license: MIT
 tags: [container-manager-mcp, docker, podman, containers, compose, mcp]
 metadata:
@@ -17,10 +11,29 @@ metadata:
 ---
 # Container Lifecycle (Docker / Podman)
 
+Scope: Docker/Podman container and image lifecycle on local or remote hosts via the container-manager-mcp MCP server — list/inspect/stop/remove/exec containers, read logs, trace which container owns a port, pull/prune images, and run docker-compose stacks. Use when the agent must operate standalone (non-swarm) container workloads on a single engine. Do NOT use for Swarm cluster services/nodes (use container-manager-swarm) or for pushing inventory into the knowledge graph (use container-manager-kg-ingestion).
+
 Domain-typed control of single-host container workloads through the
 **container-manager-mcp** server. Prefer these `cm_*` tools over raw `docker`/`podman`
 shell — they carry the host-targeting, port-tracing, and destructive-confirmation
 conventions and return typed records.
+
+## Steps
+
+1. List the remote host aliases with `cm_list_hosts` and verify the target alias is present (omit `host` for the local socket).
+2. Find the container with `cm_container_operations action=list_containers all_containers=true host=<alias>` and verify its id or name is in the output.
+3. Read its logs with `cm_container_operations action=get_container_logs container_id=<id> tail="200"` and verify the expected lines appear.
+4. Stop it with `cm_container_operations action=stop_container container_id=<id>` and verify `list_containers` no longer shows it running.
+5. Remove it with `cm_container_operations action=remove_container container_id=<id>` and verify it is absent from `list_containers all_containers=true`.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Unknown host alias | The alias is not in the tunnel-manager inventory | Choose an alias printed by `cm_list_hosts`, or omit `host` for the local socket |
+| Remove refused on a running container | The container is still running | Stop it with `stop_container`, or pass `force=true` once the user confirms the removal |
+| Log tail rejected | `tail` was passed as an integer | Pass it as a string such as `tail="50"` |
+| Port owner not found | The port is published on a different host or engine | Run `trace_port_namespace port=<port> host=<alias>` against each alias from `cm_list_hosts` |
 
 ## When to use
 - List, inspect, or read logs from containers on the LOCAL socket or a remote host.
