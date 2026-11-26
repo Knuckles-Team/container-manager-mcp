@@ -11,9 +11,9 @@ metadata:
 ---
 # Container Inventory → Knowledge Graph
 
-Scope: Snapshot a host's Docker/Podman/Swarm inventory into the epistemic-graph knowledge graph as typed OWL nodes via the container-manager-mcp MCP server — containers, images, volumes, networks, swarm services and nodes, with their :usesImage / :runsOn / :builtFrom links. Use when the agent must record live container state into the KG for cross-source reasoning, drift detection, or provenance. Do NOT use for operating containers (use container-manager-lifecycle) or managing swarm services (use container-manager-swarm).
+Scope: Snapshot a host's Docker/Podman/Swarm inventory into the medulla knowledge graph as typed OWL nodes via the container-manager-mcp MCP server — containers, images, volumes, networks, swarm services and nodes, with their :usesImage / :runsOn / :builtFrom links. Use when the agent must record live container state into the KG for cross-source reasoning, drift detection, or provenance. Do NOT use for operating containers (use container-manager-lifecycle) or managing swarm services (use container-manager-swarm).
 
-Push a host's live container inventory into the ONE epistemic-graph knowledge graph as
+Push a host's live container inventory into the ONE medulla knowledge graph as
 **typed OWL nodes**, natively from the **container-manager-mcp** server. Best-effort and
 engine-guarded: with no reachable KG engine the tool still lists the inventory and reports
 `ingested: null` per modality.
@@ -49,7 +49,7 @@ engine-guarded: with no reachable KG engine the tool still lists the inventory a
 
 ## Prerequisites & environment
 Connect via the `mcp-client` skill against the **`container-manager-mcp`** MCP server.
-A reachable Docker/Podman engine is required; a reachable epistemic-graph engine is
+A reachable Docker/Podman engine is required; a reachable medulla engine is
 optional (ingestion no-ops cleanly without one).
 
 | Variable | Required | Notes |

@@ -1,6 +1,6 @@
 # Container Inventory → Knowledge Graph
 
-Push a host's live container inventory into the ONE epistemic-graph knowledge graph as
+Push a host's live container inventory into the ONE medulla knowledge graph as
 **typed OWL nodes**, natively from the **container-manager-mcp** server. The authoritative
 native-ingest transaction is required; engine failures are returned as tool failures.
 
@@ -18,7 +18,7 @@ native-ingest transaction is required; engine failures are returned as tool fail
 
 ## Prerequisites & environment
 Connect via the `mcp-client` skill against the **`container-manager-mcp`** MCP server.
-A reachable Docker/Podman engine is required; a reachable epistemic-graph engine is
+A reachable Docker/Podman engine is required; a reachable medulla engine is
 required; an unavailable engine is reported as a native-ingest failure.
 
 | Variable | Required | Notes |
