@@ -1,4 +1,4 @@
-"""Native epistemic-graph ingestion for container-manager records.
+"""Native medulla ingestion for container-manager records.
 
 CONCEPT:AU-KG.ingest.enterprise-source-extractor. Connector-specific mappers emit
 canonical node_type nodes and relationship edges. The ``scion_sdk.ingest``

@@ -35,7 +35,7 @@ agent for conversational orchestration. It provides:
   unified `inventory.yml` (`.yaml` legacy fallback); remote Kubernetes clusters are
   reached instead via kubeconfig contexts (`K8S_CONTEXTS`) — see [Multi-Host](multi_host.md).
 - **Ontology-driven KG ingestion** — `cm_ingest_inventory` maps live Docker/Swarm/
-  Kubernetes inventory into typed OWL/RDF nodes in the epistemic-graph Knowledge Graph.
+  Kubernetes inventory into typed OWL/RDF nodes in the medulla Knowledge Graph.
 
 ## Explore the documentation
 

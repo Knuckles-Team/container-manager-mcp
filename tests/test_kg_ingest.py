@@ -1,4 +1,4 @@
-"""Native epistemic-graph typed-node ingestion — Wire-First coverage.
+"""Native medulla typed-node ingestion — Wire-First coverage.
 
 Exercises the real ``ingest_entities`` + per-modality mappers with a fake
 transport one level below ``scion_sdk.ingest.KnowledgeIngest`` (no

@@ -180,7 +180,7 @@ _Auto-generated — do not edit (synced by the `mcp-readme-table` pre-commit hoo
 | `cm_doctor` | `DOCTORTOOL` | Diagnose + get remediation for the inventory / kubernetes / docker / podman environment. |
 | `cm_image_operations` | `IMAGETOOL` | Manage container images. |
 | `cm_info_operations` | `INFOTOOL` | Manage container manager info operations. |
-| `cm_ingest_inventory` | `MISCTOOL` | Natively ingest the container inventory into epistemic-graph as typed nodes. |
+| `cm_ingest_inventory` | `MISCTOOL` | Natively ingest the container inventory into medulla as typed nodes. |
 | `cm_k8s_cluster` | `K8SCLUSTERTOOL` | Manage Kubernetes cluster resources (nodes, contexts, CSRs, API resources, cluster info, admission plugins). |
 | `cm_k8s_config` | `K8SCONFIGTOOL` | Manage Kubernetes configuration (configmaps, secrets, namespaces, events, CRDs, labels/annotations/patch, state tracking). |
 | `cm_k8s_governance` | `K8SGOVERNANCETOOL` | Manage Kubernetes governance resources (ResourceQuotas, LimitRanges, PriorityClasses, PDBs, HPAs). |
@@ -574,7 +574,7 @@ When query strings or parameters are supplied, an LLM-free **Knowledge Graph res
 
 > **Install the connector-focused `[mcp]` extra.** Examples use `container-manager-mcp[mcp]` to add
 > FastMCP / FastAPI through `scion-sdk`; the required Scion SDK core
-> still carries `epistemic-graph[full]`. The `[agent-runtime]` extra additionally
+> still carries `medulla[full]`. The `[agent-runtime]` extra additionally
 > enables model orchestration.
 
 #### stdio Transport (local IDEs — Cursor, Claude Desktop, VS Code)
@@ -996,7 +996,7 @@ artifacts, so they are not tracked in this repository. To preview the generated 
 
 | Image tag | Build target | Contents | Entrypoint |
 |-----------|--------------|----------|------------|
-| `example/container-manager-mcp:mcp` | `--target mcp` | `container-manager-mcp[mcp]` — **connector-focused**, includes `epistemic-graph[full]`; no model-orchestration stack | `container-manager-mcp` |
+| `example/container-manager-mcp:mcp` | `--target mcp` | `container-manager-mcp[mcp]` — **connector-focused**, includes `medulla[full]`; no model-orchestration stack | `container-manager-mcp` |
 
 ```bash
 uvx --from "git+https://github.com/Knuckles-Team/pipelines@main" pipelines-connector \
@@ -1005,14 +1005,14 @@ uvx --from "git+https://github.com/Knuckles-Team/pipelines@main" pipelines-conne
 
 agent (`immutable agent digest`) with a co-located `:mcp` sidecar.
 
-### Knowledge-graph database (`epistemic-graph`)
+### Knowledge-graph database (`medulla`)
 
-Scion SDK core dependency (`epistemic-graph[full]`). The `[mcp]` extra keeps
+Scion SDK core dependency (`medulla[full]`). The `[mcp]` extra keeps
 deployments can use the bundled engine. For production or shared state, run
-**epistemic-graph as a dedicated database service** and configure the runtime to use it.
+**medulla as a dedicated database service** and configure the runtime to use it.
 Deployment recipes (single-node + Raft HA), connection configuration, and architecture
 diagrams are documented in the
-[epistemic-graph deployment guide](https://knuckles-team.github.io/epistemic-graph/deployment/).
+[medulla deployment guide](https://knuckles-team.github.io/medulla/deployment/).
 
 ---
 
@@ -1048,7 +1048,7 @@ common operational flows:
 | `container-manager-podman-operations` | Rootless Podman pod/kube operations — pods, `generate`/`play kube`, checkpoint/restore, pod-scoped networks/volumes, health, system prune |
 | `container-manager-kubernetes-operations` | The full Kubernetes operational surface — workloads, config, networking, storage, RBAC, cluster, governance, observability |
 | `container-manager-multi-context` | Operating multiple Docker/Podman/Swarm/Kubernetes backends and contexts at once via `cm_multi_context` |
-| `container-manager-kg-ingestion` | Snapshotting Docker/Podman/Swarm **and Kubernetes** inventory into the epistemic-graph Knowledge Graph via `cm_ingest_inventory` |
+| `container-manager-kg-ingestion` | Snapshotting Docker/Podman/Swarm **and Kubernetes** inventory into the medulla Knowledge Graph via `cm_ingest_inventory` |
 
 `container-manager-kubernetes-operations`, `container-manager-podman-operations`,
 `container-manager-multi-context`, and `container-manager-config-walkthrough` are new; `lifecycle`, `swarm`,

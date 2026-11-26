@@ -1519,7 +1519,7 @@ def register_misc_tools(mcp: FastMCP):
         ),
         ctx: Context | None = None,
     ) -> dict:
-        """Natively ingest the container inventory into epistemic-graph as typed nodes.
+        """Natively ingest the container inventory into medulla as typed nodes.
 
         Lists resources via the real container-manager client and pushes them into the
         knowledge graph as ``:Container`` / ``:ContainerImage`` / ``:ContainerVolume`` /
