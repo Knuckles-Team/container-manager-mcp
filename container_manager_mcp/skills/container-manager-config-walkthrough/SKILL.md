@@ -2,14 +2,7 @@
 name: container-manager-config-walkthrough
 skill_type: skill
 description: >-
-  End-user setup guide for the container-manager-mcp MCP server — choosing
-  CONTAINER_MANAGER_TYPE (docker/podman/kubernetes/multi), wiring .env /
-  mcp_config toggles, connecting remote Docker/Podman hosts via the
-  tunnel-manager inventory versus remote Kubernetes clusters via kubeconfig
-  contexts, and a first-run verification checklist. Use when the agent is
-  onboarding a new environment or troubleshooting "which skill do I even use"
-  before touching any other container-manager-mcp skill. Do NOT use for actually
-  operating containers/clusters once configured — use the operational skills.
+  Setup guide for container-manager-mcp: choose CONTAINER_MANAGER_TYPE (docker, podman, kubernetes, multi), wire env toggles, connect remote hosts or kubeconfig contexts, and run the first-run checks. Use when onboarding an environment or unsure which skill applies. Do NOT use to operate containers or clusters once configured.
 license: MIT
 tags: [container-manager-mcp, setup, configuration, onboarding, mcp]
 metadata:
@@ -17,6 +10,8 @@ metadata:
   version: '0.1.0'
 ---
 # Container Manager — Configuration Walkthrough
+
+Scope: End-user setup guide for the container-manager-mcp MCP server — choosing CONTAINER_MANAGER_TYPE (docker/podman/kubernetes/multi), wiring .env / mcp_config toggles, connecting remote Docker/Podman hosts via the tunnel-manager inventory versus remote Kubernetes clusters via kubeconfig contexts, and a first-run verification checklist. Use when the agent is onboarding a new environment or troubleshooting "which skill do I even use" before touching any other container-manager-mcp skill. Do NOT use for actually operating containers/clusters once configured — use the operational skills.
 
 The one-time (or per-environment) setup path for **container-manager-mcp** before
 using any of its operational skills. This skill is a checklist and decision guide,
@@ -52,6 +47,23 @@ cm_doctor action=check_kubernetes context=<ctx>  # kubeconfig + per-context prob
 ```
 Each check returns `{name, category, status: ok|warn|fail, detail, remediation}`.
 Fix (or hand off) every `fail`, then continue with the decision guide below.
+
+## Steps
+
+1. Run the environment doctor with `cm_doctor action=run` and verify that no check reports `status: fail`.
+2. Read the current target with `cm_info_operations action=get_info` and verify it matches the intended `CONTAINER_MANAGER_TYPE` (docker, podman, kubernetes or multi).
+3. For Docker or Podman, list the remote host aliases with `cm_list_hosts` and verify the alias you need appears in the output (local socket use needs none).
+4. For Kubernetes, pick the context with `cm_k8s_cluster action=use_context context_name=<name>` and verify `cm_k8s_cluster action=get_cluster_info` answers for that context.
+5. For multi mode, list the pool with `cm_multi_context action=list_contexts` and verify every configured backend and context is listed.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Doctor reports `fail` | A Python library, CLI or environment variable is missing | Apply the `remediation` text of the failing check, then confirm with `cm_doctor action=check_backends` |
+| Unknown alias for `host=` | The alias is not in the tunnel-manager inventory, or a kubeconfig context name was passed as a host | Register the host in the tunnel-manager inventory and confirm with `cm_list_hosts`, or omit `host` to use the local socket |
+| Context not found | The name is not in the kubeconfig or in `K8S_CONTEXTS` | Take a name from `cm_k8s_cluster action=list_contexts` and set `CONTAINER_MANAGER_KUBECONTEXT` to it |
+| A `cm_k8s_*` tool is missing from the tool list | Its theme was hidden by a toggle such as `K8SWORKLOADSTOOL=false` | Set the matching toggle to `true` in the server environment and restart the server |
 
 ## When to use
 - Standing up container-manager-mcp against a new environment for the first time.

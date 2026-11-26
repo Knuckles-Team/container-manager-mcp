@@ -2,13 +2,7 @@
 name: container-manager-podman-operations
 skill_type: skill
 description: >-
-  Rootless Podman pod/kube operations via the container-manager-mcp MCP server —
-  pods (create/list/stats/top/inspect/logs/stop/rm), Kubernetes YAML interop
-  (generate/play kube), checkpoint/restore, pod-scoped networks and volumes,
-  health checks, and system prune. Use when the agent must drive Podman pod-level
-  workloads beyond single containers. Do NOT use for single-container Docker/Podman
-  lifecycle (container-manager-lifecycle) or for a real Kubernetes cluster
-  (container-manager-kubernetes-operations).
+  Podman pod and kube operations via container-manager-mcp: pods, Kubernetes YAML generate and play, checkpoint and restore, pod networks and volumes, health checks, system prune. Use to drive Podman pod-level workloads beyond single containers. Do NOT use for single-container lifecycle or a real Kubernetes cluster.
 license: MIT
 tags: [container-manager-mcp, podman, pods, rootless, checkpoint, mcp]
 metadata:
@@ -17,11 +11,30 @@ metadata:
 ---
 # Podman Pod/Kube Operations
 
+Scope: Rootless Podman pod/kube operations via the container-manager-mcp MCP server — pods (create/list/stats/top/inspect/logs/stop/rm), Kubernetes YAML interop (generate/play kube), checkpoint/restore, pod-scoped networks and volumes, health checks, and system prune. Use when the agent must drive Podman pod-level workloads beyond single containers. Do NOT use for single-container Docker/Podman lifecycle (container-manager-lifecycle) or for a real Kubernetes cluster (container-manager-kubernetes-operations).
+
 Domain-typed control of **Podman pods** and Podman-specific features through
 the single `cm_podman` tool on the **container-manager-mcp** server. Podman
 groups containers into local **pods** (its rootless analogue of a Kubernetes pod) and
 adds checkpoint/restore and Kubernetes-YAML interop that plain Docker doesn't have.
 Prefer this `cm_*` tool over raw `podman` shell.
+
+## Steps
+
+1. Confirm the engine with `cm_info_operations action=get_info` and verify it reports Podman.
+2. Create the pod with `cm_podman action=podman_pod_create pod_name=<pod> image=<image>` and verify `podman_pod_list` shows it.
+3. Inspect it with `cm_podman action=podman_pod_inspect pod_name=<pod>` and verify the containers and state match expectations.
+4. Export it with `cm_podman action=podman_generate_kube_yaml pod_name=<pod> namespace=<ns>` and verify the returned YAML names the pod.
+5. Remove it with `cm_podman action=podman_pod_rm pod_name=<pod>` and verify `podman_pod_list` no longer shows it.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Engine is not Podman | `CONTAINER_MANAGER_TYPE` is unset and Docker was auto-detected | Set `CONTAINER_MANAGER_TYPE=podman` in the server environment and restart the server |
+| Checkpoint or restore fails | The host or container lacks CRIU support | Check the host CRIU support, and use `podman_pod_stop` with a fresh start when checkpointing is unavailable |
+| `podman_play_kube_yaml` fails | `yaml_path` is missing or unreadable | Pass the path of a YAML file written from `podman_generate_kube_yaml` |
+| Health check rejected | `config` was passed as a JSON string | Pass `config` as a native object together with `container_id` |
 
 ## When to use
 - Create/list/inspect/stop/remove a Podman **pod**, and read pod-scoped stats, top,

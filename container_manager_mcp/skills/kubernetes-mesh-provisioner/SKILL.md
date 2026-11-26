@@ -40,6 +40,23 @@ Every step is **idempotent**: check the desired state, act only on drift.
 
 ## Steps
 
+1. Install the RKE2 server after writing `/etc/rancher/rke2/config.yaml` with `systemctl enable --now rke2-server` and verify `systemctl is-active rke2-server` prints `active`.
+2. Read the join token with `cat /var/lib/rancher/rke2/server/node-token` and verify the output is not empty.
+3. Start each agent with `systemctl enable --now rke2-agent` and verify `kubectl get nodes` lists it as `Ready`.
+4. Check the dataplane with `cilium status` and verify it reports OK on every node with no `kube-proxy` running.
+5. Check GPU nodes with `kubectl describe node <gpu-node>` and verify `nvidia.com/gpu` appears under allocatable resources.
+
+## Failure recovery
+
+| Failure | Cause | Recovery |
+|---|---|---|
+| Agent does not join | The server URL or token in the agent `config.yaml` is wrong | Set `server: https://<server-ip>:9345` and the token from `node-token`, then restart `rke2-agent` |
+| `cilium status` is not OK | Nodes lack a deterministic canonical IP | Apply the NIC bonds with the `nic-bond-provisioner` skill and check node-to-node reachability |
+| No `nvidia.com/gpu` resource | The driver, toolkit or device plugin is missing | Install the NVIDIA driver and `nvidia-container-toolkit`, then deploy the device-plugin DaemonSet on the GPU nodes |
+| Image pulls fail | `registries.yaml` is missing on a node | Copy `/etc/rancher/rke2/registries.yaml` to that node and restart its RKE2 service |
+
+## Procedure detail
+
 ### Step 1: Install RKE2 Server (control plane)
 On the manager node **node-a (10.0.0.13)**:
 - If `systemctl is-active rke2-server` is already active, skip to token retrieval.
