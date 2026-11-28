@@ -37,3 +37,11 @@ The tests run against the production server object. They need no vendor requests
 ## Rows awaiting bound tests
 - `CONN-CONTAINER-MANAGER-MCP-R005`: proof `tests/test_access_contracts.py::test_served_deployment_access_contract_matches_fixture`; the test carries the row's `spec` marker when it lands.
 - `CONN-CONTAINER-MANAGER-MCP-R008`: proof `tests/test_access_contracts.py::test_deployment_contract_matches_served_fixture`; the test carries the row's `spec` marker when it lands.
+
+## Machine roll-up proofs
+
+- `CONN-CONTAINER-MANAGER-MCP-R025`: `tests/test_cluster_membership.py::test_served_membership_actions_return_the_probe_schema` (planned; the owning change adds the test)
+- `CONN-CONTAINER-MANAGER-MCP-R025.1`: `tests/test_machine_rollup.py::test_node_classes_roll_up_to_machine_and_ingest_emits_observes_links` (planned; the owning change adds the test)
+- `CONN-CONTAINER-MANAGER-MCP-R025.2`: `tests/test_cluster_membership.py::test_membership_payload_matches_the_probe_schema` (planned; the owning change adds the test)
+- `CONN-CONTAINER-MANAGER-MCP-R025.3`: `tests/test_cluster_membership.py::test_both_tools_accept_the_membership_action` (planned; the owning change adds the test)
+- `CONN-CONTAINER-MANAGER-MCP-R025.4`: `tests/test_cluster_membership.py::test_served_membership_actions_return_the_probe_schema` (planned; the owning change adds the test)
