@@ -33,3 +33,8 @@ Each task line reads `- [ ] T001 [P] [US1] <ID>-R012.4 description`. Order is pr
 - [ ] T027 [US1] CONN-CONTAINER-MANAGER-MCP-R022 Inventory path text names the served path.
 - [ ] T028 [US1] CONN-CONTAINER-MANAGER-MCP-R023 Least-privilege role per target context.
 - [ ] T029 [US1] CONN-CONTAINER-MANAGER-MCP-R024 A remote single-node context keeps its TLS identity.
+- [ ] T030 [US1] CONN-CONTAINER-MANAGER-MCP-R025 Machine roll-up and cluster membership (rollup).
+- [ ] T031 [US1] CONN-CONTAINER-MANAGER-MCP-R025.1 Node classes roll up to the machine class.
+- [ ] T032 [US1] CONN-CONTAINER-MANAGER-MCP-R025.2 Membership actions.
+- [ ] T033 [US1] CONN-CONTAINER-MANAGER-MCP-R025.3 Wiring.
+- [ ] T034 [US1] CONN-CONTAINER-MANAGER-MCP-R025.4 Hot-path proof: the served actions return the schema.

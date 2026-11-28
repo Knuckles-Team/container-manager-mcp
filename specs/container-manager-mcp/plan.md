@@ -36,6 +36,16 @@ No unknowns. Each row names the code it touches.
 
 ## Phase 1: Design
 
+### Machine roll-up design
+
+1. **Owner.** container-manager-mcp owns its node classes, its node ingest and the membership actions. Medulla owns the machine class.
+2. **Cohesion.** The class parents and the link change together in the node ingest. The membership mapper lives in its own module because it reads two cluster kinds.
+3. **Dependency direction.** The connector imports `scion_sdk.machine`, which imports the engine client. Nothing points upward.
+4. **Interface depth.** The new shared mapper `container_manager_mcp/membership.py` has two call sites: the Swarm action and the Kubernetes action.
+5. **Special cases.** A refused key skips one link and never fails the record write.
+6. **State.** none. The connector holds no lifecycle. The lifecycle machine belongs to medulla.
+7. **Environment.** none. The roll-up and the link need no configuration.
+
 ### Interfaces and data model
 
 Tools with a `docker_` prefix use the `docker` backend. Tools with a `k8s_` prefix use the `kubernetes` backend.
@@ -99,4 +109,4 @@ The repository pre-commit hooks apply: `ruff-format`, `connector-standard`, `sec
 
 ## Cross-repo seams
 
-none. The cited owner rows are library capabilities the connector calls in process; spec.md names them.
+- `CONN-CONTAINER-MANAGER-MCP-R025.1` consumes the observer helper of `SCION-CENTRALIZED-CAPABILITIES-R057.1`. Contract: `contracts/machine-observer.md`.
